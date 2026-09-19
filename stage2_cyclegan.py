@@ -11,6 +11,9 @@ tensorflow_examples dependency, works with tf.keras 2 and Keras 3.
 Subcommands (run from the project root, or pass --root):
   prep      LOCAL, no TensorFlow needed. Builds data/gan/{normalA, normal_src, real/<cls>}
   train     trains or resumes one disease           --disease CSC [--epochs 100]
+            on Google Drive use e.g. --save-every 10 --keep 1 --light: files deleted from
+            Drive go to its trash and still count toward storage until the trash is emptied.
+            Speed-ups for GPU: --mixed (float16 compute) and --xla (compiled training step)
   generate  translates normal_src with trained G    --disease CSC [--n 4000]
   qc        feature-based filter + contact sheets   --disease CSC [--keep 3000]
 
@@ -134,8 +137,11 @@ def build_models():
             self.offset = self.add_weight(name="offset", shape=(shape[-1],), initializer="zeros")
 
         def call(self, x):
-            mean, var = tf.nn.moments(x, axes=[1, 2], keepdims=True)
-            return self.scale * (x - mean) * tf.math.rsqrt(var + 1e-5) + self.offset
+            x32 = tf.cast(x, tf.float32)
+            mean, var = tf.nn.moments(x32, axes=[1, 2], keepdims=True)
+            y = (tf.cast(self.scale, tf.float32) * (x32 - mean) * tf.math.rsqrt(var + 1e-5)
+                 + tf.cast(self.offset, tf.float32))
+            return tf.cast(y, x.dtype)
 
     def down(x, f, norm=True):
         x = L.Conv2D(f, 4, 2, padding="same", kernel_initializer=init, use_bias=False)(x)
@@ -158,7 +164,8 @@ def build_models():
             skips.append(x)
         for i, (f, s) in enumerate(zip([512, 512, 512, 512, 256, 128, 64], reversed(skips[:-1]))):
             x = L.Concatenate()([up(x, f, drop=i < 3), s])
-        out = L.Conv2DTranspose(3, 4, 2, padding="same", kernel_initializer=init, activation="tanh")(x)
+        out = L.Conv2DTranspose(3, 4, 2, padding="same", kernel_initializer=init, activation="tanh",
+                                 dtype="float32")(x)
         return tf.keras.Model(inp, out, name=name)
 
     def discriminator(name):  # 70x70 PatchGAN
@@ -170,7 +177,7 @@ def build_models():
         x = L.Conv2D(512, 4, 1, kernel_initializer=init, use_bias=False)(x)
         x = L.LeakyReLU()(InstanceNorm()(x))
         x = L.ZeroPadding2D()(x)
-        out = L.Conv2D(1, 4, 1, kernel_initializer=init)(x)
+        out = L.Conv2D(1, 4, 1, kernel_initializer=init, dtype="float32")(x)
         return tf.keras.Model(inp, out, name=name)
 
     return (generator("G_normal2rare"), generator("F_rare2normal"),
@@ -192,17 +199,36 @@ def train(a):
     ck_dir = ckpt_dir(a)
     (ck_dir / "samples").mkdir(parents=True, exist_ok=True)
 
+    if a.mixed:
+        tf.keras.mixed_precision.set_global_policy("mixed_float16")
+        print("mixed precision: float16 compute, float32 weights", flush=True)
     G, F, DA, DB = build_models()
     opts = [tf.keras.optimizers.Adam(2e-4, beta_1=0.5) for _ in range(4)]
+    if a.mixed:
+        opts = [tf.keras.mixed_precision.LossScaleOptimizer(o) for o in opts]
+    legacy_ls = a.mixed and not hasattr(opts[0], "scale_loss")
+
+    def scaled(o, loss):
+        if not a.mixed:
+            return loss
+        return o.get_scaled_loss(loss) if legacy_ls else o.scale_loss(loss)
     for o, m in zip(opts, (G, F, DA, DB)):
         if hasattr(o, "build"):
             o.build(m.trainable_variables)  # create slots now so resume restores them
 
     epoch = tf.Variable(0, dtype=tf.int64, trainable=False)
-    ck = tf.train.Checkpoint(G=G, F=F, DA=DA, DB=DB, oG=opts[0], oF=opts[1], oDA=opts[2], oDB=opts[3], epoch=epoch)
-    mgr = tf.train.CheckpointManager(ck, str(ck_dir), max_to_keep=2)
+    if a.light:  # weights + epoch only (~0.46 GB instead of ~1.4 GB); Adam restarts on resume
+        ck = tf.train.Checkpoint(G=G, F=F, DA=DA, DB=DB, epoch=epoch)
+    else:
+        ck = tf.train.Checkpoint(G=G, F=F, DA=DA, DB=DB, oG=opts[0], oF=opts[1], oDA=opts[2], oDB=opts[3],
+                                 epoch=epoch)
+    mgr = tf.train.CheckpointManager(ck, str(ck_dir), max_to_keep=a.keep)
     if mgr.latest_checkpoint:
-        ck.restore(mgr.latest_checkpoint)
+        try:
+            ck.restore(mgr.latest_checkpoint).expect_partial()
+        except (tf.errors.InvalidArgumentError, ValueError):  # optimizer layout differs, e.g. --mixed toggled
+            tf.train.Checkpoint(G=G, F=F, DA=DA, DB=DB, epoch=epoch).restore(mgr.latest_checkpoint).expect_partial()
+            print("  optimizer state not restored (checkpoint from a different precision mode)", flush=True)
         print(f"Resumed {a.disease} from {mgr.latest_checkpoint} (epoch {int(epoch.numpy())})", flush=True)
 
     bce = tf.keras.losses.BinaryCrossentropy(from_logits=True)
@@ -210,7 +236,7 @@ def train(a):
     def l1(x, y):
         return tf.reduce_mean(tf.abs(x - y))
 
-    @tf.function
+    @tf.function(jit_compile=a.xla)
     def step(a_img, b_img):
         with tf.GradientTape(persistent=True) as tape:
             fake_b = G(a_img, training=True)
@@ -227,8 +253,12 @@ def train(a):
             loss_F = bce(tf.ones_like(d_fa), d_fa) + cyc + 0.5 * LAMBDA * l1(a_img, same_a)
             loss_DA = 0.5 * (bce(tf.ones_like(d_ra), d_ra) + bce(tf.zeros_like(d_fa), d_fa))
             loss_DB = 0.5 * (bce(tf.ones_like(d_rb), d_rb) + bce(tf.zeros_like(d_fb), d_fb))
-        for loss, m, o in zip((loss_G, loss_F, loss_DA, loss_DB), (G, F, DA, DB), opts):
-            o.apply_gradients(zip(tape.gradient(loss, m.trainable_variables), m.trainable_variables))
+            scaled_losses = [scaled(o, l) for o, l in zip(opts, (loss_G, loss_F, loss_DA, loss_DB))]
+        for sl, m, o in zip(scaled_losses, (G, F, DA, DB), opts):
+            g = tape.gradient(sl, m.trainable_variables)
+            if legacy_ls:
+                g = o.get_unscaled_gradients(g)
+            o.apply_gradients(zip(g, m.trainable_variables))
         return tf.stack([loss_G, loss_F, loss_DA, loss_DB])
 
     fixed = tf.stack([to_float(read_img(p)) for p in A[:4]])
@@ -253,10 +283,12 @@ def train(a):
                 print(f"  ep {ep + 1} step {i}/{steps}  G={m[0]:.3f} F={m[1]:.3f} "
                       f"D_normal={m[2]:.3f} D_rare={m[3]:.3f}", flush=True)
         epoch.assign(ep + 1)
-        mgr.save()
         save_sample(ep + 1)
-        print(f"epoch {ep + 1}/{a.epochs} done in {(time.time() - t0) / 60:.1f} min "
-              f"-> {ck_dir / 'samples'}", flush=True)
+        saved = (ep + 1) % a.save_every == 0 or ep + 1 == a.epochs
+        if saved:
+            mgr.save()
+        print(f"epoch {ep + 1}/{a.epochs} done in {(time.time() - t0) / 60:.1f} min"
+              + (" | checkpoint saved" if saved else ""), flush=True)
 
 
 # --------------------------------------------------------------------------- generate
@@ -365,7 +397,14 @@ def main():
     p = sub.add_parser("train", parents=[common])
     p.add_argument("--disease", required=True, choices=RARE)
     p.add_argument("--epochs", type=int, default=100)
+    p.add_argument("--xla", action="store_true", help="XLA-compile the training step (faster on GPU)")
+    p.add_argument("--mixed", action="store_true", help="mixed float16 precision (faster on tensor-core GPUs such as T4)")
     p.add_argument("--ckpt", help="checkpoint folder (default data/gan/ckpt/<disease>)")
+    p.add_argument("--save-every", type=int, default=1,
+                   help="write a checkpoint every N epochs (and at the last epoch); samples are saved every epoch")
+    p.add_argument("--keep", type=int, default=2, help="checkpoints to keep; older ones are deleted")
+    p.add_argument("--light", action="store_true",
+                   help="save weights + epoch only (no optimizer state): ~3x smaller checkpoints")
 
     p = sub.add_parser("generate", parents=[common])
     p.add_argument("--disease", required=True, choices=RARE)
