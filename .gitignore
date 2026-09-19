@@ -1,0 +1,46 @@
+# ---------------------------------------------------------------- data ----
+# Nothing under data/ is redistributed. See README "Data download".
+# data/manifest.csv IS committed: it is small and it defines the splits.
+data/raw/
+data/aug_basic/
+data/gan/
+ChestXRay2017/
+*.zip
+*.tar.gz
+*.7z
+
+# ------------------------------------------------- large / regenerable ----
+# Cached Inception-v3 features (~390 MB), CAM panels, per-image predictions.
+results/features/
+results/stage4/cam_*/
+results/stage3_*/val_predictions.csv
+results/stage3_*/test_predictions.csv
+
+# Model artefacts: head.npz, best.weights.h5, CycleGAN checkpoints.
+*.npz
+*.h5
+*.ckpt
+checkpoint
+
+# ------------------------------------------------------------ third party ----
+# Not ours to redistribute.
+paper/
+*.pdf
+code2017/
+
+# ---------------------------------------------------------- local scratch ----
+structure.txt
+demo.ipynb
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.DS_Store
+._*
+Thumbs.db
+
+# ----------------------------------------------------- virtual environments ----
+.venv/
+venv/
+env/
+ENV/
+.env

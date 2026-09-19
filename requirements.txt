@@ -1,0 +1,11 @@
+# Stages 0-1 and `stage2_cyclegan.py prep` (CPU only, no TensorFlow needed)
+numpy
+pandas
+scikit-learn
+opencv-python
+albumentations>=2.0
+
+# Stages 2 (train/generate/qc), 3 and 4.
+# Floor is 2.16 because Stage 3 writes Keras-3 style weights ("best.weights.h5").
+# On native Windows this installs the CPU-only build: see README "Environment".
+tensorflow>=2.16
