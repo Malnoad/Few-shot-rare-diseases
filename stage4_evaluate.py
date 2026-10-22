@@ -115,9 +115,10 @@ def baselines(root, man):
     return out
 
 
-def cam(root, variant, n, weights):
+def cam(root, variant, n, weights, out=None):
     """Class activation maps. With a frozen backbone + GAP + one softmax layer,
-    Grad-CAM is exactly CAM: ReLU(sum_k W[k, c] * A_k) over the mixed10 feature maps."""
+    Grad-CAM is exactly CAM: ReLU(sum_k W[k, c] * A_k) over the mixed10 feature maps.
+    Panels go to `out` (default results/stage4/cam_<variant>)."""
     import cv2
     import tensorflow as tf
 
@@ -127,7 +128,7 @@ def cam(root, variant, n, weights):
     preds = pd.concat([preds[preds.label.isin(RARE)], preds[~preds.label.isin(RARE)].sample(frac=1, random_state=0)])
     preds = preds.head(n)
     net = tf.keras.applications.InceptionV3(include_top=False, weights=None if weights == "None" else weights, input_shape=(299, 299, 3))
-    out = root / f"results/stage4/cam_{variant}"
+    out = Path(out) if out else root / f"results/stage4/cam_{variant}"
     out.mkdir(parents=True, exist_ok=True)
     for _, r in preds.iterrows():
         raw = tf.io.decode_image(tf.io.read_file(str(root / fix(r.path))), channels=3, expand_animations=False)
