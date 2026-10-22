@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Runs when T3 Code creates a new worktree for a thread.
+set -euo pipefail
+
+# data/manifest.csv is tracked, so data/ always exists in a worktree: link the large
+# gitignored folders one by one instead. On Windows use a junction, because Git Bash's
+# `ln -s` silently copies (gigabytes here) unless Developer Mode is on.
+if [ -n "${T3CODE_PROJECT_ROOT:-}" ]; then
+  for d in raw aug_basic gan; do
+    src="$T3CODE_PROJECT_ROOT/data/$d"
+    [ -d "$src" ] && [ ! -e "data/$d" ] || continue
+    case "$(uname -s)" in
+      MINGW*|MSYS*|CYGWIN*) cmd //c mklink /J "$(cygpath -w "data/$d")" "$(cygpath -w "$src")" > /dev/null ;;
+      *) ln -s "$src" "data/$d" ;;
+    esac
+    echo "Linked data/$d -> $src"
+  done
+fi
+
+# Dependencies: reuse the main checkout's .venv rather than installing ~2 GB per worktree.
+echo "setup-worktree: use $T3CODE_PROJECT_ROOT/.venv (no install step)"
