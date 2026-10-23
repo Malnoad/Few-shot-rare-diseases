@@ -351,8 +351,9 @@ def qc(a):
         return 1 - np.sort(S, axis=1)[:, -k:].mean(axis=1)
 
     df = pd.DataFrame({"file": fake, "d_rare": knn_dist(Ff @ Fr.T), "d_normal": knn_dist(Ff @ Fn.T)})
-    df["pass"] = df.d_rare < df.d_normal
-    kept = df[df["pass"]].sort_values("d_rare").head(a.keep)
+    df["margin"] = df.d_normal - df.d_rare          # > threshold: more disease-like than normal-like
+    df["pass"] = df.margin > a.margin
+    kept = df[df["pass"]].sort_values("margin", ascending=False).head(a.keep)
     df["kept"] = df.file.isin(kept.file)
     df.to_csv(gan / f"qc_{a.disease}.csv", index=False)
 
@@ -374,7 +375,7 @@ def qc(a):
     sheet(np.random.default_rng(0).permutation(kept.file.values), f"qc_{a.disease}_kept.jpg")
     sheet(df[~df.kept].sort_values("d_rare", ascending=False).file, f"qc_{a.disease}_rejected.jpg")
 
-    print(f"{a.disease}: {int(df['pass'].sum())}/{len(df)} closer to real {a.disease} than to NORMAL; "
+    print(f"{a.disease}: {int(df['pass'].sum())}/{len(df)} above margin {a.margin:+.4f}; "
           f"kept {len(kept)} -> {acc_dir}")
     print(f"  review {gan / f'qc_{a.disease}_kept.jpg'} and delete bad files from {acc_dir}")
     if len(kept) < a.keep:
@@ -414,6 +415,9 @@ def main():
     p = sub.add_parser("qc", parents=[common])
     p.add_argument("--disease", required=True, choices=RARE)
     p.add_argument("--keep", type=int, default=3000)
+    p.add_argument("--margin", type=float, default=0.0,
+                   help="keep images whose (d_normal - d_rare) exceeds this; calibrate against real images "
+                        "(e.g. their 10th percentile) rather than against a target count")
 
     a = ap.parse_args()
     {"prep": prep, "train": train, "generate": generate, "qc": qc}[a.cmd](a)

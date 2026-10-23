@@ -1,0 +1,64 @@
+# Research context
+
+What every agent should know about this research. Keep it short (one or two
+screens). Agents read this before any research or analysis task.
+
+## Question
+Does adding CycleGAN-generated images of rare retinal diseases to the training set
+improve a few-shot 9-class OCT classifier, compared with real images only and with
+basic augmentation? (Reproduction of Yoo et al. 2021.)
+
+## Hypotheses
+- H1 (paper): `gan` > `basic` > `none` on the independent test set
+  (paper accuracy 92.1 / 91.3 / 88.4).
+- Current evidence: seed 42 gives gan 92.95, none 90.31, basic 88.85; over seeds 1-5
+  the means are gan ~92.6, basic ~92.9, none ~90.7 (`results/seed_check.csv`).
+  So gan vs basic is not separated by this test set; both beat none.
+
+## Scope
+In: the paper's pipeline (Stages 0-4), its metrics (Tables 3-4), knn/prototype
+baselines on frozen features, CAM. Out: the paper's Siamese network, a trained
+prototypical network, end-to-end fine-tuning of Inception-v3.
+
+## Glossary
+- **Common classes:** NORMAL, CNV, DME, DRUSEN (Kermany OCT2017).
+- **Rare classes:** CSC, MH, MacTel, Stargardt, RP; 5/5/4/4/4 test images each.
+- **Variant:** `none` / `basic` / `gan` rare-class training pool in Stage 3.
+- **Accepted images:** CycleGAN outputs that passed `stage2_cyclegan.py qc`
+  (Inception-v3 kNN distance closer to real disease than to NORMAL).
+- **Head:** the single trained softmax layer (`results/stage3_<variant>/head.npz`).
+
+## Units & conventions
+- Accuracy in %, kappa/MCC/RCI/AUC as fractions; 95% CIs by 1,000-sample bootstrap.
+- Images resized to 256x256 everywhere, then 299x299 for Inception-v3.
+- All seeds 42 unless a seed sweep says otherwise.
+
+## Data
+| Dataset | Source / version | Units | Resolution | Known issues |
+|---|---|---|---|---|
+| Kermany OCT2017 | Mendeley rscbjbr9sj v2, doi:10.17632/rscbjbr9sj.2 | JPEG B-scans | varies -> 256 | 566 patient IDs in both official train and test (left as published) |
+| Rare-disease OCT | Mendeley btv6yrdbmv (released with the paper) | PNG | varies -> 256 | macOS junk (`__MACOSX`, `._*`); folders shipped as `Mactel`, `Stargart` |
+| Derived (aug_basic, gan, ckpt, features) | Google Drive `MyDrive/octfsl` | | 256 | see `COLAB.md` |
+
+## Key sources
+| Citation | DOI / link | What it actually says | How we use it |
+|---|---|---|---|
+| Yoo, Choi, Kim 2021, MBEC 59:401 | 10.1007/s11517-021-02321-1 | CycleGAN augmentation for few-shot rare OCT classes | method and target numbers (`stage4_evaluate.py` PAPER) |
+| Kermany et al. 2018, Cell 172:1122 | 10.1016/j.cell.2018.02.010 | OCT2017 dataset and split | common classes, official test split |
+| TensorFlow CycleGAN tutorial | tensorflow.org/tutorials/generative/cyclegan | U-Net G, PatchGAN D, lambda 10 | Stage 2 architecture |
+
+## Decisions
+| Date | Decision | Why | Evidence |
+|---|---|---|---|
+| (pre-2026-10) | Cache frozen Inception-v3 features, train only the softmax head | Same model as end-to-end with a frozen backbone; minutes not ~150 h | `stage3_classifier.py` docstring |
+| (pre-2026-10) | Rare-class val images moved back to train | Every real rare image feeds Stage 1/2; rare val comes from augmented data, as in the paper | `stage0_manifest.py:75` |
+| (pre-2026-10) | Feature-distance QC replaces the paper's ophthalmologist review | No clinician available | `stage2_cyclegan.py` `qc` docstring |
+| 2026-10-22 | Keep the accepted GAN set from the original QC rule (sort by d_rare) | It is what the gan result was trained on; `--margin` would change CSC's kept set | QC csvs == accepted folders == `gan_*.npz` |
+| 2026-10-22 | Commit `head.npz` and `test_predictions.csv` for each variant | Small (~76 / ~180 KB); `COLAB.md` and `analysis.py` need them on GitHub | `.gitignore` |
+| 2026-10-22 | Local work on the laptop is training-free; training runs on Colab | No dedicated GPU locally | `docs/research/REPLICATION.md` |
+
+## Known pitfalls
+- Rare test classes have 4-5 images: one image moves recall by 0.20-0.25.
+- Seed variance is large (DRUSEN recall 0.62-0.94 across seeds); compare variants over seeds.
+- Accepted GAN images are fewer than 3,000 for MH, MacTel, Stargardt, RP (2,610 / 1,248 /
+  2,199 / 832); Stage 3 warns but continues.

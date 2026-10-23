@@ -10,14 +10,17 @@ ChestXRay2017/
 *.7z
 
 # ------------------------------------------------- large / regenerable ----
-# Cached Inception-v3 features (~390 MB), CAM panels, per-image predictions.
+# Cached Inception-v3 features (~390 MB), CAM panels, validation predictions.
+# Test predictions (~180 KB each) are committed: analysis.py reads them.
 results/features/
 results/stage4/cam_*/
+results/analysis/cam_*/
 results/stage3_*/val_predictions.csv
-results/stage3_*/test_predictions.csv
 
-# Model artefacts: head.npz, best.weights.h5, CycleGAN checkpoints.
+# Model artefacts: best.weights.h5, CycleGAN checkpoints. The trained softmax heads
+# (results/stage3_*/head.npz, ~76 KB) are committed.
 *.npz
+!results/stage3_*/head.npz
 *.h5
 *.ckpt
 checkpoint
@@ -44,3 +47,5 @@ venv/
 env/
 ENV/
 .env
+.agents/reports/
+.agents/pids/

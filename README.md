@@ -19,40 +19,43 @@ from the raw public datasets as five ordered scripts.
 
 ---
 
-## ⚠️ Status: partial reproduction, work in progress
+## Status
 
 | Stage | State |
 |---|---|
 | Stage 0 — manifest and splits | ✅ complete, verified |
 | Stage 1 — basic augmentation | ✅ complete (2,000 images × 5 classes) |
-| Stage 2 — CycleGAN | ⏳ **`prep` only. No CycleGAN has been trained yet.** |
-| Stage 3 — classifier `none`, `basic` | ✅ complete |
-| Stage 3 — classifier `gan` | ⏳ **pending, blocked on Stage 2** |
-| Stage 4 — metrics, baselines | ✅ complete for the variants that exist |
-| Stage 4 — CAM heatmaps | ⏳ not generated |
+| Stage 2 — CycleGAN | ✅ trained 100 epochs × 5 diseases, 4,000 generated each, filtered by automatic QC (no clinician review) |
+| Stage 3 — classifier `none`, `basic`, `gan` | ✅ complete at seed 42, plus a 5-seed check |
+| Stage 4 — metrics, baselines | ✅ complete |
+| Stage 4 — CAM heatmaps | ✅ generated locally (`analysis.py cam`), not yet reviewed |
+| Paper Table 2 (5-fold CV), Figs. 5 and 11, Siamese / prototypical networks | ❌ not done, see [`docs/research/REPLICATION.md`](docs/research/REPLICATION.md) |
 
-**The headline result of the paper — the `gan` variant — has not been run here.** Everything
-below reports only what was actually computed. Nothing is extrapolated.
+**Short version:** at seed 42 the CycleGAN variant reaches 92.95% against the paper's 92.1%,
+but over five training seeds it is tied with basic augmentation. Both beat real images only.
+Paper item by item, with the work left: [`docs/research/REPLICATION.md`](docs/research/REPLICATION.md).
+How to run everything on Colab: [`COLAB.md`](COLAB.md).
 
 ---
 
 ## Results
 
-All numbers are taken verbatim from [`results/stage4/metrics.csv`](results/stage4/metrics.csv)
-and [`results/stage4/recall.csv`](results/stage4/recall.csv), rounded for display only; the
-CSVs hold full precision. Paper values are from Tables 3–4 as encoded in
-[`stage4_evaluate.py`](stage4_evaluate.py).
+Numbers are taken from [`results/stage4/metrics.csv`](results/stage4/metrics.csv),
+[`results/stage4/recall.csv`](results/stage4/recall.csv),
+[`results/seed_check.csv`](results/seed_check.csv) and
+[`results/analysis/`](results/analysis/), rounded for display only. Paper values are from
+Tables 3–4 as encoded in [`stage4_evaluate.py`](stage4_evaluate.py).
 
 Test set: **1,022 images** — 250 per common class, and 5/5/4/4/4 held-out images for
 CSC/MH/MacTel/Stargardt/RP.
 
-### Headline metrics
+### Headline metrics (seed 42)
 
 | Model | Accuracy % | 95% CI | Paper acc % | κ | Paper κ | MCC | MCC 95% CI | Paper MCC | RCI † |
 |---|---:|:---:|---:|---:|---:|---:|:---:|---:|---:|
 | `none` — real rare images only | **90.31** | 88.6–92.1 | 88.4 | 0.872 | 0.847 | 0.879 | 0.859–0.900 | 0.848 | 0.788 |
 | `basic` — + basic augmentation | **88.85** | 86.9–90.6 | 91.3 | 0.853 | 0.886 | 0.861 | 0.838–0.882 | 0.887 | 0.760 |
-| `gan` — + CycleGAN *(proposed)* | *pending, Stage 2 (CycleGAN) not yet trained* | — | 92.1 | — | 0.896 | — | — | 0.897 | — |
+| `gan` — + CycleGAN *(proposed)* | **92.95** | 91.4–94.5 | 92.1 | 0.907 | 0.896 | 0.909 | 0.890–0.929 | 0.897 | 0.814 |
 | `knn` — K=3 on frozen features | 86.40 | 84.3–88.5 | 91.2 | 0.820 | 0.885 | 0.827 | 0.803–0.852 | 0.886 | 0.662 |
 | `proto` — class-mean on frozen features | 68.98 | 66.0–71.9 | 80.8 ‡ | 0.600 | 0.753 ‡ | 0.604 | 0.569–0.640 | 0.755 ‡ | 0.430 |
 
@@ -61,60 +64,85 @@ CSC/MH/MacTel/Stargardt/RP.
 ‡ The paper's row is a trained **prototypical network**; ours is a nearest-class-mean
 baseline. Not a like-for-like comparison — see *Differences from the paper*.
 
-### Per-class recall
+### Five training seeds
+
+One seed is not enough: the Stage 3 seed (head initialisation, data order, which augmented
+images go to validation) alone moves accuracy by several points. Seeds 1–5 for each variant, from [`results/seed_check.csv`](results/seed_check.csv):
+
+| Variant | Accuracy % mean ± SD | Range | Rare images correct, of 22 (range) | DRUSEN recall (mean) |
+|---|---:|:---:|:---:|---:|
+| `none` | 90.69 ± 1.86 | 87.87–92.86 | 14.2 (11–17) | 0.785 |
+| `basic` | 92.93 ± 1.85 | 90.90–95.79 | 18.0 (17–19) | 0.877 |
+| `gan` | 92.59 ± 1.29 | 91.49–94.13 | 18.6 (18–19) | 0.861 |
+
+- **Augmentation of either kind helps the rare classes:** 17–19 of 22 correct, against 11–17
+  with real images only.
+- **CycleGAN and basic augmentation are tied.** Per seed, `gan` − `basic` is −0.35 ± 2.77
+  points (−4.30 to +2.94); `gan` is ahead on 3 of 5 seeds
+  ([`paired_seeds.csv`](results/analysis/paired_seeds.csv)).
+- **The seed-42 ordering is not robust.** On the seed-42 test set `gan` beats `basic` by 4.1
+  points (paired bootstrap CI 2.6–5.8, McNemar p < 0.001,
+  [`paired_seed42.csv`](results/analysis/paired_seed42.csv)), but that test only covers
+  test-image sampling, not training randomness, and `basic` at seed 42 is its lowest seed.
+
+### Per-class recall (seed 42)
 
 | Model | NORMAL | CNV | DME | DRUSEN | CSC | MH | MacTel | Stargardt | RP |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | `none` | 0.984 | 0.992 | 0.936 | 0.712 | 0.800 | 0.800 | 0.750 | 0.750 | 0.750 |
 | `basic` | 0.992 | 0.996 | 0.852 | 0.720 | 0.800 | 1.000 | 0.500 | 1.000 | 0.750 |
-| `gan` | *pending, Stage 2 (CycleGAN) not yet trained* | | | | | | | | |
+| `gan` | 0.972 | 0.984 | 0.916 | 0.852 | 0.800 | 1.000 | 0.750 | 1.000 | 0.750 |
 | `knn` | 0.996 | 0.988 | 0.696 | 0.832 | 0.600 | 0.400 | 0.000 | 0.000 | 0.000 |
 | `proto` | 0.880 | 0.712 | 0.512 | 0.664 | 0.800 | 0.800 | 0.250 | 0.750 | 0.250 |
-
-The paper's per-class recall values are not recorded in this repo, so no paper column is
-shown here rather than transcribing them by hand.
 
 **Rare-class recall moves in steps of 0.20–0.25** — there are only 4–5 test images per rare
 class. One image changes the number.
 
-### `basic` vs `none`: what the confusion matrices actually show
+Our `none` already gets 0.75–0.80 on every rare class, where the paper's Table 4 reports
+0.00–0.25 for its model without augmentation. So the paper's largest effect, augmentation
+rescuing rare classes the baseline misses, is much smaller here. The cause has not been
+investigated.
 
-`basic` scores 1.46 points lower than `none` overall, but **the two accuracy CIs overlap**
-(88.6–92.1 vs 86.9–90.6), so the difference is not separated by this test set. Breaking the
-1,022 test images down:
+### What the confusion matrices show (seed 42)
 
-| | `none` | `basic` |
-|---|---:|---:|
-| Rare-class images correct (of 22) | 17 | **18** |
-| Common-class images correct (of 1,000) | **906** | 890 |
-| Common-class images predicted as a *rare* class | **0** | **0** |
+From [`confusion_none.csv`](results/stage4/confusion_none.csv),
+[`confusion_basic.csv`](results/stage4/confusion_basic.csv) and
+[`confusion_gan.csv`](results/stage4/confusion_gan.csv):
 
-Three factual observations, from
-[`confusion_none.csv`](results/stage4/confusion_none.csv) and
-[`confusion_basic.csv`](results/stage4/confusion_basic.csv):
+| | `none` | `basic` | `gan` |
+|---|---:|---:|---:|
+| Rare-class images correct (of 22) | 17 | 18 | **19** |
+| Common-class images correct (of 1,000) | 906 | 890 | **931** |
+| Common-class images predicted as a *rare* class | 0 | 0 | 1 |
+| DRUSEN predicted as CNV (of 250) | 68 | 64 | **36** |
+| DME correct (of 250) | **234** | 213 | 229 |
 
-1. **No common-class image is predicted as a rare class in either variant.** Every cell in
-   the CNV/DME/DRUSEN/NORMAL rows under the five rare columns is zero. Adding 2,000
-   augmented images per rare class did not pull common-class images into the rare classes.
-   (For contrast, `proto` does this 66 times; `knn` does it 0 times.)
-2. **The entire net change is inside the common classes, and it is concentrated in DME.**
-   DME correct falls 234 → 213. DME→CNV rises 13 → 25 and DME→NORMAL rises 2 → 11. The
-   other three common classes each move by ≤ 2 images.
-3. **The largest single error mode in both variants is DRUSEN→CNV** — 68 images in `none`,
-   64 in `basic`, out of 250 DRUSEN. This dominates both confusion matrices and is
-   essentially unchanged by the augmentation.
-
-Rare-class recall per class, `none` → `basic`: CSC 4/5 → 4/5, MH 4/5 → **5/5**,
-MacTel 3/4 → **2/4**, Stargardt 3/4 → **4/4**, RP 3/4 → 3/4.
-
-No causal conclusion is drawn here. With 22 rare test images and overlapping CIs, this run
-does not establish that basic augmentation helps or hurts.
+1. **Most of `gan`'s seed-42 gain is in a common class, DRUSEN**, not in the rare classes:
+   DRUSEN→CNV errors fall from 68 to 36. Over seeds, `basic` reaches a similar DRUSEN recall
+   (0.877 vs 0.861), so this is not specific to CycleGAN images.
+2. **Augmentation does not pull common-class images into the rare classes** (0–1 images in
+   every variant; `proto` does it 66 times).
+3. `basic`'s seed-42 loss against `none` is concentrated in DME (234 → 213 correct).
 
 ### One-vs-rest AUC
 
-See [`results/stage4/auc.csv`](results/stage4/auc.csv). Note that `knn` and `proto` AUCs are
-computed from discretised vote/distance scores, so they are not comparable to the softmax
-AUCs of `none`/`basic`.
+See [`results/stage4/auc.csv`](results/stage4/auc.csv) and the curve points in
+[`results/analysis/roc_points.csv`](results/analysis/roc_points.csv). `knn` and `proto` AUCs
+are computed from discretised vote/distance scores, so they are not comparable to the
+softmax AUCs of `none`/`basic`/`gan`.
+
+### Differences from the paper
+
+| Paper | Here | Effect |
+|---|---|---|
+| Two ophthalmologists removed bad CycleGAN images | Automatic filter (`stage2_cyclegan.py qc`): keep images closer to real disease than to NORMAL in Inception-v3 feature space | No clinician has reviewed the accepted images |
+| 3,000 accepted GAN images per disease | CSC 3,000, MH 2,610, MacTel 1,248, Stargardt 2,199, RP 832 passed QC | Four classes below target; Stage 3 warns and continues |
+| 250 epochs | Early stopping on validation loss, patience 20 (`--patience 0` runs all 250) | Heads stopped after 22–27 epochs |
+| Trained prototypical network, Siamese network | Nearest class-mean (`proto`); no Siamese network | `proto` row not comparable |
+| kNN K=3 on "Inception-v3 trained without augmentation" | K=3 Euclidean on frozen ImageNet features | 86.4 vs 91.2%; cosine K=1 gives 91.1% ([`knn_sweep.csv`](results/analysis/knn_sweep.csv)), cause not established |
+| RCI 0.92–0.98 | RCI = I(true; pred) / H(true) from the confusion matrix, 0.76–0.81 | The paper does not give its formula; values not comparable |
+| Table 2: 5-fold CV with GANs retrained per fold | Not done (25 CycleGANs, ~50 A100-hours) | Only the independent-test comparison (Table 3) is reproduced |
+| Basic augmentation in MATLAB | albumentations, same transform ranges | |
 
 ---
 
@@ -190,7 +218,10 @@ to about **8.7 GB**.
 
 ## Environment
 
-Verified on **Python 3.13.4** with **TensorFlow 2.20.0**, Windows 11.
+Verified on **Python 3.13.4** with **TensorFlow 2.20.0**, Windows 11, and on Colab
+(Python 3.13, TensorFlow 2.20.0, October 2026). `analysis.py` was run on Python 3.12 with
+TensorFlow 2.21.0 (CPU), Windows 11. The Colab workflow, including what lives in Google
+Drive, is in [`COLAB.md`](COLAB.md) and [`colab_setup.ipynb`](colab_setup.ipynb).
 
 ```bash
 python -m venv .venv
@@ -212,6 +243,7 @@ consequence:
 | Stage 0, Stage 1, `stage2_cyclegan.py prep` | CPU, any OS. No TensorFlow needed for `prep`. |
 | **Stage 2 `train` / `generate` / `qc`** | **GPU required in practice — use Colab or WSL2.** |
 | Stage 3, Stage 4 | CPU is fine (slow but workable); GPU is faster. |
+| `analysis.py` | CPU, seconds to a minute; trains nothing. `matplotlib` optional, for PNG figures. |
 
 Every script takes `--root` if you are not running from the project root. All seeds are
 fixed at **42**.
@@ -309,7 +341,7 @@ Options: `--n-domain 2000` (NORMAL images for CycleGAN domain A), `--n-source 50
 ```bash
 python stage2_cyclegan.py train    --disease CSC --epochs 100
 python stage2_cyclegan.py generate --disease CSC --n 4000
-python stage2_cyclegan.py qc       --disease CSC --keep 3000
+python stage2_cyclegan.py qc       --disease CSC --keep 3000   # optional: --margin 0.01
 ```
 
 `--disease` is required and must be one of `CSC MH MacTel Stargardt RP`. `train` and
@@ -319,84 +351,34 @@ python stage2_cyclegan.py qc       --disease CSC --keep 3000
 - **Outputs:** `data/gan/ckpt/<class>/` (checkpoints + `samples/ep_XXX.png`),
   `data/gan/out/<class>/` (raw generated), `data/gan/accepted/<class>/` (passed QC → Stage 3),
   `data/gan/qc_<class>.csv`, `data/gan/qc_<class>_kept.jpg`, `data/gan/qc_<class>_rejected.jpg`
-- **Runtime:** *not yet measured here.* 2,000 steps/epoch × 100 epochs per disease, times
-  five diseases, is a multi-day job on a single Colab T4. Budget accordingly and lean on the
-  resume mechanism.
+- **Runtime** (from [`results/stage2/stage2.log`](results/stage2/stage2.log)): 2,000
+  steps/epoch took about 3.1 min on a Colab T4 and 1.0–1.1 min on an A100, so 100 epochs is
+  about 2 h per disease on an A100 and over 5 h on a T4. Lean on the resume mechanism.
 - **Check it worked:**
   - `train` writes a sample grid every epoch to `data/gan/ckpt/<class>/samples/ep_XXX.png` —
     left column is the real NORMAL input, right column is `G(normal)`. Watch these across
     epochs; the right column should acquire the disease's hallmark (e.g. subretinal fluid
     for CSC, a full-thickness defect for MH) while keeping plausible retinal layers.
-  - `qc` prints `N/M closer to real <class> than to NORMAL; kept K`. Then **open the contact
+  - `qc` keeps images whose margin `d_normal − d_rare` (kNN distances in Inception-v3 feature
+    space) exceeds `--margin` (default 0: closer to real disease than to NORMAL), most
+    disease-like first, and prints `N/M above margin; kept K`. Then **open the contact
     sheets** `qc_<class>_kept.jpg` and `qc_<class>_rejected.jpg` and delete anything
     unconvincing from `data/gan/accepted/<class>/` by hand.
   - If `qc` warns `only K < 3000`, generate more (`--n` higher; rerun `prep` with a larger
     `--n-source` if you run out of source images).
 
-#### Colab workflow for Stage 2
+#### Stage 2 on Colab
 
-**1 — package the inputs locally and upload to Drive.** You need domain A, domain B, the
-generation sources and the real rare images:
+Run it through [`colab_setup.ipynb`](colab_setup.ipynb) (Part 3.4), which restores the
+inputs from Drive, writes checkpoints to `MyDrive/octfsl/ckpt/<class>` and resumes after a
+disconnect: rerunning the same cell prints `Resumed <class> from … (epoch N)` and continues,
+with generators, discriminators, all four optimizer states and the epoch counter restored.
+See [`COLAB.md`](COLAB.md) for runtimes, Drive layout and troubleshooting.
 
-```powershell
-Compress-Archive -Path data\aug_basic -DestinationPath aug_basic.zip
-Compress-Archive -Path data\gan       -DestinationPath gan.zip
-```
-
-Upload both to `MyDrive/octfsl/`. (~1.4 GB total.)
-
-**2 — Colab: mount Drive and unpack to local disk.** Unzip to `/content`, *not* to Drive —
-training reads these thousands of times and Drive I/O is slow.
-
-```python
-from google.colab import drive
-drive.mount('/content/drive')
-
-!mkdir -p /content/project/data
-!unzip -q /content/drive/MyDrive/octfsl/aug_basic.zip -d /content/project/data
-!unzip -q /content/drive/MyDrive/octfsl/gan.zip       -d /content/project/data
-!git clone https://github.com/Malnoad/Few-shot-rare-diseases /content/code
-!cp /content/code/stage2_cyclegan.py /content/project/
-!ls /content/project/data/aug_basic /content/project/data/gan
-```
-
-**3 — train one disease, with checkpoints on Drive so a disconnect costs nothing.**
-
-```python
-!mkdir -p /content/drive/MyDrive/octfsl/ckpt
-%cd /content/project
-!python stage2_cyclegan.py train --disease CSC --epochs 100 \
-    --ckpt /content/drive/MyDrive/octfsl/ckpt/CSC
-```
-
-**4 — resume after a disconnect: rerun the exact same command.** The script uses a
-`tf.train.CheckpointManager` and restores generators, discriminators, *all four optimizer
-states* and the epoch counter. It prints `Resumed CSC from … (epoch N)` and continues from
-there. Repeat steps 3–4 for `MH`, `MacTel`, `Stargardt`, `RP`.
-
-**5 — generate and QC, per disease.**
-
-```python
-!python stage2_cyclegan.py generate --disease CSC --n 4000 \
-    --ckpt /content/drive/MyDrive/octfsl/ckpt/CSC
-!python stage2_cyclegan.py qc --disease CSC --keep 3000
-```
-
-**6 — review the contact sheets, then bring the accepted images home.**
-
-```python
-from IPython.display import Image, display
-display(Image('/content/project/data/gan/qc_CSC_kept.jpg'))
-display(Image('/content/project/data/gan/qc_CSC_rejected.jpg'))
-```
-
-```python
-!cd /content/project/data/gan && zip -qr /content/drive/MyDrive/octfsl/accepted.zip accepted
-```
-
-Download `accepted.zip` from Drive and unpack it so that the tree reads
-`data/gan/accepted/<class>/*.png` in your local project. Stage 3 `--variant gan` reads
-exactly that path.
+The accepted images used for the `gan` results were selected with the rule that predates
+`--margin` (sort passing images by `d_rare`); their QC records are in
+[`results/stage2/`](results/stage2/). Rerunning `qc` with the current code would change the
+kept set for CSC (3,370 passed, 3,000 kept).
 
 ### Stage 3 — Inception-v3 classifier
 
@@ -434,24 +416,29 @@ loss; `0` = run all epochs as in the paper), `--gan-per-class 3000`, `--seed 42`
 Run `--variant none` **first**: it caches `major_train`, `test` and `real_<class>` features,
 which Stage 4's KNN and class-mean baselines need.
 
-`data_counts.csv` for the two variants that have been run
-([`none`](results/stage3_none/data_counts.csv) ·
-[`basic`](results/stage3_basic/data_counts.csv)) — common classes are identical in every
+`data_counts.csv` per variant ([`none`](results/stage3_none/data_counts.csv) ·
+[`basic`](results/stage3_basic/data_counts.csv) ·
+[`gan`](results/stage3_gan/data_counts.csv)) — common classes are identical in every
 variant; only the rare rows change:
 
-| Class | `none` train / val | `basic` train / val | test |
-|---|---:|---:|---:|
-| NORMAL | 23,536 / 2,779 | 23,536 / 2,779 | 250 |
-| CNV | 32,536 / 4,669 | 32,536 / 4,669 | 250 |
-| DME | 10,153 / 1,195 | 10,153 / 1,195 | 250 |
-| DRUSEN | 7,733 / 883 | 7,733 / 883 | 250 |
-| CSC | 27 / 0 | 1,800 / 200 | 5 |
-| MH | 26 / 0 | 1,800 / 200 | 5 |
-| MacTel | 25 / 0 | 1,800 / 200 | 4 |
-| Stargardt | 19 / 0 | 1,800 / 200 | 4 |
-| RP | 27 / 0 | 1,800 / 200 | 4 |
+| Class | `none` train / val | `basic` train / val | `gan` train / val | test |
+|---|---:|---:|---:|---:|
+| NORMAL | 23,536 / 2,779 | 23,536 / 2,779 | 23,536 / 2,779 | 250 |
+| CNV | 32,536 / 4,669 | 32,536 / 4,669 | 32,536 / 4,669 | 250 |
+| DME | 10,153 / 1,195 | 10,153 / 1,195 | 10,153 / 1,195 | 250 |
+| DRUSEN | 7,733 / 883 | 7,733 / 883 | 7,733 / 883 | 250 |
+| CSC | 27 / 0 | 1,800 / 200 | 4,500 / 500 | 5 |
+| MH | 26 / 0 | 1,800 / 200 | 4,149 / 461 | 5 |
+| MacTel | 25 / 0 | 1,800 / 200 | 2,924 / 324 | 4 |
+| Stargardt | 19 / 0 | 1,800 / 200 | 3,780 / 419 | 4 |
+| RP | 27 / 0 | 1,800 / 200 | 2,549 / 283 | 4 |
 
 The `none` variant has **no rare validation images** — there are too few real ones to spare.
+The `gan` pool is the 2,000 basic images plus every accepted CycleGAN image (up to
+`--gan-per-class`), so it is below 5,000 for the four classes short of 3,000 accepted images.
+
+**Before `--variant gan`, check that `data/gan/accepted/<class>/` is populated.** If it is
+empty, Stage 3 only prints a warning and trains what is effectively `basic`.
 
 ### Stage 4 — evaluation, baselines and CAM
 
@@ -486,8 +473,33 @@ With a frozen backbone + global average pooling + one softmax layer, Grad-CAM re
 exactly to CAM, so the heatmap is computed directly as `ReLU(Σₖ W[k,c]·Aₖ)` over the
 `mixed10` feature maps.
 
-> `--cam` defaults to `--cam-variant gan`, which does not exist in this repo yet. Pass
-> `--cam-variant basic` or `--cam-variant none` until Stage 2 has been trained.
+> Rerunning Stage 4 rewrites `results/stage4/*.csv`. Those files are the run of record
+> (seed 42, Colab); a local rerun can differ in late decimals (scikit-learn versions shift
+> the `knn` AUC in the 5th decimal), so don't commit a local rerun over them. For CAM alone,
+> use `analysis.py cam`, which writes elsewhere.
+
+### Training-free analysis — `analysis.py`
+
+Reads only what Stages 2–4 already produced (QC records, test predictions, the features
+cache, `results/seed_check.csv`) and trains nothing, so it runs on a laptop CPU in about
+30 s. It never writes to `results/stage4/`.
+
+```bash
+python analysis.py compare        # paired tests none/basic/gan: seed-42 test set and over seeds
+python analysis.py knn            # kNN baseline sensitivity: K and Euclidean vs cosine
+python analysis.py qc             # CycleGAN acceptance rates (paper Fig. 6)
+python analysis.py roc            # one-vs-rest ROC curve points (Fig. 9)
+python analysis.py tsne           # t-SNE of frozen features, real-only vs + CycleGAN pool (Fig. 7)
+python analysis.py cam --n 40     # CAM panels from a trained head, rare test images first (Fig. 10)
+python analysis.py all            # all of the above except cam
+```
+
+- **Input:** `results/stage3_*/test_predictions.csv`, `results/features/*.npz` (`knn`,
+  `tsne`, `cam`), `results/stage2/qc_*.csv`, `results/seed_check.csv`, `data/manifest.csv`
+- **Output:** `results/analysis/` — `paired_seed42.csv`, `paired_seeds.csv`, `knn_sweep.csv`,
+  `qc_summary.csv`, `roc_points.csv`, `tsne.csv`, `cam_<variant>/`; plus `roc.png` and
+  `tsne.png` if `matplotlib` is installed
+- `--root` points at a checkout that holds the data, `--out` at another output folder.
 
 ---
 
@@ -516,7 +528,8 @@ Total: **84,630** images.
 ## Repository structure
 
 Only code and small result files are tracked. Data, caches, checkpoints and third-party
-material are git-ignored — see [`.gitignore`](.gitignore).
+material are git-ignored — see [`.gitignore`](.gitignore). Large files live in Google Drive
+(`MyDrive/octfsl`, see [`COLAB.md`](COLAB.md)).
 
 ```
 .
@@ -525,27 +538,35 @@ material are git-ignored — see [`.gitignore`](.gitignore).
 ├── stage2_cyclegan.py          prep | train | generate | qc
 ├── stage3_classifier.py        Inception-v3, variants none|basic|gan
 ├── stage4_evaluate.py          metrics, knn/proto baselines, CAM
+├── analysis.py                 training-free analyses (paired tests, kNN, QC, ROC, t-SNE, CAM)
+├── colab_setup.ipynb           Colab: restore, rebuild, seed check, CAM, save and push
+├── COLAB.md                    Colab and Drive guide
+├── AGENTS.md, CLAUDE.md        instructions for coding agents (.agents/, .claude/, .codex/)
+├── docs/research/              CONTEXT.md (research context), REPLICATION.md (paper vs repo, work left)
 ├── requirements.txt
 ├── README.md
 ├── LICENSE
 ├── data/
 │   └── manifest.csv            tracked: 84,630 rows, defines every split
 └── results/
-    ├── stage3_none/            data_counts.csv, history.csv
-    ├── stage3_basic/           data_counts.csv, history.csv
-    └── stage4/                 metrics.csv, recall.csv, auc.csv,
-                                confusion_{none,basic,knn,proto}.csv
+    ├── stage2/                 qc_<class>.csv + contact sheets, stage2.log
+    ├── stage3_{none,basic,gan}/ head.npz, test_predictions.csv, data_counts.csv, history.csv
+    ├── stage4/                 metrics.csv, recall.csv, auc.csv, confusion_<model>.csv
+    ├── analysis/               analysis.py outputs (CSVs)
+    └── seed_check.csv          seeds 1-5 per variant
 
-not tracked (regenerate locally):
+not tracked (regenerate locally, or restore from Drive):
     data/raw/  data/aug_basic/  data/gan/   ~8.7 GB of images
-    results/features/*.npz                  cached backbone features
-    results/stage3_*/{head.npz,best.weights.h5,*_predictions.csv}
-    results/stage4/cam_*/                   CAM panels
+    results/features/*.npz                  cached backbone features (~390 MB)
+    results/stage3_*/{best.weights.h5,val_predictions.csv}
+    results/stage4/cam_*/  results/analysis/cam_*/   CAM panels
     paper/  code2017/  ChestXRay2017/       third-party material
 ```
 
-A fresh clone therefore needs Stages 0–3 rerun before Stage 4 will produce anything:
-`test_predictions.csv` is not tracked.
+A fresh clone can run `analysis.py compare|qc|roc` straight away, because the test
+predictions are tracked. The `knn`/`proto` baselines,
+`analysis.py knn|tsne|cam` and Stage 3 need the features cache (Stage 3 `--variant none`,
+or restore it from Drive).
 
 ---
 

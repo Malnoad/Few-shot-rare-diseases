@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Fast checks every agent must pass before finishing. Claude runs this
+# automatically when it stops (Stop hook); other agents are told to run it.
+# Keep it FAST (seconds, not minutes). Add a line here whenever a mistake can be
+# caught by a command: this is the strongest way to stop it happening again.
+set -euo pipefail
+# Name the failing command, so the agent knows exactly what to fix.
+trap 'echo "FAILED: $BASH_COMMAND (line $LINENO in .agents/check)" >&2' ERR
+cd "$(dirname "$0")/.."
+
+# Project venv on Windows or Linux, else whatever python3 is on PATH (e.g. Colab).
+PY=python3
+for p in .venv/Scripts/python.exe .venv/bin/python; do [ -x "$p" ] && PY="$p" && break; done
+
+# --- Edit below: one check per line. Any failing line fails the whole check. ---
+# The committed manifest defines every split; it must never change (no stage0 --force).
+git diff --quiet HEAD -- data/manifest.csv
+# Nothing under data/ is committed except the manifest.
+[ -z "$(git ls-files data | grep -vx 'data/manifest.csv')" ]
+# Stage scripts compile; the Colab notebook is valid JSON.
+"$PY" -m py_compile stage0_manifest.py stage1_basic_aug.py stage2_cyclegan.py stage3_classifier.py stage4_evaluate.py analysis.py
+"$PY" -c "import json; json.load(open('colab_setup.ipynb', encoding='utf-8'))"
+# Manifest still matches the raw data and the verified counts (only where raw data exists).
+if [ -d data/raw/OCT2017 ]; then "$PY" stage0_manifest.py > /dev/null; fi
+# --- Edit above ---
+
+# Set to 1 once you've added at least one real check above.
+CONFIGURED=1
+if [ "$CONFIGURED" -eq 0 ]; then
+  echo "WARNING: .agents/check has no checks configured yet. Nothing was verified." >&2
+fi
