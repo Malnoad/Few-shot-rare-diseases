@@ -1,0 +1,464 @@
+% Project status report: reproduction of Yoo et al. 2021 (MBEC 59:401-415).
+% Build: pdflatex 2026-10-26_status_report.tex (twice, for the table of contents). Standard packages only,
+% so it also builds on Overleaf. Set \darktrue to \darkfalse for a light, printable copy.
+% Numbers come from results/ on main (5c77ce2) and from the unmerged task branches named
+% in Section 6; each table says which file it is from.
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[margin=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\newif\ifdark
+\darktrue
+
+\ifdark
+  \definecolor{bg}{HTML}{0D1117}
+  \definecolor{fg}{HTML}{FFFFFF}
+  \definecolor{accent}{HTML}{79C0FF}
+  \definecolor{good}{HTML}{7EE787}
+  \definecolor{warn}{HTML}{FFD33D}
+  \definecolor{bad}{HTML}{FF7B72}
+  \AtBeginDocument{\pagecolor{bg}\color{fg}}
+\else
+  \definecolor{fg}{HTML}{000000}
+  \definecolor{accent}{HTML}{0550AE}
+  \definecolor{good}{HTML}{1A7F37}
+  \definecolor{warn}{HTML}{9A6700}
+  \definecolor{bad}{HTML}{CF222E}
+\fi
+
+\hypersetup{colorlinks=true, linkcolor=accent, urlcolor=accent, citecolor=accent}
+\setlist{nosep, leftmargin=1.4em}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\renewcommand{\arraystretch}{1.15}
+
+% Status markers used in the tracking tables.
+\newcommand{\done}{\textcolor{good}{\textbf{done}}}
+\newcommand{\partly}{\textcolor{warn}{\textbf{partial}}}
+\newcommand{\todo}{\textcolor{bad}{\textbf{open}}}
+\newcommand{\file}[1]{\texttt{\small #1}}
+
+\title{\textbf{Few-shot OCT classification of rare retinal diseases}\\[2pt]
+  \large Reproduction of Yoo, Choi \& Kim (2021): project status report}
+\author{Lam \quad (prepared with Claude Code, Claude Opus 5.5)}
+\date{26 October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+We rebuilt the paper's pipeline (CycleGAN per rare disease, frozen Inception-v3, softmax
+head) from the two public datasets and ran it end to end on Colab. At the fixed seed of
+record (42) the CycleGAN variant reaches 92.95\% test accuracy, against the paper's 92.1\%.
+Over five training seeds, however, CycleGAN augmentation is tied with basic augmentation
+($-0.35 \pm 2.77$ points), and both beat real images only. Three results of the paper are
+not reproduced: its baseline's failure on the rare classes (ours gets 17 of 22 right, the
+paper's 3 of 22), its RCI values (which its own Table~4 cannot produce), and the 5-fold
+cross-validation (not run). A training-free check found that rare images can be told apart
+from common ones by file format alone, so rare-class recall may partly measure the dataset
+of origin. The next step is a preprocessing control (C0), then a 20-seed sweep (C1).
+Fourteen decisions are waiting on the author (Section~8).
+\end{abstract}
+
+\tableofcontents
+
+% ---------------------------------------------------------------------------------------
+\section{At a glance}
+
+\begin{itemize}
+  \item \textbf{Pipeline:} all five stages run; results of record are seed 42 from Colab
+        (\file{results/stage4/*.csv}, \file{results/seed\_check.csv}).
+  \item \textbf{Main claim (GAN beats basic augmentation):} holds on the seed-42 test set,
+        not over training seeds. A 20-seed sweep (C1) decides it.
+  \item \textbf{Biggest risk:} a dataset-of-origin cue (Section~5.3). It affects our numbers
+        and possibly the paper's.
+  \item \textbf{Repository:} main is at \file{5c77ce2} (PR \#1 merged). Six finished task
+        branches are committed locally and not pushed (Section~6).
+  \item \textbf{Compute:} the laptop has no GPU, so local work is training-free. Training
+        runs on Colab, which receives code only through GitHub.
+\end{itemize}
+
+% ---------------------------------------------------------------------------------------
+\section{Task and pipeline}
+
+A 9-class OCT B-scan classifier: four common classes from Kermany OCT2017 (NORMAL, CNV,
+DME, DRUSEN; tens of thousands of images each) and five rare diseases (CSC, MH, MacTel,
+Stargardt, RP; 19--27 training images each) from the dataset released with the paper.
+The test set has 1,022 images: 250 per common class and a fixed 5/5/4/4/4 rare hold-out.
+
+\medskip
+\noindent
+\begin{tabularx}{\linewidth}{@{}l Y l@{}}
+\toprule
+Stage & What it does & State \\
+\midrule
+0 Manifest & Splits, defined once in \file{data/manifest.csv} (never re-sampled) & \done \\
+1 Basic aug. & Flips, shifts, rotation, zoom, brightness, elastic; 2,000 per rare class & \done \\
+2 CycleGAN & One per disease, NORMAL $\to$ disease, 100 epochs, 4,000 generated each,
+             automatic kNN quality check instead of clinicians & \done \\
+3 Classifier & Frozen Inception-v3 features, softmax head; variants \texttt{none},
+               \texttt{basic}, \texttt{gan} & \done{} (seed 42 + 5 seeds) \\
+4 Evaluation & Metrics, kNN and class-mean baselines, CAM heat maps & \done{} (CAMs not reviewed) \\
+\bottomrule
+\end{tabularx}
+
+\medskip
+\noindent
+CycleGAN images that passed the automatic check (\file{results/analysis/qc\_summary.csv}):
+
+\medskip
+\noindent
+\begin{tabularx}{\linewidth}{@{}l Y Y Y Y Y@{}}
+\toprule
+ & CSC & MH & MacTel & Stargardt & RP \\
+\midrule
+Pass rate & 84\% & 65\% & 31\% & 55\% & 21\% \\
+Kept (target 3,000) & 3,000 & 2,610 & 1,248 & 2,199 & 832 \\
+\bottomrule
+\end{tabularx}
+
+\medskip
+\noindent
+The paper's clinicians rejected Stargardt and RP most; our filter rejects RP and MacTel most.
+
+% ---------------------------------------------------------------------------------------
+\section{Results of record}
+
+\subsection{Seed 42 (\texttt{results/stage4/metrics.csv})}
+
+\noindent
+\begin{tabularx}{\linewidth}{@{}l r c r r r r r@{}}
+\toprule
+Model & Acc.\ \% & 95\% CI & Paper & $\kappa$ & Paper $\kappa$ & MCC & Paper MCC \\
+\midrule
+\texttt{none}  & 90.31 & 88.6--92.1 & 88.4 & 0.872 & 0.847 & 0.879 & 0.848 \\
+\texttt{basic} & 88.85 & 86.9--90.6 & 91.3 & 0.853 & 0.886 & 0.861 & 0.887 \\
+\texttt{gan}   & \textbf{92.95} & 91.4--94.5 & 92.1 & 0.907 & 0.896 & 0.909 & 0.897 \\
+\texttt{knn} (K=3) & 86.40 & 84.3--88.5 & 91.2 & 0.820 & 0.885 & 0.827 & 0.886 \\
+\texttt{proto}$^\ast$ & 68.98 & 66.0--71.9 & 80.8 & 0.600 & 0.753 & 0.604 & 0.755 \\
+\bottomrule
+\end{tabularx}
+
+\smallskip
+{\footnotesize $^\ast$Ours is a class-mean baseline; the paper's is a trained prototypical
+network. The confidence intervals treat test images as independent, which is too narrow
+(Section~5.4).\par}
+
+\subsection{Five training seeds (\texttt{results/seed\_check.csv})}
+
+\noindent
+\begin{tabularx}{\linewidth}{@{}l Y Y Y@{}}
+\toprule
+Variant & Accuracy \%, mean $\pm$ SD & Range & Rare correct of 22 (range) \\
+\midrule
+\texttt{none}  & $90.69 \pm 1.86$ & 87.87--92.86 & 14.2 (11--17) \\
+\texttt{basic} & $92.93 \pm 1.85$ & 90.90--95.79 & 18.0 (17--19) \\
+\texttt{gan}   & $92.59 \pm 1.29$ & 91.49--94.13 & 18.6 (18--19) \\
+\bottomrule
+\end{tabularx}
+
+\medskip
+\begin{itemize}
+  \item Per seed, \texttt{gan} $-$ \texttt{basic} $= -0.35 \pm 2.77$ points; \texttt{gan}
+        is ahead on 3 of 5 seeds (\file{results/analysis/paired\_seeds.csv}).
+  \item On the seed-42 test set \texttt{gan} beats \texttt{basic} by 4.1 points (paired
+        bootstrap CI 2.6--5.8, McNemar $p < 0.001$). That test covers test sampling only,
+        not training randomness, and seed 42 is \texttt{basic}'s worst seed.
+  \item Most of \texttt{gan}'s seed-42 gain is in a common class: DRUSEN$\to$CNV errors
+        fall from 68 to 36.
+\end{itemize}
+
+\subsection{Per-class recall, seed 42 (\texttt{results/stage4/recall.csv})}
+
+\noindent
+\begin{tabularx}{\linewidth}{@{}l *{9}{>{\centering\arraybackslash}X}@{}}
+\toprule
+ & NOR & CNV & DME & DRU & CSC & MH & MacT & Starg & RP \\
+\midrule
+\texttt{none}  & 0.98 & 0.99 & 0.94 & 0.71 & 0.80 & 0.80 & 0.75 & 0.75 & 0.75 \\
+\texttt{basic} & 0.99 & 1.00 & 0.85 & 0.72 & 0.80 & 1.00 & 0.50 & 1.00 & 0.75 \\
+\texttt{gan}   & 0.97 & 0.98 & 0.92 & 0.85 & 0.80 & 1.00 & 0.75 & 1.00 & 0.75 \\
+Paper \texttt{none} & 0.88 & 0.92 & -- & -- & 0.20 & 0.20 & 0.00 & 0.25 & 0.00 \\
+\bottomrule
+\end{tabularx}
+
+\smallskip
+{\footnotesize Rare recall moves in steps of 0.20--0.25 (4--5 test images per class).
+Paper row: Table~4; only the values quoted in the L7 analysis are shown.\par}
+
+% ---------------------------------------------------------------------------------------
+\section{Paper versus this repository}
+
+\noindent
+\begin{tabularx}{\linewidth}{@{}l Y Y l@{}}
+\toprule
+Paper item & Paper & Here & State \\
+\midrule
+Table 3, independent test & 88.4 / 91.3 / 92.1\% & 90.31 / 88.85 / 92.95\% (seed 42) & \done \\
+Table 4, per-class TPR & \texttt{none} rare 0.00--0.25 & \texttt{none} rare 0.75--0.80 & \textcolor{bad}{\textbf{differs}} \\
+RCI & 0.916--0.983 & 0.76--0.81; paper values impossible under the cited definition & \textcolor{bad}{\textbf{differs}} \\
+kNN K=3 & 91.2\% & 86.40\% (cosine K=1: 91.10\%) & \partly \\
+Fig.~5, amount of GAN images & best at 3,000 & not run (C2) & \todo \\
+Fig.~6, clinician acceptance & 2 ophthalmologists & automatic only (L4 pending) & \partly \\
+Figs.~7, 9, t-SNE and ROC & figures & data computed, no figures (L5) & \partly \\
+Fig.~10, Grad-CAM & saliency maps & panels made, not reviewed (L3) & \partly \\
+Fig.~11, under-sampling & no effect & not run (C3) & \todo \\
+Table 2, 5-fold CV & 93.9 $\pm$ 4.5\% & not run (C4, about 50 A100-hours) & \todo \\
+250 epochs & fixed schedule & early stopping, heads stop at 22--27 epochs & \partly \\
+Siamese, prototypical net, human expert, segmentation & reported & out of scope or not reproducible & -- \\
+\bottomrule
+\end{tabularx}
+
+% ---------------------------------------------------------------------------------------
+\section{Findings from the training-free work}
+
+\subsection{L2: paired tests}
+See Section~3.2. The seed-42 gap between \texttt{gan} and \texttt{basic} is within
+training noise, so more tests on one run cannot settle the claim; more seeds can.
+
+\subsection{L6: kNN gap}
+Euclidean K=3 reproduces Stage~4 (86.40\%). Cosine K=1 gives 91.10\%, close to the paper's
+91.2\%, but the paper states K=3, so this is a hint, not an explanation. K$>$1 drops rare
+recall sharply (19--27 rare neighbours against about 74,000 common ones).
+
+\subsection{L7: why our baseline finds the rare classes (branch \texttt{task/l7-rare-recall})}
+
+\noindent
+\begin{tabularx}{\linewidth}{@{}l Y l@{}}
+\toprule
+Candidate explanation & Test & Verdict \\
+\midrule
+R1 Easy test draw & our hold-out vs 2,000 random hold-outs & not supported \\
+R2 Lucky seed & seeds 1--5 give 15, 16, 17, 12, 11 of 22 & not supported \\
+R3 Test duplicates training & test--train similarity 0.78--0.94, same as train--train & ruled out \\
+R4 Weaker class prior & shift rare logits; needs a shift of 16 to reach 3/22 & weakened \\
+R5 Dataset-of-origin cue & one feature direction separates rare from common test images,
+   AUC 0.9955; raw width $\times$ height alone names the rare class of 16/22 & \textcolor{warn}{\textbf{supported}} \\
+R6 Paper fine-tuned top layers & needs training & untested \\
+R7 Paper kept the last of 250 epochs & needs training (fits C1) & untested \\
+\bottomrule
+\end{tabularx}
+
+\medskip
+\noindent
+Rare images are RGBA PNG crops, roughly square, 290--644\,px wide; Kermany images are
+grayscale JPEGs, 512--1536 $\times$ 496\,px. Without training, our numbers match the paper's
+(kNN: 5/22 here, 7/22 in the paper), so the gap lies in how the classifier was trained.
+The independent re-implementation by Tai et al.\ (2025) also reports 0\% for 4 of 5 rare
+classes without augmentation \cite{tai2025}.
+
+\subsection{Statistics review (branch \texttt{task/mock-review})}
+Kermany's test set is not patient-disjoint from its training set: 566 of the 633 test
+patients, covering 914 of the 1,000 common-class test images, also appear in training.
+Confidence intervals that treat images as independent are therefore too narrow (L9).
+The review also fixed three README wording errors.
+
+\subsection{L8: RCI (branch \texttt{task/l8-rci})}
+Our \texttt{rci()} computes $I(\text{true};\text{pred}) / H(\text{true})$, the definition
+in the sources the paper relies on \cite{statnikov2005,sindhwani2001}. Using the paper's own
+Table~4 recalls and test counts, that ratio can be at most 0.970 for \texttt{gan}, yet the
+paper reports 0.983. None of ten alternative definitions reproduces the paper's values.
+A side finding: Table~4's prototypical-network row implies 86.1\% accuracy, while Table~3
+says 80.8\%. The paper's RCI code is not public, so its formula is unverified.
+
+\subsection{Sources and literature (branches \texttt{task/verify-sources}, \texttt{task/lit-scan})}
+\begin{itemize}
+  \item Every paper number used in the repository was checked against the PDF. One
+        citation was corrected: Kermany et al.\ 2018, Cell 172(5), pages 1122--1131.e9
+        \cite{kermany2018}.
+  \item No study since 2021 tests GAN against basic augmentation for few-shot OCT across
+        several training seeds; C1 would be the first. Outside OCT, three studies favour GANs
+        on the minority class, none with a paired multi-seed comparison.
+\end{itemize}
+
+% ---------------------------------------------------------------------------------------
+\section{Repository state}
+
+\noindent
+\begin{tabularx}{\linewidth}{@{}l l Y@{}}
+\toprule
+Branch & Commit & Content \\
+\midrule
+\file{main} & 5c77ce2 & PR \#1: analysis tool, replication tracker, README, October results \\
+\file{task/l8-rci} & 6277e64 & RCI analysis, \file{references.bib}, README fixes \\
+\file{task/l7-rare-recall} & ef3570e & rare-recall analysis; conflicts with L8 in \file{analysis.py} \\
+\file{task/l3-l4-review-sheet} & 79e8556, d5e6645 & \file{review\_sheet.py}: HTML sheet for CAMs and GAN ratings \\
+\file{task/mock-review} & 4241088 & mock peer review, three README fixes \\
+\file{task/verify-sources} & 0c280f9 & Kermany page-range fix \\
+\file{task/lit-scan} & 9596ef0 & scoping review \file{docs/research/lit-scan-gan-vs-basic.md} \\
+\file{task/c1-seed-sweep-design} & -- & cancelled; 2-line notebook change, uncommitted \\
+\bottomrule
+\end{tabularx}
+
+\medskip
+\noindent
+None of the six task branches is pushed. Merge L8 first, then rebase L7 onto it.
+
+% ---------------------------------------------------------------------------------------
+\section{Work to finish the replication}
+
+\textbf{L} is the laptop track: training-free, reads existing results only.
+\textbf{C} is the Colab track: anything that trains a model. Code reaches Colab through
+GitHub; the author runs the cells.
+
+\subsection{Laptop track}
+
+\noindent
+\begin{tabularx}{\linewidth}{@{}l Y l l@{}}
+\toprule
+ID & Work & Paper & Status \\
+\midrule
+L1 & October work on GitHub, README rewrite & -- & \done \\
+L2 & Paired tests none / basic / gan & Table 3 & \done \\
+L3 & Review CAM heat maps for gan and none (author) & Fig.~10 & \partly{} sheet built \\
+L4 & Rate 100 GAN images per class by eye (author) & Fig.~6 & \partly{} automatic only \\
+L5 & t-SNE and ROC figures (needs matplotlib, D5) & Figs.~7, 9 & \partly{} data ready \\
+L6 & kNN gap & Table 3 & \partly{} cause not found \\
+L7 & Why \texttt{none} finds rare classes & Table 4 & \partly{} branch, R6/R7 need training \\
+L8 & RCI gap & Table 3 & \done{} on branch \\
+L9 & Confidence intervals clustered by patient & Table 3 & \todo \\
+L10 & Write up the paper's two inconsistencies & Tables 3, 4 & \todo \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Colab track}
+
+\noindent
+\begin{tabularx}{\linewidth}{@{}l Y l l l@{}}
+\toprule
+ID & Work & Paper & Compute & Status \\
+\midrule
+C0 & Convert rare images to Kermany's format (grayscale, no alpha), retrain & Table 4 & CPU, minutes & \todo{} D6 \\
+C1 & 20 seeds $\times$ 3 variants, plus 250 epochs keeping the last & Tables 3, 4 & CPU, minutes/run & \todo{} D8 \\
+C2 & Amount of GAN images, 0--3,000 & Fig.~5 & CPU & \todo{} after C1 \\
+C3 & Under-sampling for class balance & Fig.~11 & CPU, new option & \todo{} after C1 \\
+C4 & 5-fold CV with per-fold CycleGANs & Table 2 & GPU, $\sim$50 h & \todo{} D9 \\
+C5 & Top up MacTel and RP to 3,000 & \S2.3 & GPU, $\sim$1 h (unverified) & \todo{} D7 \\
+C6 & MobileNet-v2 and ResNet backbones & Suppl. & GPU & \todo{} D10 \\
+\bottomrule
+\end{tabularx}
+
+% ---------------------------------------------------------------------------------------
+\section{Decisions for the author}
+
+\noindent
+\begin{tabularx}{\linewidth}{@{}l Y Y l@{}}
+\toprule
+ID & Decision & Recommendation & Status \\
+\midrule
+D1 & Six task branches: push and open PRs, push some, or keep local & push all; merge L8, then L7 & \todo \\
+D2 & Git identity in the repo: Gmail or GitHub noreply address & noreply, if commits should not show the Gmail & \todo \\
+D3 & \texttt{rm} prompt that blocks unattended threads & allow only scratch paths & \todo \\
+D4 & Three mistake fixes: email-blocking hook, no \texttt{ln -s}, ``full preview'' rule & approve all & \todo \\
+D5 & Add matplotlib & yes & \todo \\
+D6 & Run C0 before C1 & yes & \todo \\
+D7 & Run C5 before C1 & yes & \todo \\
+D8 & C1 at 20 seeds with a 250-epoch arm & yes & \todo \\
+D9 & C4 (about 50 GPU-hours) & drop, with the reason written up & \todo \\
+D10 & C6, other backbones & drop & \todo \\
+D11 & Email the authors about RCI, or document only & document only & \todo \\
+D12 & Review sheet: keep local, slim publish, or commit & keep local & \todo \\
+D13 & Delete merged remote branch and pre-pull backup & yes & \todo \\
+D14 & Author does the L4 rating & yes & \todo \\
+\bottomrule
+\end{tabularx}
+
+% ---------------------------------------------------------------------------------------
+\section{Plan of work}
+
+\subsection{Author}
+\noindent
+\begin{tabularx}{\linewidth}{@{}l Y l@{}}
+\toprule
+ID & Work & When \\
+\midrule
+Y1 & Answer D1--D14 & now \\
+Y2 & Review CAM heat maps (L3) & any time \\
+Y3 & Rate GAN images (L4) & any time, if D14 \\
+Y4 & Run Colab cells for C0 and C5 & after T6, T7 \\
+Y5 & Run Colab cells for C1, then C2 and C3 & after T8, T9 \\
+Y6 & Send the RCI email & only if D11 is ``email'' \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Agent tasks (one thread each)}
+\noindent
+\begin{tabularx}{\linewidth}{@{}l Y l l@{}}
+\toprule
+ID & Task & Covers & Waits on \\
+\midrule
+T1 & Merge branches, record work list in the repo & L7, L8 & D1, D13 \\
+T2 & Settings: git identity, \texttt{rm} rule, mistake fixes & -- & D2--D4 \\
+T3 & Patient-clustered confidence intervals & L9 & T1 \\
+T4 & Paper inconsistencies write-up & L10 & T1, D11 \\
+T5 & Figures & L5 & T1, D5 \\
+T6 & Format-conversion script and cells & C0 & D6 \\
+T7 & GAN top-up cells & C5 & D7 \\
+T8 & Seed sweep, keep-last-epoch option & C1 & D8, Y4 \\
+T9 & GAN amount and under-sampling & C2, C3 & Y5 \\
+T10 & Analyse Colab results & C0--C3 & Y5 \\
+T11 & Final replication report & all & all above \\
+\bottomrule
+\end{tabularx}
+
+\medskip
+\noindent
+Order: Y1; T1 alone; then T2, T4, T5, T6 in parallel (at most three at once); then
+T6/T7 $\to$ Y4 $\to$ T8 $\to$ Y5 $\to$ T9/T10 $\to$ T11.
+
+% ---------------------------------------------------------------------------------------
+\section{Agent workflow and cost}
+
+Measured on 23 October 2026 from the Claude Code transcripts:
+\begin{itemize}
+  \item One five-hour quota held about 22.8 million tokens (218 Opus calls, mostly cache
+        reads). Seven parallel threads used it up in 46 minutes.
+  \item One task thread cost 3.0--10.3 million tokens (median about 5 million), roughly a
+        fifth of a quota. The eleven tasks above need about 2.5 quotas.
+  \item Fresh threads start at about 35k tokens of context; a long coordinating thread
+        carries 220--325k per call. One task per thread is cheaper.
+  \item The weekly cap was not measured, so the number of accounts needed per week is not
+        known.
+\end{itemize}
+
+% ---------------------------------------------------------------------------------------
+\begin{thebibliography}{9}
+\bibitem{yoo2021}
+T.\,K. Yoo, J.\,Y. Choi, H.\,K. Kim.
+Feasibility study to improve deep learning in OCT diagnosis of rare retinal diseases with
+few-shot classification.
+\emph{Med.\ Biol.\ Eng.\ Comput.} 59:401--415, 2021.
+\href{https://doi.org/10.1007/s11517-021-02321-1}{doi:10.1007/s11517-021-02321-1}.
+
+\bibitem{kermany2018}
+D.\,S. Kermany, M. Goldbaum, W. Cai, et al.
+Identifying medical diagnoses and treatable diseases by image-based deep learning.
+\emph{Cell} 172(5):1122--1131.e9, 2018.
+
+\bibitem{statnikov2005}
+A. Statnikov, C.\,F. Aliferis, I. Tsamardinos, D. Hardin, S. Levy.
+A comprehensive evaluation of multicategory classification methods for microarray gene
+expression cancer diagnosis. \emph{Bioinformatics} 21:631--643, 2005.
+\href{https://doi.org/10.1093/bioinformatics/bti033}{doi:10.1093/bioinformatics/bti033}.
+
+\bibitem{sindhwani2001}
+V. Sindhwani, P. Bhattacharya, S. Rakshit.
+Information theoretic feature crediting in multiclass support vector machines.
+\emph{Proc.\ SIAM Int.\ Conf.\ Data Mining}, 2001.
+\href{https://doi.org/10.1137/1.9781611972719.16}{doi:10.1137/1.9781611972719.16}.
+
+\bibitem{tai2025}
+Tai et al. 2025.
+\href{https://arxiv.org/abs/2505.20149}{arXiv:2505.20149} (IEEE GCCE 2025,
+\href{https://doi.org/10.1109/gcce65946.2025.11275047}{doi:10.1109/gcce65946.2025.11275047}).
+\end{thebibliography}
+
+\end{document}
