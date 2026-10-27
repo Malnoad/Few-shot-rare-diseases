@@ -13,7 +13,12 @@ basic augmentation? (Reproduction of Yoo et al. 2021.)
   (paper accuracy 92.1 / 91.3 / 88.4).
 - Current evidence: seed 42 gives gan 92.95, none 90.31, basic 88.85; over seeds 1-5
   the means are gan ~92.6, basic ~92.9, none ~90.7 (`results/seed_check.csv`).
-  So gan vs basic is not separated by this test set; both beat none.
+  The augmented variants have higher descriptive mean accuracy than none;
+  these five seeds do not establish GAN superiority over basic or equivalence.
+  L7 confirms protocol/data-count differences from the paper without a unique
+  cause for the strong real-only baseline ([audit](L7_BASELINE_AUDIT.md)).
+  L8 independently verifies our RCI calculation; the paper's implementation
+  remains unresolved ([audit](L8_RCI_AUDIT.md)).
 
 ## Scope
 In: the paper's pipeline (Stages 0-4), its metrics (Tables 3-4), knn/prototype
@@ -56,6 +61,7 @@ prototypical network, end-to-end fine-tuning of Inception-v3.
 | 2026-10-22 | Keep the accepted GAN set from the original QC rule (sort by d_rare) | It is what the gan result was trained on; `--margin` would change CSC's kept set | QC csvs == accepted folders == `gan_*.npz` |
 | 2026-10-22 | Commit `head.npz` and `test_predictions.csv` for each variant | Small (~76 / ~180 KB); `COLAB.md` and `analysis.py` need them on GitHub | `.gitignore` |
 | 2026-10-22 | Local work on the laptop is training-free; training runs on Colab | No dedicated GPU locally | `docs/research/REPLICATION.md` |
+| 2026-10-27 | D15: fixed 250 epochs/final head primary; es20 on first 20 seeds sensitivity; about 63 pairs for 1 pp at SD about 2.8 pp, or 20 first to re-estimate SD then top up | Lam selected protocol and power-based planning; T8 must align the excluded sweep implementation | [C1 plan](C1_EXPERIMENT_PLAN.md) |
 
 ## Known pitfalls
 - Rare test classes have 4-5 images: one image moves recall by 0.20-0.25.

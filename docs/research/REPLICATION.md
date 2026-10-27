@@ -1,10 +1,135 @@
 # Replication tracker: Yoo et al. 2021 (MBEC 59:401-415)
 
 What the paper reports, what this repo reproduces, and the prioritized work left.
-Status as of 2026-10-23. Update the tables when an item changes state.
+Status checkpoint: 2026-10-27. Update the tables when an item changes state.
 
 Sources: the paper PDF (main checkout, not in git), `results/stage4/*.csv`,
 `results/seed_check.csv`, `results/stage2/qc_*.csv`, the 22 Oct status report.
+
+## Start here (2026-10-27)
+
+**Finished Claude branches are integrated as primary; Codex audits supplement them. L4 GAN-image ratings remain pending.** The
+[L7 evidence report](L7_BASELINE_AUDIT.md) confirms paper/repo differences in rare
+training counts and checkpoint/validation protocols. Saved heads, labels and
+predictions agree; no exact duplicate rare images were found. Patient/source
+dependence and historical feature provenance remain unresolved. No single cause
+was established. Resolve metric definitions and experiment design before spending
+more training time or interpreting a GAN advantage. The
+[L8 audit](L8_RCI_AUDIT.md) independently reproduces all five saved RCI values;
+the paper's formula/implementation remains unverified in that audit. The primary Claude L8
+analysis makes a stronger conditional inconsistency claim; both positions are retained
+in the L8 Disagreement note below. L7 interpretive disagreements are also explicit.
+
+Lam selected the paper-style 250-epoch schedule with the final head primary and
+a 1 percentage point meaningful GAN-over-basic target. The
+[C1 experiment plan](C1_EXPERIMENT_PLAN.md) records those choices, candidate
+allocation and output-protection requirements. D15 makes es20 on the first 20
+seeds a sensitivity check. About 63 pairs is the power-based target at SD about
+2.8 points; if uncertain, first run 20 seeds to re-estimate SD and then top up.
+Budget and the variance-only recalculation rule still need specification before
+training. The cancelled `task/c1-seed-sweep` implementation is pushed but excluded
+from main because its notebook makes es20 primary; T8 will align it. No training ran.
+
+The maintained `review_sheet.py` covers all 22 rare test cases with paired none/gan
+CAM overlays and a fixed accepted-GAN sample of 100 per class. Lam's 44 CAM answers
+are committed as `results/analysis/cam_review_seed42_Lam.csv` (27 Oct): abnormality
+21/22 gan versus 14/22 none; off-retina 0 versus 7. This is unblinded, non-expert
+review. GAN ratings remain pending; `review_sheet.py serve` saves answers as local
+CSV. Earlier temporary sheets, CAM assets and figure exports remain gitignored;
+no image assets are committed by this integration.
+
+L5 source validation passes: 580 ROC points form 27 curves whose areas match the
+saved AUCs within 1e-12; 2,824 t-SNE points are finite. Both t-SNE panels must show
+subsets of the same joint embedding, not independently trained classifier spaces.
+The export script is `.agents/reports/figure-export/export_existing_figures.py`.
+Lam approved an isolated local plotting environment on 2026-10-26. ROC and t-SNE
+are now exported as PNG, SVG and PDF in that report folder; captions, source/output
+hashes, format metadata and the resolved environment lock are alongside them.
+Matplotlib 3.11.2 runs in `.agents/reports/plot-venv`; the original project package
+set is unchanged and `pip check` passes. Both PNGs were visually inspected and the
+vector files passed structural screens. These are provisional research figures,
+not journal-compliance claims. The figure source CSVs remain unchanged.
+
+### Historical verified checkpoint (2026-10-23 artifact audit)
+
+This dated snapshot predates the finished branches integrated on 27 Oct; it does
+not describe their present Git status.
+
+- GitHub `main`, local `main` and the current analysis worktree all resolve to
+  `5c77ce22c5b7eda743321e610acad0ebf6690c1a` at this checkpoint. The seven earlier
+  task worktrees are clean at that base commit; their failed threads are not
+  completed deliverables.
+- Replaying each committed `head.npz` on `D:/Few-shot/results/features/test.npz`
+  reproduces all 1,022 predicted labels for each of `none`, `basic` and `gan`.
+  Maximum absolute probability differences are below 0.000002. Test-cache paths
+  and labels match the committed manifest and prediction CSVs in order.
+- The five rare real-training caches match their manifest training paths, with
+  zero test-path overlap. This does not rule out duplicate images, shared
+  patients, acquisition cues or incorrect historical feature extraction.
+- Seed 42 has 17/22 rare images correct for `none`, 18/22 for `basic`, and
+  19/22 for `gan`. Across seeds 1-5, mean overall accuracies are 90.688%,
+  92.934% and 92.586%, respectively (`results/seed_check.csv`). These are
+  descriptive means; they do not establish equivalence or superiority.
+- Recorded training lasted 26 / 27 / 22 epochs for `none` / `basic` / `gan`;
+  minimum validation loss occurred at epochs 6 / 7 / 2. Stage 3 restores the
+  best validation checkpoint (`stage3_classifier.py:187`). The `none` validation
+  set has no rare images; augmented variants have rare validation images.
+- Current code trains `basic` on the basic pool and `gan` on basic plus accepted
+  GAN images, without separately appending the real rare images
+  (`stage3_classifier.py:153`). Verify how this compares with the original
+  paper's baseline and augmentation definitions before calling it a mismatch.
+
+The replay is an artifact-consistency check, not proof of training provenance or
+clinical validity. L7 subsequently reverified original methods and Tables 3-4:
+the paper's rare training counts total 97 versus our 124; its real-only rare
+correct count is 3/22 versus our 17/22 at seed 42. The local audit found no exact
+file/pixel duplicates among all 146 rare images and no exact rare-test feature
+matches in the real training caches. All 186 protected input hashes stayed
+unchanged. Evidence is in `.agents/reports/l7-audit/evidence.json`; the earlier
+preflight remains in `.agents/reports/project-starting-point.json`.
+
+### Completed L7 task contract
+
+L7 should produce a short, evidence-linked table of rival explanations and the
+checks that distinguish them. Start with the original Table 4 and baseline
+definition, then inspect preprocessing/feature provenance, training-pool
+composition, checkpoint selection and image/acquisition cues. Keep observations
+separate from candidates. Cache validity currently checks image path lists
+(`stage3_classifier.py:75`), so matching paths alone cannot verify the historical
+backbone, weights or preprocessing.
+
+Completion means reporting which candidates existing artifacts support,
+contradict or leave unresolved, with source pointers and any required training
+experiment. It does not require finding a single cause. Do not train, regenerate
+features or change the manifest, accepted GAN set or published results.
+
+### Remaining training-free queue
+
+1. **L4 human review:** rate the prepared GAN sample and export CSV observations.
+   L3 CAM review is committed. Lam's visual assessment is not an ophthalmologist
+   evaluation; no synthetic image was accepted/rejected anew by preparing the sheet.
+2. **L5 manuscript preparation, later:** choose final publication dimensions and
+   captions against the destination journal; PNG/SVG/PDF exports are ready locally.
+3. **C1 execution preparation (T8), later:** align the cancelled sweep with D15
+   and review its isolated-output/checkpoint implementation and variance/budget rule. Current
+   `--patience 0` still reloads the best head, so it alone cannot implement the
+   selected final-head endpoint. Do not execute notebook Part 4 unchanged.
+4. **Supporting review:** the finished mock review, README source correction and
+   [literature scan](lit-scan-gan-vs-basic.md) are integrated. The L7/L8 audits are
+   bounded primary-source checks; the literature scan is a scoping review.
+
+Historical fresh-thread prompt (superseded by D15 and T8 alignment):
+
+```text
+One task: prepare C1 in docs/research/REPLICATION.md without training.
+Read AGENTS.md, docs/research/CONTEXT.md and the Start here checkpoint first.
+Read docs/research/L7_BASELINE_AUDIT.md and L8_RCI_AUDIT.md.
+Prepare concrete choices for primary outcome, meaningful effect, seed count and
+checkpoint protocol. Inspect notebook output safety; propose isolated outputs
+and failure-safe preservation. Do not execute training or change method/data
+without Lam's research-design decision. Preserve manifest, existing caches,
+accepted GAN set and published CSVs. Run .agents/check for any edits. Do not push.
+```
 
 ## Paper vs repo
 
@@ -14,10 +139,10 @@ Sources: the paper PDF (main checkout, not in git), `results/stage4/*.csv`,
 | CycleGAN per disease (§2.3, §3.1) | TF tutorial, 100 epochs, ophthalmologists remove artifacts, 3,000 kept/class | Done, 100 epochs. Automatic kNN QC instead of clinicians; kept 3,000 / 2,610 / 1,248 / 2,199 / 832 (CSC/MH/MacTel/Stargardt/RP) |
 | Fig. 5: amount of augmentation | best at 2,000 basic + 3,000 GAN | Not done |
 | Fig. 6: acceptance rate | 100 samples/class rated by 2 ophthalmologists; Stargardt and RP rejected most | Automatic only: QC pass rate 84 / 65 / 31 / 55 / 21% (RP and MacTel lowest). No clinician; a non-expert sheet (`review_sheet.py`: each of 100 accepted/class next to its source NORMAL and the real training scans; looks real / flawed / unsure, with disease-specific reasons from the AI-drafted `docs/research/cyclegan_rubric.json`) exists, not yet rated. Its result is an author check, not comparable to the paper's rate |
-| Fig. 7: t-SNE | Inception-v3 features, none vs gan | Coordinates done (`analysis.py tsne`); figure needs matplotlib |
+| Fig. 7: t-SNE | Inception-v3 features, none vs gan | PNG/SVG/PDF exported locally from saved joint coordinates; panels show subsets of one embedding (exports remain outside Git, T5) |
 | Table 3: independent test | none 88.4, basic 91.3, gan 92.1 % | Done, seed 42: 90.31 / 88.85 / 92.95 %. Seeds 1-5: 90.7 / 92.9 / 92.6 (gan ties basic) |
 | Table 4: per-class TPR | none gets rare TPR 0.00-0.25, gan 0.75-1.00 | Done. **Our `none` already gets 0.75-0.80 on rare classes**, so the paper's rare-class rescue is not reproduced at the baseline |
-| Fig. 9: one-vs-rest ROC | per-class curves | AUC table done; curve points done (`analysis.py roc`), figure needs matplotlib |
+| Fig. 9: one-vs-rest ROC | per-class curves | AUCs and local PNG/SVG/PDF exports done; 27 curve areas match saved AUCs (exports remain outside Git, T5) |
 | Fig. 10: Grad-CAM | saliency maps | All 22 rare test images for gan and none (`analysis.py cam --n 22`), side by side in `review_sheet.py`, which asks where the strongest colour sits. Reviewed by the author (non-expert, not blinded to variant), 2026-10-27, `results/analysis/cam_review_seed42_Lam.csv`: on the abnormality gan 21/22, none 14/22; off the retina gan 0, none 7 (incl. all 4 Stargardt, 6 of the 7 correctly classified) |
 | Table 2: 5-fold CV on whole data | GANs retrained per fold, gan 93.9 ± 4.5 % | Not done |
 | Fig. 11: imbalance by under-sampling | "no significant impact" | Not done |
@@ -38,7 +163,7 @@ model is on the Colab track. Tool: `analysis.py` (CPU, about 30 s for `all`); ou
 `results/analysis/`. To run from a worktree without data:
 `D:/Few-shot/.venv/Scripts/python.exe analysis.py --root D:/Few-shot --out results/analysis all`.
 
-### Laptop track (training-free), in priority order
+### Laptop track (training-free), item status
 
 | # | Work | Paper | Status | Tool / output |
 |---|---|---|---|---|
@@ -46,10 +171,10 @@ model is on the Colab track. Tool: `analysis.py` (CPU, about 30 s for `all`); ou
 | L2 | Paired tests none/basic/gan: test set (seed 42) and training seeds | Table 3 | Done | `compare` -> `paired_seed42.csv`, `paired_seeds.csv` |
 | L3 | CAM heatmaps, all 22 rare test images, for gan and none | Fig. 10 | Done: panels 2026-10-23; author review 2026-10-27 (gan looks at the abnormality 21/22, none 14/22 and off the retina 7/22) | `cam --variant gan|none --n 22`, then `review_sheet.py` |
 | L4 | Look at GAN images: rate 100 random accepted per class (Fig. 6 protocol) | Fig. 6 | Automatic rates done; non-expert rating sheet built (seed 42), ratings not done. A blind real-vs-generated test was rejected: framing alone (black bands vs full-frame Kermany outline) gives the answer away | `review_sheet.py` builds `.agents/reports/review-sheet.html`; `review_sheet.py serve` saves every answer to `.agents/reports/review-answers.csv` |
-| L5 | t-SNE and ROC figures | Figs. 7, 9 | Coordinates done; PNGs need matplotlib | `tsne`, `roc` |
+| L5 | t-SNE and ROC figures | Figs. 7, 9 | Done: PNG/SVG/PDF exports inspected; sources unchanged; publication formatting remains later work | `.agents/reports/figure-export/{roc,tsne}.{png,svg,pdf}`; captions and evidence in same folder |
 | L6 | kNN gap (ours 86.4, paper 91.2) | Table 3 | Sweep done | `knn` -> `knn_sweep.csv` |
-| L7 | Why our `none` rare recall (0.75-0.80) is far above the paper's (0.00-0.25) | Table 4 | Training-free part done (see L7 below); 2 rivals need training | `rare` -> `rare_recall.csv`, `rare_shift.csv`, `rare_test_images.csv` |
-| L8 | RCI gap (ours 0.76-0.81, paper 0.92-0.98) | Table 3 | Done: our RCI follows the cited definition; the paper's values don't fit it. Open: the paper's actual formula (ask the authors) | `rci` -> `rci_definitions.csv`, `rci_paper_bounds.csv` |
+| L7 | Why our `none` rare recall (0.75-0.80) is far above the paper's (0.00-0.25) | Table 4 | Training-free part done (see L7 below); see [independent audit](L7_BASELINE_AUDIT.md) and Disagreement note below | `rare` -> `rare_recall.csv`, `rare_shift.csv`, `rare_test_images.csv` |
+| L8 | RCI gap (ours 0.76-0.81, paper 0.92-0.98) | Table 3 | Done: our RCI follows the cited definition; the paper's values don't fit it. Open: the paper's actual formula; see [independent audit](L8_RCI_AUDIT.md) and Disagreement note below | `rci` -> `rci_definitions.csv`, `rci_paper_bounds.csv` |
 
 ### Findings so far (2026-10-22, `results/analysis/`)
 - **Seed 42 test set:** gan beats basic by 4.1 points (CI 2.6-5.8, McNemar p < 0.0001) and none
@@ -93,7 +218,7 @@ model is on the Colab track. Tool: `analysis.py` (CPU, about 30 s for `all`); ou
     Table 4's gan row implies 940/1022 correct (92.0%), but Table 3 says 92.1%.
 
 
-### Disagreement ? L8 Claude analysis and Codex audit (D16, 2026-10-27)
+### Disagreement: L8 Claude analysis and Codex audit (D16, 2026-10-27)
 
 The Claude branch is the primary analysis and code above: its reference-chain check
 and Table 4 bounds imply that the paper's GAN RCI exceeds the maximum under
@@ -146,7 +271,7 @@ acquisition from disease without images from the same source; this needs a check
 any rare-class result.
 
 
-### Disagreement ? L7 Claude analysis and Codex audit (D16, 2026-10-27)
+### Disagreement: L7 Claude analysis and Codex audit (D16, 2026-10-27)
 
 The Claude branch remains the primary analysis and code in the rival table above.
 It interprets the similarity screen as ruling out duplicates, the hold-out proxy
@@ -171,7 +296,7 @@ These checks preserve the manifest and run of record; the unique cause is unreso
 ### Colab track (needs training)
 | # | Work | Paper | Cost |
 |---|---|---|---|
-| C1 | Seed sweep (~20 seeds) none/basic/gan, plus fixed 250 epochs without early stopping, keeping the last epoch (tests L7 R7; needs a Stage 3 option) | Tables 3-4 | head only, minutes per run (Stage 3 already ran on Colab CPU on 4 Oct) |
+| C1 | [Plan prepared](C1_EXPERIMENT_PLAN.md): fixed 250 epochs/final head primary; es20 on first 20 seeds is sensitivity. Power target about 63 pairs for 1 pp at SD about 2.8 pp; if uncertain, re-estimate SD after 20 seeds then top up | Tables 3-4 | head only; safe execution implementation/budget pending (T8); no new training executed |
 | C2 | Amount of GAN images 0 / 500 / 1,000 / 2,000 / 3,000 (`--gan-per-class`), over seeds | Fig. 5 | as C1 |
 | C3 | Under-sampling to control class balance | Fig. 11 | as C1, needs a Stage 3 option |
 | C4 | 5-fold CV with per-fold Stage 1 + CycleGANs (25 GANs, ~50 A100-hours by `stage2.log`); without per-fold GANs the test fold leaks | Table 2 | GPU, large |
