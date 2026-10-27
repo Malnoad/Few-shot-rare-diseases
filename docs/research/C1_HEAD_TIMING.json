@@ -1,0 +1,20 @@
+{
+  "seconds": 207.5818334,
+  "projected_250_seconds": 2075.818334,
+  "method": "25 completed epochs; wall time includes Python startup/cache loading; stopped because projection exceeds 30 minutes",
+  "variant": "gan",
+  "cpu": "AMD Ryzen AI 9 365 w/ Radeon 880M",
+  "command": "stage3_classifier.py --root D:/Few-shot --cache-dir D:/Few-shot/results/features --cache-only --variant gan --seed 1 --epochs 250 --patience 0 --restore last --out-dir .agents/reports/c1-timing",
+  "epochs_measured": 25,
+  "seed": 1,
+  "cache": "D:/Few-shot/results/features",
+  "date": "2026-10-27",
+  "packages": {
+    "numpy": "2.5.4",
+    "pandas": "3.0.6",
+    "scipy": "1.18.1",
+    "tensorflow": "2.21.0"
+  },
+  "completed_epochs": 25,
+  "note": "Timing only; not a C1 outcome. The next epoch had started when the verified PID was stopped. No complete head or C1 seed pair counted."
+}

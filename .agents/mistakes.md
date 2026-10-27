@@ -34,6 +34,8 @@ explicit Note when no practical check exists. Agents add entries with the `log-m
 | 20 | 2026-10-27 | Codex · gpt-6.1-sol | codex --strict-config features list was rejected | Assumed an option in top-level help was supported by the features subcommand | Note | No unsupported invocation retained. Settings verified from official docs and configured command probes; strict CLI validation remains unverified. No maintained caller to check. | no |
 | 21 | 2026-10-27 | Codex · gpt-6.1-sol | C5 notebook dump failed on cp1252 stdout, repeating entries 3/10/14; a temporary preservation check counted 8 added cells instead of 7 | Forgot UTF-8 mode; guessed the cell offset | Note; check proposed | Recovered using `-X utf8` and the actual cell-count delta; propose a shared inspection launcher that sets `PYTHONUTF8=1` and asserts stdout.encoding is utf-8. No persistent fix applied pending Lam | yes |
 
+| 22 | 2026-10-27 | Codex · gpt-6.1-sol | T8 notebook inspection again failed on cp1252 Unicode output | Repeated entries 3/10/14 by assuming stdout encoding | Note; stronger check proposed | Corrected session stdout and used ASCII cell instructions. Propose a persistent PowerShell subprocess wrapper setting `$OutputEncoding = [System.Text.UTF8Encoding]::new()` and Python UTF-8 mode, with a Unicode stdin/stdout round-trip check; awaits Lam approval | yes |
+
 ## Proposed check for entry 9 (not installed)
 
 This runs against the maintained sampler and the actual JavaScript exporter,

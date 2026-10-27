@@ -132,17 +132,26 @@ def paired_cluster_bootstrap(y, pred_a, pred_b, clusters, n_boot=CLUSTER_RESAMPL
 
 
 def seed_summary(seeds):
-    """Per-pair differences over matched training seeds (columns: variant, seed, acc, rare_correct)."""
-    from scipy.stats import wilcoxon
+    """Matched-seed accuracy differences in pp, with nominal paired-t 95% CIs.
+
+    These describe training variation conditional on the fixed test cohort.
+    Wilcoxon uses rounded differences to preserve numerical ties in accuracy.
+    """
+    from scipy.stats import t, wilcoxon
 
     wide = seeds.pivot(index="seed", columns="variant", values="acc")
     rows = []
     for a, b in combinations([v for v in VARIANTS if v in wide], 2):
         a, b = b, a                                       # later variant first: basic-none, gan-none, gan-basic
         d = (wide[a] - wide[b]).dropna()
+        ranked_d = d.round(12)
+        half = t.ppf(0.975, len(d) - 1) * d.std(ddof=1) / np.sqrt(len(d)) if len(d) > 1 else np.nan
         rows.append(dict(a=a, b=b, n_seeds=len(d), mean_diff=d.mean(), sd_diff=d.std(ddof=1),
+                         ci95_lo=d.mean() - half, ci95_hi=d.mean() + half,
                          min_diff=d.min(), max_diff=d.max(), a_wins=int((d > 0).sum()),
-                         wilcoxon_p=wilcoxon(d).pvalue if len(d) >= 5 and d.any() else np.nan))
+                         zero_differences=int((ranked_d == 0).sum()),
+                         wilcoxon_p=(wilcoxon(ranked_d).pvalue if ranked_d.any() else 1.0)
+                         if len(d) >= 5 else np.nan))
     return pd.DataFrame(rows)
 
 

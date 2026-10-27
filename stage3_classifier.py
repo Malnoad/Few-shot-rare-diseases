@@ -23,7 +23,10 @@ Usage (from the project root):
   python stage3_classifier.py --variant none
   python stage3_classifier.py --variant basic
   python stage3_classifier.py --variant gan
-Options: --epochs 250 --batch 10 --patience 20 (0 = run all epochs, as in the paper)
+Options: --epochs 250 --batch 10 --patience 20 (0 = run all epochs)
+         --restore best|last (default best, even with --patience 0)
+D15 primary: --epochs 250 --patience 0 --restore last. Final-head selection is
+our operational choice; the paper does not specify checkpoint selection.
 Isolated experiments: --cache-dir /path/to/features --out-dir /path/to/run
 
 Outputs:
@@ -74,14 +77,17 @@ def backbone(weights="imagenet"):
                                              input_shape=(299, 299, 3))
 
 
-def features(group, paths, root, cache_dir, net_fn, bs=32):
+def features(group, paths, root, cache_dir, net_fn, bs=32, cache_only=False):
     """Features for `paths` (relative to root), cached in results/features/<group>.npz."""
     f = cache_dir / f"{group}.npz"
     if f.exists():
         z = np.load(f, allow_pickle=False)
         if z["paths"].tolist() == list(paths):
             return z["feats"].astype(np.float32)
-        print(f"  cache {f.name} is stale (image list changed) -> re-extracting")
+        if not cache_only:
+            print(f"  cache {f.name} is stale (image list changed) -> re-extracting")
+    if cache_only:
+        raise ValueError(f"Required cache missing or stale: {f}")
     if not paths:
         return np.zeros((0, 2048), np.float32)
 
@@ -139,6 +145,8 @@ def main():
     ap.add_argument("--batch", type=int, default=10)
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--patience", type=int, default=20, help="early stopping on val loss; 0 = off")
+    ap.add_argument("--restore", choices=["best", "last"], default="best",
+                    help="select best validation weights or the last epoch; patience does not select weights")
     ap.add_argument("--gan-per-class", type=int, default=3000)
     ap.add_argument("--gan-pool", choices=["v1", "v2"], default="v1",
                     help="v1 = original accepted set (C1); v2 = complete C5 top-up (C2)")
@@ -146,6 +154,7 @@ def main():
     ap.add_argument("--feat-batch", type=int, default=32, help="lower if feature extraction runs out of memory")
     ap.add_argument("--cache-dir", help="explicit feature-cache directory (C0 uses one per arm)")
     ap.add_argument("--out-dir", help="explicit run directory; defaults to results/stage3_<variant>")
+    ap.add_argument("--cache-only", action="store_true", help="fail on missing/stale caches; never extract or write features")
     ap.add_argument("--weights", default="imagenet", help=argparse.SUPPRESS)  # testing only
     a = ap.parse_args()
 
@@ -156,7 +165,8 @@ def main():
         for cls in RARE:
             gan_images(root, cls, a.gan_pool)
     cache = Path(a.cache_dir) if a.cache_dir else root / "results/features"
-    cache.mkdir(parents=True, exist_ok=True)
+    if not a.cache_only:
+        cache.mkdir(parents=True, exist_ok=True)
     suffix = "_v2" if a.variant == "gan" and a.gan_pool == "v2" else ""
     out = Path(a.out_dir) if a.out_dir else root / f"results/stage3_{a.variant}{suffix}"
     out.mkdir(parents=True, exist_ok=True)
@@ -171,7 +181,7 @@ def main():
         return net_holder["net"]
 
     def feats_for(group, frame):
-        return features(group, frame.path.tolist(), root, cache, net_fn, a.feat_batch), frame.label.tolist()
+        return features(group, frame.path.tolist(), root, cache, net_fn, a.feat_batch, a.cache_only), frame.label.tolist()
 
     # ---- major classes (identical in every variant) and the test set
     maj = man[man.label.isin(MAJOR)]
@@ -196,8 +206,8 @@ def main():
             if len(gan) < a.gan_per_class:
                 print(f"WARNING {cls}: only {len(gan)} accepted GAN images (paper: {a.gan_per_class})")
             gan = sorted(rng.sample(gan, min(len(gan), a.gan_per_class)))
-        Xb = features(f"basic_{cls}", basic, root, cache, net_fn, a.feat_batch)
-        Xg = features(gan_cache_group(cls, a.gan_pool), gan, root, cache, net_fn, a.feat_batch) if gan else np.zeros((0, 2048), np.float32)
+        Xb = features(f"basic_{cls}", basic, root, cache, net_fn, a.feat_batch, a.cache_only)
+        Xg = features(gan_cache_group(cls, a.gan_pool), gan, root, cache, net_fn, a.feat_batch, a.cache_only) if gan else np.zeros((0, 2048), np.float32)
         pool = np.concatenate([Xb, Xg])
         idx = np.random.default_rng(a.seed).permutation(len(pool))
         n_val = len(pool) // 10
@@ -226,7 +236,10 @@ def main():
         cbs.append(tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=a.patience))
     model.fit(Xtr, ytr_i, validation_data=(Xva, yva_i), epochs=a.epochs, batch_size=a.batch,
               shuffle=True, callbacks=cbs, verbose=2)
-    model.load_weights(str(best))
+    W, b = model.layers[-1].get_weights()
+    np.savez(out / "last_head.npz", W=W, b=b, classes=np.array(CLASSES))
+    if a.restore == "best":
+        model.load_weights(str(best))
     W, b = model.layers[-1].get_weights()
     np.savez(out / "head.npz", W=W, b=b, classes=np.array(CLASSES))
 

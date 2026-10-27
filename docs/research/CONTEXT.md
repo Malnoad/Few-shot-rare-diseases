@@ -76,3 +76,13 @@ prototypical network, end-to-end fine-tuning of Inception-v3.
   frozen features. Rare recall may partly measure the source (`REPLICATION.md` L7, R5).
 - Accepted GAN images are fewer than 3,000 for MH, MacTel, Stargardt, RP (2,610 / 1,248 /
   2,199 / 832); Stage 3 warns but continues.
+
+## C1 execution (T8, 2026-10-27)
+
+Notebook 4.1-4.5 now implements D15: fixed250 final heads primary; es20 on
+C0-matched seeds 1-20 sensitivity. First 20 complete before a one-time SD-only
+power recalculation (1 pp, alpha .05, power .80, floor 63/cap 243); top up fixed250
+seeds 21..N. C0 input choice remains pending via INPUT_ARM. Original accepted GAN
+pool only; C5 is for C2. Drive c1/v1/<input_arm> outputs preserve canonical results.
+The authorized CPU timing (25 epochs/207.58 s) projects 34.6 min per 250-epoch
+head; no C1 seed-pair outcomes exist. [Plan and budget](C1_EXPERIMENT_PLAN.md).

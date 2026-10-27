@@ -440,6 +440,17 @@ python stage3_classifier.py --variant gan     # + 3,000 accepted CycleGAN images
 Options: `--epochs 250`, `--batch 10`, `--lr 1e-3`, `--patience 20` (early stopping on val
 loss; `0` = run all epochs as in the paper), `--gan-per-class 3000`, `--seed 42`,
 `--feat-batch 32` (lower it if feature extraction runs out of memory), `--root`.
+`--restore best|last` defaults to best even with patience 0. D15's final-head
+protocol explicitly uses `--epochs 250 --patience 0 --restore last`. Isolated
+cached-head runs use `--cache-dir`, `--out-dir` and `--cache-only` (missing/stale
+cache is an error, with no extraction). Both last_head.npz and best.weights.h5
+are retained; head.npz follows the selected restore mode.
+
+C1 is ready in notebook **4.1-4.5**, after Lam's C0 input decision: fixed250
+primary, es20 sensitivity on seeds 1-20, then one SD-only power top-up (floor 63,
+cap 243) with consecutive primary seeds. Outputs go only to Drive c1/v1;
+see the [plan and measured CPU budget](docs/research/C1_EXPERIMENT_PLAN.md).
+
 
 - **Input:** `data/manifest.csv`, `data/aug_basic/`, and for `--variant gan`,
   `data/gan/accepted/`

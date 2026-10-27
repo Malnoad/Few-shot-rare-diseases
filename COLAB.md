@@ -99,7 +99,7 @@ tokens, then add it in Colab's Secrets panel as `GITHUB_TOKEN` with notebook acc
 3. Then run **either** Part 2 (normal work: restore results, about 2 minutes) **or** Part 3
    (rebuild stages from raw). Not both in one session: Part 2 creates empty placeholder
    images that only Stage 3 understands. Part 3 deletes them before it starts.
-4. Optional: Part 4 (seed check), Part 5 (CAM).
+4. Optional: Part 4 (C1/D15; use the separate order below), Part 5 (CAM).
    For **C0** use Part 1, then 3.1, 3.2 and 3.4b (real images; Part 2's placeholders are
    not enough), then C0.1-C0.5 on an A100/L4/T4 for the fresh features. Outputs live only
    in `MyDrive/octfsl/c0/v1/`; never reuse `results/features`. If C0.3 reports a framing
@@ -116,7 +116,7 @@ tokens, then add it in Colab's Secrets panel as `GITHUB_TOKEN` with notebook acc
 | 3.4 Stage 2 training | ~1.1 min/epoch in the logged run (an A100 at least in its last session), so ~2 h per disease for 100 epochs; T4 is several times slower |
 | 3.5 Stage 3 with features cache | minutes per variant |
 | 3.5 Stage 3 from nothing | hours on CPU |
-| Part 4 seed check (15 heads) | minutes |
+| Part 4 C1 first 20 / provisional 63 pairs | ~37-42 h / ~112-116 h serial CPU; laptop extrapolation, es20 assumed 20-50 epochs |
 | Stage 4 / CAM | 1–2 min / a few minutes |
 
 The Stage 2 figure comes from `stage2.log`. The extraction and seed-check times are
@@ -190,6 +190,48 @@ Stage 3 requires v2's full inventory and uses new `gan_v2_<class>.npz` groups;
 the existing exact path-list comparison also rejects stale caches when N changes.
 Its v2 default output is `results/stage3_gan_v2/`, protecting the run of record.
 Switch back with `--gan-pool v1`; no deletion or mutation of either pool is needed.
+## C1 / D15: manual seed sweep (wait for C0 input decision)
+
+Use a **CPU runtime** and run **Part 1 -> 4.1 -> 4.2 -> 4.3 -> 4.4 -> 4.5**.
+Leave `INPUT_ARM = "current"` in 4.1 only if Lam retains current after C0; otherwise
+set `format` or `framing`. This is the single C1 input selector. Do not select
+inputs from C1 accuracy. Current restoration needs only the saved features;
+4.1 copies them and creates isolated placeholders, without Part 2 or Stage 4.
+For normalized inputs restore real images with 3.1/3.2/3.4b, then C0.1/C0.2 to
+restore completed C0 caches/metadata and recreate normalized inputs. C1 reads
+`data/c0/v1/<arm>` and `results/c0/v1/<arm>/features`; it never extracts features.
+
+- **4.1:** choose input arm after C0, preflight caches/counts/identity, open output.
+- **4.2:** first 20 seeds, three variants under fixed250 primary and es20 sensitivity:
+  120 heads. Fixed250 explicitly uses `--patience 0 --restore last`; es20 uses
+  patience 20/best weights and the same seeds 1-20 as C0.
+- **4.3:** once-only SD-based power recalculation. N is at least 63 pairs, including
+  first 20, for two-sided alpha .05/power .80 at a true 1 pp difference versus zero.
+  Save the target before top-up. If N exceeds the 243-pair feasibility cap, stop
+  incomplete. No target changes from means/CIs/p-values or repeated recalculation.
+- **4.4:** fixed250 seeds 21..N only; refuses to run until all first-20 heads finish.
+- **4.5:** per-seed gan-basic differences per protocol, paired-t 95% CIs, Wilcoxon
+  sensitivity and the D15 rule comparing the fixed250 CI to zero and 1 pp.
+  A positive CI alone does not establish a 1 pp gain; no nonsignificance/equivalence shortcut.
+
+Everything C1 produces is written directly to `MyDrive/octfsl/c1/v1/<INPUT_ARM>/`.
+Resume after disconnect by rerunning Part 1 and 4.1-4.5; completed heads are
+verified/skipped, interrupted heads restart. Run one sweep at a time. Skip 3.5,
+3.6 and Part 6. No old seed-check backup/restore loop is used. Keep the existing
+accepted GAN realization: MacTel 1,248 and RP 832; C5's separate pool is C2 only.
+
+Measured local CPU head timing: **25 completed epochs in 207.58 s**, projected
+**34.60 min/250 epochs**, the allowed short timing because 250 exceeded 30 min.
+At that largest-variant rate, 20-seed primary = **34.6 h**; 63-pair primary =
+**109.0 h**. Add **2.8-6.9 h** for 60 es20 heads if they take 20-50 epochs
+(assumption). First stage total ~37-42 h; 63-pair total ~112-116 h. Worst cases
+with all sensitivity heads reaching 250 are 69.2/143.6 h. Colab CPU/Drive speed is
+unverified: use actual first-head timing for forecasts and resume across sessions.
+GPU speedup for heads is unverified; CPU is sufficient, and paying for a GPU
+solely for this tiny batch-10 Dense head needs a measured benefit first.
+See the [fixed plan](docs/research/C1_EXPERIMENT_PLAN.md) and
+[timing record](docs/research/C1_HEAD_TIMING.json). Patient-cluster CIs and
+training-seed CIs describe different uncertainties; C1 does not resolve leakage.
 
 ## Rules that protect the results
 
@@ -199,8 +241,10 @@ Switch back with `--gan-pool v1`; no deletion or mutation of either pool is need
   `stage0_manifest.py` without `--force` only verifies.
 - **Check the accepted-image counts before `--variant gan`.** If `data/gan/accepted/` is
   empty, Stage 3 only prints a warning and trains what is effectively `basic`.
-- **The seed check restores the seed-42 outputs** when it finishes, so the published tables
-  stay intact.
+- **C1 never writes canonical Stage 3/4 or seed_check.csv.** It uses explicit
+  `--cache-dir`, `--out-dir` and `--cache-only`; completed runs are retained only
+  after configuration and artifact hashes match. Partial heads restart, without
+  replacing completed heads. Do not use Part 6 for C1.
 - **Patient-level CIs use saved predictions, without rerunning Stage 4.** Run
   `python analysis.py cluster` (also included in `all`); the 5,000-draw percentile
   accuracy/MCC and paired CIs go to `results/analysis/`. Kermany images are clustered

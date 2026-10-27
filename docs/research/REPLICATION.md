@@ -22,13 +22,16 @@ in the L8 Disagreement note below. L7 interpretive disagreements are also explic
 
 Lam selected the paper-style 250-epoch schedule with the final head primary and
 a 1 percentage point meaningful GAN-over-basic target. The
-[C1 experiment plan](C1_EXPERIMENT_PLAN.md) records those choices, candidate
-allocation and output-protection requirements. D15 makes es20 on the first 20
-seeds a sensitivity check. About 63 pairs is the power-based target at SD about
-2.8 points; if uncertain, first run 20 seeds to re-estimate SD and then top up.
-Budget and the variance-only recalculation rule still need specification before
-training. The cancelled `task/c1-seed-sweep` implementation is pushed but excluded
-from main because its notebook makes es20 primary; T8 will align it. No training ran.
+[C1 experiment plan](C1_EXPERIMENT_PLAN.md) and notebook Part 4 now implement D15:
+fixed250 final heads primary, es20 sensitivity on C0-matched seeds 1-20. First
+complete both protocols/all variants for those 20 seeds, then lock a single
+variance-only paired-t power target for 1 pp (floor 63, feasibility cap 243), then
+run fixed250 seeds 21..N. No significance-driven stopping. Outputs go only to
+Drive c1/v1/<input_arm>; C0 input selection remains Lam's pending decision.
+Current GAN counts are fixed (MacTel 1,248; RP 832); C5 is for C2 only.
+The authorized CPU timing completed 25 cached-head epochs in 207.58 s, projecting
+34.6 min/head; roughly 37-42 h first stage and 112-116 h at 63 pairs, assuming
+20-50 es20 epochs (Colab speed unverified). No C1 seed-pair outcome exists.
 
 The maintained `review_sheet.py` covers all 22 rare test cases with paired none/gan
 CAM overlays and a fixed accepted-GAN sample of 100 per class. Lam's 44 CAM answers
@@ -110,10 +113,10 @@ features or change the manifest, accepted GAN set or published results.
    evaluation; no synthetic image was accepted/rejected anew by preparing the sheet.
 2. **L5 manuscript preparation, later:** choose final publication dimensions and
    captions against the destination journal; PNG/SVG/PDF exports are ready locally.
-3. **C1 execution preparation (T8), later:** align the cancelled sweep with D15
-   and review its isolated-output/checkpoint implementation and variance/budget rule. Current
-   `--patience 0` still reloads the best head, so it alone cannot implement the
-   selected final-head endpoint. Do not execute notebook Part 4 unchanged.
+3. **C1 execution (T8 ready):** read the fixed plan and runtime budget; wait for
+   Lam's C0 input selection, then run notebook 4.1-4.5 on Colab. Stage 3 supports
+   `--restore best|last` alongside cache/out directories and cache-only mode.
+   Patience 0 alone still restores best; fixed250 explicitly selects last.
 4. **Supporting review:** the finished mock review, README source correction and
    [literature scan](lit-scan-gan-vs-basic.md) are integrated. The L7/L8 audits are
    bounded primary-source checks; the literature scan is a scoping review.
@@ -318,7 +321,7 @@ behave alike, and the gap sits in how the classifier was trained.
 | R4 Our head has a weaker class prior than the paper's | Lowering every rare logit by about log(class ratio) ≈ 6.9 gives ~3/22, and major recall does not drop | Shift the rare logits of the saved head | Biases are -0.12 to 0.08 (no prior learned), but a shift of 7 still leaves 9/22; it takes 16 to reach ≤3/22. Major accuracy stays 0.906, while the paper's `none` has *lower* NORMAL/CNV recall than ours (0.876/0.924 vs 0.984/0.992) | Weakened: a uniform prior shift doesn't fit. A non-uniform change from other training is not excluded |
 | R5 Rare images carry a dataset-of-origin cue that a linear head picks up | One direction separates rare from major *test* images; raw files differ by source; errors fall where the cue is weak | Axis = mean(real rare train) - mean(major train) features; raw PNG/JPEG headers | AUC 0.9955; 17/22 rare test images score above all 1,000 major test images; 3 of the 4 rare→major errors are among the 5 lowest-scoring rare images. Raw files: rare = RGBA PNG crops, about square, 290-644 px wide; Kermany = grayscale JPEG 512-1536 x 496. Raw width x height alone names the rare class of 16/22 test images | Supported as why *our* head finds rare classes. It can't explain the gap by itself: the paper used the same two datasets |
 | R6 The paper fine-tuned the top Inception blocks, not only the softmax | Fine-tuning `none` (~25 images per rare class vs ~74k major) drops rare recall toward 0, while `gan` keeps it | needs training | §2.4 says both "fine-tuning of the weights of the pre-trained networks ... keeps the weights of some bottom layers" and "the backbone convolutional layers ... were left frozen"; it reports "150 h for 250 epochs with fine-tuning" | **Untested, needs training** (GPU) |
-| R7 Training schedule and model selection | `none` trained for 250 epochs and kept at the last epoch falls toward 3/22. The paper states 250 epochs and a tenth of training data for validation, and mentions no early stopping; that it kept the last epoch is our assumption | needs training | Ours keeps the best major-only val loss: the 6th of 26 epochs run (`history.csv`). Note: `--patience 0` alone still restores the best-val-loss weights (`ModelCheckpoint`), so testing the final epoch needs a small Stage 3 option | **Untested, needs training** (head only, minutes; fits C1) |
+| R7 Training schedule and model selection | `none` trained for 250 epochs and kept at the last epoch falls toward 3/22. The paper states 250 epochs and a tenth of training data for validation, and mentions no early stopping; that it kept the last epoch is our assumption | needs training | Ours keeps the best major-only val loss: the 6th of 26 epochs run (`history.csv`). Note: `--patience 0` alone still restores the best-val-loss weights (`ModelCheckpoint`), Stage 3 now supports `--restore last` for the C1 test | **Untested, needs training** (head only, minutes; fits C1) |
 | R8 Different input pipeline in the paper (PNG RGBA handling, resizing) | Unknown direction | needs the paper's code | Paper code not published beyond the TF tutorial link | **Untested** |
 
 **Reading.** Hold-out luck and seed luck do not explain our 17/22. Our frozen features separate rare
@@ -359,7 +362,7 @@ These checks preserve the manifest and run of record; the unique cause is unreso
 | # | Work | Paper | Cost |
 |---|---|---|---|
 | C0 | Preprocessing control before C1 (decision D6): arms `current` / `format` (8-bit grayscale PNG) / `framing` (grayscale, centred square padding, 256x256) x none/basic/gan x seeds 1-20, 180 paired heads. Primary: current minus framing rare macro recall for `none`. Code and Colab Part C0 ready ([design](C0_DESIGN.md), [report](C0_REPORT.md)). Training-free sample check: framing removes the header-size cue, but the frozen-feature axis still separates rare from common (sample AUC 0.71 recomputed, 0.93 fixed), so cue removal is not established; the notebook stops before heads if the full framing AUC is >= 0.90 | Table 4 | GPU 45-180 min for features, then CPU heads 6-24 h (unbenchmarked) |
-| C1 | [Plan prepared](C1_EXPERIMENT_PLAN.md): fixed 250 epochs/final head primary; es20 on first 20 seeds is sensitivity. Power target about 63 pairs for 1 pp at SD about 2.8 pp; if uncertain, re-estimate SD after 20 seeds then top up | Tables 3-4 | head only; safe execution implementation/budget pending (T8); no new training executed |
+| C1 | [Execution ready](C1_EXPERIMENT_PLAN.md), notebook 4.1-4.5: fixed250/final primary; es20 seeds 1-20 sensitivity (same as C0). Complete first 20, one SD-only recalculation for 1 pp at alpha .05/power .80 (floor 63/cap 243), fixed250 top-up seeds 21..N. Input arm waits on C0; original accepted GAN pool only, C5 reserved for C2. Drive-only immutable completed runs; no C1 outcomes yet | Tables 3-4 | CPU cached heads: measured 25 epochs 207.58 s, projected 34.6 min/250; first stage ~37-42 h, 63 pairs ~112-116 h including estimated es20; Colab unbenchmarked |
 | C2 | Amount of GAN images 0 / 500 / 1,000 / 2,000 / 3,000 (`--gan-per-class`), over seeds | Fig. 5 | as C1 |
 | C3 | Under-sampling to control class balance | Fig. 11 | as C1, needs a Stage 3 option |
 | C4 | 5-fold CV with per-fold Stage 1 + CycleGANs (25 GANs, ~50 A100-hours by `stage2.log`); without per-fold GANs the test fold leaks | Table 2 | GPU, large |
