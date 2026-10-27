@@ -12,7 +12,8 @@ Commands (from the project root, or pass --root to the checkout that holds the d
   python analysis.py roc            one-vs-rest ROC curves per variant                         (Fig. 9)
   python analysis.py tsne           t-SNE of frozen features, real-only vs + CycleGAN pool     (Fig. 7)
   python analysis.py cam --n 40     CAM heatmaps from a trained head, rare test images first   (Fig. 10)
-  python analysis.py all            every command above except cam
+  python analysis.py rci            alternative RCI definitions + the RCI range Table 4 allows (Table 3, ~2 min)
+  python analysis.py all            every command above except cam and rci
 
 Outputs: CSVs in results/analysis/ (or --out). PNG figures as well if matplotlib is installed.
 """
@@ -23,9 +24,20 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from stage4_evaluate import CLASSES, RARE, cam, fix, load_feats
+from stage4_evaluate import CLASSES, PAPER, RARE, cam, fix, load_feats, rci
 
 VARIANTS = ["none", "basic", "gan"]
+
+# Paper Table 4 (per-class TPR), reordered to CLASSES (the paper lists RP before Stargardt),
+# and the paper's test counts (§2.2: 250 per major class, CSC 5, MH 5, MacTel 4, Stargardt 4, RP 4).
+PAPER_TPR = {
+    "none":  [.876, .924, .920, .880, .2, .2, 0, .25, 0],
+    "basic": [.932, .940, .888, .924, .8, .8, .25, .5, .25],
+    "gan":   [.912, .948, .932, .888, 1, 1, 1, .75, .75],
+    "knn":   [.944, .936, .916, .904, .6, .8, 0, 0, 0],
+    "proto": [.872, .916, .832, .820, 1, 1, 1, .75, .75],
+}
+PAPER_N = np.array([250, 250, 250, 250, 5, 5, 4, 4, 4], float)
 
 
 # ---------- pure analysis (arrays in, numbers out) ----------
@@ -86,6 +98,83 @@ def qc_summary(qc):
         rows.append(dict(disease=cls, generated=len(df), passed=int(df["pass"].sum()), kept=int(df.kept.sum()),
                          pass_rate=df["pass"].mean(), kept_margin_median=margin[df.kept].median()))
     return pd.DataFrame(rows)
+
+
+def entropy(p):
+    """Shannon entropy in nats of a probability array (any shape)."""
+    p = p[p > 0]
+    return -(p * np.log(p)).sum()
+
+
+def mutual_info(p):
+    """I(true; pred) in nats from a joint probability matrix (rows true, columns predicted)."""
+    return entropy(p.sum(1)) + entropy(p.sum(0)) - entropy(p)
+
+
+def rci_definitions(cm):
+    """Candidate RCI definitions for one confusion matrix (rows true, columns predicted).
+    The first is stage4_evaluate.rci (Sindhwani 2001 / Statnikov 2005: I / H(true));
+    "I (Choi 2017 Eq. 6)" is the formula as printed by the same group, without the denominator."""
+    p = cm / cm.sum()
+    ht, hp, i = entropy(p.sum(1)), entropy(p.sum(0)), mutual_info(p)
+    balanced = cm / cm.sum(1, keepdims=True) / len(cm)          # every true class weighted 1/K
+    ovr = []
+    for k in range(len(cm)):                                     # 2x2 one-vs-rest table per class
+        tp, fn, fp = cm[k, k], cm[k].sum() - cm[k, k], cm[:, k].sum() - cm[k, k]
+        b = np.array([[tp, fn], [fp, cm.sum() - tp - fn - fp]]) / cm.sum()
+        ovr.append(mutual_info(b) / entropy(b.sum(1)))
+    return {"I/H(true) [stage 4]": rci(cm), "I (Choi 2017 Eq. 6)": i, "I/H(pred)": i / hp,
+            "2I/(H(true)+H(pred))": 2 * i / (ht + hp), "I/sqrt(H(true)H(pred))": i / np.sqrt(ht * hp),
+            "I/min(H)": i / min(ht, hp), "I/log K": i / np.log(len(cm)),
+            "balanced prior I/log K": mutual_info(balanced) / np.log(len(cm)),
+            "1-H(pred|true)/H(true)": 1 - (entropy(p) - ht) / ht, "macro one-vs-rest": np.mean(ovr)}
+
+
+def rci_range(n, tpr):
+    """Smallest and largest I/H(true) of any confusion matrix with row totals n and recalls tpr.
+    I is convex in p(pred|true) for fixed p(true), so the max sits at a vertex of the feasible
+    set (each row sends all its errors to one other column); at a vertex H(pred|true) is constant,
+    so the max is found by enumerating vertices for the largest H(pred). The min is a convex
+    problem (SLSQP from the uniform-error start)."""
+    from itertools import product
+    from scipy.optimize import minimize
+
+    K, pt, r = len(n), n / n.sum(), np.asarray(tpr, float)
+    err, ht = pt * (1 - r), entropy(pt)
+    h_cond = sum(pt[k] * entropy(np.array([r[k], 1 - r[k]])) for k in range(K))
+    rows = [k for k in range(K) if err[k] > 0]
+    opts = {k: [j for j in range(K) if j != k] for k in rows}
+    head, tail = rows[:2], rows[2:]
+    combos = np.array(list(product(*[opts[k] for k in tail])), int).reshape(-1, len(tail))
+    best = -np.inf
+    for a in product(*[opts[k] for k in head]):                 # chunk the 8^9 vertices by the first two rows
+        q = np.tile(pt * r, (len(combos), 1))
+        for k, j in zip(head, a):
+            q[:, j] += err[k]
+        ar = np.arange(len(q))
+        for c, k in enumerate(tail):                              # one index per row, so fancy += is safe
+            q[ar, combos[:, c]] += err[k]
+        best = max(best, (-(q * np.log(np.where(q > 0, q, 1)))).sum(1).max())
+    off = ~np.eye(K, dtype=bool)
+
+    def channel(x):
+        c = np.diag(r); c[off] = x
+        return c
+
+    res = minimize(lambda x: mutual_info(pt[:, None] * np.clip(channel(x), 0, None)),
+                   np.repeat((1 - r) / (K - 1), K - 1), bounds=[(0, 1)] * off.sum(), method="SLSQP",
+                   constraints=[{"type": "eq", "fun": lambda x, k=k: channel(x)[k].sum() - 1} for k in range(K)],
+                   options=dict(maxiter=500, ftol=1e-12))
+    return res.fun / ht, (best - h_cond) / ht
+
+
+def with_error_pattern(cm, n, tpr):
+    """I/H(true) when recalls are tpr but each row's errors are spread like the rows of cm."""
+    r = np.asarray(tpr, float)
+    e = cm * ~np.eye(len(cm), dtype=bool)
+    e = np.where(e.sum(1, keepdims=True) > 0, e / np.maximum(e.sum(1, keepdims=True), 1), ~np.eye(len(cm), dtype=bool) / (len(cm) - 1))
+    p = (n / n.sum())[:, None] * (e * (1 - r)[:, None] + np.diag(r))
+    return mutual_info(p) / entropy(p.sum(1))
 
 
 # ---------- I/O ----------
@@ -242,6 +331,36 @@ def cmd_tsne(root, out, a):
     save_fig(draw, out / "tsne.png")
 
 
+def cmd_rci(root, out, a):
+    """Why our RCI (0.76-0.81) is below the paper's (0.92-0.98): docs/research/REPLICATION.md L8."""
+    cms = {m: pd.read_csv(f, index_col=0).loc[CLASSES, CLASSES].to_numpy(float)
+           for m in PAPER if (f := root / f"results/stage4/confusion_{m}.csv").exists()}
+    t = pd.DataFrame({m: rci_definitions(cm) for m, cm in cms.items()}).T
+    t.insert(0, "paper", pd.Series({m: PAPER[m]["rci"] for m in cms}))
+    t.index.name = "model"
+    t.to_csv(out / "rci_definitions.csv")
+    print("=== RCI definitions on results/stage4/confusion_*.csv (paper Table 3 first) ===")
+    print(t.round(3).to_string())
+    print("mean |definition - paper|:", (t.drop(columns="paper").sub(t.paper, axis=0)).abs().mean().round(3).to_dict())
+
+    rows = []
+    for m, tpr in PAPER_TPR.items():
+        lo, hi = rci_range(PAPER_N, tpr)
+        rows.append(dict(model=m, acc_from_tpr=(np.array(tpr) * PAPER_N).sum() / PAPER_N.sum() * 100,
+                         paper_acc=PAPER[m]["acc"], rci_min=lo, rci_max=hi,
+                         rci_our_error_pattern=with_error_pattern(cms[m], PAPER_N, tpr) if m in cms else np.nan,
+                         paper_rci=PAPER[m]["rci"]))
+    b = pd.DataFrame(rows)
+    b.to_csv(out / "rci_paper_bounds.csv", index=False)
+    print("\n=== I/H(true) any confusion matrix with the paper's Table 4 recalls can reach ===")
+    print(b.round(3).to_string(index=False))
+    # Table 4 gives 940/1022 correct for gan, Table 3 says 92.1% (941): allow one more hit anywhere.
+    r = np.array(PAPER_TPR["gan"], float)
+    hi = max(rci_range(PAPER_N, np.where(np.arange(len(r)) == k, r + 1 / PAPER_N, r))[1]
+             for k in range(len(r)) if r[k] < 1)
+    print(f"gan with one more correct image in any class: max I/H(true) = {hi:.3f} (paper {PAPER['gan']['rci']})")
+
+
 def cmd_cam(root, out, a):
     cam(root, a.variant, a.n, "imagenet", out=out / f"cam_{a.variant}")
 
@@ -251,7 +370,7 @@ def main():
     ap.add_argument("--root", default=".", help="checkout that holds data/ and results/")
     ap.add_argument("--out", default=None, help="output folder (default <root>/results/analysis)")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ["compare", "knn", "qc", "roc", "all"]:
+    for name in ["compare", "knn", "qc", "roc", "rci", "all"]:
         sub.add_parser(name)
     for name in ["tsne", "all"]:
         p = sub.choices.get(name) or sub.add_parser(name)
@@ -265,7 +384,8 @@ def main():
     root = Path(a.root)
     out = Path(a.out) if a.out else root / "results/analysis"
     out.mkdir(parents=True, exist_ok=True)
-    cmds = {"compare": cmd_compare, "knn": cmd_knn, "qc": cmd_qc, "roc": cmd_roc, "tsne": cmd_tsne, "cam": cmd_cam}
+    cmds = {"compare": cmd_compare, "knn": cmd_knn, "qc": cmd_qc, "roc": cmd_roc, "tsne": cmd_tsne, "rci": cmd_rci,
+            "cam": cmd_cam}
     for name in (["compare", "qc", "roc", "knn", "tsne"] if a.cmd == "all" else [a.cmd]):
         cmds[name](root, out, a)
         print()
