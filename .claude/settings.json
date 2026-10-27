@@ -6,18 +6,28 @@
       "Bash(git push * -f)",
       "Bash(git push * -f *)",
       "Bash(pkill *)",
-      "Bash(killall *)"
+      "Bash(killall *)",
+      "Bash(ln -s *)",
+      "Bash(ln -sf *)",
+      "Bash(gh pr merge *)"
     ],
     "ask": [
       "Bash(git reset *--hard*)",
       "Bash(git clean *)",
-      "Bash(git branch -D *)",
-      "Bash(rm -rf *)",
-      "Bash(rm -fr *)",
-      "Bash(rm -r *)"
+      "Bash(git branch -D *)"
     ]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.agents/run-python.sh\" .agents/tool_guard.py claude"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

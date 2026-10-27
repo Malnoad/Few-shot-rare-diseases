@@ -44,6 +44,7 @@ Before calling work done, walk this list and state which entries apply:
 1. **Commands:** Locally use `.venv/Scripts/python.exe` (Python 3.12, CPU-only
    TensorFlow), not the system `python` (3.14, no TensorFlow). Fast checks:
    `.agents/check`. GPU work (Stage 2 train/generate/qc) runs on Colab only.
+   From a worktree, call `D:/Few-shot/.venv/Scripts/python.exe` by path; never `ln -s` (Windows Git Bash can copy the 2 GB venv).
 2. **Processes:** Save the PID of anything you start (in
    `.agents/pids/<name>.pid`) and only stop that process.
 3. **Data in worktrees:** `data/raw`, `data/aug_basic` and `data/gan` are links to

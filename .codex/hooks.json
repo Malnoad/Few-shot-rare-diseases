@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agents/run-python.sh\" .agents/tool_guard.py codex",
+            "commandWindows": "powershell -NoProfile -Command \"& 'D:/Few-shot/.venv/Scripts/python.exe' -X utf8 (Join-Path (git rev-parse --show-toplevel) '.agents/tool_guard.py') codex\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -8,9 +8,11 @@ set -euo pipefail
 trap 'echo "FAILED: $BASH_COMMAND (line $LINENO in .agents/check)" >&2' ERR
 cd "$(dirname "$0")/.."
 
-# Project venv on Windows or Linux, else whatever python3 is on PATH (e.g. Colab).
+# Project/main venv on Windows or Linux, else python3 (e.g. Colab).
+MAIN="$(cd "$(git rev-parse --git-common-dir)/.." && pwd)"
 PY=python3
-for p in .venv/Scripts/python.exe .venv/bin/python; do [ -x "$p" ] && PY="$p" && break; done
+for p in .venv/Scripts/python.exe .venv/bin/python "$MAIN/.venv/Scripts/python.exe" "$MAIN/.venv/bin/python"; do [ -x "$p" ] && PY="$p" && break; done
+export PYTHONUTF8=1
 
 # --- Edit below: one check per line. Any failing line fails the whole check. ---
 # The committed manifest defines every split; it must never change (no stage0 --force).
@@ -22,6 +24,9 @@ git diff --quiet HEAD -- data/manifest.csv
 "$PY" -c "import json; json.load(open('colab_setup.ipynb', encoding='utf-8'))"
 # Manifest still matches the raw data and the verified counts (only where raw data exists).
 if [ -d data/raw/OCT2017 ]; then "$PY" stage0_manifest.py > /dev/null; fi
+# Guard behavior, configuration wiring and outgoing identity (never print addresses).
+"$PY" .agents/test_guards.py
+"$PY" .agents/check_identity.py
 # --- Edit above ---
 
 # Set to 1 once you've added at least one real check above.
@@ -29,3 +34,4 @@ CONFIGURED=1
 if [ "$CONFIGURED" -eq 0 ]; then
   echo "WARNING: .agents/check has no checks configured yet. Nothing was verified." >&2
 fi
+echo "Agent checks: PASS"

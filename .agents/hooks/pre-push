@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Install with git config --local core.hooksPath .agents/hooks (see README).
+set -euo pipefail
+root="$(git rev-parse --show-toplevel)"
+exec bash "$root/.agents/run-python.sh" .agents/check_identity.py --pre-push "$1"
