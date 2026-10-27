@@ -7,20 +7,24 @@ One HTML page with two parts:
      accept/reject control; the ratings export as CSV                             (REPLICATION L4, Fig. 6)
 
 Training-free: reads test predictions, CAM panels written by `analysis.py cam`, and
-data/gan/accepted/<class>/. Images are referenced by absolute path, not copied, so the
-sheet only opens on the machine that built it. Missing CAM panels are shown as missing.
---jpeg Q shows JPEG copies of the sampled GAN images (written next to the page) instead of
-the PNGs, for viewers with a size cap; ratings still key on the original PNG names.
+data/gan/accepted/<class>/. The images it shows are copied into <page>_files/ next to the
+page and referenced by relative path, so the page and that folder open anywhere: from disk,
+or over HTTP (an in-app preview cannot load C:/ or D:/ paths). Missing CAM panels are shown
+as missing. --jpeg Q copies the sampled GAN images as JPEG instead of PNG, for viewers with a
+size cap; ratings still key on the original PNG names.
 
 Usage (from the project root; pass --root to the checkout that holds data/):
   python analysis.py --root D:/Few-shot --out results/analysis cam --variant gan --n 22
   python analysis.py --root D:/Few-shot --out results/analysis cam --variant none --n 22
   python review_sheet.py --root D:/Few-shot --cam results/analysis
-Output: .agents/reports/review-sheet.html (git-ignored). Ratings persist in the browser
-(localStorage) until exported.
+Output: .agents/reports/review-sheet.html + review-sheet_files/ (git-ignored). Open the html
+file in a browser, or serve the folder and open http://localhost:8765/review-sheet.html:
+  python -m http.server 8765 --bind 127.0.0.1 -d .agents/reports
+Ratings persist in that browser (localStorage, per origin: keep the same port) until exported.
 """
 import argparse
 import json
+import shutil
 from datetime import date
 from pathlib import Path
 
@@ -50,7 +54,7 @@ def cam_rows(root, cam_dir):
             p = t[t.path == r.path].iloc[0]
             panel = cam_dir / f"cam_{v}" / f"{p.label}_as_{p.pred}_{stem}.jpg"   # stage4_evaluate.cam naming
             row[v] = dict(pred=p.pred, p=round(float(p[f"p_{p.pred}"]), 3),
-                          src=panel.resolve().as_posix() if panel.exists() else None)
+                          src=panel if panel.exists() else None)
         rows.append(row)
     return sorted(rows, key=lambda r: (RARE.index(r["label"]), r["stem"]))
 
@@ -67,20 +71,31 @@ def main():
 
     root, out = Path(a.root), Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
+    files = f"{out.stem}_files"                # image copies next to the page, linked by relative URL
+
+    def put(src, rel, jpeg=0):
+        """Copy src to <out dir>/<files>/<rel> (re-encoded as JPEG at quality `jpeg` if set) and
+        return its URL relative to the page."""
+        dst = out.parent / files / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if jpeg:
+            import cv2
+            dst = dst.with_suffix(".jpg")
+            cv2.imwrite(str(dst), cv2.imread(str(src)), [cv2.IMWRITE_JPEG_QUALITY, jpeg])
+        else:
+            shutil.copyfile(src, dst)
+        return dst.relative_to(out.parent).as_posix()
+
     cams = cam_rows(root, Path(a.cam))
-    gan = {}                                   # disease -> [[original PNG name, displayed image path], ...]
+    for r in cams:
+        for v in CAM_VARIANTS:
+            if r[v]["src"]:
+                r[v]["src"] = put(r[v]["src"], f"cam_{v}/{r[v]['src'].name}")   # copied as written
+    gan = {}                                   # disease -> [[original PNG name, page-relative image URL], ...]
     for c in RARE:
         d = root / "data/gan/accepted" / c
         names = sample_files([p.name for p in d.glob("*.png")], a.n, a.seed)
-        srcs = [d / f for f in names]
-        if a.jpeg:
-            import cv2
-            jd = out.parent / f"{out.stem}_files" / c
-            jd.mkdir(parents=True, exist_ok=True)
-            for i, f in enumerate(srcs):
-                srcs[i] = jd / f"{f.stem}.jpg"
-                cv2.imwrite(str(srcs[i]), cv2.imread(str(f)), [cv2.IMWRITE_JPEG_QUALITY, a.jpeg])
-        gan[c] = [[f, s.resolve().as_posix()] for f, s in zip(names, srcs)]
+        gan[c] = [[f, put(d / f, f"gan/{c}/{f}", a.jpeg)] for f in names]
     data = dict(seed=a.seed, n=a.n, jpeg=a.jpeg, built=date.today().isoformat(), cams=cams, gan=gan)
 
     out.write_text(TEMPLATE.replace("__DATA__", json.dumps(data).replace("</", "<\\/")), encoding="utf-8")
@@ -148,8 +163,6 @@ const KEY = "octfsl-gan-ratings-seed" + D.seed;
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
                 set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
 const ratings = JSON.parse(store.get(KEY) || "{}");           // file -> {rating, at}
-// Images are absolute paths. Opened from disk, a browser needs a file:// URL.
-const url = p => location.protocol !== "file:" ? p : /^[A-Za-z]:\//.test(p) ? "file:///" + p : "file://" + p;
 const el = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) k === "class" ? e.className = v : k.startsWith("on") ? e[k] = v : e.setAttribute(k, v);
   e.append(...kids); return e; };
@@ -189,15 +202,15 @@ let lastLabel = null;
 for (const r of D.cams) {
   if (r.label !== lastLabel) { camPane.append(el("h2", {}, r.label)); lastLabel = r.label; }
   const base = r.gan.src || r.none.src;
-  const sq = (src, side, text) => src
-    ? el("div", { class: "sq", role: "img", "aria-label": text, style: `background-image:url("${url(src)}");background-position:${side}` })
-    : el("div", { class: "sq missing" }, text);
+  const sq = (src, side, label, missing) => src
+    ? el("div", { class: "sq", role: "img", "aria-label": label, style: `background-image:url("${src}");background-position:${side}` })
+    : el("div", { class: "sq missing" }, missing);
   const cap = v => { const ok = r[v].pred === r.label;
     return el("figcaption", {}, `${v}: `, el("span", { class: ok ? "ok" : "bad" }, `${ok ? "✓" : "✗"} ${r[v].pred}`), ` p=${r[v].p.toFixed(3)}`); };
   camPane.append(el("div", { class: "small muted" }, `${r.path} · true ${r.label}`), el("div", { class: "cam" },
-    el("figure", {}, sq(base, "0 0", "image not available (no panel)"), el("figcaption", {}, "original (256→299 px)")),
-    el("figure", {}, sq(r.gan.src, "100% 0", "gan panel missing"), cap("gan")),
-    el("figure", {}, sq(r.none.src, "100% 0", "none panel missing"), cap("none"))));
+    el("figure", {}, sq(base, "0 0", `${r.stem} original`, "image not available (no panel)"), el("figcaption", {}, "original (256→299 px)")),
+    el("figure", {}, sq(r.gan.src, "100% 0", `${r.stem} gan CAM overlay`, "gan panel missing"), cap("gan")),
+    el("figure", {}, sq(r.none.src, "100% 0", `${r.stem} none CAM overlay`, "none panel missing"), cap("none"))));
 }
 addTab("cam", "CAM: gan vs none", camPane);
 
@@ -221,7 +234,7 @@ for (const c of RARE) {
   D.gan[c].forEach((g, i) => {
     const name = g.file.split("/").pop();
     const tile = el("div", { class: "tile", tabindex: "0", "aria-label": `${c} sample ${i + 1}` },
-      el("img", { src: url(g.src), alt: `${c} CycleGAN sample ${i + 1}: ${name}`, loading: "lazy", title: "click to zoom" }),
+      el("img", { src: g.src, alt: `${c} CycleGAN sample ${i + 1}: ${name}`, loading: "lazy", title: "click to zoom" }),
       el("div", { class: "meta" }, el("span", {}, `#${i + 1} `, el("b", { class: "state" }, "unrated")), el("span", { class: "file", title: name }, name)),
       el("div", { class: "btns" },
         el("button", { class: "acc", "aria-pressed": "false", onclick: () => rate(g, tile, "accept") }, "✓ Accept"),
