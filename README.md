@@ -169,6 +169,13 @@ Three of the paper's numbers can't be matched as printed: its RCI values, Table 
 |---|---|---|
 | Two ophthalmologists removed bad CycleGAN images | Automatic filter (`stage2_cyclegan.py qc`): keep images closer to real disease than to NORMAL in Inception-v3 feature space | No clinician has reviewed the accepted images |
 | 3,000 accepted GAN images per disease | CSC 3,000, MH 2,610, MacTel 1,248, Stargardt 2,199, RP 832 passed QC | Four classes below target; Stage 3 warns and continues |
+
+C1 keeps that original accepted set (`--gan-pool v1`, the Stage 3 default).
+C5 is prepared in Colab **3.4c.1–3.4c.6** to generate and automatically QC fresh
+candidates from existing checkpoints for all four short classes. It writes a
+separate, immutable `accepted_v2` pool capped at 3,000 per class; C2 must select
+`--gan-pool v2`. No GPU top-up has been run yet. See [the C5 guide](COLAB.md#c5-top-up-before-c2-keep-c1s-pool-fixed-d7)
+for budgets, resume, provenance and cache isolation.
 | 250 epochs | Early stopping on validation loss, patience 20 (`--patience 0` runs all 250) | Heads stopped after 22–27 epochs |
 | Trained prototypical network, Siamese network | Nearest class-mean (`proto`); no Siamese network | `proto` row not comparable |
 | kNN K=3 on "Inception-v3 trained without augmentation" | K=3 Euclidean on frozen ImageNet features | 86.4 vs 91.2%; cosine K=1 gives 91.1% ([`knn_sweep.csv`](results/analysis/knn_sweep.csv)), cause not established |

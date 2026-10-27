@@ -363,7 +363,7 @@ These checks preserve the manifest and run of record; the unique cause is unreso
 | C2 | Amount of GAN images 0 / 500 / 1,000 / 2,000 / 3,000 (`--gan-per-class`), over seeds | Fig. 5 | as C1 |
 | C3 | Under-sampling to control class balance | Fig. 11 | as C1, needs a Stage 3 option |
 | C4 | 5-fold CV with per-fold Stage 1 + CycleGANs (25 GANs, ~50 A100-hours by `stage2.log`); without per-fold GANs the test fold leaks | Table 2 | GPU, large |
-| C5 | Top up MacTel and RP toward 3,000 GAN images | §2.3 | GPU |
+| C5 | D7: top up **MH, MacTel, Stargardt and RP** to 3,000 for C2; C1 keeps the original short v1 pools as a deviation. Generation only from existing checkpoints, fresh NORMALs with zero round-1 overlap, original automatic QC (zero margin, rank d_rare), no L4 human ratings. **Code/tests and Colab 3.4c.1–3.4c.6 prepared; GPU execution pending.** Budgets with 20% surplus: 718 / 6,739 / 1,749 / 12,508. Separate immutable `accepted_v2`, explicit Stage 3 `--gan-pool v2`, new cache groups; old accepted images and QC CSVs unchanged. [Run guide](../../COLAB.md#c5-top-up-before-c2-keep-c1s-pool-fixed-d7) | §2.3 | A100 compute ~25–32 min / T4 ~75–128 min (T4 inference extrapolated, unbenchmarked), plus raw/Drive I/O; no retraining |
 
 ### Not reproducible / out of scope
 Ophthalmologist review and human-expert baseline (no clinician), segmentation CycleGAN (no

@@ -300,36 +300,53 @@ def generate(a):
     G = build_models()[0]
     tf.train.Checkpoint(G=G).restore(latest).expect_partial()
 
-    src = list_images(root / "data/gan/normal_src")
+    src = list_images(Path(a.source_dir) if a.source_dir else root / "data/gan/normal_src")
     if a.n > len(src):
         print(f"only {len(src)} source images available (asked for {a.n}); rerun prep with a larger --n-source")
     src = src[: a.n]
-    out = root / "data/gan/out" / a.disease
+    out = Path(a.output_dir) if a.output_dir else root / "data/gan/out" / a.disease
     out.mkdir(parents=True, exist_ok=True)
+    if a.resume:
+        src = [p for p in src if not (out / f"{a.disease}_gan_{Path(p).stem}.png").is_file()]
     t0 = time.time()
     for i in range(0, len(src), 16):
         chunk = src[i : i + 16]
         y = G(tf.stack([to_float(read_img(p)) for p in chunk]), training=False)
         y = tf.cast(tf.clip_by_value((y + 1) * 127.5, 0, 255), tf.uint8)
         for p, img in zip(chunk, y):
-            tf.io.write_file(str(out / f"{a.disease}_gan_{Path(p).stem}.png"), tf.io.encode_png(img))
+            dest = out / f"{a.disease}_gan_{Path(p).stem}.png"
+            pending = dest.with_suffix(".tmp")
+            tf.io.write_file(str(pending), tf.io.encode_png(img))
+            pending.replace(dest)
+        print(f"  generated {min(i + 16, len(src))}/{len(src)} remaining images", flush=True)
     print(f"wrote {len(src)} images to {out} in {time.time() - t0:.0f}s (checkpoint {latest})")
 
 
 # --------------------------------------------------------------------------- qc
+def select_qc(df, keep, margin=0.0, ranking="margin"):
+    """The recorded run ranked by d_rare; the later CLI default ranks by margin."""
+    df = df.copy()
+    df["margin"] = df.d_normal - df.d_rare
+    df["pass"] = df.margin > margin
+    kept = df[df["pass"]].sort_values(
+        [ranking, "file"], ascending=[ranking == "d_rare", True]).head(keep)
+    df["kept"] = df.file.isin(kept.file)
+    return df, kept
+
+
 def qc(a):
-    """Proxy for the paper's ophthalmologist review (you must still eyeball the sheets).
+    """Automatic proxy for the paper's ophthalmologist review, not expert validation.
 
     Keeps a synthetic image only if its Inception-v3 features are closer (mean cosine
     distance to 3 nearest neighbours) to REAL training images of the disease than to
     real NORMAL images, i.e. the translation actually happened, then keeps the `keep`
-    closest ones.
+    closest ones under the selected ranking (d_rare for the recorded run).
     """
     need_tf()
     import cv2
 
     gan = Path(a.root) / "data/gan"
-    fake = list_images(gan / "out" / a.disease)
+    fake = list_images(Path(a.input_dir) if a.input_dir else gan / "out" / a.disease)
     real = list_images(gan / "real" / a.disease)
     normal = list_images(gan / "normalA")[:500]
     assert fake, "no generated images: run generate first"
@@ -351,13 +368,12 @@ def qc(a):
         return 1 - np.sort(S, axis=1)[:, -k:].mean(axis=1)
 
     df = pd.DataFrame({"file": fake, "d_rare": knn_dist(Ff @ Fr.T), "d_normal": knn_dist(Ff @ Fn.T)})
-    df["margin"] = df.d_normal - df.d_rare          # > threshold: more disease-like than normal-like
-    df["pass"] = df.margin > a.margin
-    kept = df[df["pass"]].sort_values("margin", ascending=False).head(a.keep)
-    df["kept"] = df.file.isin(kept.file)
-    df.to_csv(gan / f"qc_{a.disease}.csv", index=False)
+    df, kept = select_qc(df, a.keep, a.margin, a.ranking)
+    report = Path(a.report_dir) if a.report_dir else gan
+    report.mkdir(parents=True, exist_ok=True)
+    df.to_csv(report / f"qc_{a.disease}.csv", index=False)
 
-    acc_dir = gan / "accepted" / a.disease
+    acc_dir = Path(a.accepted_dir) if a.accepted_dir else gan / "accepted" / a.disease
     if acc_dir.exists():
         shutil.rmtree(acc_dir)
     acc_dir.mkdir(parents=True)
@@ -370,14 +386,14 @@ def qc(a):
             return
         tiles = [cv2.resize(cv2.imread(p), (128, 128)) for p in files]
         tiles += [np.zeros_like(tiles[0])] * (-len(tiles) % 8)
-        cv2.imwrite(str(gan / name), np.vstack([np.hstack(tiles[i : i + 8]) for i in range(0, len(tiles), 8)]))
+        cv2.imwrite(str(report / name), np.vstack([np.hstack(tiles[i : i + 8]) for i in range(0, len(tiles), 8)]))
 
     sheet(np.random.default_rng(0).permutation(kept.file.values), f"qc_{a.disease}_kept.jpg")
     sheet(df[~df.kept].sort_values("d_rare", ascending=False).file, f"qc_{a.disease}_rejected.jpg")
 
     print(f"{a.disease}: {int(df['pass'].sum())}/{len(df)} above margin {a.margin:+.4f}; "
           f"kept {len(kept)} -> {acc_dir}")
-    print(f"  review {gan / f'qc_{a.disease}_kept.jpg'} and delete bad files from {acc_dir}")
+    print(f"  contact sheet: {report / f'qc_{a.disease}_kept.jpg'}")
     if len(kept) < a.keep:
         print(f"  only {len(kept)} < {a.keep}: generate more (larger --n; prep with larger --n-source if needed)")
 
@@ -411,10 +427,18 @@ def main():
     p.add_argument("--disease", required=True, choices=RARE)
     p.add_argument("--n", type=int, default=4000, help="images to generate (extra to survive QC)")
     p.add_argument("--ckpt")
+    p.add_argument("--source-dir", help="separate NORMAL source folder (C5)")
+    p.add_argument("--output-dir", help="separate generated-candidate folder (C5)")
+    p.add_argument("--resume", action="store_true", help="skip completed PNGs; writes are atomic")
 
     p = sub.add_parser("qc", parents=[common])
     p.add_argument("--disease", required=True, choices=RARE)
     p.add_argument("--keep", type=int, default=3000)
+    p.add_argument("--input-dir", help="separate candidate folder (C5)")
+    p.add_argument("--accepted-dir", help="separate accepted folder (C5)")
+    p.add_argument("--report-dir", help="separate QC CSV/contact-sheet folder (C5)")
+    p.add_argument("--ranking", choices=["margin", "d_rare"], default="margin",
+                   help="d_rare reproduces the original recorded run's selection")
     p.add_argument("--margin", type=float, default=0.0,
                    help="keep images whose (d_normal - d_rare) exceeds this; calibrate against real images "
                         "(e.g. their 10th percentile) rather than against a target count")

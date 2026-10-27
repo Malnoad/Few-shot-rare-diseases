@@ -33,6 +33,7 @@ Outputs:
   results/stage3_<variant>/{val,test}_predictions.csv
 """
 import argparse
+import json
 import random
 import sys
 import time
@@ -108,6 +109,28 @@ def rel_images(root, folder):
         if d.exists() else []
 
 
+def gan_images(root, cls, pool="v1"):
+    """Select the explicit pool; v2 is usable only after all C5 classes are complete."""
+    if pool not in {"v1", "v2"}:
+        raise ValueError(f"unknown GAN pool: {pool}")
+    folder = "data/gan/accepted" if pool == "v1" else "data/gan/accepted_v2"
+    paths = rel_images(root, f"{folder}/{cls}")
+    if pool == "v2":
+        marker = root / folder / "complete.json"
+        if not marker.exists():
+            raise ValueError("C5 v2 is incomplete: run 3.4c.6 publish first")
+        expected = json.loads(marker.read_text(encoding="utf-8"))
+        if set(expected) != set(RARE) or any(len(expected[c]) != 3000 for c in RARE):
+            raise ValueError("C5 completion inventory must have 3,000 images per rare class")
+        if {Path(p).name for p in paths} != set(expected[cls]):
+            raise ValueError(f"C5 v2 {cls} differs from its completed inventory")
+    return paths
+
+
+def gan_cache_group(cls, pool):
+    return f"gan_{cls}" if pool == "v1" else f"gan_v2_{cls}"
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=".")
@@ -117,6 +140,8 @@ def main():
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--patience", type=int, default=20, help="early stopping on val loss; 0 = off")
     ap.add_argument("--gan-per-class", type=int, default=3000)
+    ap.add_argument("--gan-pool", choices=["v1", "v2"], default="v1",
+                    help="v1 = original accepted set (C1); v2 = complete C5 top-up (C2)")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--feat-batch", type=int, default=32, help="lower if feature extraction runs out of memory")
     ap.add_argument("--cache-dir", help="explicit feature-cache directory (C0 uses one per arm)")
@@ -127,9 +152,13 @@ def main():
     need_tf()
     tf.keras.utils.set_random_seed(a.seed)
     root = Path(a.root)
+    if a.variant == "gan" and a.gan_pool == "v2":
+        for cls in RARE:
+            gan_images(root, cls, a.gan_pool)
     cache = Path(a.cache_dir) if a.cache_dir else root / "results/features"
     cache.mkdir(parents=True, exist_ok=True)
-    out = Path(a.out_dir) if a.out_dir else root / f"results/stage3_{a.variant}"
+    suffix = "_v2" if a.variant == "gan" and a.gan_pool == "v2" else ""
+    out = Path(a.out_dir) if a.out_dir else root / f"results/stage3_{a.variant}{suffix}"
     out.mkdir(parents=True, exist_ok=True)
 
     man = pd.read_csv(root / "data/manifest.csv")
@@ -160,7 +189,7 @@ def main():
             Xtr.append(Xr); ytr += yr
             continue
         basic = rel_images(root, f"data/aug_basic/{cls}")
-        gan = rel_images(root, f"data/gan/accepted/{cls}") if a.variant == "gan" else []
+        gan = gan_images(root, cls, a.gan_pool) if a.variant == "gan" else []
         if len(basic) < 2000:
             sys.exit(f"data/aug_basic/{cls} has {len(basic)} images: run Stage 1")
         if a.variant == "gan":
@@ -168,7 +197,7 @@ def main():
                 print(f"WARNING {cls}: only {len(gan)} accepted GAN images (paper: {a.gan_per_class})")
             gan = sorted(rng.sample(gan, min(len(gan), a.gan_per_class)))
         Xb = features(f"basic_{cls}", basic, root, cache, net_fn, a.feat_batch)
-        Xg = features(f"gan_{cls}", gan, root, cache, net_fn, a.feat_batch) if gan else np.zeros((0, 2048), np.float32)
+        Xg = features(gan_cache_group(cls, a.gan_pool), gan, root, cache, net_fn, a.feat_batch) if gan else np.zeros((0, 2048), np.float32)
         pool = np.concatenate([Xb, Xg])
         idx = np.random.default_rng(a.seed).permutation(len(pool))
         n_val = len(pool) // 10

@@ -66,6 +66,7 @@ prototypical network, end-to-end fine-tuning of Inception-v3.
 | 2026-10-22 | Commit `head.npz` and `test_predictions.csv` for each variant | Small (~76 / ~180 KB); `COLAB.md` and `analysis.py` need them on GitHub | `.gitignore` |
 | 2026-10-22 | Local work on the laptop is training-free; training runs on Colab | No dedicated GPU locally | `docs/research/REPLICATION.md` |
 | 2026-10-27 | D15: fixed 250 epochs/final head primary; es20 on first 20 seeds sensitivity; about 63 pairs for 1 pp at SD about 2.8 pp, or 20 first to re-estimate SD then top up | Lam selected protocol and power-based planning; T8 must align the excluded sweep implementation | [C1 plan](C1_EXPERIMENT_PLAN.md) |
+| 2026-10-27 | D7/C5: C1 keeps v1; run C5 before C2, topping up MH/MacTel/Stargardt/RP using existing checkpoints and original automatic QC only | L4 expert ratings were dropped; C2 needs full 3,000-image pools. Code/cells prepared, GPU work pending | [Colab 3.4c](../../COLAB.md#c5-top-up-before-c2-keep-c1s-pool-fixed-d7), `c5_topup.py`; explicit Stage 3 `--gan-pool v2`, separate caches and outputs |
 
 ## Known pitfalls
 - Rare test classes have 4-5 images: one image moves recall by 0.20-0.25.
