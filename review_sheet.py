@@ -8,30 +8,32 @@ One HTML page with two parts:
      says where the strongest colour sits (on the abnormality / retina elsewhere / off the
      retina / can't tell)                                                         (REPLICATION L3, Fig. 10)
   2. 100 random accepted CycleGAN images per disease (fixed seed), each shown next to the
-     NORMAL scan it was translated from, under a strip of the real training scans of that
-     disease (data/gan/real/<class>, what the CycleGAN learned to imitate). The rater picks
-     looks real / flawed (with reasons) / unsure                                  (REPLICATION L4, Fig. 6)
-Answers export as one long-format CSV.
+     NORMAL scan it was translated from, under a numbered strip of the real training scans of
+     that disease (data/gan/real/<class>, what the CycleGAN learned to imitate). The rater picks
+     looks real / flawed / unsure, then disease-specific reasons from
+     docs/research/cyclegan_rubric.json (easy / medium / hard)                   (REPLICATION L4, Fig. 6)
 
-Training-free: reads test predictions, CAM panels written by `analysis.py cam`, and
+Training-free: reads test predictions, CAM panels written by `analysis.py cam`, the rubric and
 data/gan/{accepted,normal_src,real}/. The images it shows are copied into <page>_files/ next
-to the page and referenced by relative path, so the page and that folder open anywhere: from
-disk, or over HTTP (an in-app preview cannot load C:/ or D:/ paths). Missing images are shown
-as missing. --jpeg Q copies the GAN, source and real images as JPEG instead of PNG, for
-viewers with a size cap; answers still key on the original PNG names.
+to the page and referenced by relative path, so the page and that folder open anywhere.
+Missing images are shown as missing. --jpeg Q copies the GAN, source and real images as JPEG
+instead of PNG, for viewers with a size cap; answers still key on the original PNG names.
 
 Usage (from the project root; pass --root to the checkout that holds data/):
   python analysis.py --root D:/Few-shot --out results/analysis cam --variant gan --n 22
   python analysis.py --root D:/Few-shot --out results/analysis cam --variant none --n 22
-  python review_sheet.py --root D:/Few-shot --cam results/analysis
-Output: .agents/reports/review-sheet.html + review-sheet_files/ (git-ignored). Open the html
-file in a browser, or serve the folder and open http://localhost:8765/review-sheet.html:
-  python -m http.server 8765 --bind 127.0.0.1 -d .agents/reports
-Answers persist in that browser (localStorage, per origin: keep the same port) until exported.
+  python review_sheet.py --root D:/Few-shot --cam results/analysis      # build the page
+  python review_sheet.py serve                                          # then open the URL it prints
+Output: .agents/reports/review-sheet.html + review-sheet_files/ (git-ignored).
+`serve` serves .agents/reports on http://localhost:8765 and saves every answer, the moment it
+is clicked, to .agents/reports/review-answers.csv (one row per question, newest answer wins;
+rebuilding the page never touches it). The browser keeps a copy too (localStorage). Opened as
+a plain file, the page cannot write to disk: it says so, and Export CSV is the only copy.
 """
 import argparse
 import json
 import shutil
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -40,6 +42,7 @@ import pandas as pd
 
 RARE = ["CSC", "MH", "MacTel", "Stargardt", "RP"]  # == stage4_evaluate.RARE (not imported: it pulls in sklearn)
 CAM_VARIANTS = ["gan", "none"]
+ANSWER_FIELDS = ["rater", "task", "disease", "item", "file", "source_file", "answer", "reasons", "answered_at", "seed"]
 
 
 def sample_files(names, n, seed):
@@ -53,6 +56,19 @@ def sample_files(names, n, seed):
 def source_name(gan_name):
     """stage2 `generate` names outputs <class>_gan_<source stem>.png after the data/gan/normal_src image."""
     return gan_name.split("_gan_", 1)[-1]
+
+
+def merge_answers(old, new):
+    """Upsert answer rows keyed by (task, file). A row replaces the stored one only if it was
+    answered at the same time or later (ISO timestamps compare as strings), so several tabs or
+    a stale browser copy cannot overwrite a newer answer. A cleared answer is a row with an
+    empty `answer` and its own timestamp."""
+    rows = {(r["task"], r["file"]): r for r in old}
+    for r in new:
+        k = (r["task"], r["file"])
+        if k not in rows or r.get("answered_at", "") >= rows[k].get("answered_at", ""):
+            rows[k] = {f: str(r.get(f, "")) for f in ANSWER_FIELDS}
+    return list(rows.values())
 
 
 def cam_rows(root, cam_dir):
@@ -75,6 +91,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=".", help="checkout that holds data/ and results/")
     ap.add_argument("--cam", default="results/analysis", help="folder holding cam_gan/ and cam_none/")
+    ap.add_argument("--rubric", default="docs/research/cyclegan_rubric.json", help="disease-specific answer choices")
     ap.add_argument("--out", default=".agents/reports/review-sheet.html")
     ap.add_argument("--n", type=int, default=100, help="GAN images per disease (paper Fig. 6: 100)")
     ap.add_argument("--seed", type=int, default=42)
@@ -113,7 +130,9 @@ def main():
                    put(root / "data/gan/normal_src" / source_name(f), f"source/{source_name(f)}", a.jpeg)]
                   for f in names]
         real[c] = [put(p, f"real/{c}/{p.name}", a.jpeg) for p in sorted((root / "data/gan/real" / c).glob("*.png"))]
-    data = dict(seed=a.seed, n=a.n, jpeg=a.jpeg, built=date.today().isoformat(), cams=cams, gan=gan, real=real)
+    rubric = json.loads(Path(a.rubric).read_text(encoding="utf-8"))
+    rubric = {c: rubric[c] for c in RARE}
+    data = dict(seed=a.seed, n=a.n, jpeg=a.jpeg, built=date.today().isoformat(), cams=cams, gan=gan, real=real, rubric=rubric)
 
     out.write_text(TEMPLATE.replace("__DATA__", json.dumps(data).replace("</", "<\\/")), encoding="utf-8")
     found = {v: sum(r[v]["src"] is not None for r in cams) for v in CAM_VARIANTS}
@@ -121,6 +140,69 @@ def main():
           f"GAN images {', '.join(f'{c} {len(g)}' for c, g in gan.items())}; "
           f"sources found {sum(s is not None for g in gan.values() for _, _, s in g)}; "
           f"real scans {', '.join(f'{c} {len(r)}' for c, r in real.items())}; seed {a.seed})")
+
+
+def serve(argv):
+    """Serve the page folder and keep <dir>/review-answers.csv in step with every answer:
+    GET /answers returns the stored rows, POST /answers {rows: [...]} merges rows in."""
+    import csv
+    import os
+    import threading
+    from functools import partial
+    from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+
+    ap = argparse.ArgumentParser(prog="review_sheet.py serve", description=serve.__doc__)
+    ap.add_argument("--dir", default=".agents/reports", help="folder holding review-sheet.html")
+    ap.add_argument("--port", type=int, default=8765)
+    a = ap.parse_args(argv)
+    base = Path(a.dir)
+    store, lock = base / "review-answers.csv", threading.Lock()
+
+    def read():
+        if not store.exists():
+            return []
+        with store.open(newline="", encoding="utf-8") as f:
+            return list(csv.DictReader(f))
+
+    def write(rows):
+        tmp = store.with_suffix(".csv.tmp")          # write then rename: a crash never leaves half a file
+        with tmp.open("w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, ANSWER_FIELDS)
+            w.writeheader()
+            w.writerows(rows)
+        os.replace(tmp, store)
+
+    class Handler(SimpleHTTPRequestHandler):
+        def reply(self, code, obj):
+            body = json.dumps(obj).encode()
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self):
+            if self.path.split("?")[0] != "/answers":
+                return super().do_GET()
+            with lock:
+                self.reply(200, {"rows": read(), "file": store.name})
+
+        def do_POST(self):
+            if self.path != "/answers":
+                return self.send_error(404)
+            try:
+                new = json.loads(self.rfile.read(int(self.headers["Content-Length"])))["rows"]
+                with lock:
+                    rows = merge_answers(read(), new)
+                    write(rows)
+                self.reply(200, {"saved": len(new), "total": len(rows), "file": store.name})
+            except Exception as e:  # report to the page, which shows it and keeps the answers queued
+                self.reply(500, {"error": f"{type(e).__name__}: {e}"})
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", a.port), partial(Handler, directory=str(base)))
+    print(f"serving {base} at http://localhost:{a.port}/review-sheet.html  (answers -> {store}); Ctrl+C stops")
+    httpd.serve_forever()
 
 
 TEMPLATE = r"""<!doctype html>
@@ -131,7 +213,7 @@ TEMPLATE = r"""<!doctype html>
   .sheet { background: #0b0d10; color: #fff; padding: 16px; border-radius: var(--radius, 10px);
            font: 14px/1.45 var(--font-sans, system-ui, sans-serif); }
   h1 { font-size: 18px; margin: 0 0 4px; } h2 { font-size: 15px; margin: 16px 0 6px; }
-  p { margin: 6px 0; } ol { margin: 4px 0; padding-left: 22px; }
+  p { margin: 6px 0; } ol, ul { margin: 4px 0; padding-left: 22px; }
   code { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px;
          background: #1c2128; padding: 1px 4px; border-radius: 4px; }
   .muted { color: #d0d7de; } .small { font-size: 12px; }
@@ -139,15 +221,23 @@ TEMPLATE = r"""<!doctype html>
                   border-radius: 6px; padding: 4px 10px; }
   button { cursor: pointer; } button:hover { border-color: #fff; }
   :focus-visible { outline: 3px solid #79c0ff; outline-offset: 2px; }
+  summary { cursor: pointer; font-weight: 600; }
   .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
   .tabs button[aria-selected=true] { background: #fff; color: #000; border-color: #fff; font-weight: 600; }
   .note { border-left: 3px solid #79c0ff; padding: 4px 10px; background: #11161d; margin: 8px 0; }
   .warn { border-left-color: #f0b72f; }
+  /* disk-save status: text says the state, colour only repeats it */
+  .status { margin: 6px 0; padding: 4px 10px; border-radius: 6px; font-size: 13px; border: 1px solid #484f58; }
+  .status.ok { border-color: #3fb950; } .status.ok::before { content: "✓ "; color: #7ee787; }
+  .status.busy { border-style: dashed; }
+  .status.warn { border-color: #f0b72f; } .status.warn::before { content: "⚠ "; color: #f0b72f; }
+  .status.bad { background: #67060c; border-color: #f85149; font-weight: 700; } .status.bad::before { content: "✗ "; }
   .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 9px;
            border: 1px solid #f0b72f; color: #f0b72f; margin-left: 6px; }
   /* answer buttons: pressed state = filled + bold, never colour alone */
-  .opts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .opts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; align-items: center; }
   .opts button { padding: 2px 8px; font-size: 12px; }
+  .tier { font-size: 11px; color: #d0d7de; min-width: 64px; }
   button[aria-pressed=true] { background: #fff; color: #000; border-color: #fff; font-weight: 700; }
   button.real[aria-pressed=true] { background: #0f5132; color: #fff; border-color: #3fb950; }
   button.flawed[aria-pressed=true] { background: #67060c; color: #fff; border-color: #f85149; }
@@ -159,10 +249,12 @@ TEMPLATE = r"""<!doctype html>
   .sq.missing, .missing { display: flex; align-items: center; justify-content: center; text-align: center; padding: 6px;
                           border: 2px dashed #8b949e; font-size: 12px; aspect-ratio: 1; box-sizing: border-box; }
   .ok { color: #7ee787; } .bad { color: #ffa198; }
-  /* real reference scans, kept in view while scrolling a disease tab */
+  /* real reference scans, numbered as in the rubric, kept in view while scrolling a disease tab */
   .refs { position: sticky; top: 0; z-index: 2; background: #0b0d10; padding: 6px 0; border-bottom: 1px solid #484f58; }
   .strip { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px; }
-  .strip img { height: 110px; aspect-ratio: 1; cursor: zoom-in; border: 1px solid #484f58; }
+  .strip figure { margin: 0; position: relative; flex: none; }
+  .strip figcaption { position: absolute; top: 1px; left: 1px; background: #000; color: #fff; font-size: 11px; padding: 0 4px; }
+  .strip img { display: block; height: 110px; aspect-ratio: 1; cursor: zoom-in; border: 1px solid #484f58; }
   .strip img.big { height: 256px; cursor: zoom-out; }
   /* GAN rating grid: before (source NORMAL) | after (generated) */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 10px; margin-top: 10px; }
@@ -185,6 +277,7 @@ TEMPLATE = r"""<!doctype html>
 <body><div class="sheet">
 <h1>Rare-disease review sheet</h1>
 <p class="muted small" id="meta"></p>
+<p id="status" class="status busy" role="status">Loading saved answers…</p>
 <div class="note">This sheet is built for a <b>non-expert</b>: every question is answered by <b>comparing images</b>, not by medical knowledge.
   When you are not sure, choose “Unsure” or “Can't tell” instead of guessing. Report the results as a visual check by the author,
   not a clinician: they do not replicate the paper's ophthalmologist rating (Fig. 6).</div>
@@ -192,17 +285,20 @@ TEMPLATE = r"""<!doctype html>
 <div class="tabs" role="tablist" id="tabs"></div>
 <div id="panes"></div>
 </div>
-<script>
+<script type="module">
 const D = __DATA__;
 const RARE = Object.keys(D.gan);
 // Answers are keyed and exported by the original PNG path relative to the data checkout.
-for (const c of RARE) D.gan[c] = D.gan[c].map(([name, src, source]) => ({ src, source,
-  file: `data/gan/accepted/${c}/${name}`, sourceFile: `data/gan/normal_src/${name.split("_gan_").pop()}` }));
+const byFile = new Map();
+for (const c of RARE) D.gan[c] = D.gan[c].map(([name, src, source], i) => {
+  const g = { src, source, disease: c, i: i + 1, file: `data/gan/accepted/${c}/${name}`, sourceFile: `data/gan/normal_src/${name.split("_gan_").pop()}` };
+  byFile.set(g.file, g); return g; });
+const camByPath = new Map(D.cams.map(r => [r.path, r]));
 const KEY = "octfsl-review-v2-seed" + D.seed;
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
                 set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
-const S = Object.assign({ gan: {}, cam: {} }, JSON.parse(store.get(KEY) || "{}"));   // gan: file -> {answer, reasons, at}; cam: "v|path" -> {answer, at}
-const save = () => { store.set(KEY, JSON.stringify(S)); for (const c of RARE) tabBtn[c].textContent = tabLabel(c); tabBtn.cam.textContent = camLabel(); };
+// gan: file -> {answer, reasons, at}; cam: "v|path" -> {answer, at}. answer "" = cleared, kept so a merge knows when.
+const S = Object.assign({ gan: {}, cam: {} }, JSON.parse(store.get(KEY) || "{}"));
 const now = () => new Date().toISOString();
 const el = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) k === "class" ? e.className = v : k.startsWith("on") ? e[k] = v : e.setAttribute(k, v);
@@ -212,7 +308,7 @@ function options(choices, get, set, label) {
   const box = el("div", { class: "opts", role: "group", "aria-label": label });
   const paint = () => box.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === get()));
   for (const [v, text, cls] of choices)
-    box.append(el("button", { class: cls || "", "data-v": v, "aria-pressed": "false", onclick: () => { set(get() === v ? null : v); paint(); } }, text));
+    box.append(el("button", { class: cls || "", "data-v": v, "aria-pressed": "false", onclick: () => { set(get() === v ? "" : v); paint(); } }, text));
   paint(); return box;
 }
 
@@ -221,6 +317,68 @@ document.getElementById("meta").textContent =
 const rater = document.getElementById("rater");
 rater.value = store.get(KEY + "-rater") || "";
 rater.oninput = () => store.set(KEY + "-rater", rater.value);
+
+// ---------- answers on disk (review_sheet.py serve) ----------
+// One CSV row per question, same columns as Export. Every change is queued and POSTed; failed
+// saves stay queued and are retried on the next change.
+const camKey = (v, r) => `${v}|${r.path}`;
+const ganRow = g => { const s = S.gan[g.file] || {};
+  return { rater: rater.value, task: "gan", disease: g.disease, item: g.i, file: g.file, source_file: g.sourceFile,
+           answer: s.answer || "", reasons: (s.reasons || []).join(";"), answered_at: s.at || "", seed: D.seed }; };
+const camRow = (v, r) => { const s = S.cam[camKey(v, r)] || {};
+  return { rater: rater.value, task: `cam_${v}`, disease: r.label, item: r.stem, file: r.path, source_file: "",
+           answer: s.answer || "", reasons: "", answered_at: s.at || "", seed: D.seed }; };
+const statusEl = document.getElementById("status");
+const setStatus = (kind, text) => { statusEl.className = "status " + kind; statusEl.textContent = text; };
+const disk = { on: location.protocol.startsWith("http"), file: "review-answers.csv", pending: new Map(), timer: 0 };
+async function loadFromDisk() {
+  if (!disk.on) return setStatus("warn", "Not saved to disk: this page was opened as a file. Answers stay in this browser only, so export a CSV often, or open the page through `python review_sheet.py serve`.");
+  try {
+    const r = await fetch("answers", { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status === 404 || r.status === 501 ? "this server has no /answers endpoint; start it with `python review_sheet.py serve`" : `HTTP ${r.status}`);
+    const { rows, file } = await r.json(); disk.file = file;
+    const onDisk = new Map();
+    for (const row of rows) {                       // per question, the newer of disk and browser wins
+      const isGan = row.task === "gan", key = isGan ? row.file : `${row.task.slice(4)}|${row.file}`, bucket = isGan ? S.gan : S.cam;
+      onDisk.set(row.task + "|" + row.file, row.answered_at);
+      if (!bucket[key] || row.answered_at >= (bucket[key].at || ""))
+        bucket[key] = { answer: row.answer, reasons: row.reasons ? row.reasons.split(";") : [], at: row.answered_at };
+    }
+    store.set(KEY, JSON.stringify(S));
+    const newer = [];                               // browser answers the file has not seen yet
+    for (const [file, s] of Object.entries(S.gan)) if (byFile.has(file) && s.at > (onDisk.get("gan|" + file) || "")) newer.push(ganRow(byFile.get(file)));
+    for (const [k, s] of Object.entries(S.cam)) { const [v, path] = [k.slice(0, k.indexOf("|")), k.slice(k.indexOf("|") + 1)];
+      if (camByPath.has(path) && s.at > (onDisk.get(`cam_${v}|${path}`) || "")) newer.push(camRow(v, camByPath.get(path))); }
+    for (const row of newer) disk.pending.set(row.task + "|" + row.file, row);
+    if (newer.length) await flush();
+    else setStatus("ok", `Every answer is saved to ${disk.file} as you click (${rows.filter(r => r.answer).length} answers on disk).`);
+  } catch (e) {
+    disk.on = false;
+    setStatus("bad", `NOT saved to disk: ${e.message}. Answers stay in this browser only; export a CSV.`);
+  }
+}
+async function flush() {
+  if (!disk.pending.size) return;
+  const batch = [...disk.pending.values()];
+  setStatus("busy", "Saving…");
+  try {
+    const r = await fetch("answers", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rows: batch }) });
+    const res = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(res.error || `HTTP ${r.status}`);
+    for (const row of batch) { const k = row.task + "|" + row.file; if (disk.pending.get(k) === row) disk.pending.delete(k); }
+    setStatus("ok", `Saved to ${disk.file} · ${new Date().toLocaleTimeString()} (${res.total} questions on disk).`);
+  } catch (e) {
+    setStatus("bad", `NOT saved to disk (${e.message}). Answers are still in this browser and will be retried on your next click. Export a CSV to be safe.`);
+  }
+}
+function record(row) {
+  store.set(KEY, JSON.stringify(S)); refreshLabels();
+  if (!disk.on) return;
+  disk.pending.set(row.task + "|" + row.file, row);
+  clearTimeout(disk.timer); disk.timer = setTimeout(flush, 250);
+}
+addEventListener("beforeunload", e => { if (disk.pending.size) { flush(); e.preventDefault(); } });
+await loadFromDisk();
 
 // ---------- tabs ----------
 const tabs = document.getElementById("tabs"), panes = document.getElementById("panes"), tabBtn = {};
@@ -233,11 +391,12 @@ function show(id) {
   for (const [k, b] of Object.entries(tabBtn)) { b.setAttribute("aria-selected", k === id); document.getElementById("pane-" + k).hidden = k !== id; }
   if (id === "export") renderExport();
 }
+const tabLabel = c => `${c} ${D.gan[c].filter(g => S.gan[g.file]?.answer).length}/${D.gan[c].length}`;
+const camLabel = () => `1. CAM ${Object.values(S.cam).filter(s => s.answer).length}/${2 * D.cams.length}`;
+function refreshLabels() { for (const c of RARE) tabBtn[c].textContent = tabLabel(c); tabBtn.cam.textContent = camLabel(); }
 
 // ---------- part 1: CAM ----------
 const WHERE = [["abnormality", "On the abnormality"], ["retina", "On the retina, elsewhere"], ["off", "Off the retina"], ["cant", "Can't tell"]];
-const camKey = (v, r) => `${v}|${r.path}`;
-const camLabel = () => `1. CAM ${Object.keys(S.cam).length}/${2 * D.cams.length}`;
 const camPane = el("div");
 const nFound = v => D.cams.filter(r => r[v].src).length;
 const nRight = v => D.cams.filter(r => r[v].pred === r.label).length;
@@ -267,8 +426,8 @@ for (const r of D.cams) {
   const fig = v => { const ok = r[v].pred === r.label;
     return el("figure", {}, sq(r[v].src, "100% 0", `${r.stem} ${v} CAM overlay`, `${v} panel missing`),
       el("figcaption", {}, `${v}: `, el("span", { class: ok ? "ok" : "bad" }, `${ok ? "✓" : "✗"} ${r[v].pred}`), ` p=${r[v].p.toFixed(3)}`),
-      options(WHERE, () => S.cam[camKey(v, r)]?.answer,
-        a => { if (a) S.cam[camKey(v, r)] = { answer: a, at: now() }; else delete S.cam[camKey(v, r)]; save(); },
+      options(WHERE, () => S.cam[camKey(v, r)]?.answer || "",
+        a => { S.cam[camKey(v, r)] = { answer: a, at: now() }; record(camRow(v, r)); },
         `${r.stem} ${v}: where is the strongest colour?`)); };
   camPane.append(el("div", { class: "small muted" }, `${r.path} · true ${r.label}`,
       r.gan.pred !== r.none.pred ? el("span", { class: "badge" }, "models disagree") : ""),
@@ -281,63 +440,78 @@ addTab("cam", camLabel(), camPane);
 // ---------- part 2: GAN images ----------
 const ANSWERS = [["real", "✓ Looks real", "real"], ["flawed", "✗ Flawed", "flawed"], ["unsure", "? Unsure", "unsure"]];
 const STATE = { real: "LOOKS REAL", flawed: "FLAWED", unsure: "UNSURE" };
-const REASONS = [["artefact", "Grid, stripes or noise"], ["blur", "Blurry or smeared"], ["layers", "Broken or doubled layers"],
-                 ["nochange", "No change from before"], ["unlike", "Unlike the real scans"], ["other", "Other"]];
-const tabLabel = c => `${c} ${D.gan[c].filter(g => S.gan[g.file]).length}/${D.gan[c].length}`;
+const TIERS = [["easy", "Easy: image quality"], ["medium", "Medium: anatomy"], ["hard", "Hard: compare with the real range"]];
+const OTHER = { id: "other", label: "Other", tier: "", verdict: "flawed", how_to_spot: "A flaw not listed here.", examples: [] };
+const choicesOf = c => [...D.rubric[c].choices, OTHER];
+const labelOf = (c, id) => choicesOf(c).find(ch => ch.id === id)?.label || id;
 function answer(g, tile, a) {
-  const prev = S.gan[g.file];
-  if (!a || prev?.answer === a) delete S.gan[g.file];                        // pressing again clears
-  else S.gan[g.file] = { answer: a, reasons: a === "flawed" ? prev?.reasons || [] : [], at: now() };
-  paint(g, tile); save();
+  const next = !a || S.gan[g.file]?.answer === a ? "" : a;           // pressing again clears
+  S.gan[g.file] = { answer: next, reasons: [], at: now() };          // reasons belong to one answer
+  paint(g, tile); record(ganRow(g));
 }
-function toggleReason(g, tile, k) {
-  const s = S.gan[g.file]; if (s?.answer !== "flawed") return;
-  s.reasons = s.reasons.includes(k) ? s.reasons.filter(x => x !== k) : [...s.reasons, k];
-  paint(g, tile); save();
+function toggleReason(g, tile, id) {
+  const s = S.gan[g.file]; if (s?.answer !== "flawed" && s?.answer !== "real") return;
+  s.reasons = s.reasons.includes(id) ? s.reasons.filter(x => x !== id) : [...s.reasons, id];
+  s.at = now(); paint(g, tile); record(ganRow(g));
 }
 function paint(g, tile) {
   const s = S.gan[g.file], a = s?.answer || "";
   tile.className = "tile " + a + (tile.classList.contains("zoom") ? " zoom" : "");
   tile.querySelectorAll(".btns button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === a));
   tile.querySelector(".state").textContent = STATE[a] || "unrated";
-  tile.querySelector(".why").hidden = a !== "flawed";
+  tile.querySelector(".why-flawed").hidden = a !== "flawed";
+  tile.querySelector(".why-real").hidden = a !== "real";
   tile.querySelectorAll(".why button").forEach(b => b.setAttribute("aria-pressed", !!s?.reasons?.includes(b.dataset.v)));
 }
 const img = (src, alt) => src ? el("img", { src, alt, loading: "lazy" }) : el("div", { class: "missing" }, "image missing");
 for (const c of RARE) {
-  const grid = el("div", { class: "grid" });
-  D.gan[c].forEach((g, i) => {
+  const R = D.rubric[c], grid = el("div", { class: "grid" });
+  D.gan[c].forEach(g => {
     const name = g.file.split("/").pop();
-    const tile = el("div", { class: "tile", tabindex: "0", "aria-label": `${c} sample ${i + 1}` },
+    const chip = ch => el("button", { "data-v": ch.id, "aria-pressed": "false", title: ch.how_to_spot, onclick: () => toggleReason(g, tile, ch.id) }, ch.label);
+    const tile = el("div", { class: "tile", tabindex: "0", "aria-label": `${c} sample ${g.i}` },
       el("div", { class: "pair", title: "click to zoom" },
-        el("figure", {}, img(g.source, `source normal scan for ${c} sample ${i + 1}`), el("figcaption", {}, "before: normal scan")),
-        el("figure", {}, img(g.src, `${c} generated sample ${i + 1}: ${name}`), el("figcaption", {}, `after: generated ${c}`))),
-      el("div", { class: "meta" }, el("span", {}, `#${i + 1} `, el("b", { class: "state" }, "unrated")), el("span", { class: "file", title: name }, name)),
+        el("figure", {}, img(g.source, `source normal scan for ${c} sample ${g.i}`), el("figcaption", {}, "before: normal scan")),
+        el("figure", {}, img(g.src, `${c} generated sample ${g.i}: ${name}`), el("figcaption", {}, `after: generated ${c}`))),
+      el("div", { class: "meta" }, el("span", {}, `#${g.i} `, el("b", { class: "state" }, "unrated")), el("span", { class: "file", title: name }, name)),
       el("div", { class: "btns" }, ...ANSWERS.map(([v, text, cls]) =>
         el("button", { class: cls, "data-v": v, "aria-pressed": "false", onclick: () => answer(g, tile, v) }, text))),
-      el("div", { class: "why", hidden: "" }, "Why flawed? (pick any) ",
-        el("div", { class: "opts" }, ...REASONS.map(([k, text]) =>
-          el("button", { "data-v": k, "aria-pressed": "false", onclick: () => toggleReason(g, tile, k) }, text)))));
+      el("div", { class: "why why-flawed", hidden: "" }, "Why flawed? Pick any; hover a reason for how to spot it.",
+        ...TIERS.map(([t, name]) => el("div", { class: "opts" }, el("span", { class: "tier" }, name),
+          ...R.choices.filter(ch => ch.verdict === "flawed" && ch.tier === t).map(chip))),
+        el("div", { class: "opts" }, chip(OTHER))),
+      el("div", { class: "why why-real", hidden: "" }, "What makes it look real? (optional)",
+        el("div", { class: "opts" }, ...R.choices.filter(ch => ch.verdict === "looks-real").map(chip))));
     tile.querySelector(".pair").onclick = () => tile.classList.toggle("zoom");
     tile.onkeydown = e => { if (e.target !== tile) return; const k = e.key.toLowerCase();
       if (k === "y") answer(g, tile, "real"); else if (k === "n") answer(g, tile, "flawed"); else if (k === "u") answer(g, tile, "unsure");
       else if (k === "backspace" || k === "delete") answer(g, tile, null); };
     paint(g, tile); grid.append(tile);
   });
-  const strip = el("div", { class: "strip" }, ...D.real[c].map((src, i) => src ? el("img", { src, alt: `real ${c} training scan ${i + 1}`, loading: "lazy",
-    title: "click to enlarge", onclick: e => e.target.classList.toggle("big") }) : ""));
+  const strip = el("div", { class: "strip" }, ...D.real[c].map((src, i) => src ? el("figure", {},
+    el("img", { src, alt: `real ${c} training scan ${i + 1}`, loading: "lazy", title: "click to enlarge", onclick: e => e.target.classList.toggle("big") }),
+    el("figcaption", {}, `real ${i + 1}`)) : ""));
   const refs = el("div", { class: "refs" },
     el("div", { class: "small" }, el("b", {}, `Real ${c} scans (${D.real[c].length}, training set): what the CycleGAN learned to imitate. `),
       el("button", { onclick: e => { strip.hidden = !strip.hidden; e.target.textContent = strip.hidden ? "Show" : "Hide"; } }, "Hide")),
     strip);
+  const guide = el("details", { class: "note small" }, el("summary", {}, "Answer guide: what each reason means, with example samples"),
+    el("p", {}, el("b", {}, `What the real ${c} scans have in common: `)), el("ul", {}, ...R.real_features.map(f => el("li", {}, f))),
+    ...TIERS.map(([t, name]) => el("div", {}, el("b", {}, name),
+      el("ul", {}, ...R.choices.filter(ch => ch.tier === t).map(ch => el("li", {}, el("b", {}, ch.label),
+        ch.verdict === "looks-real" ? " (a reason it looks real)" : "", ": ", ch.how_to_spot,
+        ch.examples.length ? ` Examples: ${ch.examples.join(", ")}.` : ""))))),
+    el("p", { class: "muted" }, "Draft by an AI sub-agent from these images, checked and extended by another AI, not by a clinician. ‘real n’ is the numbered scan in the strip; ‘#n’ is the sample number."));
   addTab(c, tabLabel(c), el("div", {},
     el("div", { class: "note" }, el("b", {}, `Question: does the “after” image look like the real ${c} scans in the strip, without obvious flaws?`),
       el("ol", {},
         el("li", {}, `First scroll through the real ${c} scans in the strip to see what they have in common.`),
         el("li", {}, "For each pair, compare before and after: what did the CycleGAN change, and does the change resemble the real scans?"),
-        el("li", {}, "Choose ✓ Looks real, ✗ Flawed (then pick why), or ? Unsure. Unsure is a valid answer: do not guess.")),
+        el("li", {}, "Choose ✓ Looks real, ✗ Flawed (then pick the reasons you see, easy ones first), or ? Unsure. Unsure is a valid answer: do not guess.")),
       el("span", { class: "small muted" }, "Ignore the framing: generated images usually keep the outline and black corners of the normal scan they came from, while the real scans have black bands. Judge the retina itself. ",
         "Keys on a focused tile: Y looks real, N flawed, U unsure, Delete clear. Click a pair to zoom.")),
+    el("div", { class: "note warn small" }, el("b", {}, "Traps (do not reject for these alone):"), el("ul", {}, ...R.traps.map(t => el("li", {}, t)))),
+    guide,
     el("div", { class: "note small" }, "These images already passed the automatic QC, so the share that looks real here is conditional on QC and is not comparable to the paper's raw acceptance rate."),
     D.jpeg ? el("div", { class: "note warn small" }, `Shown as JPEG copies (quality ${D.jpeg}) of the PNGs to fit a size cap. `,
       "Fine artefacts may differ: for the answers of record, use the sheet built without --jpeg.") : "",
@@ -346,25 +520,21 @@ for (const c of RARE) {
 
 // ---------- export ----------
 const csvCell = s => /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+const FIELDS = ["rater", "task", "disease", "item", "file", "source_file", "answer", "reasons", "answered_at", "seed"];
 function csv() {
-  const lines = ["rater,task,disease,item,file,source_file,answer,reasons,answered_at,seed"];
-  const row = (...xs) => lines.push([rater.value, ...xs, D.seed].map(x => csvCell(String(x))).join(","));
-  for (const v of ["gan", "none"]) for (const r of D.cams) { const s = S.cam[camKey(v, r)] || {};
-    row(`cam_${v}`, r.label, r.stem, r.path, "", s.answer || "", "", s.at || ""); }
-  for (const c of RARE) D.gan[c].forEach((g, i) => { const s = S.gan[g.file] || {};
-    row("gan", c, i + 1, g.file, g.sourceFile, s.answer || "", (s.reasons || []).join(";"), s.at || ""); });
-  return lines.join("\n") + "\n";
+  const rows = [...["gan", "none"].flatMap(v => D.cams.map(r => camRow(v, r))), ...RARE.flatMap(c => D.gan[c].map(ganRow))];
+  return [FIELDS.join(","), ...rows.map(r => FIELDS.map(f => csvCell(String(r[f]))).join(","))].join("\n") + "\n";
 }
 const ganBody = el("tbody"), camBody = el("tbody"), text = el("textarea", { readonly: "", "aria-label": "answers CSV" });
 const count = (xs, a) => xs.filter(x => x === a).length;
 function renderExport() {
-  ganBody.replaceChildren(...RARE.map(c => { const ss = D.gan[c].map(g => S.gan[g.file]).filter(Boolean), as = ss.map(s => s.answer);
+  ganBody.replaceChildren(...RARE.map(c => { const ss = D.gan[c].map(g => S.gan[g.file]).filter(s => s?.answer), as = ss.map(s => s.answer);
     const real = count(as, "real"), flawed = count(as, "flawed"), why = {};
-    for (const s of ss) for (const k of s.reasons || []) why[k] = (why[k] || 0) + 1;
+    for (const s of ss) if (s.answer === "flawed") for (const k of s.reasons || []) why[k] = (why[k] || 0) + 1;
     const top = Object.entries(why).sort((a, b) => b[1] - a[1])[0];
     return el("tr", {}, el("td", {}, c), el("td", {}, `${as.length}/${D.gan[c].length}`), el("td", {}, real), el("td", {}, flawed),
       el("td", {}, count(as, "unsure")), el("td", {}, real + flawed ? `${(100 * real / (real + flawed)).toFixed(0)}%` : "–"),
-      el("td", {}, top ? `${REASONS.find(r => r[0] === top[0])[1]} (${top[1]})` : "–")); }));
+      el("td", {}, top ? `${labelOf(c, top[0])} (${top[1]})` : "–")); }));
   camBody.replaceChildren(...["gan", "none"].map(v => { const as = D.cams.map(r => S.cam[camKey(v, r)]?.answer).filter(Boolean);
     return el("tr", {}, el("td", {}, v), el("td", {}, `${as.length}/${D.cams.length}`), ...WHERE.map(([k]) => el("td", {}, count(as, k)))); }));
   text.value = csv();
@@ -380,10 +550,10 @@ addTab("export", "Export CSV", el("div", {},
       download: `review_answers_seed${D.seed}_${rater.value || "rater"}.csv` }); document.body.append(a); a.click(); a.remove(); } }, "Download CSV"),
     el("span", { class: "small muted" }, " If the download is blocked here, copy the text below.")),
   text,
-  el("p", { class: "small muted" }, "One row per question (task cam_gan, cam_none or gan); unanswered questions are exported with an empty answer, so the file always lists the full sample. Answers are kept in this browser (localStorage) until exported.")));
+  el("p", { class: "small muted" }, "One row per question (task cam_gan, cam_none or gan); reasons are rubric ids separated by ‘;’. Unanswered questions are exported with an empty answer, so the file always lists the full sample.")));
 show("cam");
 </script></body></html>
 """
 
 if __name__ == "__main__":
-    main()
+    serve(sys.argv[2:]) if sys.argv[1:2] == ["serve"] else main()

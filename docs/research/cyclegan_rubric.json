@@ -1,0 +1,485 @@
+{
+ "_about": "Disease-specific answer choices for the CycleGAN review in review_sheet.py. Drafted by an AI sub-agent (Codex gpt-6.1-sol, role-played as retina specialist + medical CV professor) from the seed-42 contact sheets on 2026-10-27; 'repeats-template' (all) and 'bright-block-under-hole' (MH) added by Claude Opus 5.5 after a spot-check. AI-assisted, not a clinical assessment. 'real n' = n-th real training scan in data/gan/real/<class>, sorted by file name; '#n' = sample n of the seed-42 draw.",
+ "CSC": {
+  "real_features": [
+   "A dark pocket separates the layered retinal roof from a brighter lower boundary in most scans; it ranges from a shallow slit (real 19, 24) to a broad, tall space (real 5, 6).",
+   "The roof generally remains a connected stack of curved grey and bright bands above the pocket.",
+   "Pockets can be central or asymmetric; overall scan curvature varies markedly.",
+   "Pocket edges are not always smooth: real 11 and 16 have small projections, and real 27 has a divided-looking pocket.",
+   "The bright lower boundary generally continues beneath the pocket, with variable mottled texture below it."
+  ],
+  "choices": [
+   {
+    "id": "grid-stripes-noise",
+    "label": "Grid, stripes or noise",
+    "tier": "easy",
+    "verdict": "flawed",
+    "how_to_spot": "Compare retinal tissue with the real strip and before image for a newly imposed regular grid or stripes, rather than ordinary grain or inherited vertical shadows.",
+    "examples": []
+   },
+   {
+    "id": "blurred-retinal-lines",
+    "label": "Blurry retinal lines",
+    "tier": "easy",
+    "verdict": "flawed",
+    "how_to_spot": "Compare the roof bands with similarly soft real scans and the before image, rejecting only smearing that prevents the bands or pocket boundary being followed.",
+    "examples": []
+   },
+   {
+    "id": "extra-retinal-stack",
+    "label": "Extra retinal stack",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with the real strip for an additional disconnected stack of retinal bands above the main retina, and check the before image to see whether it was introduced.",
+    "examples": [
+     "#32"
+    ]
+   },
+   {
+    "id": "broken-pocket-roof",
+    "label": "Broken pocket roof",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare the connected roofs in the real strip with an abrupt tear through the generated retinal roof, rather than a small irregularity along its underside.",
+    "examples": [
+     "#8",
+     "#20",
+     "#22"
+    ]
+   },
+   {
+    "id": "no-visible-pocket-change",
+    "label": "No visible pocket change",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare against the before image and shallow-pocket real 19 and 24, using this only if no new pocket or comparable structural change can be found.",
+    "examples": []
+   },
+   {
+    "id": "repeats-template",
+    "label": "Repeats a common template",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with the other samples on this tab and with the real strip: flag it when the retina has nearly the same shape, tilt and lesion as many other generated images whatever its before scan, and the real scans vary more than that.",
+    "examples": []
+   },
+   {
+    "id": "pocket-beyond-real-range",
+    "label": "Pocket beyond real range",
+    "tier": "hard",
+    "verdict": "flawed",
+    "how_to_spot": "Compare pocket height relative to retinal thickness and pocket width relative to scan width against even real 5 and 6, choosing this only for a clear excess.",
+    "examples": []
+   },
+   {
+    "id": "implausible-pocket-shape",
+    "label": "Implausible pocket shape",
+    "tier": "hard",
+    "verdict": "flawed",
+    "how_to_spot": "Compare the pocket roof, floor and tapering edges with the entire real strip, allowing the projections and divided appearance already present in real 11, 16 and 27.",
+    "examples": []
+   },
+   {
+    "id": "plausible-pocket",
+    "label": "Plausible pocket and layers",
+    "tier": "hard",
+    "verdict": "looks-real",
+    "how_to_spot": "Compare with the real strip for a dark space between a connected layered roof and a continuing bright floor, within the observed range of size and asymmetry.",
+    "examples": [
+     "#1",
+     "#5",
+     "#14",
+     "#19"
+    ]
+   }
+  ],
+  "traps": [
+   "Do not reject a large or ragged pocket just for being large or ragged: compare with real 5, 6, 11, 16 and 27 before choosing a hard flaw.",
+   "A shallow pocket can look nearly unchanged at thumbnail size; real 19 and 24 are subtle, so absence of an obvious large pocket is not enough to reject."
+  ]
+ },
+ "MH": {
+  "real_features": [
+   "The real strip shows a central opening in the retinal tissue, with a bright basal line continuing underneath.",
+   "The two edges commonly rise and curl inward; opening width and edge height vary.",
+   "Small dark cavities occur inside the tissue beside the opening, sometimes in clusters.",
+   "Some scans have thin curved lines or small bright suspended pieces above the opening (for example real 2, 5 and 7).",
+   "The surrounding retina remains layered; the basal brightness and background grain vary."
+  ],
+  "choices": [
+   {
+    "id": "grid-stripes-noise",
+    "label": "Grid, stripes or noise",
+    "tier": "easy",
+    "verdict": "flawed",
+    "how_to_spot": "Compare tissue with the real strip and before image for a newly imposed periodic pattern that is distinct from speckle or the thin curves seen in real scans.",
+    "examples": []
+   },
+   {
+    "id": "smeared-hole-edges",
+    "label": "Smeared hole edges",
+    "tier": "easy",
+    "verdict": "flawed",
+    "how_to_spot": "Compare the opening edges with similarly soft real scans, selecting this only when smearing prevents the raised tissue and cavities from being followed.",
+    "examples": []
+   },
+   {
+    "id": "bright-block-under-hole",
+    "label": "Bright block under hole",
+    "tier": "easy",
+    "verdict": "flawed",
+    "how_to_spot": "Look under the opening for a uniform bright rectangle with straight vertical edges reaching deep below the floor; a mild brightening under the hole (real 16, 18) is normal.",
+    "examples": [
+     "#6",
+     "#12"
+    ]
+   },
+   {
+    "id": "broken-hole-floor",
+    "label": "Broken hole floor",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Trace the bright floor beneath the opening against the real strip and flag a sharp break or displaced segment rather than a change in brightness.",
+    "examples": [
+     "#21"
+    ]
+   },
+   {
+    "id": "closed-or-missing-opening",
+    "label": "Closed or missing opening",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with the before image and real strip for a persisting bridge of retinal tissue where the real examples show an opening, checking that this is not just a narrow dark gap.",
+    "examples": [
+     "#19",
+     "#44",
+     "#58"
+    ]
+   },
+   {
+    "id": "repeats-template",
+    "label": "Repeats a common template",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with the other samples on this tab and with the real strip: flag it when the retina has nearly the same shape, tilt and lesion as many other generated images whatever its before scan, and the real scans vary more than that.",
+    "examples": []
+   },
+   {
+    "id": "excessive-edge-cavities",
+    "label": "Cavities swallow surrounding retina",
+    "tier": "hard",
+    "verdict": "flawed",
+    "how_to_spot": "Compare the extent of dark spaces beside the opening with the most cavity-rich real scans and flag only extension far into otherwise unsupported tissue.",
+    "examples": [
+     "#51"
+    ]
+   },
+   {
+    "id": "opening-beyond-real-range",
+    "label": "Opening beyond real range",
+    "tier": "hard",
+    "verdict": "flawed",
+    "how_to_spot": "Compare opening width and raised-edge height relative to retinal thickness with the widest and tallest real examples before calling the hole exaggerated.",
+    "examples": []
+   },
+   {
+    "id": "plausible-open-hole",
+    "label": "Plausible opening and edges",
+    "tier": "hard",
+    "verdict": "looks-real",
+    "how_to_spot": "Compare with the real strip for an open central gap, raised layered edges with optional small cavities, and a continuing basal line.",
+    "examples": [
+     "#1",
+     "#5",
+     "#10",
+     "#12"
+    ]
+   }
+  ],
+  "traps": [
+   "A central missing piece of retina and cavities in the raised edges are real-set features, not automatic evidence of broken layers.",
+   "Small suspended bright pieces and thin overhead curves occur in the real strip; do not automatically call them floating GAN debris."
+  ]
+ },
+ "MacTel": {
+  "real_features": [
+   "Small dark spaces occur near the central dip or within adjacent retinal tissue.",
+   "Some spaces have a thin roof; others are narrow vertical or angular gaps at the dip.",
+   "The bright lower bands usually continue underneath the small spaces.",
+   "Most scans retain a recognisable shallow central dip without a large raised dome.",
+   "The spaces vary considerably: real 2 has adjacent cavities, real 10 and 11 have a conspicuous dark cavity, and real 14 has a thin horizontal space."
+  ],
+  "choices": [
+   {
+    "id": "grid-stripes-noise",
+    "label": "Grid, stripes or noise",
+    "tier": "easy",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with the real strip and before image for a newly regular grid or repeated bars crossing tissue rather than ordinary speckle.",
+    "examples": []
+   },
+   {
+    "id": "blurred-cavity-border",
+    "label": "Blurry cavity border",
+    "tier": "easy",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with the softer real scans and flag only smearing that makes the cavity border and adjacent layers unreadable.",
+    "examples": []
+   },
+   {
+    "id": "broken-deep-bands",
+    "label": "Broken deep bands",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare the bright bands beneath the cavity with the real strip and before image, flagging an abrupt displaced or duplicated segment rather than local dimming.",
+    "examples": []
+   },
+   {
+    "id": "no-visible-cavity-change",
+    "label": "No visible cavity change",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare the before image and the subtler real scans for a new central cavity or focal layer change, using unsure when the difference is too small to resolve.",
+    "examples": []
+   },
+   {
+    "id": "repeats-template",
+    "label": "Repeats a common template",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with the other samples on this tab and with the real strip: flag it when the retina has nearly the same shape, tilt and lesion as many other generated images whatever its before scan, and the real scans vary more than that.",
+    "examples": []
+   },
+   {
+    "id": "oversized-or-misplaced-cavity",
+    "label": "Oversized or misplaced cavity",
+    "tier": "hard",
+    "verdict": "flawed",
+    "how_to_spot": "Compare cavity size and position relative to retinal thickness with real 2, 10, 11 and 14, rejecting only a clearly unsupported extension or location.",
+    "examples": []
+   },
+   {
+    "id": "plausible-small-cavity",
+    "label": "Plausible small central cavity",
+    "tier": "hard",
+    "verdict": "looks-real",
+    "how_to_spot": "Compare with the real strip for a small central or near-central dark space with surrounding tissue and continuing bright lower bands.",
+    "examples": [
+     "#5",
+     "#6",
+     "#12",
+     "#15"
+    ]
+   },
+   {
+    "id": "plausible-adjacent-cavities",
+    "label": "Plausible adjacent cavities",
+    "tier": "hard",
+    "verdict": "looks-real",
+    "how_to_spot": "Compare the adjacent dark spaces with real 2 rather than requiring every image to show one round cavity.",
+    "examples": [
+     "#3",
+     "#14",
+     "#17"
+    ]
+   }
+  ],
+  "traps": [
+   "An angular dark cavity or a very thin roof is not automatically an artefact: compare real 10, 11, 14 and 23.",
+   "Real 2 already contains multiple adjacent cavities; the repeated generated multi-cavity motif is a diversity concern, not by itself an image-level rejection."
+  ]
+ },
+ "Stargardt": {
+  "real_features": [
+   "The retina generally remains a connected band with a shallow or broad central dip.",
+   "Several scans have a thin central retinal band and less distinct lower retinal layering than the NORMAL before images.",
+   "The bright lower border is variably irregular or mottled rather than uniformly crisp.",
+   "Brightness beneath that border varies, including locally bright vertical regions in real 3, 14, 18 and 19.",
+   "The real strip includes both sharp scans and soft, low-contrast scans; it does not show the large dark domes seen in the CSC strip."
+  ],
+  "choices": [
+   {
+    "id": "grid-stripes-noise",
+    "label": "Grid, stripes or noise",
+    "tier": "easy",
+    "verdict": "flawed",
+    "how_to_spot": "Compare the retinal band with the real strip and before image for newly regular grids or stripes, separating them from irregular bright columns below the retina.",
+    "examples": []
+   },
+   {
+    "id": "unreadable-layer-blur",
+    "label": "Unreadable layer blur",
+    "tier": "easy",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with soft real 13 and the before image, flagging only loss of readable retinal structure beyond that reference rather than softness alone.",
+    "examples": []
+   },
+   {
+    "id": "stepped-or-doubled-layers",
+    "label": "Stepped or doubled layers",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare the before image and real strip for abrupt stair steps or a second displaced copy of a bright retinal band.",
+    "examples": [
+     "#12",
+     "#34",
+     "#80"
+    ]
+   },
+   {
+    "id": "no-visible-tissue-change",
+    "label": "No visible tissue change",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare lower retinal bands and underlying texture with the before image, using this only if neither changes beyond overall brightness and using unsure for subtle cases.",
+    "examples": []
+   },
+   {
+    "id": "repeats-template",
+    "label": "Repeats a common template",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with the other samples on this tab and with the real strip: flag it when the retina has nearly the same shape, tilt and lesion as many other generated images whatever its before scan, and the real scans vary more than that.",
+    "examples": [
+     "#2",
+     "#4",
+     "#6",
+     "#11",
+     "#13",
+     "#15"
+    ]
+   },
+   {
+    "id": "exaggerated-bright-column",
+    "label": "Exaggerated bright column",
+    "tier": "hard",
+    "verdict": "flawed",
+    "how_to_spot": "Compare any bright column beneath the central retina with real 3, 14, 18 and 19, requiring a clearly more extensive or structure-erasing patch before rejecting it.",
+    "examples": []
+   },
+   {
+    "id": "unsupported-large-pocket",
+    "label": "Unsupported large dark pocket",
+    "tier": "hard",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with the real Stargardt strip for a newly created broad dark separation or open tissue gap absent from these references.",
+    "examples": []
+   },
+   {
+    "id": "plausible-lower-band-change",
+    "label": "Plausible lower-band change",
+    "tier": "hard",
+    "verdict": "looks-real",
+    "how_to_spot": "Compare with the real strip for a connected retinal band with subtle lower-band irregularity or altered underlying brightness without an unsupported large cavity.",
+    "examples": [
+     "#1",
+     "#16",
+     "#17",
+     "#20"
+    ]
+   }
+  ],
+  "traps": [
+   "Bright columns beneath the retina and an irregular lower border already occur in real scans; neither alone establishes an artefact.",
+   "A soft, nearly ordinary-looking scan can still resemble this real set (for example real 13); do not equate weak visible disease signal with failed translation."
+  ]
+ },
+ "RP": {
+  "real_features": [
+   "The retina is a continuous curved band in most real scans, with a shallow central dip or a flatter profile.",
+   "Lower retinal bands vary in definition and thickness; some scans look thin and relatively smooth.",
+   "A bright basal band generally continues across the scan, with variable mottled texture below.",
+   "Several real scans contain small central dark cavities (real 1, 8, 11 and 12); they are not universal.",
+   "The real set spans strongly speckled, soft and clearer scans; real 24 is particularly bright and soft beneath the retina."
+  ],
+  "choices": [
+   {
+    "id": "grid-stripes-noise",
+    "label": "Grid, stripes or noise",
+    "tier": "easy",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with the real strip and before image for a newly imposed periodic pattern rather than the irregular grain already visible in real scans.",
+    "examples": []
+   },
+   {
+    "id": "washed-out-retinal-detail",
+    "label": "Washed-out retinal detail",
+    "tier": "easy",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with bright soft real 24 and the before image, flagging only washout that makes the retinal bands impossible to follow.",
+    "examples": []
+   },
+   {
+    "id": "torn-central-retina",
+    "label": "Torn central retina",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare continuity of the upper retinal surface with the real strip and before image, distinguishing an open surface tear from a dark cavity enclosed in tissue.",
+    "examples": [
+     "#18"
+    ]
+   },
+   {
+    "id": "no-visible-tissue-change",
+    "label": "No visible tissue change",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare lower retinal bands and small central spaces with the before image, using unsure if the change could be as subtle as the less distinctive real scans.",
+    "examples": []
+   },
+   {
+    "id": "repeats-template",
+    "label": "Repeats a common template",
+    "tier": "medium",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with the other samples on this tab and with the real strip: flag it when the retina has nearly the same shape, tilt and lesion as many other generated images whatever its before scan, and the real scans vary more than that.",
+    "examples": []
+   },
+   {
+    "id": "oversized-central-cavities",
+    "label": "Oversized central cavities",
+    "tier": "hard",
+    "verdict": "flawed",
+    "how_to_spot": "Compare the cavity cluster with real 1 before rejecting its size or extent, requiring more than simply the presence of several dark spaces.",
+    "examples": []
+   },
+   {
+    "id": "unsupported-detachment-dome",
+    "label": "Unsupported detachment dome",
+    "tier": "hard",
+    "verdict": "flawed",
+    "how_to_spot": "Compare with the real RP strip for a broad dark space lifting the whole retinal band away from its bright base rather than a small space inside the tissue.",
+    "examples": []
+   },
+   {
+    "id": "plausible-continuous-retina",
+    "label": "Plausible continuous retinal band",
+    "tier": "hard",
+    "verdict": "looks-real",
+    "how_to_spot": "Compare with the real strip for a continuous retinal band, variable lower-band definition and a continuing bright base without an unsupported large gap.",
+    "examples": [
+     "#3",
+     "#4",
+     "#8",
+     "#11"
+    ]
+   },
+   {
+    "id": "plausible-small-cavities",
+    "label": "Plausible small central cavities",
+    "tier": "hard",
+    "verdict": "looks-real",
+    "how_to_spot": "Compare enclosed central dark spaces with real 1, 8 and 11, checking that tissue remains above them and the bright base remains below.",
+    "examples": [
+     "#19",
+     "#25",
+     "#37"
+    ]
+   }
+  ],
+  "traps": [
+   "Do not reject all dark cavities: real 1 has a conspicuous cluster, confirmed by opening its individual image.",
+   "Brightness beneath the retina and subtle thinning vary in the real set; a bright underside or near-normal-looking profile alone is insufficient for rejection."
+  ]
+ }
+}
