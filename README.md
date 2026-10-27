@@ -32,7 +32,10 @@ from the raw public datasets as five ordered scripts.
 | Paper Table 2 (5-fold CV), Figs. 5 and 11, Siamese / prototypical networks | ❌ not done, see [`docs/research/REPLICATION.md`](docs/research/REPLICATION.md) |
 
 **Short version:** at seed 42 the CycleGAN variant reaches 92.95% against the paper's 92.1%,
-but over five training seeds it is tied with basic augmentation. Both beat real images only.
+but over five training seeds it is not distinguishable from basic augmentation (`gan` ahead on
+3 of 5 seeds). Both augmentations have higher mean accuracy than real images only (`gan`
+by 1.9, `basic` by 2.2 points) and get more rare test images right, but five seeds cannot
+separate the accuracy gains from training noise.
 Paper item by item, with the work left: [`docs/research/REPLICATION.md`](docs/research/REPLICATION.md).
 How to run everything on Colab: [`COLAB.md`](COLAB.md).
 
@@ -77,9 +80,13 @@ images go to validation) alone moves accuracy by several points. Seeds 1–5 for
 
 - **Augmentation of either kind helps the rare classes:** 17–19 of 22 correct, against 11–17
   with real images only.
-- **CycleGAN and basic augmentation are tied.** Per seed, `gan` − `basic` is −0.35 ± 2.77
-  points (−4.30 to +2.94); `gan` is ahead on 3 of 5 seeds
-  ([`paired_seeds.csv`](results/analysis/paired_seeds.csv)).
+- **CycleGAN and basic augmentation are not separated** (which is not the same as shown to be
+  equal). Per seed, `gan` − `basic` is −0.35 ± 2.77 points (−4.30 to +2.94); `gan` is ahead on
+  3 of 5 seeds ([`paired_seeds.csv`](results/analysis/paired_seeds.csv)).
+- **Neither augmentation is separated from `none` on accuracy either:** `basic` − `none` is
+  +2.25 ± 3.53 points (ahead on 3 of 5 seeds), `gan` − `none` +1.90 ± 2.22 (4 of 5). With five
+  seeds the smallest possible two-sided Wilcoxon p is 0.0625, so no seed comparison here can
+  reach p < 0.05.
 - **The seed-42 ordering is not robust.** On the seed-42 test set `gan` beats `basic` by 4.1
   points (paired bootstrap CI 2.6–5.8, McNemar p < 0.001,
   [`paired_seed42.csv`](results/analysis/paired_seed42.csv)), but that test only covers
@@ -257,9 +264,9 @@ Run everything from the project root, in order.
 ### Stage 0 — build and verify the manifest
 
 **What and why.** Builds `data/manifest.csv` with columns `path, label, pid, split`. It uses
-the Kermany official train/test split (independent patients, 250 test images per common
-class) and, for the rare classes, a **fixed seed-42 hold-out of 5/5/4/4/4 images** matching
-the paper's Fig. 2. A 10% validation set is carved from train **grouped by patient**
+the Kermany official train/test split (250 test images per common class; the split is
+**not** patient-disjoint, see the note below) and, for the rare classes, a **fixed seed-42
+hold-out of 5/5/4/4/4 images** matching the paper's Fig. 2. A 10% validation set is carved from train **grouped by patient**
 (`GroupShuffleSplit`, seed 42) so no patient spans train and val. Rare-class validation
 images are then moved back into train, so that every real rare image is available to
 Stage 1 and the CycleGAN — as in the paper, rare-class validation comes from *augmented*
@@ -280,8 +287,10 @@ python stage0_manifest.py --force    # rebuild (only if the raw data changed)
 The script never overwrites an existing manifest without `--force`, because Stages 1 and 2
 were built from it.
 
-> A note it may print: some patient IDs appear in both Kermany train and test. That comes
-> from the published release itself and is deliberately left as-is, not fixed.
+> A note it may print: some patient IDs appear in both Kermany train and test (566 of the 633
+> patients in our common-class test set, covering 914 of its 1,000 images, per
+> `data/manifest.csv`). That comes from the published release itself and is deliberately left
+> as-is, not fixed.
 
 ### Stage 1 — basic augmentation
 
