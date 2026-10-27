@@ -24,6 +24,7 @@ Usage (from the project root):
   python stage3_classifier.py --variant basic
   python stage3_classifier.py --variant gan
 Options: --epochs 250 --batch 10 --patience 20 (0 = run all epochs, as in the paper)
+Isolated experiments: --cache-dir /path/to/features --out-dir /path/to/run
 
 Outputs:
   results/features/<group>.npz                  cached features, shared by variants and Stage 4
@@ -95,7 +96,9 @@ def features(group, paths, root, cache_dir, net_fn, bs=32):
             print(f"  {group}: {min(i * bs, len(paths))}/{len(paths)} images "
                   f"({rate:.0f} img/s, ~{max(len(paths) - i * bs, 0) / rate / 60:.0f} min left)", flush=True)
     feats = np.concatenate(out)
-    np.savez(f, paths=np.array(paths), feats=feats)
+    pending = f.with_suffix(".tmp.npz")
+    np.savez(pending, paths=np.array(paths), feats=feats)
+    pending.replace(f)
     return feats.astype(np.float32)
 
 
@@ -116,15 +119,17 @@ def main():
     ap.add_argument("--gan-per-class", type=int, default=3000)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--feat-batch", type=int, default=32, help="lower if feature extraction runs out of memory")
+    ap.add_argument("--cache-dir", help="explicit feature-cache directory (C0 uses one per arm)")
+    ap.add_argument("--out-dir", help="explicit run directory; defaults to results/stage3_<variant>")
     ap.add_argument("--weights", default="imagenet", help=argparse.SUPPRESS)  # testing only
     a = ap.parse_args()
 
     need_tf()
     tf.keras.utils.set_random_seed(a.seed)
     root = Path(a.root)
-    cache = root / "results/features"
+    cache = Path(a.cache_dir) if a.cache_dir else root / "results/features"
     cache.mkdir(parents=True, exist_ok=True)
-    out = root / f"results/stage3_{a.variant}"
+    out = Path(a.out_dir) if a.out_dir else root / f"results/stage3_{a.variant}"
     out.mkdir(parents=True, exist_ok=True)
 
     man = pd.read_csv(root / "data/manifest.csv")
@@ -179,6 +184,7 @@ def main():
                            [("train", ytr), ("val", yva), ("test", yte)]}).reindex(CLASSES).fillna(0).astype(int)
     counts.to_csv(out / "data_counts.csv")
     print(f"\nVariant '{a.variant}' data counts:\n{counts}\n")
+
 
     # ---- the trainable part: one softmax layer on frozen 2048-d features
     model = tf.keras.Sequential([tf.keras.Input((2048,)), tf.keras.layers.Dense(len(CLASSES), activation="softmax")])

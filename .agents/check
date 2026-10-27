@@ -9,7 +9,7 @@ trap 'echo "FAILED: $BASH_COMMAND (line $LINENO in .agents/check)" >&2' ERR
 cd "$(dirname "$0")/.."
 
 # Project venv on Windows or Linux, else whatever python3 is on PATH (e.g. Colab).
-PY=python3
+PY="${PYTHON:-python3}"
 for p in .venv/Scripts/python.exe .venv/bin/python; do [ -x "$p" ] && PY="$p" && break; done
 
 # --- Edit below: one check per line. Any failing line fails the whole check. ---
@@ -18,8 +18,9 @@ git diff --quiet HEAD -- data/manifest.csv
 # Nothing under data/ is committed except the manifest.
 [ -z "$(git ls-files data | grep -vx 'data/manifest.csv')" ]
 # Stage scripts compile; the Colab notebook is valid JSON.
-"$PY" -m py_compile stage0_manifest.py stage1_basic_aug.py stage2_cyclegan.py stage3_classifier.py stage4_evaluate.py analysis.py review_sheet.py figures.py
+"$PY" -m py_compile stage0_manifest.py stage1_basic_aug.py stage2_cyclegan.py stage3_classifier.py stage4_evaluate.py analysis.py review_sheet.py figures.py stage1b_normalize.py c0_experiment.py
 "$PY" -c "import json; json.load(open('colab_setup.ipynb', encoding='utf-8'))"
+"$PY" -m unittest discover -s tests -p test_c0.py
 # Manifest still matches the raw data and the verified counts (only where raw data exists).
 if [ -d data/raw/OCT2017 ]; then "$PY" stage0_manifest.py > /dev/null; fi
 # --- Edit above ---

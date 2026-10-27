@@ -4,6 +4,8 @@
 data/raw/
 data/aug_basic/
 data/gan/
+data/c0/
+results/c0/
 ChestXRay2017/
 *.zip
 *.tar.gz
