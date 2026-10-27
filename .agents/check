@@ -18,7 +18,7 @@ git diff --quiet HEAD -- data/manifest.csv
 # Nothing under data/ is committed except the manifest.
 [ -z "$(git ls-files data | grep -vx 'data/manifest.csv')" ]
 # Stage scripts compile; the Colab notebook is valid JSON.
-"$PY" -m py_compile stage0_manifest.py stage1_basic_aug.py stage2_cyclegan.py stage3_classifier.py stage4_evaluate.py analysis.py
+"$PY" -m py_compile stage0_manifest.py stage1_basic_aug.py stage2_cyclegan.py stage3_classifier.py stage4_evaluate.py analysis.py review_sheet.py
 "$PY" -c "import json; json.load(open('colab_setup.ipynb', encoding='utf-8'))"
 # Manifest still matches the raw data and the verified counts (only where raw data exists).
 if [ -d data/raw/OCT2017 ]; then "$PY" stage0_manifest.py > /dev/null; fi
