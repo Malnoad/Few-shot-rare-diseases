@@ -18,7 +18,7 @@ Sources: the paper PDF (main checkout, not in git), `results/stage4/*.csv`,
 | Table 3: independent test | none 88.4, basic 91.3, gan 92.1 % | Done, seed 42: 90.31 / 88.85 / 92.95 %. Seeds 1-5: 90.7 / 92.9 / 92.6 (gan ties basic) |
 | Table 4: per-class TPR | none gets rare TPR 0.00-0.25, gan 0.75-1.00 | Done. **Our `none` already gets 0.75-0.80 on rare classes**, so the paper's rare-class rescue is not reproduced at the baseline |
 | Fig. 9: one-vs-rest ROC | per-class curves | AUC table done; curve points done (`analysis.py roc`), figure needs matplotlib |
-| Fig. 10: Grad-CAM | saliency maps | All 22 rare test images for gan and none (`analysis.py cam --n 22`), side by side in `review_sheet.py`, which asks where the strongest colour sits (abnormality / retina elsewhere / off the retina); not yet reviewed |
+| Fig. 10: Grad-CAM | saliency maps | All 22 rare test images for gan and none (`analysis.py cam --n 22`), side by side in `review_sheet.py`, which asks where the strongest colour sits. Reviewed by the author (non-expert, not blinded to variant), 2026-10-27, `results/analysis/cam_review_seed42_Lam.csv`: on the abnormality gan 21/22, none 14/22; off the retina gan 0, none 7 (incl. all 4 Stargardt, 6 of the 7 correctly classified) |
 | Table 2: 5-fold CV on whole data | GANs retrained per fold, gan 93.9 ± 4.5 % | Not done |
 | Fig. 11: imbalance by under-sampling | "no significant impact" | Not done |
 | kNN K=3 baseline | 91.2 % | Done: 86.40 % |
@@ -44,7 +44,7 @@ model is on the Colab track. Tool: `analysis.py` (CPU, about 30 s for `all`); ou
 |---|---|---|---|---|
 | L1 | Get the October work onto GitHub (branch + PR), rewrite README results | | Done in the PR from branch `t3/28d8122c` | git |
 | L2 | Paired tests none/basic/gan: test set (seed 42) and training seeds | Table 3 | Done | `compare` -> `paired_seed42.csv`, `paired_seeds.csv` |
-| L3 | CAM heatmaps, all 22 rare test images, for gan and none | Fig. 10 | Panels done (22 gan + 22 none, 2026-10-23); review by eye pending | `cam --variant gan|none --n 22`, then `review_sheet.py` |
+| L3 | CAM heatmaps, all 22 rare test images, for gan and none | Fig. 10 | Done: panels 2026-10-23; author review 2026-10-27 (gan looks at the abnormality 21/22, none 14/22 and off the retina 7/22) | `cam --variant gan|none --n 22`, then `review_sheet.py` |
 | L4 | Look at GAN images: rate 100 random accepted per class (Fig. 6 protocol) | Fig. 6 | Automatic rates done; non-expert rating sheet built (seed 42), ratings not done. A blind real-vs-generated test was rejected: framing alone (black bands vs full-frame Kermany outline) gives the answer away | `review_sheet.py` -> `.agents/reports/review-sheet.html`, exports an answers CSV |
 | L5 | t-SNE and ROC figures | Figs. 7, 9 | Coordinates done; PNGs need matplotlib | `tsne`, `roc` |
 | L6 | kNN gap (ours 86.4, paper 91.2) | Table 3 | Sweep done | `knn` -> `knn_sweep.csv` |
