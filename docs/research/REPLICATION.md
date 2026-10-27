@@ -1,7 +1,7 @@
 # Replication tracker: Yoo et al. 2021 (MBEC 59:401-415)
 
 What the paper reports, what this repo reproduces, and the prioritized work left.
-Status as of 2026-10-22. Update the tables when an item changes state.
+Status as of 2026-10-23. Update the tables when an item changes state.
 
 Sources: the paper PDF (main checkout, not in git), `results/stage4/*.csv`,
 `results/seed_check.csv`, `results/stage2/qc_*.csv`, the 22 Oct status report.
@@ -48,7 +48,7 @@ model is on the Colab track. Tool: `analysis.py` (CPU, about 30 s for `all`); ou
 | L4 | Look at GAN images: rate 100 random accepted per class (Fig. 6 protocol) | Fig. 6 | Automatic rates done; human look not done | `qc` -> `qc_summary.csv`; `results/stage2/qc_*_kept.jpg` |
 | L5 | t-SNE and ROC figures | Figs. 7, 9 | Coordinates done; PNGs need matplotlib | `tsne`, `roc` |
 | L6 | kNN gap (ours 86.4, paper 91.2) | Table 3 | Sweep done | `knn` -> `knn_sweep.csv` |
-| L7 | Why our `none` rare recall (0.75-0.80) is far above the paper's (0.00-0.25) | Table 4 | Not started | inspect `results/stage3_none/test_predictions.csv` |
+| L7 | Why our `none` rare recall (0.75-0.80) is far above the paper's (0.00-0.25) | Table 4 | Training-free part done (see L7 below); 2 rivals need training | `rare` -> `rare_recall.csv`, `rare_shift.csv`, `rare_test_images.csv` |
 | L8 | RCI gap (ours 0.76-0.81, paper 0.92-0.98) | Table 3 | Done: our RCI follows the cited definition; the paper's values don't fit it. Open: the paper's actual formula (ask the authors) | `rci` -> `rci_definitions.csv`, `rci_paper_bounds.csv` |
 
 ### Findings so far (2026-10-22, `results/analysis/`)
@@ -112,10 +112,66 @@ still needed. The one-class zero-entropy case was not certified. A blocked sklea
 DLL required an AST-only function audit, rather than a full Stage 4 evaluation.
 Published Stage 4 values remain unchanged. See the audit for its source boundaries.
 
+### L7: why `none` finds the rare classes (2026-10-23, `results/analysis/rare_*.csv`)
+**Observation.** Seed 42 `none` gets 17/22 rare test images right; the paper's `none` gets 3/22
+(Table 4, order CSC / MH / MacTel / RP / Stargardt: 0.20 / 0.20 / 0.00 / 0.00 / 0.25). The paper's own tables agree: its Table 4 TPRs give
+903/1022 = 88.36% for `none` (Table 3: 88.4). Of our 5 rare errors, 4 go to a major class and 1
+to another rare class, and no major test image is predicted as rare. All analysis below came after
+seeing these results, so it is exploratory.
+
+**Where the gap is.** When no training is involved, our numbers match the paper's. kNN K=3 gets
+5/22 rare here and 7/22 in the paper (Table 4: 0.6 / 0.8 / 0 / 0 / 0). So the data and features
+behave alike, and the gap sits in how the classifier was trained.
+
+| Rival (candidate) | Prediction that tells it apart | Test (training-free) | Result | Status |
+|---|---|---|---|---|
+| R1 Lucky hold-out: our 22 test images are easy | Our draw scores near the top of random 5/5/4/4/4 hold-outs | 9-way cosine nearest-centroid rule, our draw vs 2,000 random draws | Ours 13/22, random median 15 (5-95%: 12-18) | Not supported (proxy, not the trained head) |
+| R2 Lucky training seed | Other seeds fall toward 3/22 | `results/seed_check.csv` | Seeds 1-5: 15, 16, 17, 12, 11 /22 | Not supported |
+| R3 Test images duplicate training images | Test-to-train similarity above train-to-train | Cosine on cached features (earlier check) | Same range, 0.78-0.94 | Ruled out. Patient overlap can't be checked: file names are `01.PNG`..`32.PNG`, no patient ID |
+| R4 Our head has a weaker class prior than the paper's | Lowering every rare logit by about log(class ratio) ≈ 6.9 gives ~3/22, and major recall does not drop | Shift the rare logits of the saved head | Biases are -0.12 to 0.08 (no prior learned), but a shift of 7 still leaves 9/22; it takes 16 to reach ≤3/22. Major accuracy stays 0.906, while the paper's `none` has *lower* NORMAL/CNV recall than ours (0.876/0.924 vs 0.984/0.992) | Weakened: a uniform prior shift doesn't fit. A non-uniform change from other training is not excluded |
+| R5 Rare images carry a dataset-of-origin cue that a linear head picks up | One direction separates rare from major *test* images; raw files differ by source; errors fall where the cue is weak | Axis = mean(real rare train) - mean(major train) features; raw PNG/JPEG headers | AUC 0.9955; 17/22 rare test images score above all 1,000 major test images; 3 of the 4 rare→major errors are among the 5 lowest-scoring rare images. Raw files: rare = RGBA PNG crops, about square, 290-644 px wide; Kermany = grayscale JPEG 512-1536 x 496. Raw width x height alone names the rare class of 16/22 test images | Supported as why *our* head finds rare classes. It can't explain the gap by itself: the paper used the same two datasets |
+| R6 The paper fine-tuned the top Inception blocks, not only the softmax | Fine-tuning `none` (~25 images per rare class vs ~74k major) drops rare recall toward 0, while `gan` keeps it | needs training | §2.4 says both "fine-tuning of the weights of the pre-trained networks ... keeps the weights of some bottom layers" and "the backbone convolutional layers ... were left frozen"; it reports "150 h for 250 epochs with fine-tuning" | **Untested, needs training** (GPU) |
+| R7 Training schedule and model selection | `none` trained for 250 epochs and kept at the last epoch falls toward 3/22. The paper states 250 epochs and a tenth of training data for validation, and mentions no early stopping; that it kept the last epoch is our assumption | needs training | Ours keeps the best major-only val loss: the 6th of 26 epochs run (`history.csv`). Note: `--patience 0` alone still restores the best-val-loss weights (`ModelCheckpoint`), so testing the final epoch needs a small Stage 3 option | **Untested, needs training** (head only, minutes; fits C1) |
+| R8 Different input pipeline in the paper (PNG RGBA handling, resizing) | Unknown direction | needs the paper's code | Paper code not published beyond the TF tutorial link | **Untested** |
+
+**Reading.** Hold-out luck and seed luck do not explain our 17/22. Our frozen features separate rare
+from major images almost linearly, partly through a cue that may be acquisition, not disease (R5).
+So a softmax on frozen features finds the rare classes even with ~25 images each. The paper's
+`none` behaves like a training-free method on the rare classes (close to its kNN), which fits R6 or
+R7: a model that did not use, or lost, that direction. Next test: R7 first (cheapest), then R6.
+
+**Caveat for the whole project.** R5 means rare recall may partly measure "which dataset did this
+come from". That affects `none`, `basic` and `gan` alike, and the paper too. We can't tell
+acquisition from disease without images from the same source; this needs a check before claiming
+any rare-class result.
+
+
+### Disagreement ? L7 Claude analysis and Codex audit (D16, 2026-10-27)
+
+The Claude branch remains the primary analysis and code in the rival table above.
+It interprets the similarity screen as ruling out duplicates, the hold-out proxy
+and seed check as discounting luck, and the rare-versus-major axis as supporting
+an acquisition cue; it locates the main gap in training and retains fine-tuning
+(R6) as a candidate. The [Codex audit](L7_BASELINE_AUDIT.md) excludes exact file,
+pixel and feature duplication only, leaves transformed duplicates/patient/source
+dependence and hold-out comparability unresolved, and treats the original methods
+as freezing the convolutional backbone. It therefore does not support fine-tuning
+as an explanation or attribute the gap uniquely to training. These are explicit
+disagreements in interpretation; no scientific resolution is selected here.
+
+Codex adds verified paper/repo rare-training counts (97 versus 124), identical
+saved-head/H5 weights and replayed predictions, and the limitation that path-only
+cache validation cannot establish historical weights or preprocessing. Validation
+composition differs (zero rare validation images for none, versus 1,000/1,987 for
+basic/gan); histories have 26/27/22 epochs and select epochs 6/7/2. Matching test
+counts does not establish the paper's test-image identities. Similarity scores
+have no validated duplicate threshold here, and extra seeds do not add patients.
+These checks preserve the manifest and run of record; the unique cause is unresolved.
+
 ### Colab track (needs training)
 | # | Work | Paper | Cost |
 |---|---|---|---|
-| C1 | Seed sweep (~20 seeds) none/basic/gan, plus fixed 250 epochs without early stopping | Table 3 | head only, minutes per run (Stage 3 already ran on Colab CPU on 4 Oct) |
+| C1 | Seed sweep (~20 seeds) none/basic/gan, plus fixed 250 epochs without early stopping, keeping the last epoch (tests L7 R7; needs a Stage 3 option) | Tables 3-4 | head only, minutes per run (Stage 3 already ran on Colab CPU on 4 Oct) |
 | C2 | Amount of GAN images 0 / 500 / 1,000 / 2,000 / 3,000 (`--gan-per-class`), over seeds | Fig. 5 | as C1 |
 | C3 | Under-sampling to control class balance | Fig. 11 | as C1, needs a Stage 3 option |
 | C4 | 5-fold CV with per-fold Stage 1 + CycleGANs (25 GANs, ~50 A100-hours by `stage2.log`); without per-fold GANs the test fold leaks | Table 2 | GPU, large |

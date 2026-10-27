@@ -1,0 +1,10 @@
+test,value
+head bias range (all 9 classes),-0.12 to 0.08
+"log(train NORMAL / train rare), mean over rare",6.86
+smallest rare-logit shift giving <= 3/22 (paper none),16
+"domain-axis AUC, rare vs major TEST images",0.9955
+rare test images above every major test image on the axis,17/22
+rare test images whose cosine nearest train neighbour is rare,14/22
+"centroid rule, our hold-out",13/22
+"centroid rule, 2000 random hold-outs: median (5-95%)",15 (12-18)/22
+"rare test class from raw (width, height) alone",16/22

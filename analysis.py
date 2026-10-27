@@ -11,6 +11,7 @@ Commands (from the project root, or pass --root to the checkout that holds the d
   python analysis.py qc             CycleGAN acceptance rates from the Stage 2 QC records      (Fig. 6)
   python analysis.py roc            one-vs-rest ROC curves per variant                         (Fig. 9)
   python analysis.py tsne           t-SNE of frozen features, real-only vs + CycleGAN pool     (Fig. 7)
+  python analysis.py rare           why `none` rare recall beats the paper's: prior, domain, luck (Table 4, L7)
   python analysis.py cam --n 40     CAM heatmaps from a trained head, rare test images first   (Fig. 10)
   python analysis.py rci            alternative RCI definitions + the RCI range Table 4 allows (Table 3, ~2 min)
   python analysis.py all            every command above except cam and rci
@@ -88,6 +89,35 @@ def knn_scores(X, y, Xt, yt, ks, metrics):
             rows.append(dict(metric=metric, k=k, acc=(pred == yt).mean() * 100,
                              rare_recall_mean=np.mean(rec), rare_correct=int(sum((pred == yt)[np.isin(yt, rare)]))))
     return pd.DataFrame(rows)
+
+
+def unit_rows(X):
+    return X / np.linalg.norm(X, axis=1, keepdims=True)
+
+
+def rare_shift_curve(L, y, shifts):
+    """Rare test images still correct when every rare logit is lowered by d (a stronger class prior)."""
+    rare = [CLASSES.index(c) for c in RARE]
+    is_rare = np.isin(y, rare)
+    rows = []
+    for d in shifts:
+        pred = (L - np.isin(np.arange(L.shape[1]), rare) * d).argmax(1)
+        rows.append(dict(shift=d, rare_correct=int((pred == y)[is_rare].sum()),
+                         major_acc=(pred == y)[~is_rare].mean()))
+    return pd.DataFrame(rows)
+
+
+def auc(pos, neg):
+    """Mann-Whitney AUC: P(score of a positive > score of a negative)."""
+    from scipy.stats import mannwhitneyu
+    return mannwhitneyu(pos, neg).statistic / (len(pos) * len(neg))
+
+
+def centroid_correct(X, y, test_mask, major_centroids):
+    """Rare test images right under a 9-way cosine nearest-centroid rule (rare centroids from the rest)."""
+    rare = [CLASSES.index(c) for c in RARE]
+    C = unit_rows(np.concatenate([major_centroids, [X[(y == k) & ~test_mask].mean(0) for k in rare]]))
+    return int(((unit_rows(X[test_mask]) @ C.T).argmax(1) == y[test_mask]).sum())
 
 
 def qc_summary(qc):
@@ -252,6 +282,93 @@ def cmd_knn(root, out, a):
     print(t.round(3).to_string(index=False))
 
 
+def image_size(path):
+    """(width, height) from a PNG or baseline/progressive JPEG header, without an image library."""
+    import struct
+    b = Path(path).read_bytes()
+    if b[:8] == b"\x89PNG\r\n\x1a\n":
+        return struct.unpack(">II", b[16:24])
+    i = 2
+    while i < len(b) - 9:
+        if b[i] != 0xFF:
+            i += 1; continue
+        if b[i + 1] in (0xC0, 0xC1, 0xC2):
+            h, w = struct.unpack(">HH", b[i + 5:i + 9]); return w, h
+        i += 2 + struct.unpack(">H", b[i + 2:i + 4])[0]
+
+
+def cmd_rare(root, out, a):
+    """L7: why the `none` head gets 0.75-0.80 rare recall (paper Table 4: 0.00-0.25)."""
+    man = pd.read_csv(root / "data/manifest.csv")
+    man["path"] = man.path.map(fix)
+    split = dict(zip(man.path, man.split))
+    cache = root / "results/features"
+    Xm, pm = load_feats(cache, "major_train")
+    ym = np.array([CLASSES.index(c) for c in man.set_index("path").label.loc[[fix(p) for p in pm]]])
+    Xr, yr, pr = [], [], []
+    for c in RARE:
+        X, p = load_feats(cache, f"real_{c}")
+        Xr.append(X); yr += [CLASSES.index(c)] * len(X); pr += [fix(q) for q in p]
+    Xr, yr = np.concatenate(Xr), np.array(yr)
+    Xt, pt = load_feats(cache, "test")
+    pt = [fix(p) for p in pt]
+    yt = np.array([CLASSES.index(c) for c in man.set_index("path").label.loc[pt]])
+    is_r = np.isin(yt, [CLASSES.index(c) for c in RARE])
+    head = np.load(root / "results/stage3_none/head.npz")
+    L = Xt @ head["W"] + head["b"]
+    rows = [("head bias range (all 9 classes)", f"{head['b'].min():.2f} to {head['b'].max():.2f}")]
+
+    # (1) class prior: how far must rare logits drop to reach the paper's 3/22?
+    curve = rare_shift_curve(L, yt, [0, 2, 4, 6, 7, 8, 10, 12, 14, 16, 20])
+    curve.to_csv(out / "rare_shift.csv", index=False)
+    n_tr = man[man.split == "train"].label.value_counts()
+    rows.append(("log(train NORMAL / train rare), mean over rare", f"{np.log(n_tr['NORMAL'] / n_tr[RARE]).mean():.2f}"))
+    rows.append(("smallest rare-logit shift giving <= 3/22 (paper none)", int(curve[curve.rare_correct <= 3]["shift"].min())))
+
+    # (2) dataset of origin: one direction from training means separates rare from major test images
+    axis = Xr.mean(0) - Xm.mean(0)
+    s = Xt @ axis
+    rows.append(("domain-axis AUC, rare vs major TEST images", f"{auc(s[is_r], s[~is_r]):.4f}"))
+    rows.append(("rare test images above every major test image on the axis", f"{int((s[is_r] > s[~is_r].max()).sum())}/22"))
+    sim_m = (unit_rows(Xt[is_r]) @ unit_rows(Xm).T).max(1)
+    sim_r = unit_rows(Xt[is_r]) @ unit_rows(Xr).T
+    rows.append(("rare test images whose cosine nearest train neighbour is rare", f"{int((sim_r.max(1) > sim_m).sum())}/22"))
+
+    # (3) hold-out luck: our 22 vs random 5/5/4/4/4 hold-outs under a training-free 9-way centroid rule
+    X = np.concatenate([Xr, Xt[is_r]]); y = np.concatenate([yr, yt[is_r]])
+    paths = pr + [p for p, r in zip(pt, is_r) if r]
+    ours = np.array([split[p] == "test" for p in paths])
+    cent = np.stack([Xm[ym == k].mean(0) for k in range(4)])
+    rng = np.random.default_rng(0)
+    sims = []
+    for _ in range(a.n_draws):
+        m = np.zeros(len(y), bool)
+        for c, n in zip(RARE, [5, 5, 4, 4, 4]):
+            m[rng.choice(np.flatnonzero(y == CLASSES.index(c)), n, replace=False)] = True
+        sims.append(centroid_correct(X, y, m, cent))
+    rows.append(("centroid rule, our hold-out", f"{centroid_correct(X, y, ours, cent)}/22"))
+    rows.append((f"centroid rule, {a.n_draws} random hold-outs: median (5-95%)",
+                 f"{np.median(sims):.0f} ({np.percentile(sims, 5):.0f}-{np.percentile(sims, 95):.0f})/22"))
+
+    # (4) acquisition fingerprint in the raw files (only where data/raw exists)
+    if (root / "data/raw/rare").exists():
+        wh = np.array([image_size(root / p) for p in paths], float)
+        med = {k: np.median(wh[(y == k) & ~ours], 0) for k in np.unique(y)}
+        guess = [min(med, key=lambda k: np.abs(w - med[k]).sum()) for w in wh[ours]]
+        rows.append(("rare test class from raw (width, height) alone", f"{int((np.array(guess) == y[ours]).sum())}/22"))
+
+    per = pd.DataFrame(dict(path=np.array(pt)[is_r], label=[CLASSES[k] for k in yt[is_r]],
+                            pred=[CLASSES[k] for k in L[is_r].argmax(1)], domain_score=s[is_r]))
+    Lo = L[is_r].copy(); Lo[np.arange(is_r.sum()), yt[is_r]] = -np.inf
+    per["logit_margin"] = L[is_r][np.arange(is_r.sum()), yt[is_r]] - Lo.max(1)
+    per.to_csv(out / "rare_test_images.csv", index=False)
+    t = pd.DataFrame(rows, columns=["test", "value"])
+    t.to_csv(out / "rare_recall.csv", index=False)
+    print("=== L7: rare recall of the `none` head (paper Table 4: none 3/22 rare correct) ===")
+    print(t.to_string(index=False))
+    print("\nRare-logit shift curve:\n" + curve.round(3).to_string(index=False))
+
+
 def cmd_qc(root, out, a):
     qc = {c: pd.read_csv(f) for c in RARE if (f := root / f"results/stage2/qc_{c}.csv").exists()}
     if not qc:
@@ -376,6 +493,9 @@ def main():
         p = sub.choices.get(name) or sub.add_parser(name)
         p.add_argument("--per-class", type=int, default=300, help="sampled points per major class and per GAN class")
         p.add_argument("--seed", type=int, default=42)
+    for name in ["rare", "all"]:
+        p = sub.choices.get(name) or sub.add_parser(name)
+        p.add_argument("--n-draws", type=int, default=2000, help="random rare hold-outs for the luck check")
     p = sub.add_parser("cam")
     p.add_argument("--variant", default="gan", choices=VARIANTS)
     p.add_argument("--n", type=int, default=40, help="number of test images (rare first)")
@@ -384,9 +504,9 @@ def main():
     root = Path(a.root)
     out = Path(a.out) if a.out else root / "results/analysis"
     out.mkdir(parents=True, exist_ok=True)
-    cmds = {"compare": cmd_compare, "knn": cmd_knn, "qc": cmd_qc, "roc": cmd_roc, "tsne": cmd_tsne, "rci": cmd_rci,
-            "cam": cmd_cam}
-    for name in (["compare", "qc", "roc", "knn", "tsne"] if a.cmd == "all" else [a.cmd]):
+    cmds = {"compare": cmd_compare, "knn": cmd_knn, "qc": cmd_qc, "roc": cmd_roc, "tsne": cmd_tsne,
+            "rci": cmd_rci, "rare": cmd_rare, "cam": cmd_cam}
+    for name in (["compare", "qc", "roc", "knn", "tsne", "rare"] if a.cmd == "all" else [a.cmd]):
         cmds[name](root, out, a)
         print()
 
