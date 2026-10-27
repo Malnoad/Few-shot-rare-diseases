@@ -296,6 +296,7 @@ These checks preserve the manifest and run of record; the unique cause is unreso
 ### Colab track (needs training)
 | # | Work | Paper | Cost |
 |---|---|---|---|
+| C0 | Preprocessing control before C1 (decision D6): arms `current` / `format` (8-bit grayscale PNG) / `framing` (grayscale, centred square padding, 256x256) x none/basic/gan x seeds 1-20, 180 paired heads. Primary: current minus framing rare macro recall for `none`. Code and Colab Part C0 ready ([design](C0_DESIGN.md), [report](C0_REPORT.md)). Training-free sample check: framing removes the header-size cue, but the frozen-feature axis still separates rare from common (sample AUC 0.71 recomputed, 0.93 fixed), so cue removal is not established; the notebook stops before heads if the full framing AUC is >= 0.90 | Table 4 | GPU 45-180 min for features, then CPU heads 6-24 h (unbenchmarked) |
 | C1 | [Plan prepared](C1_EXPERIMENT_PLAN.md): fixed 250 epochs/final head primary; es20 on first 20 seeds is sensitivity. Power target about 63 pairs for 1 pp at SD about 2.8 pp; if uncertain, re-estimate SD after 20 seeds then top up | Tables 3-4 | head only; safe execution implementation/budget pending (T8); no new training executed |
 | C2 | Amount of GAN images 0 / 500 / 1,000 / 2,000 / 3,000 (`--gan-per-class`), over seeds | Fig. 5 | as C1 |
 | C3 | Under-sampling to control class balance | Fig. 11 | as C1, needs a Stage 3 option |

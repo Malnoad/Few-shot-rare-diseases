@@ -99,6 +99,10 @@ tokens, then add it in Colab's Secrets panel as `GITHUB_TOKEN` with notebook acc
    (rebuild stages from raw). Not both in one session: Part 2 creates empty placeholder
    images that only Stage 3 understands. Part 3 deletes them before it starts.
 4. Optional: Part 4 (seed check), Part 5 (CAM).
+   For **C0** use Part 1, then 3.1, 3.2 and 3.4b (real images; Part 2's placeholders are
+   not enough), then C0.1-C0.5 on an A100/L4/T4 for the fresh features. Outputs live only
+   in `MyDrive/octfsl/c0/v1/`; never reuse `results/features`. If C0.3 reports a framing
+   AUC >= 0.90, the notebook stops before C0.4: bring `gate.json` back for a decision.
 5. Run **Part 6** to save to Drive and push to GitHub.
 
 ### Rough timings
