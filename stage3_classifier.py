@@ -23,7 +23,10 @@ Usage (from the project root):
   python stage3_classifier.py --variant none
   python stage3_classifier.py --variant basic
   python stage3_classifier.py --variant gan
-Options: --epochs 250 --batch 10 --patience 20 (0 = run all epochs, as in the paper)
+Options: --epochs 250 --batch 10 --patience 20 (0 = run all epochs)
+         --restore best (weights of the lowest val loss) | last (final-epoch weights)
+The paper's literal schedule is --patience 0 --restore last: 250 epochs, no checkpoint
+selection. With --restore best, --patience 0 still ends on the lowest-val-loss epoch.
 
 Outputs:
   results/features/<group>.npz                  cached features, shared by variants and Stage 4
@@ -113,6 +116,8 @@ def main():
     ap.add_argument("--batch", type=int, default=10)
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--patience", type=int, default=20, help="early stopping on val loss; 0 = off")
+    ap.add_argument("--restore", choices=["best", "last"], default="best",
+                    help="keep the lowest-val-loss weights (best) or the final-epoch weights (last)")
     ap.add_argument("--gan-per-class", type=int, default=3000)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--feat-batch", type=int, default=32, help="lower if feature extraction runs out of memory")
@@ -191,7 +196,8 @@ def main():
         cbs.append(tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=a.patience))
     model.fit(Xtr, ytr_i, validation_data=(Xva, yva_i), epochs=a.epochs, batch_size=a.batch,
               shuffle=True, callbacks=cbs, verbose=2)
-    model.load_weights(str(best))
+    if a.restore == "best":
+        model.load_weights(str(best))
     W, b = model.layers[-1].get_weights()
     np.savez(out / "head.npz", W=W, b=b, classes=np.array(CLASSES))
 
