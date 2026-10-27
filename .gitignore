@@ -29,6 +29,7 @@ checkpoint
 # Not ours to redistribute.
 paper/
 *.pdf
+!results/figures/*.pdf
 code2017/
 
 # ---------------------------------------------------------- local scratch ----
