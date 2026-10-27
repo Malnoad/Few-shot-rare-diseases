@@ -163,7 +163,7 @@ shown below.
 - <https://data.mendeley.com/datasets/rscbjbr9sj/2>
 - DOI: [10.17632/rscbjbr9sj.2](https://doi.org/10.17632/rscbjbr9sj.2)
 - Kermany DS, Goldbaum M, Cai W, et al. *Identifying medical diagnoses and treatable
-  diseases by image-based deep learning.* Cell 172(5):1122–1131 (2018).
+  diseases by image-based deep learning.* Cell 172(5):1122–1131.e9 (2018).
 
 ### 2. Rare-disease OCT — five rare classes
 
@@ -602,7 +602,7 @@ Mendeley Data directly and cite them:
              image-based deep learning},
   author  = {Kermany, Daniel S and Goldbaum, Michael and Cai, Wenjia and others},
   journal = {Cell},
-  volume  = {172}, number = {5}, pages = {1122--1131}, year = {2018},
+  volume  = {172}, number = {5}, pages = {1122--1131.e9}, year = {2018},
   doi     = {10.1016/j.cell.2018.02.010}
 }
 ```
