@@ -1,5 +1,8 @@
 # Running this project on Google Colab
 
+For the remaining replication runs (C5, C0, C1) in order, with what to bring back, see
+[`guide.md`](guide.md). This file is the background reference.
+
 Everything runs in Colab. Nothing needs to be installed on your PC except for one optional
 job: preparing the raw data the first time (see *One-time preparation*).
 
