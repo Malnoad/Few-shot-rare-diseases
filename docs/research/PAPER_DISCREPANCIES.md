@@ -10,8 +10,7 @@ implementation details remain open. D11, whether to contact them, is Lam's decis
 the [Europe PMC full-text XML](https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7829497/fullTextXML).
 The local PDF directory was unavailable. References marked **L8 branch** mean
 `task/l8-rci` at commit `6277e64b7a667fdf5ef647815576611a6b2433fa`, readable with
-`git show task/l8-rci:<path>`. These files need not exist on this branch yet;
-T1 owns their integration. All file line numbers refer to the versions checked
+`git show task/l8-rci:<path>`. These files are now on main (PRs #2 and #8). All file line numbers refer to the versions checked
 for this report.
 
 ## RCI (L8): our calculation is sound, but its paper comparison is unresolved

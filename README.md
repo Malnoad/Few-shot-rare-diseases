@@ -140,6 +140,8 @@ softmax AUCs of `none`/`basic`/`gan`.
 
 ### Differences from the paper
 
+Three of the paper's numbers can't be matched as printed: its RCI values, Table 3 vs Table 4 accuracy for the prototypical network, and the kNN baseline. Worked examples and what would settle each: [`docs/research/PAPER_DISCREPANCIES.md`](docs/research/PAPER_DISCREPANCIES.md).
+
 | Paper | Here | Effect |
 |---|---|---|
 | Two ophthalmologists removed bad CycleGAN images | Automatic filter (`stage2_cyclegan.py qc`): keep images closer to real disease than to NORMAL in Inception-v3 feature space | No clinician has reviewed the accepted images |
