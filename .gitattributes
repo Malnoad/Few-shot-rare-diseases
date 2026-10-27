@@ -1,0 +1,5 @@
+# Agent shell entry points must run after a Windows core.autocrlf checkout.
+.agents/check text eol=lf
+.agents/run-python.sh text eol=lf
+.agents/hooks/* text eol=lf
+.claude/hooks/*.sh text eol=lf
