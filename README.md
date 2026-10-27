@@ -511,6 +511,22 @@ python analysis.py all            # all of the above except cam and rci
   `tsne.png` if `matplotlib` is installed
 - `--root` points at a checkout that holds the data, `--out` at another output folder.
 
+### Figures — `figures.py`
+
+Plots the saved analysis CSVs without refitting models or recomputing embeddings (needs
+`matplotlib`, pinned in `requirements.txt`).
+
+```bash
+python figures.py all             # t-SNE (Fig. 7) and one-vs-rest ROC (Fig. 9)
+python figures.py roc             # or one figure; --root and --out go before the subcommand
+```
+
+- **Input:** `results/analysis/roc_points.csv`, `results/analysis/tsne.csv`,
+  `results/stage4/auc.csv` (per-class AUCs in the ROC legends)
+- **Output:** `results/figures/` — `roc.png`, `roc.pdf`, `tsne.png`, `tsne.pdf`. Both t-SNE
+  panels are views of one joint embedding: real points only, and the same points plus GAN
+  points.
+
 ---
 
 ## Expected counts
