@@ -34,14 +34,18 @@ prototypical network, end-to-end fine-tuning of Inception-v3.
 - **Head:** the single trained softmax layer (`results/stage3_<variant>/head.npz`).
 
 ## Units & conventions
-- Accuracy in %, kappa/MCC/RCI/AUC as fractions; 95% CIs by 1,000-sample bootstrap.
+- Accuracy in %, kappa/MCC/RCI/AUC as fractions. Seed-42 none/basic/gan 95% CIs:
+  5,000 patient-cluster percentile draws (RNG seed 0), 633 Kermany patients + 22 rare
+  image singletons (patient IDs unknown; shared rare patients could leave CIs too narrow).
+  `analysis.py cluster` writes `results/analysis/`; Stage 4 retains legacy image CIs.
+  Gan-basic accuracy: +4.11 points, CI 2.47–5.76; single-run conclusion unchanged (L9).
 - Images resized to 256x256 everywhere, then 299x299 for Inception-v3.
 - All seeds 42 unless a seed sweep says otherwise.
 
 ## Data
 | Dataset | Source / version | Units | Resolution | Known issues |
 |---|---|---|---|---|
-| Kermany OCT2017 | Mendeley rscbjbr9sj v2, doi:10.17632/rscbjbr9sj.2 | JPEG B-scans | varies -> 256 | 566 patient IDs in both official train and test (left as published) |
+| Kermany OCT2017 | Mendeley rscbjbr9sj v2, doi:10.17632/rscbjbr9sj.2 | JPEG B-scans | varies -> 256 | 633 test patients; 566 overlap official train (our train + val), 506 overlap fitting split. Clustering cannot fix leakage; splits fixed (L9) |
 | Rare-disease OCT | Mendeley btv6yrdbmv (released with the paper) | PNG | varies -> 256 | macOS junk (`__MACOSX`, `._*`); folders shipped as `Mactel`, `Stargart` |
 | Derived (aug_basic, gan, ckpt, features) | Google Drive `MyDrive/octfsl` | | 256 | see `COLAB.md` |
 
