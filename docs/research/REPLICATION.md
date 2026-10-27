@@ -13,12 +13,12 @@ Sources: the paper PDF (main checkout, not in git), `results/stage4/*.csv`,
 | Basic augmentation (§2.3) | flips, ±5% shift, ±30° rotation, 0-20% zoom, ±10% brightness, elastic (MATLAB) | Done: Stage 1, 2,000/class (albumentations) |
 | CycleGAN per disease (§2.3, §3.1) | TF tutorial, 100 epochs, ophthalmologists remove artifacts, 3,000 kept/class | Done, 100 epochs. Automatic kNN QC instead of clinicians; kept 3,000 / 2,610 / 1,248 / 2,199 / 832 (CSC/MH/MacTel/Stargardt/RP) |
 | Fig. 5: amount of augmentation | best at 2,000 basic + 3,000 GAN | Not done |
-| Fig. 6: acceptance rate | 100 samples/class rated by 2 ophthalmologists; Stargardt and RP rejected most | Automatic only: QC pass rate 84 / 65 / 31 / 55 / 21% (RP and MacTel lowest). No clinician; a by-eye rating sheet of 100 accepted/class exists (`review_sheet.py`), not yet rated |
+| Fig. 6: acceptance rate | 100 samples/class rated by 2 ophthalmologists; Stargardt and RP rejected most | Automatic only: QC pass rate 84 / 65 / 31 / 55 / 21% (RP and MacTel lowest). No clinician; a non-expert sheet (`review_sheet.py`: each of 100 accepted/class next to its source NORMAL and the real training scans; looks real / flawed + reason / unsure) exists, not yet rated. Its result is an author check, not comparable to the paper's rate |
 | Fig. 7: t-SNE | Inception-v3 features, none vs gan | Coordinates done (`analysis.py tsne`); figure needs matplotlib |
 | Table 3: independent test | none 88.4, basic 91.3, gan 92.1 % | Done, seed 42: 90.31 / 88.85 / 92.95 %. Seeds 1-5: 90.7 / 92.9 / 92.6 (gan ties basic) |
 | Table 4: per-class TPR | none gets rare TPR 0.00-0.25, gan 0.75-1.00 | Done. **Our `none` already gets 0.75-0.80 on rare classes**, so the paper's rare-class rescue is not reproduced at the baseline |
 | Fig. 9: one-vs-rest ROC | per-class curves | AUC table done; curve points done (`analysis.py roc`), figure needs matplotlib |
-| Fig. 10: Grad-CAM | saliency maps | All 22 rare test images for gan and none (`analysis.py cam --n 22`), side by side in `review_sheet.py`; not yet reviewed |
+| Fig. 10: Grad-CAM | saliency maps | All 22 rare test images for gan and none (`analysis.py cam --n 22`), side by side in `review_sheet.py`, which asks where the strongest colour sits (abnormality / retina elsewhere / off the retina); not yet reviewed |
 | Table 2: 5-fold CV on whole data | GANs retrained per fold, gan 93.9 ± 4.5 % | Not done |
 | Fig. 11: imbalance by under-sampling | "no significant impact" | Not done |
 | kNN K=3 baseline | 91.2 % | Done: 86.40 % |
@@ -45,7 +45,7 @@ model is on the Colab track. Tool: `analysis.py` (CPU, about 30 s for `all`); ou
 | L1 | Get the October work onto GitHub (branch + PR), rewrite README results | | Done in the PR from branch `t3/28d8122c` | git |
 | L2 | Paired tests none/basic/gan: test set (seed 42) and training seeds | Table 3 | Done | `compare` -> `paired_seed42.csv`, `paired_seeds.csv` |
 | L3 | CAM heatmaps, all 22 rare test images, for gan and none | Fig. 10 | Panels done (22 gan + 22 none, 2026-10-23); review by eye pending | `cam --variant gan|none --n 22`, then `review_sheet.py` |
-| L4 | Look at GAN images: rate 100 random accepted per class (Fig. 6 protocol) | Fig. 6 | Automatic rates done; rating sheet built (seed 42), ratings not done | `review_sheet.py` -> `.agents/reports/review-sheet.html`, exports a ratings CSV |
+| L4 | Look at GAN images: rate 100 random accepted per class (Fig. 6 protocol) | Fig. 6 | Automatic rates done; non-expert rating sheet built (seed 42), ratings not done. A blind real-vs-generated test was rejected: framing alone (black bands vs full-frame Kermany outline) gives the answer away | `review_sheet.py` -> `.agents/reports/review-sheet.html`, exports an answers CSV |
 | L5 | t-SNE and ROC figures | Figs. 7, 9 | Coordinates done; PNGs need matplotlib | `tsne`, `roc` |
 | L6 | kNN gap (ours 86.4, paper 91.2) | Table 3 | Sweep done | `knn` -> `knn_sweep.csv` |
 | L7 | Why our `none` rare recall (0.75-0.80) is far above the paper's (0.00-0.25) | Table 4 | Training-free part done (see L7 below); 2 rivals need training | `rare` -> `rare_recall.csv`, `rare_shift.csv`, `rare_test_images.csv` |
