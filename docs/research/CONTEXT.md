@@ -60,5 +60,8 @@ prototypical network, end-to-end fine-tuning of Inception-v3.
 ## Known pitfalls
 - Rare test classes have 4-5 images: one image moves recall by 0.20-0.25.
 - Seed variance is large (DRUSEN recall 0.62-0.94 across seeds); compare variants over seeds.
+- Rare images come from another source than Kermany (RGBA PNG crops vs grayscale JPEG; raw size
+  alone names the rare test class 16/22) and are almost linearly separable from major images in
+  frozen features. Rare recall may partly measure the source (`REPLICATION.md` L7, R5).
 - Accepted GAN images are fewer than 3,000 for MH, MacTel, Stargardt, RP (2,610 / 1,248 /
   2,199 / 832); Stage 3 warns but continues.
