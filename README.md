@@ -140,7 +140,7 @@ softmax AUCs of `none`/`basic`/`gan`.
 | 250 epochs | Early stopping on validation loss, patience 20 (`--patience 0` runs all 250) | Heads stopped after 22–27 epochs |
 | Trained prototypical network, Siamese network | Nearest class-mean (`proto`); no Siamese network | `proto` row not comparable |
 | kNN K=3 on "Inception-v3 trained without augmentation" | K=3 Euclidean on frozen ImageNet features | 86.4 vs 91.2%; cosine K=1 gives 91.1% ([`knn_sweep.csv`](results/analysis/knn_sweep.csv)), cause not established |
-| RCI 0.92–0.98 | RCI = I(true; pred) / H(true) from the confusion matrix, 0.76–0.81 | The paper does not give its formula; values not comparable |
+| RCI 0.92–0.98 | RCI = I(true; pred) / H(true) from the confusion matrix, 0.76–0.81 | The cited definition (Sindhwani 2001 via the paper's ref. 38) is ours, and the paper's gan 0.983 is above the 0.970 maximum that definition allows with its own Table 4 recalls; formula actually used unknown ([`rci_paper_bounds.csv`](results/analysis/rci_paper_bounds.csv), REPLICATION.md L8) |
 | Table 2: 5-fold CV with GANs retrained per fold | Not done (25 CycleGANs, ~50 A100-hours) | Only the independent-test comparison (Table 3) is reproduced |
 | Basic augmentation in MATLAB | albumentations, same transform ranges | |
 
@@ -491,7 +491,8 @@ python analysis.py qc             # CycleGAN acceptance rates (paper Fig. 6)
 python analysis.py roc            # one-vs-rest ROC curve points (Fig. 9)
 python analysis.py tsne           # t-SNE of frozen features, real-only vs + CycleGAN pool (Fig. 7)
 python analysis.py cam --n 40     # CAM panels from a trained head, rare test images first (Fig. 10)
-python analysis.py all            # all of the above except cam
+python analysis.py rci            # alternative RCI definitions + RCI range the paper's Table 4 allows (~2 min)
+python analysis.py all            # all of the above except cam and rci
 ```
 
 - **Input:** `results/stage3_*/test_predictions.csv`, `results/features/*.npz` (`knn`,
@@ -563,8 +564,8 @@ not tracked (regenerate locally, or restore from Drive):
     paper/  code2017/  ChestXRay2017/       third-party material
 ```
 
-A fresh clone can run `analysis.py compare|qc|roc` straight away, because the test
-predictions are tracked. The `knn`/`proto` baselines,
+A fresh clone can run `analysis.py compare|qc|roc|rci` straight away, because the test
+predictions and Stage 4 confusion matrices are tracked. The `knn`/`proto` baselines,
 `analysis.py knn|tsne|cam` and Stage 3 need the features cache (Stage 3 `--variant none`,
 or restore it from Drive).
 

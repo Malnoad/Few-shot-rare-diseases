@@ -28,7 +28,7 @@ Sources: the paper PDF (main checkout, not in git), `results/stage4/*.csv`,
 | Fig. 12: segmentation CycleGAN | 72 clinician-labelled masks, Dice 0.784 | Not reproducible (no masks) |
 | Supplement: MobileNet-v2, ResNet | "similar" to Inception-v3 | Not done |
 | Training schedule | 250 epochs, batch 10, Adam | Batch 10, Adam, but early stopping (patience 20) |
-| RCI | 0.916-0.983 | 0.76-0.81 at similar accuracy; cause unknown |
+| RCI | 0.916-0.983 | 0.76-0.81 with the cited definition I(true; pred)/H(true). The paper's values do not fit that definition (gan 0.983 is above the 0.970 maximum its own Table 4 allows); no tested alternative reproduces them (L8) |
 
 ## Prioritized work
 
@@ -49,7 +49,7 @@ model is on the Colab track. Tool: `analysis.py` (CPU, about 30 s for `all`); ou
 | L5 | t-SNE and ROC figures | Figs. 7, 9 | Coordinates done; PNGs need matplotlib | `tsne`, `roc` |
 | L6 | kNN gap (ours 86.4, paper 91.2) | Table 3 | Sweep done | `knn` -> `knn_sweep.csv` |
 | L7 | Why our `none` rare recall (0.75-0.80) is far above the paper's (0.00-0.25) | Table 4 | Not started | inspect `results/stage3_none/test_predictions.csv` |
-| L8 | RCI gap (ours 0.76-0.81, paper 0.92-0.98) | Table 3 | Not started | pure math on `results/stage4/confusion_*.csv` |
+| L8 | RCI gap (ours 0.76-0.81, paper 0.92-0.98) | Table 3 | Done: our RCI follows the cited definition; the paper's values don't fit it. Open: the paper's actual formula (ask the authors) | `rci` -> `rci_definitions.csv`, `rci_paper_bounds.csv` |
 
 ### Findings so far (2026-10-22, `results/analysis/`)
 - **Seed 42 test set:** gan beats basic by 4.1 points (CI 2.6-5.8, McNemar p < 0.0001) and none
@@ -63,6 +63,54 @@ model is on the Colab track. Tool: `analysis.py` (CPU, about 30 s for `all`); ou
 - **kNN:** Euclidean K=3 reproduces Stage 4 (86.40%). Cosine K=1 gives 91.10%, close to the
   paper's 91.2%, but the paper states K=3 and Euclidean, so this is a hint, not an explanation.
   K>1 drops rare recall sharply (19-27 rare vs ~74,000 major neighbours).
+- **RCI (L8, 2026-10-23):** our `stage4_evaluate.rci()` follows the definition the paper cites, and
+  the paper's values cannot come from that definition. Sources are in `references.bib`.
+  - *What is cited.* The paper cites refs 38-39 for kappa/RCI/MCC. Ref 39 (Gorodkin 2004) is the
+    multiclass MCC. Ref 38 (Yoo 2019) is not open access; its reference list includes Sindhwani 2001
+    and Statnikov 2005. Statnikov §2.8 describes RCI as how much a classifier reduces "the uncertainty of
+    a decision problem ... relative to classifying using only the priors", i.e. I(true; pred) / H(true).
+    That is our formula. The same group's 2017 paper (Choi et al., Eq. 6) prints the same thing
+    without the division (I in nats).
+  - *Alternatives on our confusion matrices.* We tried 10 definitions: ours, I in nats, I/H(pred),
+    three symmetric normalisations, I/log K, balanced class prior, H(pred|true) in place of
+    H(true|pred), and macro one-vs-rest. None comes within 0.19 of the paper on average
+    (`rci_definitions.csv`). None gets near the paper's proto (0.933 at 80.8%); our proto is
+    0.29-0.64 at 69%.
+  - *The paper's own Table 4.* With the paper's per-class recalls and test counts, I/H(true) can only
+    lie in 0.64-0.97 for any confusion matrix (exact range; the maximum is found by enumerating
+    vertices, since I is convex in p(pred|true)).
+    - gan: the paper reports 0.983, above the maximum of 0.970. Even allowing the one extra correct
+      image that Table 3's 92.1% implies, the maximum is 0.971. So under the cited definition the
+      paper's gan RCI is impossible.
+    - none / basic / knn: these sit near the maximum (knn 0.972 vs 0.974). Reaching it needs every
+      class's errors to fall in a single other class.
+    - With our error pattern, the paper's recalls give 0.70-0.78, our range
+      (`rci_paper_bounds.csv`).
+  - *Bottom line.* The gap is not our bug. What the paper computed is unverified; its code is not
+    public. Next step: ask the authors for the RCI code or the confusion matrices. Keep RCI out of
+    claims, as the README already does.
+  - *Side finding.* Table 4's proto row implies 86.1% accuracy, but Table 3 says 80.8%.
+    Table 4's gan row implies 940/1022 correct (92.0%), but Table 3 says 92.1%.
+
+
+### Disagreement ? L8 Claude analysis and Codex audit (D16, 2026-10-27)
+
+The Claude branch is the primary analysis and code above: its reference-chain check
+and Table 4 bounds imply that the paper's GAN RCI exceeds the maximum under
+`I(true; pred)/H(true)`. The independent [Codex audit](L8_RCI_AUDIT.md) verifies our
+five saved RCI values within 1e-12, but did not inspect the cited 2019 full text or
+verify the primary 2001 equation directly. It therefore leaves the paper's actual
+normalization, aggregation and implementation unresolved and does not certify a
+paper error. These conclusions differ in the strength of the paper-inconsistency
+claim; both are retained, without selecting one as a new scientific finding.
+
+Codex adds an independent conditional-entropy computation, axis-reversal results,
+log-base/count-scaling invariance, and perfect/independent/constant/permuted-label/
+empty-class fixtures. Axis reversal does not reproduce the paper's targets; RCI
+can equal 1 for a bijective label permutation, so accuracy and label alignment are
+still needed. The one-class zero-entropy case was not certified. A blocked sklearn
+DLL required an AST-only function audit, rather than a full Stage 4 evaluation.
+Published Stage 4 values remain unchanged. See the audit for its source boundaries.
 
 ### Colab track (needs training)
 | # | Work | Paper | Cost |

@@ -1,0 +1,65 @@
+% Bibliography for docs/research. Entries from Crossref via the citation-management skill
+% (doi_to_bibtex.py, 2026-10-23), cleaned by hand: print-issue year, "--" page ranges.
+
+% RCI as defined at the source. Yoo 2019 (Yoo 2021 ref. 38) cites it for RCI.
+% Text not opened (SIAM paywall); the definition is taken from Statnikov 2005 §2.8.
+@inproceedings{Sindhwani2001information,
+  author    = {Sindhwani, V. and Bhattacharya, P. and Rakshit, S.},
+  title     = {Information Theoretic Feature Crediting in Multiclass Support Vector Machines},
+  booktitle = {Proceedings of the 2001 SIAM International Conference on Data Mining},
+  year      = {2001},
+  pages     = {1--18},
+  publisher = {Society for Industrial and Applied Mathematics},
+  doi       = {10.1137/1.9781611972719.16}
+}
+
+% RCI "quantifies how much the uncertainty of a decision problem is reduced by a classifier
+% relative to classifying using only the priors" (§2.8), i.e. I(true; pred) / H(true).
+@article{Statnikov2005comprehensive,
+  author    = {Statnikov, Alexander and Aliferis, Constantin F. and Tsamardinos, Ioannis and Hardin, Douglas and Levy, Shawn},
+  title     = {A comprehensive evaluation of multicategory classification methods for microarray gene expression cancer diagnosis},
+  journal   = {Bioinformatics},
+  year      = {2005},
+  volume    = {21},
+  number    = {5},
+  pages     = {631--643},
+  doi       = {10.1093/bioinformatics/bti033}
+}
+
+% Yoo 2021 ref. 38, cited there for kappa, RCI and MCC. Not open access; text not opened.
+% Its reference list (Crossref) includes Sindhwani 2001 and Statnikov 2005.
+@article{Yoo2019possibility,
+  author    = {Yoo, Tae Keun and Choi, Joon Yul and Seo, Jeong Gi and Ramasubramanian, Bhoopalan and Selvaperumal, Sundaramoorthy and Kim, Deok Won},
+  title     = {The possibility of the combination of {OCT} and fundus images for improving the diagnostic accuracy of deep learning for age-related macular degeneration: a preliminary experiment},
+  journal   = {Medical \& Biological Engineering \& Computing},
+  year      = {2019},
+  volume    = {57},
+  number    = {3},
+  pages     = {677--687},
+  doi       = {10.1007/s11517-018-1915-z}
+}
+
+% Same group. Eq. (6) prints RCI as H(true) - H(true|pred), natural log, with no division
+% by H(true) (read from the PMC5667846 JATS MathML).
+@article{Choi2017multi,
+  author    = {Choi, Joon Yul and Yoo, Tae Keun and Seo, Jeong Gi and Kwak, Jiyong and Um, Terry Taewoong and Rim, Tyler Hyungtaek},
+  title     = {Multi-categorical deep learning neural network to classify retinal images: A pilot study employing small database},
+  journal   = {PLOS ONE},
+  year      = {2017},
+  volume    = {12},
+  number    = {11},
+  pages     = {e0187336},
+  doi       = {10.1371/journal.pone.0187336}
+}
+
+% Yoo 2021 ref. 39: the K-category correlation coefficient (multiclass MCC), not RCI.
+@article{Gorodkin2004comparing,
+  author    = {Gorodkin, J.},
+  title     = {Comparing two {K}-category assignments by a {K}-category correlation coefficient},
+  journal   = {Computational Biology and Chemistry},
+  year      = {2004},
+  volume    = {28},
+  number    = {5--6},
+  pages     = {367--374},
+  doi       = {10.1016/j.compbiolchem.2004.09.006}
+}
