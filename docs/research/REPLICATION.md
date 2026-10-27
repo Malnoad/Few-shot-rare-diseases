@@ -175,10 +175,14 @@ model is on the Colab track. Tool: `analysis.py` (CPU, about 30 s for `all`); ou
 | L6 | kNN gap (ours 86.4, paper 91.2) | Table 3 | Done at training-free scope: cause unresolved (the paper's kNN feature layer is not stated); see [PAPER_DISCREPANCIES.md](PAPER_DISCREPANCIES.md) | `knn` -> `knn_sweep.csv` |
 | L7 | Why our `none` rare recall (0.75-0.80) is far above the paper's (0.00-0.25) | Table 4 | Training-free part done (see L7 below); see [independent audit](L7_BASELINE_AUDIT.md) and Disagreement note below | `rare` -> `rare_recall.csv`, `rare_shift.csv`, `rare_test_images.csv` |
 | L8 | RCI gap (ours 0.76-0.81, paper 0.92-0.98) | Table 3 | Done: our RCI follows the cited definition; the paper's values don't fit it. Open: the paper's actual formula; see [independent audit](L8_RCI_AUDIT.md), Disagreement note below, and the plain-language [PAPER_DISCREPANCIES.md](PAPER_DISCREPANCIES.md) (also covers L10: Table 4's proto row implies 86.1% vs 80.8% in Table 3). Emailing the authors (D11) is on hold | `rci` -> `rci_definitions.csv`, `rci_paper_bounds.csv` |
+| L9 | Patient-cluster confidence intervals | Table 3 | Done: 633 Kermany patients + 22 assumed rare singletons; gan-basic +4.11 pp, 95% CI 2.47–5.76 (was 2.6–5.8 image-level); single-run conclusion unchanged. Leakage unresolved | `cluster` (also in `all`) -> `cluster_seed42.csv`, `paired_cluster_seed42.csv`, `cluster_sizes.csv`, `cluster_summary.csv`, `cluster_size_distribution.csv` |
 
 ### Findings so far (2026-10-22, `results/analysis/`)
-- **Seed 42 test set:** gan beats basic by 4.1 points (CI 2.6-5.8, McNemar p < 0.0001) and none
-  by 2.6 (p = 0.001). This only covers test-set sampling, not training randomness.
+- **Seed 42 test set (L9 update, 2026-10-27):** gan exceeds basic by 4.11 points
+  (patient-cluster CI 2.47–5.76; legacy image CI 2.6–5.8) and none by 2.64
+  (cluster CI 0.92–4.30). Both intervals still exclude zero. These cover test-patient
+  sampling for fixed heads, not training randomness. Legacy McNemar p-values assume
+  independent images and are not patient-level evidence.
 - **Over 5 training seeds:** gan - basic = -0.35 ± 2.77 points, gan ahead on 3 of 5 seeds. The
   seed-42 gap is within training noise, so the seed sweep (C1) decides the claim, not more tests
   on one run.
@@ -217,6 +221,64 @@ model is on the Colab track. Tool: `analysis.py` (CPU, about 30 s for `all`); ou
   - *Side finding.* Table 4's proto row implies 86.1% accuracy, but Table 3 says 80.8%.
     Table 4's gan row implies 940/1022 correct (92.0%), but Table 3 says 92.1%.
 
+
+### L9: patient-cluster confidence intervals (2026-10-27)
+
+Training-free, from the saved seed-42 predictions and committed manifest:
+`D:/Few-shot/.venv/Scripts/python.exe analysis.py --root D:/Few-shot --out results/analysis cluster`.
+Pure functions in `analysis.py` resample whole clusters uniformly with replacement,
+retain all their images (including repeated cluster draws), and recompute pooled,
+image-weighted accuracy and multiclass MCC. Paired differences use the same cluster
+draw for both arms. There is no class stratification: 24 test patients span classes.
+All reported CIs are percentiles 2.5 and 97.5 of 5,000 resamples, RNG seed 0.
+
+**Units.** All 84,484 common-class filenames match `CLASS-PATIENTID-N.jpeg` and the
+manifest `pid`. The 1,000 common-class test images represent **633 patients**; cluster
+size median 1, mean 1.580, maximum 13. Cluster size → patient count:
+1→458, 2→100, 3→36, 4→14, 5→10, 6→2, 7→5, 8→3, 10→1, 11→2, 12→1, 13→1.
+The 22 rare filenames have no patient IDs, so each full image path is a separate
+singleton: **655 resampling clusters overall**, not 655 verified patients. This
+assumption can leave rare-subset and overall CIs too narrow if rare images share
+patients; rare train/test patient overlap remains unknown. See
+[`cluster_summary.csv`](../../results/analysis/cluster_summary.csv),
+[`cluster_sizes.csv`](../../results/analysis/cluster_sizes.csv) and
+[`cluster_size_distribution.csv`](../../results/analysis/cluster_size_distribution.csv).
+
+**Old vs new.** Accuracy and its differences are in percentage points; MCC is a fraction.
+Old intervals are the published image-level 1,000-draw results; their widths use the
+rounded saved endpoints. New widths use full-precision cluster endpoints before rounding.
+Differences therefore include Monte Carlo and display-rounding effects; they do not
+isolate clustering alone. Rare singletons use the same resampling unit as before.
+
+| Metric / arm | Image-level 95% CI | Patient-cluster 95% CI | Width: old → new |
+|---|---:|---:|---:|
+| Accuracy: none | 88.6–92.1 | 88.21–92.32 | 3.50 → 4.10 |
+| Accuracy: basic | 86.9–90.6 | 86.75–90.83 | 3.70 → 4.08 |
+| Accuracy: gan | 91.4–94.5 | 91.19–94.62 | 3.10 → 3.43 |
+| MCC: none | 0.859–0.900 | 0.855–0.902 | 0.041 → 0.0478 |
+| MCC: basic | 0.838–0.882 | 0.837–0.884 | 0.044 → 0.0472 |
+| MCC: gan | 0.890–0.929 | 0.887–0.930 | 0.039 → 0.0430 |
+| Accuracy: basic − none | −3.1–0.0 | −2.95–0.00 | 3.10 → 2.95 |
+| Accuracy: gan − none | 1.1–4.1 | 0.92–4.30 | 3.00 → 3.39 |
+| Accuracy: gan − basic | 2.6–5.8 | 2.47–5.76 | 3.20 → 3.29 |
+
+Sources: [`cluster_seed42.csv`](../../results/analysis/cluster_seed42.csv) and
+[`paired_cluster_seed42.csv`](../../results/analysis/paired_cluster_seed42.csv)
+(also includes rare-only accuracy and paired MCC intervals). The legacy Stage 4
+and seed-check outputs are unchanged; kNN/proto CIs remain image-level.
+
+**Conclusions.** All three head accuracy/MCC intervals widen; the gan-basic accuracy
+interval widens slightly and still excludes zero at seed 42. The gan-none accuracy
+interval still excludes zero, and basic-none still includes zero. The rare-only
+accuracy intervals all include zero. Neither this result nor the exploratory paired
+MCC intervals establishes an advantage over training seeds; the five-seed evidence
+remains unchanged. Intervals are uncorrected for multiple comparisons. Legacy
+image-level McNemar tests remain secondary, not valid patient-level tests.
+
+**Leakage.** Of 633 test patients, 566 (914 images) occur in the official training
+pool (repo train + validation); 506 (804 images) occur in the fitting split alone.
+Patient clustering adjusts variance, but cannot remove train/test leakage or show
+generalization to unseen patients; the committed splits remain fixed.
 
 ### Disagreement: L8 Claude analysis and Codex audit (D16, 2026-10-27)
 

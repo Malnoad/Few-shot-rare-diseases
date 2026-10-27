@@ -7,6 +7,7 @@ model, so it runs on a laptop CPU. It never writes to results/stage4/ (the run o
 
 Commands (from the project root, or pass --root to the checkout that holds the data):
   python analysis.py compare        paired none/basic/gan tests on the test set + seed check  (Table 3)
+  python analysis.py cluster        patient-cluster CIs and paired seed-42 differences        (L9)
   python analysis.py knn            kNN baseline sensitivity: K and Euclidean vs cosine        (Table 3 knn row)
   python analysis.py qc             CycleGAN acceptance rates from the Stage 2 QC records      (Fig. 6)
   python analysis.py roc            one-vs-rest ROC curves per variant                         (Fig. 9)
@@ -19,6 +20,7 @@ Commands (from the project root, or pass --root to the checkout that holds the d
 Outputs: CSVs in results/analysis/ (or --out). PNG figures as well if matplotlib is installed.
 """
 import argparse
+import re
 from itertools import combinations
 from pathlib import Path
 
@@ -28,6 +30,8 @@ import pandas as pd
 from stage4_evaluate import CLASSES, PAPER, RARE, cam, fix, load_feats, rci
 
 VARIANTS = ["none", "basic", "gan"]
+CLUSTER_RESAMPLES = 5000
+CLUSTER_SEED = 0
 
 # Paper Table 4 (per-class TPR), reordered to CLASSES (the paper lists RP before Stargardt),
 # and the paper's test counts (§2.2: 250 per major class, CSC 5, MH 5, MacTel 4, Stargardt 4, RP 4).
@@ -59,6 +63,72 @@ def paired_bootstrap(a_ok, b_ok, n_boot=1000, seed=0):
     d = a_ok.astype(float) - b_ok.astype(float)
     boots = [d[rng.integers(0, len(d), len(d))].mean() * 100 for _ in range(n_boot)]
     return np.percentile(boots, 2.5), np.percentile(boots, 97.5)
+
+
+def patient_cluster(path, label):
+    """Kermany numeric patient ID across classes; unknown rare patients get one cluster per path."""
+    path = fix(path)
+    if label in RARE:
+        return f"rare:{path}"
+    match = re.fullmatch(r"(NORMAL|CNV|DME|DRUSEN)-(\d+)-(\d+)\.jpeg", Path(path).name)
+    if match is None or match[1] != label:
+        raise ValueError(f"Invalid Kermany filename or label: {path}, {label}")
+    return f"kermany:{match[2]}"
+
+
+def _cluster_bootstrap_scores(y, predictions, clusters, n_boot, seed):
+    """Whole-cluster draws, using sufficient counts for image-weighted accuracy and multiclass MCC.
+
+    Each draw samples G of the G clusters uniformly with replacement, retains every image
+    of each selected cluster (including repeated selections), and recomputes the pooled
+    metrics. No class stratification: patients can span classes. All arms share each draw.
+    """
+    y, clusters = np.asarray(y), np.asarray(clusters)
+    predictions = [np.asarray(p) for p in predictions]
+    if (y.ndim != 1 or not len(y) or clusters.shape != y.shape
+            or any(p.shape != y.shape for p in predictions)):
+        raise ValueError("Labels, predictions and clusters must be nonempty aligned vectors")
+    if n_boot < 1:
+        raise ValueError("n_boot must be positive")
+    _, groups = np.unique(clusters, return_inverse=True)
+    labels = np.unique(np.concatenate([y, *predictions]))
+    truth = np.searchsorted(labels, y)
+    g, k = groups.max() + 1, len(labels)
+    # Columns per arm: image count, correct count, true marginals, predicted marginals.
+    totals = np.zeros((g, len(predictions), 2 + 2 * k), dtype=np.int64)
+    for arm, pred in enumerate(predictions):
+        np.add.at(totals[:, arm, 0], groups, 1)
+        np.add.at(totals[:, arm, 1], groups, pred == y)
+        np.add.at(totals[:, arm, 2:2 + k], (groups, truth), 1)
+        np.add.at(totals[:, arm, 2 + k:], (groups, np.searchsorted(labels, pred)), 1)
+    rng = np.random.default_rng(seed)
+    scores = np.empty((n_boot, len(predictions), 2))
+    for i in range(n_boot):
+        counts = totals[rng.integers(0, g, g)].sum(axis=0).astype(float)
+        n, correct = counts[:, 0], counts[:, 1]
+        t, p = counts[:, 2:2 + k], counts[:, 2 + k:]
+        numerator = correct * n - (t * p).sum(axis=1)
+        denominator = np.sqrt((n * n - (t * t).sum(axis=1)) * (n * n - (p * p).sum(axis=1)))
+        scores[i, :, 0] = correct / n * 100
+        # Match sklearn's convention for constant/one-class bootstrap samples.
+        scores[i, :, 1] = np.divide(numerator, denominator, out=np.zeros_like(numerator),
+                                  where=denominator > 0)
+    return scores
+
+
+def cluster_bootstrap(y, pred, clusters, n_boot=CLUSTER_RESAMPLES, seed=CLUSTER_SEED):
+    """95% percentile patient-cluster CIs: accuracy in percent, MCC as a fraction."""
+    scores = _cluster_bootstrap_scores(y, [pred], clusters, n_boot, seed)[:, 0]
+    return {metric: tuple(np.percentile(scores[:, i], [2.5, 97.5]))
+            for i, metric in enumerate(["acc", "mcc"])}
+
+
+def paired_cluster_bootstrap(y, pred_a, pred_b, clusters, n_boot=CLUSTER_RESAMPLES, seed=CLUSTER_SEED):
+    """95% percentile CIs for a minus b; the same patient draw is applied to both arms."""
+    scores = _cluster_bootstrap_scores(y, [pred_a, pred_b], clusters, n_boot, seed)
+    differences = scores[:, 0] - scores[:, 1]
+    return {metric: tuple(np.percentile(differences[:, i], [2.5, 97.5]))
+            for i, metric in enumerate(["acc", "mcc"])}
 
 
 def seed_summary(seeds):
@@ -251,8 +321,9 @@ def cmd_compare(root, out, a):
                              mcnemar_p=p))
     t = pd.DataFrame(rows)
     t.to_csv(out / "paired_seed42.csv", index=False)
-    print("=== Paired comparison, seed 42 test set (McNemar exact, paired bootstrap 95% CI) ===")
+    print("=== Legacy image-level comparison, seed 42 (McNemar exact, paired bootstrap 95% CI) ===")
     print(t.round(4).to_string(index=False))
+    print("Images within patients are dependent: use `cluster` for CIs; these McNemar p-values assume independent images.")
 
     f = root / "results/seed_check.csv"
     if f.exists():
@@ -261,6 +332,114 @@ def cmd_compare(root, out, a):
         print("\n=== Over training seeds (results/seed_check.csv), accuracy points ===")
         print(s.round(3).to_string(index=False))
         print("With 5 seeds the smallest possible two-sided Wilcoxon p is 0.0625.")
+
+
+def cmd_cluster(root, out, a):
+    """L9: read saved predictions only; keep Stage 4 and the manifest untouched."""
+    from sklearn.metrics import matthews_corrcoef
+
+    man = pd.read_csv(root / "data/manifest.csv", dtype={"pid": str})
+    man["path"] = man.path.map(fix)
+    if man.path.duplicated().any():
+        raise ValueError("Duplicate manifest paths")
+    man["cluster"] = [patient_cluster(p, c) for p, c in zip(man.path, man.label)]
+    common = ~man.label.isin(RARE)
+    if (man.loc[common, "cluster"] != "kermany:" + man.loc[common, "pid"]).any():
+        raise ValueError("Parsed Kermany patient IDs disagree with manifest pid")
+    test = man[man.split == "test"].set_index("path")
+    preds = load_preds(root)
+    for v in VARIANTS:
+        if v not in preds:
+            raise ValueError(f"Missing seed-42 predictions for {v}")
+        p = preds[v]
+        if p.index.has_duplicates or set(p.index) != set(test.index):
+            raise ValueError(f"{v}: predictions must cover the exact manifest test paths once")
+        p = p.loc[test.index]
+        if not p.label.equals(test.label) or not p.pred.isin(CLASSES).all():
+            raise ValueError(f"{v}: prediction labels disagree with manifest/classes")
+        probability_pred = np.asarray(CLASSES)[p[[f"p_{c}" for c in CLASSES]].to_numpy().argmax(axis=1)]
+        if not np.array_equal(probability_pred, p.pred):
+            raise ValueError(f"{v}: pred disagrees with probability argmax used by Stage 4")
+        preds[v] = p
+
+    train = set(man.loc[man.split == "train", "cluster"])
+    val = set(man.loc[man.split == "val", "cluster"])
+    sizes = test.groupby("cluster").agg(n_images=("label", "size"),
+                                         labels=("label", lambda x: "|".join(sorted(set(x)))))
+    sizes["source"] = np.where(sizes.index.str.startswith("kermany:"), "common", "rare")
+    sizes["overlap_train"] = sizes.index.isin(train)
+    sizes["overlap_val"] = sizes.index.isin(val)
+    for col in ["overlap_train", "overlap_val"]:
+        sizes[col] = sizes[col].astype("boolean")
+        sizes.loc[sizes.source == "rare", col] = pd.NA  # Unknown patients, not evidence of no overlap.
+    sizes.to_csv(out / "cluster_sizes.csv")
+    summary, frequencies = [], []
+    for subset, s in [("all", sizes), ("common", sizes[sizes.source == "common"]),
+                      ("rare", sizes[sizes.source == "rare"])]:
+        row = dict(subset=subset, n_images=int(s.n_images.sum()), n_clusters=len(s),
+                   size_min=int(s.n_images.min()), size_median=s.n_images.median(),
+                   size_mean=s.n_images.mean(), size_max=int(s.n_images.max()),
+                   cross_class_clusters=int(s.labels.str.contains("|", regex=False).sum()))
+        for name, overlap in [("train", s.overlap_train), ("train_val", s.overlap_train | s.overlap_val)]:
+            row[f"{name}_overlap_clusters"] = int(overlap.sum()) if subset != "rare" else None
+            row[f"{name}_overlap_images"] = int(s.loc[overlap, "n_images"].sum()) if subset != "rare" else None
+        summary.append(row)
+        frequencies.extend(dict(subset=subset, cluster_size=int(size), n_clusters=int(n))
+                           for size, n in s.n_images.value_counts().sort_index().items())
+    summary = pd.DataFrame(summary)
+    summary.to_csv(out / "cluster_summary.csv", index=False)
+    pd.DataFrame(frequencies).to_csv(out / "cluster_size_distribution.csv", index=False)
+
+    old_metrics = pd.read_csv(root / "results/stage4/metrics.csv").set_index("model")
+    old_pairs = pd.read_csv(root / "results/analysis/paired_seed42.csv").set_index(["a", "b", "subset"])
+
+    def interval_columns(lo, hi, old_ci=None):
+        row = dict(ci_low=lo, ci_high=hi, ci_width=hi - lo,
+                   n_boot=CLUSTER_RESAMPLES, bootstrap_seed=CLUSTER_SEED)
+        if old_ci is not None:
+            match = re.fullmatch(r"(-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)", old_ci)
+            if match is None:
+                raise ValueError(f"Cannot parse legacy CI: {old_ci}")
+            old_lo, old_hi = float(match[1]), float(match[2])
+            row.update(image_ci=old_ci, image_ci_width=old_hi - old_lo,
+                       width_ratio=(hi - lo) / (old_hi - old_lo))
+        return row
+
+    y, clusters = test.label.to_numpy(), test.cluster.to_numpy()
+    rows = []
+    for v in VARIANTS:
+        pred = preds[v].pred.to_numpy()
+        estimates = dict(acc=(y == pred).mean() * 100, mcc=matthews_corrcoef(y, pred))
+        for metric, (lo, hi) in cluster_bootstrap(y, pred, clusters).items():
+            if not np.isclose(estimates[metric], old_metrics.loc[v, metric], atol=1e-12, rtol=0):
+                raise ValueError(f"{v}: {metric} differs from the Stage 4 run of record")
+            rows.append(dict(variant=v, metric=metric, estimate=estimates[metric], n_images=len(y),
+                             n_clusters=len(sizes), **interval_columns(lo, hi, old_metrics.loc[v, f"{metric}_ci"])))
+    metrics = pd.DataFrame(rows)
+    metrics.to_csv(out / "cluster_seed42.csv", index=False)
+
+    rows = []
+    for x, b in [("basic", "none"), ("gan", "none"), ("gan", "basic")]:
+        for subset, mask in [("all", np.ones(len(y), bool)), ("rare", test.label.isin(RARE).to_numpy())]:
+            yt, px, pb, groups = y[mask], preds[x].pred.to_numpy()[mask], preds[b].pred.to_numpy()[mask], clusters[mask]
+            estimates = dict(acc=((yt == px).mean() - (yt == pb).mean()) * 100,
+                             mcc=matthews_corrcoef(yt, px) - matthews_corrcoef(yt, pb))
+            for metric, (lo, hi) in paired_cluster_bootstrap(yt, px, pb, groups).items():
+                old_ci = old_pairs.loc[(x, b, subset), "diff_ci"] if metric == "acc" else None
+                rows.append(dict(a=x, b=b, subset=subset, metric=metric, diff=estimates[metric],
+                                 n_images=len(yt), n_clusters=len(np.unique(groups)),
+                                 **interval_columns(lo, hi, old_ci)))
+    pairs = pd.DataFrame(rows)
+    pairs.to_csv(out / "paired_cluster_seed42.csv", index=False)
+    print("=== Patient clusters (rare images assumed independent singleton clusters) ===")
+    print(summary.to_string(index=False))
+    print("=== Seed-42 patient-cluster percentile 95% CIs (5,000 draws, RNG seed 0) ===")
+    print(metrics.round(4).to_string(index=False))
+    print("=== Paired cluster differences (a minus b; accuracy in points, MCC as fraction) ===")
+    print(pairs.round(4).to_string(index=False))
+    print("Legacy image CI widths use rounded published endpoints (1,000 draws); cluster widths use full precision.")
+    print("Rare singleton clusters may understate uncertainty if multiple images share a patient.")
+    print("Clustering addresses test-sampling variance, not train/test leakage or training-seed variability.")
 
 
 def cmd_knn(root, out, a):
@@ -487,7 +666,7 @@ def main():
     ap.add_argument("--root", default=".", help="checkout that holds data/ and results/")
     ap.add_argument("--out", default=None, help="output folder (default <root>/results/analysis)")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ["compare", "knn", "qc", "roc", "rci", "all"]:
+    for name in ["compare", "cluster", "knn", "qc", "roc", "rci", "all"]:
         sub.add_parser(name)
     for name in ["tsne", "all"]:
         p = sub.choices.get(name) or sub.add_parser(name)
@@ -504,9 +683,9 @@ def main():
     root = Path(a.root)
     out = Path(a.out) if a.out else root / "results/analysis"
     out.mkdir(parents=True, exist_ok=True)
-    cmds = {"compare": cmd_compare, "knn": cmd_knn, "qc": cmd_qc, "roc": cmd_roc, "tsne": cmd_tsne,
+    cmds = {"compare": cmd_compare, "cluster": cmd_cluster, "knn": cmd_knn, "qc": cmd_qc, "roc": cmd_roc, "tsne": cmd_tsne,
             "rci": cmd_rci, "rare": cmd_rare, "cam": cmd_cam}
-    for name in (["compare", "qc", "roc", "knn", "tsne", "rare"] if a.cmd == "all" else [a.cmd]):
+    for name in (["compare", "cluster", "qc", "roc", "knn", "tsne", "rare"] if a.cmd == "all" else [a.cmd]):
         cmds[name](root, out, a)
         print()
 

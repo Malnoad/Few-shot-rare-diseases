@@ -52,15 +52,34 @@ Tables 3–4 as encoded in [`stage4_evaluate.py`](stage4_evaluate.py).
 Test set: **1,022 images** — 250 per common class, and 5/5/4/4/4 held-out images for
 CSC/MH/MacTel/Stargardt/RP.
 
+The common-class images come from **633 patients** (1–13 images each; median 1,
+mean 1.58). Of these, 566 patients / 914 images overlap the official Kermany training
+pool, which includes our validation split; 506 / 804 overlap our fitting split alone
+([cluster summary](results/analysis/cluster_summary.csv)). Clustering adjusts
+test-sampling variance; it cannot fix train/test patient leakage or establish accuracy
+on new patients. The committed splits remain fixed.
+
 ### Headline metrics (seed 42)
 
-| Model | Accuracy % | 95% CI | Paper acc % | κ | Paper κ | MCC | MCC 95% CI | Paper MCC | RCI † |
+| Model | Accuracy % | 95% CI § | Paper acc % | κ | Paper κ | MCC | MCC 95% CI § | Paper MCC | RCI † |
 |---|---:|:---:|---:|---:|---:|---:|:---:|---:|---:|
-| `none` — real rare images only | **90.31** | 88.6–92.1 | 88.4 | 0.872 | 0.847 | 0.879 | 0.859–0.900 | 0.848 | 0.788 |
-| `basic` — + basic augmentation | **88.85** | 86.9–90.6 | 91.3 | 0.853 | 0.886 | 0.861 | 0.838–0.882 | 0.887 | 0.760 |
-| `gan` — + CycleGAN *(proposed)* | **92.95** | 91.4–94.5 | 92.1 | 0.907 | 0.896 | 0.909 | 0.890–0.929 | 0.897 | 0.814 |
+| `none` — real rare images only | **90.31** | 88.21–92.32 | 88.4 | 0.872 | 0.847 | 0.879 | 0.855–0.902 | 0.848 | 0.788 |
+| `basic` — + basic augmentation | **88.85** | 86.75–90.83 | 91.3 | 0.853 | 0.886 | 0.861 | 0.837–0.884 | 0.887 | 0.760 |
+| `gan` — + CycleGAN *(proposed)* | **92.95** | 91.19–94.62 | 92.1 | 0.907 | 0.896 | 0.909 | 0.887–0.930 | 0.897 | 0.814 |
 | `knn` — K=3 on frozen features | 86.40 | 84.3–88.5 | 91.2 | 0.820 | 0.885 | 0.827 | 0.803–0.852 | 0.886 | 0.662 |
 | `proto` — class-mean on frozen features | 68.98 | 66.0–71.9 | 80.8 ‡ | 0.600 | 0.753 ‡ | 0.604 | 0.569–0.640 | 0.755 ‡ | 0.430 |
+
+§ `none`/`basic`/`gan`: percentile **patient-cluster** 95% CIs from
+[`cluster_seed42.csv`](results/analysis/cluster_seed42.csv), 5,000 resamples, RNG seed 0.
+Each draw samples 655 clusters with replacement: 633 Kermany patient IDs (shared
+across class labels) plus 22 rare-image singletons. All images of each drawn patient
+are retained, and pooled image-weighted accuracy/MCC are recomputed. Rare filenames
+have no patient IDs; treating each rare image as an independent cluster can leave
+CIs too narrow if images share patients. These CIs condition on the seed-42 heads,
+augmentation/GAN runs and hold-out; they exclude training-seed variability.
+`knn`/`proto` retain the legacy image-level CIs (1,000 draws); they have not been
+cluster-adjusted. The original Stage 4 CSVs are unchanged. Old/new widths and the
+cluster-size distribution are reported under [L9](docs/research/REPLICATION.md#l9-patient-cluster-confidence-intervals-2026-10-27).
 
 † **RCI is not comparable to the paper** — see *Differences from the paper*. Treat accuracy,
 κ and MCC as the primary comparison.
@@ -87,10 +106,14 @@ images go to validation) alone moves accuracy by several points. Seeds 1–5 for
   +2.25 ± 3.53 points (ahead on 3 of 5 seeds), `gan` − `none` +1.90 ± 2.22 (4 of 5). With five
   seeds the smallest possible two-sided Wilcoxon p is 0.0625, so no seed comparison here can
   reach p < 0.05.
-- **The seed-42 ordering is not robust.** On the seed-42 test set `gan` beats `basic` by 4.1
-  points (paired bootstrap CI 2.6–5.8, McNemar p < 0.001,
-  [`paired_seed42.csv`](results/analysis/paired_seed42.csv)), but that test only covers
-  test-image sampling, not training randomness, and `basic` at seed 42 is its lowest seed.
+- **The seed-42 ordering is not robust.** On the seed-42 test set `gan` exceeds `basic` by
+  4.11 points (paired patient-cluster CI **2.47–5.76**, previously 2.6–5.8 at image level;
+  [`paired_cluster_seed42.csv`](results/analysis/paired_cluster_seed42.csv)). The CI still
+  excludes zero, so this single-run conclusion does not change. It covers test-patient
+  sampling, excludes training randomness, and `basic` at seed 42 is its lowest seed.
+  Legacy McNemar p-values in [`paired_seed42.csv`](results/analysis/paired_seed42.csv)
+  assume independent images and are not patient-level evidence. Pairwise intervals and
+  legacy tests are exploratory and uncorrected for multiple comparisons.
 
 ### Per-class recall (seed 42)
 
@@ -455,7 +478,8 @@ empty, Stage 3 only prints a warning and trains what is effectively `basic`.
 
 **What and why.** Computes the paper's Table 3–4 metrics on the independent test set:
 accuracy, unweighted Cohen's κ, RCI, multiclass MCC (Gorodkin), per-class recall,
-one-vs-rest AUC, and bootstrap 95% CIs (1,000 resamples) for accuracy and MCC. It also adds
+one-vs-rest AUC, and legacy image-bootstrap 95% CIs (1,000 resamples) for accuracy and MCC.
+Use `analysis.py cluster` for the patient-cluster CIs of the saved seed-42 heads. Stage 4 also adds
 two few-shot baselines computed on the same frozen ImageNet features: **`knn`** (K=3
 Euclidean, after Quellec et al.) and **`proto`** (nearest class-mean). It evaluates whichever
 `results/stage3_<variant>/test_predictions.csv` files exist.
@@ -497,6 +521,7 @@ cache, `results/seed_check.csv`) and trains nothing, so it runs on a laptop CPU 
 
 ```bash
 python analysis.py compare        # paired tests none/basic/gan: seed-42 test set and over seeds
+python analysis.py cluster        # patient-cluster accuracy/MCC CIs and paired differences, seed 42
 python analysis.py knn            # kNN baseline sensitivity: K and Euclidean vs cosine
 python analysis.py qc             # CycleGAN acceptance rates (paper Fig. 6)
 python analysis.py roc            # one-vs-rest ROC curve points (Fig. 9)
@@ -512,6 +537,10 @@ python analysis.py all            # all of the above except cam and rci
   `qc_summary.csv`, `roc_points.csv`, `tsne.csv`, `cam_<variant>/`; plus `roc.png` and
   `tsne.png` if `matplotlib` is installed
 - `--root` points at a checkout that holds the data, `--out` at another output folder.
+- `cluster` is included in `all` and needs only committed manifest/prediction/result CSVs.
+  It writes `cluster_seed42.csv`, `paired_cluster_seed42.csv`, `cluster_sizes.csv`,
+  `cluster_summary.csv` and `cluster_size_distribution.csv`. From a worktree without data:
+  `D:/Few-shot/.venv/Scripts/python.exe analysis.py --root D:/Few-shot --out results/analysis cluster`.
 
 ### Figures — `figures.py`
 
@@ -591,7 +620,7 @@ not tracked (regenerate locally, or restore from Drive):
     paper/  code2017/  ChestXRay2017/       third-party material
 ```
 
-A fresh clone can run `analysis.py compare|qc|roc|rci` straight away, because the test
+A fresh clone can run `analysis.py compare|cluster|qc|roc|rci` straight away, because the test
 predictions and Stage 4 confusion matrices are tracked. The `knn`/`proto` baselines,
 `analysis.py knn|tsne|cam` and Stage 3 need the features cache (Stage 3 `--variant none`,
 or restore it from Drive).

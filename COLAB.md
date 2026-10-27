@@ -131,6 +131,12 @@ estimates.
   empty, Stage 3 only prints a warning and trains what is effectively `basic`.
 - **The seed check restores the seed-42 outputs** when it finishes, so the published tables
   stay intact.
+- **Patient-level CIs use saved predictions, without rerunning Stage 4.** Run
+  `python analysis.py cluster` (also included in `all`); the 5,000-draw percentile
+  accuracy/MCC and paired CIs go to `results/analysis/`. Kermany images are clustered
+  by patient across classes; the 22 rare images are assumed independent singletons.
+  This adjusts test-sampling variance, leaves train/test leakage unresolved and excludes
+  training-seed variability. `results/stage4/` keeps the legacy image-level CIs.
 
 ## Troubleshooting
 
