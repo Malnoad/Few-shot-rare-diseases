@@ -1,7 +1,7 @@
 # Replication tracker: Yoo et al. 2021 (MBEC 59:401-415)
 
 What the paper reports, what this repo reproduces, and the prioritized work left.
-Status checkpoint: 2026-10-27. Update the tables when an item changes state.
+Status checkpoint: 2026-10-29 (C0/C5 outcomes; other entries retain their dated scope). Update the tables when an item changes state.
 
 Sources: the paper PDF (main checkout, not in git), `results/stage4/*.csv`,
 `results/seed_check.csv`, `results/stage2/qc_*.csv`, the 22 Oct status report.
@@ -361,12 +361,49 @@ These checks preserve the manifest and run of record; the unique cause is unreso
 ### Colab track (needs training)
 | # | Work | Paper | Cost |
 |---|---|---|---|
-| C0 | Preprocessing control before C1 (decision D6): arms `current` / `format` (8-bit grayscale PNG) / `framing` (grayscale, centred square padding, 256x256) x none/basic/gan x seeds 1-20, 180 paired heads. Primary: current minus framing rare macro recall for `none`. Code and Colab Part C0 ready ([design](C0_DESIGN.md), [report](C0_REPORT.md)). Training-free sample check: framing removes the header-size cue, but the frozen-feature axis still separates rare from common (sample AUC 0.71 recomputed, 0.93 fixed), so cue removal is not established; the notebook stops before heads if the full framing AUC is >= 0.90 | Table 4 | GPU 45-180 min for features, then CPU heads 6-24 h (unbenchmarked) |
+| C0 | **Full feature gate stopped on Colab; no heads ran.** Recomputed AUC current 0.995455, format 0.995409, framing 0.991455; framing must be <0.90. Headers pass; framing size-only scores tie on all 22 rare tests. `ready_for_heads=False`. [Evidence](../../results/c0/v1_gate_summary.csv), [fixed design](C0_DESIGN.md). D20 remains Lam's decision on continuing C0 or choosing C1 inputs | Table 4 | Features completed; head training blocked by the predeclared gate |
 | C1 | [Execution ready](C1_EXPERIMENT_PLAN.md), notebook 4.1-4.5: fixed250/final primary; es20 seeds 1-20 sensitivity (same as C0). Complete first 20, one SD-only recalculation for 1 pp at alpha .05/power .80 (floor 63/cap 243), fixed250 top-up seeds 21..N. Input arm waits on C0; original accepted GAN pool only, C5 reserved for C2. Drive-only immutable completed runs; no C1 outcomes yet | Tables 3-4 | CPU cached heads: measured 25 epochs 207.58 s, projected 34.6 min/250; first stage ~37-42 h, 63 pairs ~112-116 h including estimated es20; Colab unbenchmarked |
 | C2 | Amount of GAN images 0 / 500 / 1,000 / 2,000 / 3,000 (`--gan-per-class`), over seeds | Fig. 5 | as C1 |
 | C3 | Under-sampling to control class balance | Fig. 11 | as C1, needs a Stage 3 option |
 | C4 | 5-fold CV with per-fold Stage 1 + CycleGANs (25 GANs, ~50 A100-hours by `stage2.log`); without per-fold GANs the test fold leaks | Table 2 | GPU, large |
-| C5 | D7: top up **MH, MacTel, Stargardt and RP** to 3,000 for C2; C1 keeps the original short v1 pools as a deviation. Generation only from existing checkpoints, fresh NORMALs with zero round-1 overlap, original automatic QC (zero margin, rank d_rare), no L4 human ratings. **Code/tests and Colab 3.4c.1–3.4c.6 prepared; GPU execution pending.** Budgets with 20% surplus: 718 / 6,739 / 1,749 / 12,508. Separate immutable `accepted_v2`, explicit Stage 3 `--gan-pool v2`, new cache groups; old accepted images and QC CSVs unchanged. [Run guide](../../COLAB.md#c5-top-up-before-c2-keep-c1s-pool-fixed-d7) | §2.3 | A100 compute ~25–32 min / T4 ~75–128 min (T4 inference extrapolated, unbenchmarked), plus raw/Drive I/O; no retraining |
+| C5 | **Completed on Colab.** Added MH 390, MacTel 1,752, Stargardt 801, RP 2,168; all five `accepted_v2` classes have 3,000 images. Existing checkpoints and original automatic QC only (no human ratings); logs report zero round-1/domain-A source overlap and unchanged v1 hashes. C1 keeps v1; C2 selects `--gan-pool v2` with separate caches. [Counts and provenance](../../results/stage2/c5_v2_counts.csv) | §2.3 | Generation/QC completed; no retraining |
+
+### First Colab outcomes (T10a)
+
+Verified from `git show b109d0d:colab_setup.ipynb`; all cell numbers below are
+1-based notebook positions (including markdown), and output numbers are 1-based.
+The full outputs remain in git history at **b109d0d**; the working notebook has
+empty code outputs/null execution counts and its prior metadata from dfa951d,
+with source fields byte-identical to b109d0d. Colab converted some source strings
+to line arrays, but the source text itself matches dfa951d too.
+
+[C5 evidence](../../results/stage2/c5_v2_counts.csv): cell 19 output 1 gives
+old kept counts CSC/MH/MacTel/Stargardt/RP = 3,000/2,610/1,248/2,199/832.
+Cells 20-23 output 1 respectively report generated candidates
+718/6,739/1,749/12,508, QC passing 430/2,142/1,013/2,769, and newly kept
+390/1,752/801/2,168. Their completion lines report unchanged v1 hashes;
+cell 24 output 1 confirms all five totals are 3,000. CSV pass rates are derived
+as QC passing / generated, not the fraction retained after the cap. CSC required
+no new candidates; its zero top-up is inferred from setup and final counts.
+
+[C0 evidence](../../results/c0/v1_gate_summary.csv): cell 29 output 1 verifies
+104,519 images per normalized arm, all PNG/L; format has 124 header signatures,
+size-only 16/22 correct with no ties. Framing has one 256x256 grayscale header
+signature and ties on all 22 rare tests (nominal 5/22 is solely the tie rule).
+The header dimensions follow from the passing checks in `stage1b_normalize.py`
+and `headers_pass=True` in cell 30 output 1. That output reports recomputed-axis
+AUCs current/format/framing = 0.995455/0.995409/0.991455 and fixed-current-axis
+AUCs = 0.995455/0.995545/0.988045, on 22 rare and 1,000 common tests.
+The CSV retains printed precision; only the framing gate value is printed in full:
+0.9914545454545455. The gate requires <0.90, so `ready_for_heads=False`;
+cells 31-32 (C0.4/C0.5) have null execution counts and no outputs. No C0 heads ran.
+
+Normalizing format and framing did **not** reduce the strong rare-versus-common
+separation (0.995 to 0.991). The separation does not come from the tested file
+format or framing differences. Disease and dataset source remain confounded,
+and this cannot tell them apart; other acquisition cues can remain in the pixels.
+Whether to continue C0 or choose C1's input arm is **Lam's D20 decision, still open**.
+No head/recall comparison is available from this stopped run.
 
 ### Not reproducible / out of scope
 Ophthalmologist review and human-expert baseline (no clinician), segmentation CycleGAN (no

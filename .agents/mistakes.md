@@ -36,6 +36,8 @@ explicit Note when no practical check exists. Agents add entries with the `log-m
 
 | 22 | 2026-10-27 | Codex · gpt-6.1-sol | T8 notebook inspection again failed on cp1252 Unicode output | Repeated entries 3/10/14 by assuming stdout encoding | Note; stronger check proposed | Corrected session stdout and used ASCII cell instructions. Propose a persistent PowerShell subprocess wrapper setting `$OutputEncoding = [System.Text.UTF8Encoding]::new()` and Python UTF-8 mode, with a Unicode stdin/stdout round-trip check; awaits Lam approval | yes |
 
+| 23 | 2026-10-29 | Codex · gpt-6.1-sol | T10a inspection repeated cp1252 output failure; extraction probes also assumed uniform source types and no leading blank/header lines | Repeated encoding issue (21/22) and assumptions about notebook serialization | Proposed check; note | Recovered with UTF-8 and parsed actual text. Escalation proposed: route notebook inspection through the persistent UTF-8 wrapper/round-trip check proposed in 22; compare joined source text separately from source JSON representation. No permanent fix applied pending Lam | yes |
+
 ## Proposed check for entry 9 (not installed)
 
 This runs against the maintained sampler and the actual JavaScript exporter,

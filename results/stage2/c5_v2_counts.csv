@@ -1,0 +1,6 @@
+provenance_commit,source_cell,source_output,old_counts_cell,totals_cell,disease,old_kept,new_accepted,total,candidates_generated,qc_passed,qc_pass_rate_derived,v1_hashes_unchanged_reported
+b109d0d,19,1,19,24,CSC,3000,0,3000,0,0,,
+b109d0d,20,1,19,24,MH,2610,390,3000,718,430,0.5988857938718662,True
+b109d0d,21,1,19,24,MacTel,1248,1752,3000,6739,2142,0.31785131325122423,True
+b109d0d,22,1,19,24,Stargardt,2199,801,3000,1749,1013,0.5791881074899943,True
+b109d0d,23,1,19,24,RP,832,2168,3000,12508,2769,0.221378317876559,True

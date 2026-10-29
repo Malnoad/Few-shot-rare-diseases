@@ -66,7 +66,8 @@ prototypical network, end-to-end fine-tuning of Inception-v3.
 | 2026-10-22 | Commit `head.npz` and `test_predictions.csv` for each variant | Small (~76 / ~180 KB); `COLAB.md` and `analysis.py` need them on GitHub | `.gitignore` |
 | 2026-10-22 | Local work on the laptop is training-free; training runs on Colab | No dedicated GPU locally | `docs/research/REPLICATION.md` |
 | 2026-10-27 | D15: fixed 250 epochs/final head primary; es20 on first 20 seeds sensitivity; about 63 pairs for 1 pp at SD about 2.8 pp, or 20 first to re-estimate SD then top up | Lam selected protocol and power-based planning; T8 must align the excluded sweep implementation | [C1 plan](C1_EXPERIMENT_PLAN.md) |
-| 2026-10-27 | D7/C5: C1 keeps v1; run C5 before C2, topping up MH/MacTel/Stargardt/RP using existing checkpoints and original automatic QC only | L4 expert ratings were dropped; C2 needs full 3,000-image pools. Code/cells prepared, GPU work pending | [Colab 3.4c](../../COLAB.md#c5-top-up-before-c2-keep-c1s-pool-fixed-d7), `c5_topup.py`; explicit Stage 3 `--gan-pool v2`, separate caches and outputs |
+| 2026-10-27 | D7/C5: C1 keeps v1; run C5 before C2, topping up MH/MacTel/Stargardt/RP using existing checkpoints and original automatic QC only | L4 expert ratings were dropped; C2 needs full 3,000-image pools. Completed on Colab; all five v2 classes now have 3,000 images (v1 preserved) | [Colab 3.4c](../../COLAB.md#c5-top-up-before-c2-keep-c1s-pool-fixed-d7), `c5_topup.py`; explicit Stage 3 `--gan-pool v2`, separate caches and outputs |
+| 2026-10-29 | Record first Colab outcomes: C5 done; C0 gate stopped, no heads. D20 remains open for Lam: continue C0 or choose C1 input arm | Normalizing format and framing did not reduce strong rare-versus-common separation (AUC 0.995 to 0.991). The separation does not come from the tested file-format/framing differences; disease and dataset source remain confounded and this cannot tell them apart | b109d0d notebook cells 19-24, 29-32; [C5 counts](../../results/stage2/c5_v2_counts.csv), [C0 gate](../../results/c0/v1_gate_summary.csv) |
 
 ## Known pitfalls
 - Rare test classes have 4-5 images: one image moves recall by 0.20-0.25.
@@ -74,8 +75,8 @@ prototypical network, end-to-end fine-tuning of Inception-v3.
 - Rare images come from another source than Kermany (RGBA PNG crops vs grayscale JPEG; raw size
   alone names the rare test class 16/22) and are almost linearly separable from major images in
   frozen features. Rare recall may partly measure the source (`REPLICATION.md` L7, R5).
-- Accepted GAN images are fewer than 3,000 for MH, MacTel, Stargardt, RP (2,610 / 1,248 /
-  2,199 / 832); Stage 3 warns but continues.
+- Original v1 accepted GAN images are fewer than 3,000 for MH, MacTel, Stargardt, RP (2,610 / 1,248 /
+  2,199 / 832); Stage 3 warns but continues. C5 completed a separate 3,000/class v2 pool for C2; C1 keeps v1.
 
 ## C1 execution (T8, 2026-10-27)
 

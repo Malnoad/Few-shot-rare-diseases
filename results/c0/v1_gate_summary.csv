@@ -1,0 +1,4 @@
+provenance_commit,source_cell,source_output,header_cell,arm,recomputed_axis_auc,fixed_current_axis_auc,rare_above_all_common,rare_test,common_test,header_images,header_signatures,encoding_mode,size_correct,size_ties,headers_pass,ready_for_heads,gate_framing_auc,gate_requires_framing_auc_below
+b109d0d,30,1,,current,0.995455,0.995455,17,22,1000,,,,,,True,False,0.9914545454545455,0.90
+b109d0d,30,1,29,format,0.995409,0.995545,18,22,1000,104519,124,PNG/L,16,0,True,False,0.9914545454545455,0.90
+b109d0d,30,1,29,framing,0.991455,0.988045,7,22,1000,104519,1,PNG/L,5,22,True,False,0.9914545454545455,0.90
