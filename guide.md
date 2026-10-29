@@ -15,8 +15,8 @@ Open the notebook from GitHub so it always matches the code:
 |---|---|---|---|---|
 | **1. C5** GAN top-up | Brings MH, MacTel, Stargardt and RP to 3,000 accepted GAN images in a separate pool (`accepted_v2`), for C2 | §2.3, Fig. 5 | GPU | yes |
 | **2. C0** features and gate | Does the rare-image file format/framing act as a "which dataset" cue? | Table 4 | GPU | yes |
-| **3. C0** heads | Does removing that cue change rare-class recall? | Table 4 | CPU | yes, if the gate passes |
-| **4. C1** seed sweep | Does GAN beat basic augmentation under the paper's 250-epoch schedule, over enough seeds? | Tables 3, 4 | CPU | yes, after the C0 input choice; budget depends on decision D17 |
+| **3. C0** heads | Does removing that cue change rare-class recall? | Table 4 | CPU | no: stopped at gate, D20=A |
+| **4. C1** seed sweep | Does GAN beat basic augmentation under the paper's 250-epoch schedule, over enough seeds? | Tables 3, 4 | CPU | yes: current inputs (D20=A), fast (D17=B) |
 | **5. C2 / C3** | Amount of GAN images; class balance | Figs. 5, 11 | CPU | **not yet**: cells come with task T9 |
 
 Runs 1 and 2 don't depend on each other or on any open decision. Start there.
@@ -104,31 +104,20 @@ C0 reads the original pool (`data/gan/accepted/`) and C5 writes a separate one
 3.4c.1-3.4c.6 → C0.1-C0.3. This combined order has not been tested; if anything looks
 off, use two sessions.
 
-## Run 3: C0 heads (CPU, only if the gate passed)
+## Run 3: C0 closed at the gate (D20=A, 29 Oct 2026)
 
-**Cells:** Part 1 → 3.1 → 3.2 → 3.4b → C0.1 → C0.2 → C0.3 → C0.4 → C0.5.
-
-On a CPU runtime C0.3 finds the finished caches in Drive and skips extraction. C0.4
-trains 180 heads (3 arms × 3 variants × 20 seeds) with the default Stage 3 schedule;
-the estimate is 6-24 h in total, and each head's minutes are printed. C0.5 summarizes,
-and is safe to run on partial results; the decision needs all 20 seeds.
-
-**Saved to:** `MyDrive/octfsl/c0/v1/` (`runs.csv`, `contrasts.csv`, one folder per head).
-
-**Bring back:** `runs.csv` and `contrasts.csv`. The agent (task T10a) reads them and
-recommends C1's input arm; you confirm it.
-
-If decision D17 adopts a faster head trainer, wait for it before this run.
+Do not run C0.4 heads. Normalizing format/framing did not reduce separation;
+disease and dataset source remain confounded. Record this as a limitation.
+C1 and later C2/C3 use current inputs. C0's retained head code is not a planned run.
 
 ## Run 4: C1 seed sweep (CPU, long)
 
-**Wait for:** your C0 input choice and decision D17 (compute budget).
+**D20=A (29 Oct 2026):** current inputs fixed. D17=B selects fast.
 
 **Cells:** Part 1 → 4.1 → 4.2 → 4.3 → 4.4 → 4.5.
 
-- **4.1:** set `INPUT_ARM` to `"current"`, `"format"` or `"framing"`, as decided after
-  C0. For `"current"` nothing else is needed. For a normalized arm, first run 3.1, 3.2,
-  3.4b, C0.1 and C0.2 in the same session so its data and caches are restored.
+- **4.1:** keep `INPUT_ARM = "current"` (D20=A, 29 Oct 2026). Restore saved
+  features and preflight; no normalized-input/C0 head run is planned.
 - **4.2:** seeds 1-20, all three variants. Primary arm: 250 epochs, final-epoch head.
   Sensitivity arm: early stopping, same seeds as C0.
 - **4.3:** recalculates the number of seeds needed once, from the SD of the first 20, and
@@ -138,9 +127,15 @@ If decision D17 adopts a faster head trainer, wait for it before this run.
 - **4.5:** summary; safe on partial results. No conclusion until the schedule is
   complete.
 
-Budget with the current trainer, measured on the laptop: about **35 min per 250-epoch
-head**, so about **37-42 h** for 4.2 and **112-116 h** up to 63 pairs, serial CPU.
-Plan sessions from the minutes 4.2 prints.
+D17=B uses `--trainer fast`, with the same Keras Dense/loss/Adam steps.
+[Laptop benchmark](docs/research/T12_FAST_TRAINER.md): **4.69x** paired compute
+speed-up; **9.35-12.87 min/250 epochs**, projected from three 25-epoch gan fits.
+C0 heads are cancelled by D20=A (historical hypothetical compute budget
+3.1-7.7 h, 38.6 h ceiling). C1 first stage **13.9-15.4 h**, provisional
+63 pairs **41.6-43.1 h**, including that assumed sensitivity cost; ceilings
+**25.7/53.4 h** if sensitivity reaches 250. These are laptop-measured compute
+projections, excluding checkpoint/Drive I/O; **Colab is unbenchmarked**.
+Native-shuffle accuracy differed materially; see the report, not an equivalence claim.
 
 **Saved to:** `MyDrive/octfsl/c1/v1/<INPUT_ARM>/` (`runs.csv`, `summary.csv`,
 `paired_differences.csv`).
@@ -160,7 +155,7 @@ Not ready. Cells come with task T9, after decisions D17 and D18. C2 will use the
 |---|---|---|
 | C5 | `c5/v2/` | counts printed by 3.4c.6 |
 | C0 gate | `c0/v1/` | `gate.json`, `full_axis.csv` |
-| C0 heads | `c0/v1/` | `runs.csv`, `contrasts.csv` |
+| C0 heads | cancelled (D20=A) | no head results |
 | C1 | `c1/v1/<INPUT_ARM>/` | `runs.csv`, `summary.csv`, `paired_differences.csv` |
 
 The full designs and rules: [`C0_DESIGN.md`](docs/research/C0_DESIGN.md),

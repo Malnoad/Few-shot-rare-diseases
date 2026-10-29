@@ -54,6 +54,16 @@ def fix(p):
     return str(p).replace("\\", "/")
 
 
+def lock_trainer(out, identity):
+    """Refuse resuming a run with a different trainer or head configuration."""
+    provenance = Path(out) / "trainer.json"
+    if not provenance.exists() and identity["trainer"] != "keras" and (Path(out) / "head.npz").exists():
+        raise ValueError("Legacy head has no trainer identity; use a separate run directory")
+    if provenance.exists() and json.loads(provenance.read_text()) != identity:
+        raise ValueError("Trainer/configuration changed; use a separate run directory")
+    provenance.write_text(json.dumps(identity, indent=2) + "\n")
+
+
 def need_tf():
     global tf
     if tf is None:
@@ -142,6 +152,8 @@ def main():
     ap.add_argument("--root", default=".")
     ap.add_argument("--variant", required=True, choices=["none", "basic", "gan"])
     ap.add_argument("--epochs", type=int, default=250)
+    ap.add_argument("--trainer", choices=["keras", "fast"], default="keras",
+                    help="fast compiles complete epochs using the same Keras training steps")
     ap.add_argument("--batch", type=int, default=10)
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--patience", type=int, default=20, help="early stopping on val loss; 0 = off")
@@ -170,6 +182,11 @@ def main():
     suffix = "_v2" if a.variant == "gan" and a.gan_pool == "v2" else ""
     out = Path(a.out_dir) if a.out_dir else root / f"results/stage3_{a.variant}{suffix}"
     out.mkdir(parents=True, exist_ok=True)
+    identity = dict(trainer=a.trainer, seed=a.seed, epochs=a.epochs, batch=a.batch,
+                    lr=a.lr, patience=a.patience, restore=a.restore,
+                    variant=a.variant, gan_pool=a.gan_pool, gan_per_class=a.gan_per_class,
+                    tensorflow=tf.__version__, keras=tf.keras.__version__)
+    lock_trainer(out, identity)
 
     man = pd.read_csv(root / "data/manifest.csv")
     man["path"] = man.path.map(fix)
@@ -234,8 +251,12 @@ def main():
            tf.keras.callbacks.CSVLogger(str(out / "history.csv"))]
     if a.patience > 0:
         cbs.append(tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=a.patience))
-    model.fit(Xtr, ytr_i, validation_data=(Xva, yva_i), epochs=a.epochs, batch_size=a.batch,
-              shuffle=True, callbacks=cbs, verbose=2)
+    if a.trainer == "keras":
+        model.fit(Xtr, ytr_i, validation_data=(Xva, yva_i), epochs=a.epochs, batch_size=a.batch,
+                  shuffle=True, callbacks=cbs, verbose=2)
+    else:
+        from fast_head import fit
+        fit(tf, model, Xtr, ytr_i, Xva, yva_i, a.epochs, a.batch, cbs)
     W, b = model.layers[-1].get_weights()
     np.savez(out / "last_head.npz", W=W, b=b, classes=np.array(CLASSES))
     if a.restore == "best":

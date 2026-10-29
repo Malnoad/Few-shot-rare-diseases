@@ -25,6 +25,9 @@ git diff --quiet HEAD -- data/manifest.csv
 "$PY" -m unittest discover -s tests -p test_c0.py
 "$PY" -m unittest discover -s tests -p test_c5.py
 "$PY" -m unittest discover -s tests -p test_c1.py
+"$PY" -m py_compile fast_head.py benchmark_head.py
+"$PY" -m unittest discover -s tests -p test_fast_head.py
+"$PY" -m unittest discover -s tests -p test_fast_head_tf.py
 # Manifest still matches the raw data and the verified counts (only where raw data exists).
 if [ -d data/raw/OCT2017 ]; then "$PY" stage0_manifest.py > /dev/null; fi
 # Guard behavior, configuration wiring and outgoing identity (never print addresses).
