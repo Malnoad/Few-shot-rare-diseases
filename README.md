@@ -25,7 +25,8 @@ C5 completed on Colab: all five classes now have 3,000 images in the separate
 `accepted_v2` pool for C2; C1 keeps v1. C0 stopped before heads at its predeclared
 gate: normalizing format and framing did not reduce the strong rare-versus-common
 separation (AUC 0.995 to 0.991); disease and dataset source remain confounded,
-and Lam's D20 decision on continuing C0 or choosing C1 inputs remains open
+and D20=A (29 Oct 2026) closes C0 at the gate as a limitation; C1 and later
+C2/C3 use current inputs
 ([evidence](docs/research/REPLICATION.md#first-colab-outcomes-t10a)).
 
 | Stage | State |
@@ -445,6 +446,14 @@ python stage3_classifier.py --variant basic   # rare train = 2,000 basic-augment
 python stage3_classifier.py --variant gan     # + 3,000 accepted CycleGAN images  <- proposed
 ```
 
+Stage 3 defaults to `--trainer keras` to preserve historical commands. D17=B
+adds `--trainer fast`: a device-resident epoch loop using Keras's own Dense,
+cross-entropy, Adam and metrics. C0.4 and C1 Part 4 select fast explicitly and
+lock the trainer in run provenance. Switch back with `--trainer keras` in a
+separate experiment directory. See the [exactness gate and laptop benchmark](docs/research/T12_FAST_TRAINER.md).
+Future C2/C3 runners must pass `--trainer fast` and include it in immutable run
+identity; those runners do not exist yet. This does not change data or caches.
+
 Options: `--epochs 250`, `--batch 10`, `--lr 1e-3`, `--patience 20` (early stopping on val
 loss; `0` = run all epochs as in the paper), `--gan-per-class 3000`, `--seed 42`,
 `--feat-batch 32` (lower it if feature extraction runs out of memory), `--root`.
@@ -454,7 +463,7 @@ cached-head runs use `--cache-dir`, `--out-dir` and `--cache-only` (missing/stal
 cache is an error, with no extraction). Both last_head.npz and best.weights.h5
 are retained; head.npz follows the selected restore mode.
 
-C1 is ready in notebook **4.1-4.5**, after Lam's C0 input decision: fixed250
+C1 is ready in notebook **4.1-4.5**, current inputs fixed by D20=A: fixed250
 primary, es20 sensitivity on seeds 1-20, then one SD-only power top-up (floor 63,
 cap 243) with consecutive primary seeds. Outputs go only to Drive c1/v1;
 see the [plan and measured CPU budget](docs/research/C1_EXPERIMENT_PLAN.md).

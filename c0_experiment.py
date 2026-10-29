@@ -22,6 +22,14 @@ from stage1b_normalize import (ARMS, VERSION, arm_root, atomic_json, header_chec
 SEEDS = tuple(range(1, 21))
 VARIANTS = ("none", "basic", "gan")
 SCRIPT_ROOT = Path(__file__).resolve().parent
+# Pre-T12 feature extraction is unchanged. Accept only these inspected legacy
+# scripts (LF/CRLF), retaining their original provenance, never rewriting it.
+FEATURE_COMPATIBLE = {
+    "c0_experiment.py": {"591a93181233ab8e1c6b0af62eeddc4d9f5dc665fcae0aefb3ea19e3f3f8167e",
+                         "67e4d371fabd036dc0e7c21e65c5eaf7dde02978173debd7509e0a482fe38016"},
+    "stage3_classifier.py": {"70b342f417d32875df3fd26f35b70df9ef9a99fb320f9fe84e982c86b8a29239",
+                            "acf173f6985254fe17f25663224caaa634d2d658184305d7422b9b5d95cfd2c9"},
+}
 
 
 def output_root(workspace):
@@ -49,6 +57,14 @@ def guard(path, identity):
     if path.exists() and json.loads(path.read_text()) != identity:
         raise ValueError(f"Provenance mismatch at {path}; use a fresh C0 version/workspace")
     atomic_json(path, identity)
+
+
+def compatible_feature_code(saved, current):
+    if {k: v for k, v in saved.items() if k != "scripts"} != {k: v for k, v in current.items() if k != "scripts"}:
+        return False
+    return (saved["scripts"].keys() == current["scripts"].keys() and
+            all(digest == current["scripts"][name] or digest in FEATURE_COMPATIBLE.get(name, set())
+                for name, digest in saved["scripts"].items()))
 
 
 def normalized_inventory(a, arm, require_full=True):
@@ -159,9 +175,10 @@ def verify_cache(cache, groups):
                 raise ValueError(f"Nonfinite features: {group}")
 
 
-def run_stage3(root, cache, out, variant, seed):
+def run_stage3(root, cache, out, variant, seed, trainer):
     command = [sys.executable, str(SCRIPT_ROOT / "stage3_classifier.py"), "--root", str(root),
-               "--cache-dir", str(cache), "--out-dir", str(out), "--variant", variant, "--seed", str(seed)]
+               "--cache-dir", str(cache), "--out-dir", str(out), "--variant", variant, "--seed", str(seed),
+               "--trainer", trainer]
     out.mkdir(parents=True, exist_ok=True)
     with (out / "run.log").open("w", encoding="utf-8") as log:
         child = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -202,7 +219,12 @@ def extract(a):
         identity = dict(arm=arm, version=VERSION, code=code_identity(), paths=inventory.path.tolist(), hashes=hashes,
                         input_manifest_sha256=sha256(root / "data/manifest.csv"),
                         source_manifest_sha256=sha256(Path(a.source_root) / "data/manifest.csv"))
-        guard(dest / "identity.json", identity)
+        identity_path = dest / "identity.json"
+        if identity_path.exists():
+            saved = json.loads(identity_path.read_text())
+            if compatible_feature_code(saved["code"], identity["code"]):
+                identity["code"] = saved["code"]
+        guard(identity_path, identity)
         header, _ = header_check(root, arm, inventory)
         atomic_json(dest / "header_check.json", header)
         cache = dest / "features"
@@ -283,7 +305,7 @@ def train(a):
         raise ValueError("Full feature gate did not pass; report residual separation to Lam before training")
     root, dest = input_root(a, a.arm), output / a.arm
     identity = json.loads((dest / "identity.json").read_text())
-    if identity["code"] != code_identity():
+    if not compatible_feature_code(identity["code"], code_identity()):
         raise ValueError("Code/environment changed after extraction")
     if sha256(Path(a.source_root) / "data/manifest.csv") != identity["source_manifest_sha256"]:
         raise ValueError("Source manifest changed")
@@ -299,8 +321,14 @@ def train(a):
             raise ValueError(f"Cache content changed: {group}")
     verify_cache(cache, groups)
     out = dest / "runs" / f"{a.variant}_s{a.seed}"
+    training_identity = dict(trainer=a.trainer, keras=stage3.need_tf().keras.__version__,
+                             scripts={name: sha256(SCRIPT_ROOT / name) for name in
+                                      ("stage3_classifier.py", "fast_head.py", "c0_experiment.py")})
+    # Lock the entire sweep, not just a single seed's folder.
+    guard(output / "training_identity.json", training_identity)
     run_identity = dict(identity_sha256=marker["identity_sha256"], variant=a.variant, seed=a.seed,
-                        epochs=250, patience=20, restore="best", batch=10, lr=0.001, gan_per_class=3000)
+                        training=training_identity,
+                        trainer=a.trainer, epochs=250, patience=20, restore="best", batch=10, lr=0.001, gan_per_class=3000)
     guard(out / "run_identity.json", run_identity)
     done = out / "complete.json"
     if done.exists():
@@ -310,11 +338,11 @@ def train(a):
         print("Completed run retained:", out)
         return
     start = time.monotonic()
-    run_stage3(root, cache, out, a.variant, a.seed)
+    run_stage3(root, cache, out, a.variant, a.seed, a.trainer)
     validate_predictions(pd.read_csv(out / "test_predictions.csv"))
     atomic_json(done, dict(run_identity=run_identity, minutes=(time.monotonic() - start) / 60,
                 files={name: sha256(out / name) for name in
-                       ["head.npz", "history.csv", "data_counts.csv", "test_predictions.csv", "val_predictions.csv"]}))
+                       ["head.npz", "history.csv", "trainer.json", "data_counts.csv", "test_predictions.csv", "val_predictions.csv"]}))
 
 
 def validate_predictions(frame):
@@ -401,6 +429,7 @@ def main():
     head.add_argument("--arm", choices=ARMS, required=True)
     head.add_argument("--variant", choices=VARIANTS, required=True)
     head.add_argument("--seed", type=int, choices=SEEDS, required=True)
+    head.add_argument("--trainer", choices=["keras", "fast"], default="fast")
     sub.add_parser("summarize", help="summarize completed runs without fitting")
     a = ap.parse_args()
     if a.command == "cue" and a.sample_per_class < 1:

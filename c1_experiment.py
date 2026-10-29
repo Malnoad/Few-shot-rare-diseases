@@ -27,7 +27,7 @@ PILOT = tuple(range(1, 21))
 MIN_PAIRS, MAX_PAIRS = 63, 243
 SCRIPT_ROOT = Path(__file__).resolve().parent
 ARTIFACTS = ("head.npz", "last_head.npz", "best.weights.h5", "history.csv",
-             "data_counts.csv", "test_predictions.csv", "val_predictions.csv", "run.log")
+             "trainer.json", "data_counts.csv", "test_predictions.csv", "val_predictions.csv", "run.log")
 
 
 def schedule(stage, target=MIN_PAIRS):
@@ -103,7 +103,10 @@ def protected_hashes():
 
 
 class Sweep:
-    def __init__(self, root, cache, output, input_arm):
+    def __init__(self, root, cache, output, input_arm, trainer="fast"):
+        if trainer not in ("keras", "fast"):
+            raise ValueError("Unknown trainer")
+        self.trainer = trainer
         self.root, self.cache, self.output = map(Path, (root, cache, output))
         if input_arm not in ("current", "format", "framing"):
             raise ValueError("INPUT_ARM must be current, format or framing")
@@ -150,10 +153,10 @@ class Sweep:
         self.identity = dict(input_arm=input_arm, manifest_sha256=sha256(self.root / "data/manifest.csv"),
                              caches=self.cache_hashes, c0=provenance,
                              scripts={name: sha256(SCRIPT_ROOT / name) for name in
-                                      ("stage3_classifier.py", "c1_experiment.py", "analysis.py", "c0_experiment.py", "stage1b_normalize.py")},
+                                      ("stage3_classifier.py", "fast_head.py", "c1_experiment.py", "analysis.py", "c0_experiment.py", "stage1b_normalize.py")},
                              revision=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=SCRIPT_ROOT, text=True).strip(),
-                             packages={p: importlib.metadata.version(p) for p in ("numpy", "pandas", "scipy", "tensorflow")},
-                             protocol=dict(epochs=250, batch=10, lr=.001, gan_per_class=3000,
+                             packages={p: importlib.metadata.version(p) for p in ("numpy", "pandas", "scipy", "tensorflow", "keras")},
+                             protocol=dict(trainer=trainer, epochs=250, batch=10, lr=.001, gan_per_class=3000,
                                            gan_pool="v1",
                                            arms=ARMS, first_seeds=PILOT, floor=MIN_PAIRS, cap=MAX_PAIRS),
                              cache_history="Historical backbone weights/input content unverified for legacy current caches")
@@ -222,7 +225,7 @@ class Sweep:
                 command = [sys.executable, str(SCRIPT_ROOT / "stage3_classifier.py"), "--root", str(self.root),
                            "--cache-dir", str(self.cache), "--out-dir", str(out), "--cache-only",
                            "--variant", variant, "--seed", str(seed), "--epochs", "250",
-                           "--gan-pool", "v1",
+                           "--gan-pool", "v1", "--trainer", self.trainer,
                            "--patience", str(patience), "--restore", restore]
                 atomic_json(out / "run.json", dict(command=command, identity=self.identity))
                 atomic_json(out / "status.json", dict(state="running"))

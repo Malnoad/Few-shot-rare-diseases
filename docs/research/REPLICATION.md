@@ -29,11 +29,13 @@ fixed250 final heads primary, es20 sensitivity on C0-matched seeds 1-20. First
 complete both protocols/all variants for those 20 seeds, then lock a single
 variance-only paired-t power target for 1 pp (floor 63, feasibility cap 243), then
 run fixed250 seeds 21..N. No significance-driven stopping. Outputs go only to
-Drive c1/v1/<input_arm>; C0 input selection remains Lam's pending decision.
+Drive c1/v1/<input_arm>; D20=A (29 Oct 2026) fixes current inputs for C1 and later C2/C3.
 Current GAN counts are fixed (MacTel 1,248; RP 832); C5 is for C2 only.
-The authorized CPU timing completed 25 cached-head epochs in 207.58 s, projecting
-34.6 min/head; roughly 37-42 h first stage and 112-116 h at 63 pairs, assuming
-20-50 es20 epochs (Colab speed unverified). No C1 seed-pair outcome exists.
+D17=B fast passed the numerical gate with zero differences. Laptop paired
+compute speed-up is 4.69x; conservative projection 12.87 min/head, 13.9-15.4 h
+first stage and 41.6-43.1 h through 63 pairs (20-50 es20 epochs assumed, I/O
+excluded, Colab unbenchmarked). Native seeded accuracies differ; see the
+[T12 benchmark and limitations](T12_FAST_TRAINER.md). No C1 seed-pair outcome exists.
 
 The maintained `review_sheet.py` covers all 22 rare test cases with paired none/gan
 CAM overlays and a fixed accepted-GAN sample of 100 per class. Lam's 44 CAM answers
@@ -115,8 +117,8 @@ features or change the manifest, accepted GAN set or published results.
    evaluation; no synthetic image was accepted/rejected anew by preparing the sheet.
 2. **L5 manuscript preparation, later:** choose final publication dimensions and
    captions against the destination journal; PNG/SVG/PDF exports are ready locally.
-3. **C1 execution (T8 ready):** read the fixed plan and runtime budget; wait for
-   Lam's C0 input selection, then run notebook 4.1-4.5 on Colab. Stage 3 supports
+3. **C1 execution (T8 ready):** read the fixed plan and runtime budget; D20=A fixes
+   current inputs, then run notebook 4.1-4.5 on Colab. Stage 3 supports
    `--restore best|last` alongside cache/out directories and cache-only mode.
    Patience 0 alone still restores best; fixed250 explicitly selects last.
 4. **Supporting review:** the finished mock review, README source correction and
@@ -363,8 +365,8 @@ These checks preserve the manifest and run of record; the unique cause is unreso
 ### Colab track (needs training)
 | # | Work | Paper | Cost |
 |---|---|---|---|
-| C0 | **Full feature gate stopped on Colab; no heads ran.** Recomputed AUC current 0.995455, format 0.995409, framing 0.991455; framing must be <0.90. Headers pass; framing size-only scores tie on all 22 rare tests. `ready_for_heads=False`. [Evidence](../../results/c0/v1_gate_summary.csv), [fixed design](C0_DESIGN.md). D20 remains Lam's decision on continuing C0 or choosing C1 inputs | Table 4 | Features completed; head training blocked by the predeclared gate |
-| C1 | [Execution ready](C1_EXPERIMENT_PLAN.md), notebook 4.1-4.5: fixed250/final primary; es20 seeds 1-20 sensitivity (same as C0). Complete first 20, one SD-only recalculation for 1 pp at alpha .05/power .80 (floor 63/cap 243), fixed250 top-up seeds 21..N. Input arm waits on C0; original accepted GAN pool only, C5 reserved for C2. Drive-only immutable completed runs; no C1 outcomes yet | Tables 3-4 | CPU cached heads: measured 25 epochs 207.58 s, projected 34.6 min/250; first stage ~37-42 h, 63 pairs ~112-116 h including estimated es20; Colab unbenchmarked |
+| C0 | **Full feature gate stopped on Colab; no heads ran.** Recomputed AUC current 0.995455, format 0.995409, framing 0.991455; framing must be <0.90. Headers pass; framing size-only scores tie on all 22 rare tests. `ready_for_heads=False`. [Evidence](../../results/c0/v1_gate_summary.csv), [fixed design](C0_DESIGN.md). D20=A (29 Oct 2026): close C0 as a limitation; C1/C2/C3 use current inputs | Table 4 | Features completed; head training blocked by the predeclared gate |
+| C1 | [Execution ready](C1_EXPERIMENT_PLAN.md), notebook 4.1-4.5: fixed250/final primary; es20 seeds 1-20 sensitivity (same as C0). Complete first 20, one SD-only recalculation for 1 pp at alpha .05/power .80 (floor 63/cap 243), fixed250 top-up seeds 21..N. Input arm waits on C0; original accepted GAN pool only, C5 reserved for C2. Drive-only immutable completed runs; no C1 outcomes yet | Tables 3-4 | D17=B fast: laptop 9.35-12.87 min/250 projected; conservative first stage 13.9-15.4 h, 63 pairs 41.6-43.1 h including assumed es20; excludes I/O, Colab unbenchmarked |
 | C2 | Amount of GAN images 0 / 500 / 1,000 / 2,000 / 3,000 (`--gan-per-class`), over seeds | Fig. 5 | as C1 |
 | C3 | Under-sampling to control class balance | Fig. 11 | as C1, needs a Stage 3 option |
 | C4 | 5-fold CV with per-fold Stage 1 + CycleGANs (25 GANs, ~50 A100-hours by `stage2.log`); without per-fold GANs the test fold leaks | Table 2 | GPU, large |
@@ -404,7 +406,7 @@ Normalizing format and framing did **not** reduce the strong rare-versus-common
 separation (0.995 to 0.991). The separation does not come from the tested file
 format or framing differences. Disease and dataset source remain confounded,
 and this cannot tell them apart; other acquisition cues can remain in the pixels.
-Whether to continue C0 or choose C1's input arm is **Lam's D20 decision, still open**.
+**D20=A (29 Oct 2026): C0 stops here as a limitation; C1 and later C2/C3 use current inputs.**
 No head/recall comparison is available from this stopped run.
 
 ### Not reproducible / out of scope

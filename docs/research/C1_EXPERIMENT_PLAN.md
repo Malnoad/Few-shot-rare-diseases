@@ -1,8 +1,8 @@
 # C1: D15 fixed 250 epochs, final head, 1 pp target
 
 Execution specification fixed 2026-10-27, before any C1 seed-pair result.
-Code and notebook Part 4 are ready for Lam to run by hand on Colab. The only
-local fitting was the explicitly authorized, isolated cached-head timing below;
+Code and notebook Part 4 are ready for Lam to run by hand on Colab. Local fitting includes the explicitly authorized T12 isolated cached-head
+exactness gate and three seeds x 25 epochs per trainer;
 no C1 pilot/sensitivity/top-up runs or feature/GAN training were performed locally.
 
 ## Question, inputs and protocol
@@ -12,11 +12,11 @@ over basic augmentation across classifier seeds? Primary contrast: **gan minus
 basic in percentage points**, fixed250 final heads. A meaningful gain is **1 pp**.
 None is a secondary baseline; rare/class-specific metrics are exploratory.
 
-D6: **input choice waits for C0 and Lam's decision**. Notebook 4.1 has one input
-parameter, `INPUT_ARM = "current"`. Leave it there only if Lam retains current
-inputs; otherwise set `format` or `framing` after C0 review. Normalized inputs use
-Part C0's `data/c0/v1/<arm>/` and `results/c0/v1/<arm>/features/` with its completion
-and identity records. Do not choose inputs using C1 outcomes. No C1 feature extraction.
+**D20=A (29 Oct 2026)** resolves D6: `INPUT_ARM = "current"` is fixed for
+C1 and later C2/C3. C0 stops at its gate as a limitation. Format/framing
+normalization did not reduce separation; disease and dataset source remain
+confounded. No C0 heads are planned. Keep the harmless format/framing code
+branch for future explicitly authorized protocols. No C1 feature extraction.
 
 - Primary fixed250: every variant reaches 250 epochs, `--patience 0 --restore last`.
   `head.npz` is the final-epoch head; `last_head.npz` also retains the last head;
@@ -44,7 +44,7 @@ selection is Lam's operational choice, not a verified literal paper implementati
    Run ascending seed blocks, fixed250 then es20, none/basic/gan within each arm.
    Both protocols for all 20 seeds must complete before any top-up. Historical
    seeds 1-5 overlap in numeric labels only: their inspected outputs are never
-   imported or counted as new runs. C0 shares the es20 seeds for comparison.
+   imported or counted as new runs. C0 originally shared the es20 seeds; its heads are now cancelled by D20=A.
 2. Once only, compute the sample SD (ddof 1) of the 20 **fixed250 gan-basic**
    accuracy differences. Retain full-precision accuracies; units are pp.
 3. Calculate the smallest integer n with two-sided paired-t power >=0.80 for a
@@ -107,11 +107,10 @@ Patient-cluster uncertainty from L9 remains separate from seed uncertainty.
 
 ## Output protection and manual Colab order
 
-CPU runtime; Part 1 then **4.1 -> 4.2 -> 4.3 -> 4.4 -> 4.5**. Wait for C0 input
-selection before 4.2. Current needs the original Drive features only; 4.1 builds
-isolated placeholders without Part 2/Stage 4. For a normalized arm, restore real
-inputs with 3.1/3.2/3.4b, then C0.1/C0.2 to restore metadata/caches and recreate
-normalized data; no C0 feature extraction or heads need repeating for C1.
+CPU runtime; Part 1 then **4.1 -> 4.2 -> 4.3 -> 4.4 -> 4.5**.
+D20=A fixes current inputs: 4.1 restores the original Drive features and builds
+isolated placeholders without Part 2/Stage 4. No normalized-input or C0 head run
+is planned.
 
 All C1 artifacts go directly to **MyDrive/octfsl/c1/v1/<INPUT_ARM>/**, under
 `<fixed250|es20>/sNNN/<variant>/`. Never run 3.5, 3.6 or Part 6 for this sweep.
@@ -135,38 +134,22 @@ interruption. Use one active notebook sweep at a time. To change inputs/protocol
 or reverse a selection, retain the old version and select another arm/new version;
 never delete a completed experiment to make resume pass.
 
-## Measured CPU head budget
+## Measured CPU head budget (D17=B)
 
-[Timing record](C1_HEAD_TIMING.json), 2026-10-27: cached gan seed 1, batch 10,
-Adam 0.001, no early stopping, Ryzen AI 9 365, Windows CPU, TensorFlow 2.21.0.
-The largest variant has 91,860 training rows and 11,513 validation rows (data_counts
-from the isolated run), 9,186 batches/epoch. At about 8 s/epoch, 250 would exceed
-30 minutes, so timing stopped after **25 completed epochs: 207.58 s (3.46 min)**,
-including startup/cache loading. The next epoch had just started at termination;
-no completed C1 head or seed pair was counted. Linear 10x extrapolation is
-**2,075.82 s = 34.60 min per 250-epoch head**; conservative because it repeats
-startup overhead. Timing output stayed in ignored .agents/reports/c1-timing.
+D17=B uses `--trainer fast`, with the same Keras Dense/loss/Adam steps.
+[Laptop benchmark](T12_FAST_TRAINER.md): **4.69x** paired compute
+speed-up; **9.35-12.87 min/250 epochs**, projected from three 25-epoch gan fits.
+C0 heads are cancelled by D20=A (historical hypothetical compute budget
+3.1-7.7 h, 38.6 h ceiling). C1 first stage **13.9-15.4 h**, provisional
+63 pairs **41.6-43.1 h**, including that assumed sensitivity cost; ceilings
+**25.7/53.4 h** if sensitivity reaches 250. These are laptop-measured compute
+projections, excluding checkpoint/Drive I/O; **Colab is unbenchmarked**.
+Native-shuffle accuracy differed materially; see the report, not an equivalence claim.
 
-Using that largest-variant rate for every variant, serial CPU estimates are:
-
-- First 20 primary seed blocks: 60 fixed250 heads, **34.6 h**.
-- Es20 sensitivity: 60 more heads. If 20-50 epochs/head, **2.8-6.9 h** (assumption,
-  not measured); first stage total approximately **37-42 h**. Worst case es20 also
-  reaches 250: total **69.2 h** for all 120 heads.
-- Provisional 63-pair primary stage: 189 fixed250 heads, **109.0 h**, plus the same
-  sensitivity cost: approximately **112-116 h**, ceiling **143.6 h** if all es20
-  runs reach 250. Top-up alone (seeds 21-63): 129 heads, **74.4 h**.
-- At the 243-pair cap: 729 primary heads, **420.4 h**, plus sensitivity. This is a
-  feasibility ceiling, not a recommendation to spend that time without review.
-
-Drive checkpoint/log I/O, CPU allocation, Colab TensorFlow version and runtime
-limits can change these estimates. Print actual first-head minutes and revise
-**time forecasts only**, never the stopping rule based on outcomes. Resume across
-sessions. GPU head timing is **unverified**: this tiny Dense(9), batch-10 workload
-has many small steps and a GPU is not required. Paying for GPU solely for heads
-is not justified by this CPU measurement; use CPU initially and consider a
-supported Colab GPU only if a measured head speedup offsets its cost. C0 fresh
-feature extraction still benefits from A100/L4/T4; no Blackwell runtime.
-
-Open before execution: Lam's C0 input choice and willingness to allocate the
-resulting multi-session runtime. No C1 efficacy conclusion exists yet.
+First-20 primary alone is 12.9 h; 63-pair primary alone 40.5 h; top-up alone
+27.7 h. At the 243-pair cap primary alone is 156.3 h plus sensitivity.
+The old [34.60-min Keras timing](C1_HEAD_TIMING.json) is retained as historical.
+Fast retains fresh per-epoch shuffles; native Keras 3.15.1 repeated its seeded
+permutation in the diagnostic. The numerical gate passes, but native final
+accuracies differ. Trainer and training-code identities prevent mixed resumes.
+D20=A fixes current inputs; no C1 efficacy outcomes exist.
