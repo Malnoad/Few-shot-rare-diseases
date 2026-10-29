@@ -69,6 +69,7 @@ prototypical network, end-to-end fine-tuning of Inception-v3.
 | 2026-10-27 | D7/C5: C1 keeps v1; run C5 before C2, topping up MH/MacTel/Stargardt/RP using existing checkpoints and original automatic QC only | L4 expert ratings were dropped; C2 needs full 3,000-image pools. Completed on Colab; all five v2 classes now have 3,000 images (v1 preserved) | [Colab 3.4c](../../COLAB.md#c5-top-up-before-c2-keep-c1s-pool-fixed-d7), `c5_topup.py`; explicit Stage 3 `--gan-pool v2`, separate caches and outputs |
 | 2026-10-29 | Record first Colab outcomes: C5 done; C0 gate stopped, no heads. D20=A (29 Oct 2026): stop C0 at the gate as a limitation; C1 and later C2/C3 use current inputs | Normalizing format and framing did not reduce strong rare-versus-common separation (AUC 0.995 to 0.991). The separation does not come from the tested file-format/framing differences; disease and dataset source remain confounded and this cannot tell them apart | b109d0d notebook cells 19-24, 29-32; [C5 counts](../../results/stage2/c5_v2_counts.csv), [C0 gate](../../results/c0/v1_gate_summary.csv) |
 | 2026-10-29 | D17=B: accelerate cached Stage 3 heads without changing the maths; C1 selects fast; C0 trainer support retained but heads stopped under D20=A; historical Stage 3 default stays keras | Compiled epoch calls the same Keras steps; identical-order full-epoch gate passes with zero weight/val-loss difference on laptop | [T12 gate and benchmark](T12_FAST_TRAINER.md) |
+| 2026-10-29 | C2/C3 ready for manual Colab: current inputs, v2, fixed250 FINAL, seeds1-20 (D18=A). Lam chose C3 A: common fitting caps10000/5000, nested per class/seed, common val/test fixed | Fig11 counts visually checked; fitting-only adaptation, cap5000 vs4500 rare fitting is near-balanced. C2 N=0 is basic; original non-nested-by-design sampling and pooled rare90/10 preserved | [Design and source/decision provenance](C2_C3_DESIGN.md); notebook Part4b; `c23_experiment.py` |
 
 ## Known pitfalls
 - Rare test classes have 4-5 images: one image moves recall by 0.20-0.25.
@@ -77,7 +78,7 @@ prototypical network, end-to-end fine-tuning of Inception-v3.
   alone names the rare test class 16/22) and are almost linearly separable from major images in
   frozen features. Rare recall may partly measure the source (`REPLICATION.md` L7, R5).
 - Original v1 accepted GAN images are fewer than 3,000 for MH, MacTel, Stargardt, RP (2,610 / 1,248 /
-  2,199 / 832); Stage 3 warns but continues. C5 completed a separate 3,000/class v2 pool for C2; C1 keeps v1.
+  2,199 / 832); Stage 3 warns but continues. C5 completed a separate 3,000/class v2 pool for C2/C3; C1 keeps v1.
 
 ## C1 execution (T8, 2026-10-27)
 
@@ -85,7 +86,7 @@ Notebook 4.1-4.5 now implements D15: fixed250 final heads primary; es20 on
 C0-matched seeds 1-20 sensitivity. First 20 complete before a one-time SD-only
 power recalculation (1 pp, alpha .05, power .80, floor 63/cap 243); top up fixed250
 seeds 21..N. D20=A (29 Oct 2026) fixes INPUT_ARM=current; C0 stops at its gate as a limitation. Original accepted GAN
-pool only; C5 is for C2. Drive c1/v1/<input_arm> outputs preserve canonical results.
+pool only; C5 is for C2/C3. Drive c1/v1/<input_arm> outputs preserve canonical results.
 D17=B selects the fast trainer after an identical-order gate with zero weight,
 optimizer-state and val_loss differences. Three native-shuffle 25-epoch pairs
 show 4.69x compute speed-up but lower fast test accuracies; no behavioural

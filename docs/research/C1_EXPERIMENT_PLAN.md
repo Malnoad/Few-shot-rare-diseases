@@ -30,7 +30,7 @@ branch for future explicitly authorized protocols. No C1 feature extraction.
 - D7: keep the **current accepted GAN realization**, cap 3,000 per disease:
   CSC 3,000; MH 2,610; MacTel 1,248; Stargardt 2,199; RP 832. This deviates from
   the paper's 3,000/class, especially MacTel/RP. No count matching or Stage 2 changes.
-  C5 top-up lives in a separate pool **for C2 only**, excluded from C1.
+  C5 top-up lives in a separate pool **for C2/C3**, excluded from C1.
   Every C1 command explicitly pins `--gan-pool v1`; v2 routing from C5 is preserved.
 
 The [original methods](https://pmc.ncbi.nlm.nih.gov/articles/PMC7829497/) specify

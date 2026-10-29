@@ -22,7 +22,7 @@ from the raw public datasets as five ordered scripts.
 ## Status
 
 C5 completed on Colab: all five classes now have 3,000 images in the separate
-`accepted_v2` pool for C2; C1 keeps v1. C0 stopped before heads at its predeclared
+`accepted_v2` pool for C2/C3; C1 keeps v1. C0 stopped before heads at its predeclared
 gate: normalizing format and framing did not reduce the strong rare-versus-common
 separation (AUC 0.995 to 0.991); disease and dataset source remain confounded,
 and D20=A (29 Oct 2026) closes C0 at the gate as a limitation; C1 and later
@@ -451,8 +451,9 @@ adds `--trainer fast`: a device-resident epoch loop using Keras's own Dense,
 cross-entropy, Adam and metrics. C0.4 and C1 Part 4 select fast explicitly and
 lock the trainer in run provenance. Switch back with `--trainer keras` in a
 separate experiment directory. See the [exactness gate and laptop benchmark](docs/research/T12_FAST_TRAINER.md).
-Future C2/C3 runners must pass `--trainer fast` and include it in immutable run
-identity; those runners do not exist yet. This does not change data or caches.
+C2/C3 notebook Part 4b passes `--trainer fast` and includes it in immutable run
+identity. See the [C2/C3 execution plan](docs/research/C2_C3_DESIGN.md): current/v2,
+fixed250 final, seeds1-20, isolated Drive outputs; no C2/C3 results exist yet.
 
 Options: `--epochs 250`, `--batch 10`, `--lr 1e-3`, `--patience 20` (early stopping on val
 loss; `0` = run all epochs as in the paper), `--gan-per-class 3000`, `--seed 42`,

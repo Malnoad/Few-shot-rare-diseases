@@ -89,6 +89,9 @@ assert a non-ASCII log round-trip. Existing PowerShell redirection logs require
 BOM inspection before decoding; the report's verification record records its
 actual UTF-16 encoding. No log-capture guard was installed.
 
+| 27 | 2026-10-29 | Codex · gpt-6.1-sol | T9 paper-text inspection again failed on Unicode stdout | Repeated omitted UTF-8 boundary (3/10/14/21–23) | Proposed check | Corrected session encoding; persistent UTF-8 wrapper/Unicode round-trip from entry22 remains proposed, not installed pending Lam | yes |
+| 28 | 2026-10-29 | Codex · gpt-6.1-sol | T9 sampler fixture incorrectly expected CSC500 not to nest in1000; several atomic patches guessed nonexistent final context | Assumed individual sample behavior and patch context before inspecting them | Note | Corrected fixture uses exact Stage3 sampler calls and later-class non-nesting; corrected patches use opened context. No extra guard installed | yes: context repeats13 |
+
 ## Proposed check for entry 9 (not installed)
 
 This runs against the maintained sampler and the actual JavaScript exporter,

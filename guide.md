@@ -13,11 +13,11 @@ Open the notebook from GitHub so it always matches the code:
 
 | Run | Answers | Paper item | Runtime | Ready? |
 |---|---|---|---|---|
-| **1. C5** GAN top-up | Brings MH, MacTel, Stargardt and RP to 3,000 accepted GAN images in a separate pool (`accepted_v2`), for C2 | §2.3, Fig. 5 | GPU | yes |
+| **1. C5** GAN top-up | Brings MH, MacTel, Stargardt and RP to 3,000 accepted GAN images in a separate pool (`accepted_v2`), for C2/C3 | §2.3, Fig. 5 | GPU | yes |
 | **2. C0** features and gate | Does the rare-image file format/framing act as a "which dataset" cue? | Table 4 | GPU | yes |
 | **3. C0** heads | Does removing that cue change rare-class recall? | Table 4 | CPU | no: stopped at gate, D20=A |
 | **4. C1** seed sweep | Does GAN beat basic augmentation under the paper's 250-epoch schedule, over enough seeds? | Tables 3, 4 | CPU | yes: current inputs (D20=A), fast (D17=B) |
-| **5. C2 / C3** | Amount of GAN images; class balance | Figs. 5, 11 | CPU | **not yet**: cells come with task T9 |
+| **5. C2 / C3** | Amount of GAN images; common fitting caps | Figs. 5, 11 | GPU for first v2 features; CPU heads | yes: Part 4b, current/v2, fixed250 final, seeds 1-20 |
 
 Runs 1 and 2 don't depend on each other or on any open decision. Start there.
 
@@ -146,8 +146,46 @@ Don't run Part 6 for C0 or C1: their results live in Drive.
 
 ## Run 5: C2 and C3
 
-Not ready. Cells come with task T9, after decisions D17 and D18. C2 will use the
-`accepted_v2` pool from run 1.
+**First preparation:** Part 1 -> **4b.1 -> 4b.2**, preferably A100/L4/T4 for
+15,000 new v2 features. Needs original saved features (`R`) and completed
+`D/c5/v2/accepted_v2/complete.json`. No Part 2, raw restore or Stage 2 run.
+
+**CPU heads/resume:** Part 1 -> **4b.1 -> 4b.2** (verifies/reuses bundle), then
+**4b.3 -> 4b.4** for C2 or **4b.5 -> 4b.6** for C3. Both can run serially.
+That order is for a **fresh runtime**. In the same retained kernel with setup
+helpers loaded, skip Part1 and rerun4b.1 onward: git pull fails on the detached
+pinned checkout. If helpers/kernel state are lost but the local disk remains,
+request a fresh Colab runtime (not merely restart the kernel); Drive is retained.
+D18=A fixes 250 epochs/final heads, seeds 1-20; D20=A fixes current inputs.
+Both use **v2**, while C1 keeps v1. Notebook explicitly selects `fast`; its
+native shuffle differs from the historical Keras adapter, so seeded equivalence
+is not claimed. Keep one active sweep session at a time.
+
+C2 runs 100 heads at GAN amounts 0/500/1000/2000/3000 per rare class; zero is the
+**basic** baseline. The basic source pool is fixed, but pooled rare 90/10
+membership varies with N. GAN subsets use the existing, not-designed-nested sampler.
+C3 runs 60 heads at full/cap10000/cap5000 **common fitting** rows, nested within
+class/seed; common validation/test stay fixed. Rare fitting is 4500/class, so
+cap5000 is near-balanced. This is Lam's approved fitting-only Fig. 11 adaptation.
+Sample size and optimizer update count change with either intervention.
+
+**Budget:** an unmeasured linear scaling of T12's v1 fast rate (91,860 fitting
+rows) to the largest v2 head (96,458 rows) gives roughly **22.5 h C2 + 13.5 h
+C3**. This is not a bound; I/O/extraction and Colab are unbenchmarked. Reserve multiple sessions
+and roughly 1-2 GiB additional Drive space; verify actual space. Resume the same
+cells: completed artifact hashes must match; interrupted heads restart. After a
+hard disconnect, consult the design's explicit writer-lock recovery instructions.
+Part1 pulls main, then4b.1 checks out the frozen SHA in `c23/v1/revision.json`
+before imports. Use a fresh runtime if project modules were already imported
+before a needed code switch; keep that revision
+file. Changed packages stop resume: recreate the versions in identity.json or
+bring the mismatch back, never mix environments in the same experiment.
+
+**Bring back:** `runs.csv`, `summary.csv`, `paired_differences.csv`, `contrasts.csv`,
+`identity.json`, `schedule.json` from each experiment. Summaries can be partial;
+nominal paired seed intervals are exploratory and cannot establish equivalence.
+Keep per-head artifacts in Drive. **Skip Part 6**. Full protocol, source and
+limitations: [C2/C3 design](docs/research/C2_C3_DESIGN.md). No C2/C3 results exist yet.
 
 ## Where everything goes
 
@@ -157,6 +195,9 @@ Not ready. Cells come with task T9, after decisions D17 and D18. C2 will use the
 | C0 gate | `c0/v1/` | `gate.json`, `full_axis.csv` |
 | C0 heads | cancelled (D20=A) | no head results |
 | C1 | `c1/v1/<INPUT_ARM>/` | `runs.csv`, `summary.csv`, `paired_differences.csv` |
+| C2 | `c2/v1/` | four summary CSVs + identity/schedule JSON |
+| C3 | `c3/v1/` | four summary CSVs + identity/schedule JSON |
+| C2/C3 features | `c23/v1/features/` | retain bundle identity/completion metadata |
 
 The full designs and rules: [`C0_DESIGN.md`](docs/research/C0_DESIGN.md),
 [`C1_EXPERIMENT_PLAN.md`](docs/research/C1_EXPERIMENT_PLAN.md), and the C5 section of

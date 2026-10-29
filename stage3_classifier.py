@@ -28,6 +28,8 @@ Options: --epochs 250 --batch 10 --patience 20 (0 = run all epochs)
 D15 primary: --epochs 250 --patience 0 --restore last. Final-head selection is
 our operational choice; the paper does not specify checkpoint selection.
 Isolated experiments: --cache-dir /path/to/features --out-dir /path/to/run
+C3 fitting-only common-class caps: --major-train-per-class 10000 (or 5000).
+Omit the flag for the full common fitting set; validation and test never change.
 
 Outputs:
   results/features/<group>.npz                  cached features, shared by variants and Stage 4
@@ -52,6 +54,26 @@ tf = None
 
 def fix(p):
     return str(p).replace("\\", "/")
+
+
+def major_indices(labels, cap, seed):
+    """Nested common fitting subsets; independent class RNG, original row order.
+
+    This stream is separate from the rare-pool and trainer RNGs. A missing cap
+    retains the entire fitting set. Validation/test must not call this helper.
+    """
+    labels = np.asarray(labels)
+    if not np.isin(labels, MAJOR).all() or (cap is not None and cap <= 0):
+        raise ValueError("expected common fitting labels and a positive cap")
+    keep = np.zeros(len(labels), dtype=bool)
+    for i, cls in enumerate(MAJOR):
+        rows = np.flatnonzero(labels == cls)
+        if cap is None or len(rows) <= cap:
+            keep[rows] = True
+        else:
+            rng = np.random.default_rng(np.random.SeedSequence([seed, i, 2303]))
+            keep[rng.permutation(rows)[:cap]] = True
+    return np.flatnonzero(keep)
 
 
 def lock_trainer(out, identity):
@@ -160,6 +182,8 @@ def main():
     ap.add_argument("--restore", choices=["best", "last"], default="best",
                     help="select best validation weights or the last epoch; patience does not select weights")
     ap.add_argument("--gan-per-class", type=int, default=3000)
+    ap.add_argument("--major-train-per-class", type=int,
+                    help="C3: random common FITTING cap per class; validation/test unchanged")
     ap.add_argument("--gan-pool", choices=["v1", "v2"], default="v1",
                     help="v1 = original accepted set (C1); v2 = complete C5 top-up (C2)")
     ap.add_argument("--seed", type=int, default=42)
@@ -169,6 +193,8 @@ def main():
     ap.add_argument("--cache-only", action="store_true", help="fail on missing/stale caches; never extract or write features")
     ap.add_argument("--weights", default="imagenet", help=argparse.SUPPRESS)  # testing only
     a = ap.parse_args()
+    if a.major_train_per_class is not None and a.major_train_per_class <= 0:
+        ap.error("--major-train-per-class must be positive")
 
     need_tf()
     tf.keras.utils.set_random_seed(a.seed)
@@ -186,6 +212,9 @@ def main():
                     lr=a.lr, patience=a.patience, restore=a.restore,
                     variant=a.variant, gan_pool=a.gan_pool, gan_per_class=a.gan_per_class,
                     tensorflow=tf.__version__, keras=tf.keras.__version__)
+    if a.major_train_per_class is not None:
+        identity["major_train_per_class"] = a.major_train_per_class
+        identity["common_sampling"] = "SeedSequence([seed,class_index,2303]); nested; original row order"
     lock_trainer(out, identity)
 
     man = pd.read_csv(root / "data/manifest.csv")
@@ -203,6 +232,9 @@ def main():
     # ---- major classes (identical in every variant) and the test set
     maj = man[man.label.isin(MAJOR)]
     Xtr, ytr = feats_for("major_train", maj[maj.split == "train"])
+    if a.major_train_per_class is not None:
+        keep = major_indices(ytr, a.major_train_per_class, a.seed)
+        Xtr, ytr = Xtr[keep], [ytr[i] for i in keep]
     Xva, yva = feats_for("major_val", maj[maj.split == "val"])
     test = man[man.split == "test"]
     Xte, yte = feats_for("test", test)

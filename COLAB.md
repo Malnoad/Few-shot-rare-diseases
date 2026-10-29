@@ -220,7 +220,7 @@ Everything C1 produces is written directly to `MyDrive/octfsl/c1/v1/<INPUT_ARM>/
 Resume after disconnect by rerunning Part 1 and 4.1-4.5; completed heads are
 verified/skipped, interrupted heads restart. Run one sweep at a time. Skip 3.5,
 3.6 and Part 6. No old seed-check backup/restore loop is used. Keep the existing
-accepted GAN realization: MacTel 1,248 and RP 832; C5's separate pool is C2 only.
+accepted GAN realization: MacTel 1,248 and RP 832; C5's separate pool is for C2/C3.
 
 D17=B uses `--trainer fast`, with the same Keras Dense/loss/Adam steps.
 [Laptop benchmark](docs/research/T12_FAST_TRAINER.md): **4.69x** paired compute
@@ -235,6 +235,53 @@ Native-shuffle accuracy differed materially; see the report, not an equivalence 
 See the [fixed plan](docs/research/C1_EXPERIMENT_PLAN.md) and
 [timing record](docs/research/C1_HEAD_TIMING.json). Patient-cluster CIs and
 training-seed CIs describe different uncertainties; C1 does not resolve leakage.
+
+## C2/C3 (Part 4b): manual execution
+
+Run **Part 1 -> 4b.1 -> 4b.2** for the shared immutable feature bundle; prefer
+A100/L4/T4 for first extraction of the 15,000 new v2 images. Original common,
+basic and test caches come from `R/features`; the completed C5 pool is
+`D/c5/v2/accepted_v2`. No raw restore, Part 2, Stage 2, Stage 4 or Part 6.
+Then use CPU: rerun Part 1 and 4b.1-4b.2 to verify/reuse the bundle, followed by
+**4b.3-4b.4 (C2)** or **4b.5-4b.6 (C3)**. Current/v2, fixed250 FINAL, seeds1-20,
+trainer fast are explicit. D18/D20 and Lam's C3 A are settled.
+This Part1 order applies to a fresh runtime. In the same retained kernel with
+helpers loaded, **skip Part1** and run4b.1 onward: git pull cannot run on the
+detached pinned checkout. If kernel/helpers are gone but the local checkout
+remains, request a fresh Colab runtime rather than just restarting the kernel;
+Drive outputs remain intact.
+
+C2 varies GAN amount 0/500/1000/2000/3000 on the fixed 2000 basic source pool;
+zero is basic. Existing non-nested-by-design sampling and pooled rare90/10 are
+preserved, so basic fitting/validation membership changes with N. C3 keeps all
+3000GAN+2000basic and caps COMMON FITTING at10000/5000, nested per class/seed,
+leaving common val/test fixed. It is a fitting-only adaptation of Fig11;
+cap5000 is near-balanced versus4500 rare fitting. Both change data/update count.
+
+Writes: `D/c23/v1/features/` for the immutable full bundle; `D/c2/v1/` and
+`D/c3/v1/` for independent resumable heads/summaries. Local temporary cache views
+slice selected GAN rows without rewriting full bundle or original caches.
+Exact fitting/validation path inventories are compressed beside every head.
+No outputs go to recorded Stage3/Stage4 folders. Completed heads are retained
+only after all required artifact/identity hashes match; partial heads restart.
+Run one sweep session at a time. Hard disconnect recovery, exact CLI, source
+counts and output contracts: [fixed design](docs/research/C2_C3_DESIGN.md).
+After Part1 pulls main,4b.1 checks out the frozen full SHA in
+`D/c23/v1/revision.json` before project imports. Keep that file. Reuse a fresh
+runtime if project modules were already imported before a needed code switch.
+Package-version mismatch stops resume;
+recreate the recorded environment from identity.json or bring back the blocker.
+Never relax identity checks or mix package versions in the same sweep.
+
+100 C2 +60 C3 heads project to about22.5+13.5 laptop compute hours after unmeasured
+linear scaling from T12's91,860-row v1 head to96,458-row v2. This is not an upper
+bound; Colab, feature extraction and Drive I/O are unbenchmarked.
+Allow roughly1-2GiB extra Drive space and check actual free space. Bring back
+`runs.csv`, `summary.csv`, `paired_differences.csv`, `contrasts.csv`,
+`identity.json`, `schedule.json` from each experiment. Exploratory nominal seed
+CIs are separate from patient uncertainty; no automatic best-N or equivalence
+decision. Fast is not seeded-outcome-equivalent to historical Keras. Source/disease
+confounding, patient leakage and legacy base feature provenance stay limitations.
 
 ## Rules that protect the results
 

@@ -10,7 +10,7 @@ Sources: the paper PDF (main checkout, not in git), `results/stage4/*.csv`,
 
 ## Start here (2026-10-27)
 
-**Finished Claude branches are integrated as primary; Codex audits supplement them. L4 GAN-image ratings remain pending.** The
+**Finished Claude branches are integrated as primary; Codex audits supplement them. L4 expert GAN-image ratings were dropped as not reproducible.** The
 [L7 evidence report](L7_BASELINE_AUDIT.md) confirms paper/repo differences in rare
 training counts and checkpoint/validation protocols. Saved heads, labels and
 predictions agree; no exact duplicate rare images were found. Patient/source
@@ -30,7 +30,7 @@ complete both protocols/all variants for those 20 seeds, then lock a single
 variance-only paired-t power target for 1 pp (floor 63, feasibility cap 243), then
 run fixed250 seeds 21..N. No significance-driven stopping. Outputs go only to
 Drive c1/v1/<input_arm>; D20=A (29 Oct 2026) fixes current inputs for C1 and later C2/C3.
-Current GAN counts are fixed (MacTel 1,248; RP 832); C5 is for C2 only.
+Current C1 GAN counts are fixed (MacTel 1,248; RP 832); C5 is for C2/C3 only.
 D17=B fast passed the numerical gate with zero differences. Laptop paired
 compute speed-up is 4.69x; conservative projection 12.87 min/head, 13.9-15.4 h
 first stage and 41.6-43.1 h through 63 pairs (20-50 es20 epochs assumed, I/O
@@ -41,8 +41,8 @@ The maintained `review_sheet.py` covers all 22 rare test cases with paired none/
 CAM overlays and a fixed accepted-GAN sample of 100 per class. Lam's 44 CAM answers
 are committed as `results/analysis/cam_review_seed42_Lam.csv` (27 Oct): abnormality
 21/22 gan versus 14/22 none; off-retina 0 versus 7. This is unblinded, non-expert
-review. GAN ratings remain pending; `review_sheet.py serve` saves answers as local
-CSV. Earlier temporary sheets, CAM assets and figure exports remain gitignored;
+review. L4 expert GAN ratings were dropped; the optional non-expert sheet is not
+replication evidence. Earlier temporary sheets, CAM assets and figure exports remain gitignored;
 no image assets are committed by this integration.
 
 L5 source validation passes: 580 ROC points form 27 curves whose areas match the
@@ -112,9 +112,9 @@ features or change the manifest, accepted GAN set or published results.
 
 ### Remaining training-free queue
 
-1. **L4 human review:** rate the prepared GAN sample and export CSV observations.
-   L3 CAM review is committed. Lam's visual assessment is not an ophthalmologist
-   evaluation; no synthetic image was accepted/rejected anew by preparing the sheet.
+1. **L4 closed:** expert human review is not reproducible; automatic QC is the
+   substitute. L3 non-expert CAM review is committed. No GAN image is accepted
+   or rejected anew by the unused optional review sheet.
 2. **L5 manuscript preparation, later:** choose final publication dimensions and
    captions against the destination journal; PNG/SVG/PDF exports are ready locally.
 3. **C1 execution (T8 ready):** read the fixed plan and runtime budget; D20=A fixes
@@ -144,7 +144,7 @@ accepted GAN set and published CSVs. Run .agents/check for any edits. Do not pus
 |---|---|---|
 | Basic augmentation (§2.3) | flips, ±5% shift, ±30° rotation, 0-20% zoom, ±10% brightness, elastic (MATLAB) | Done: Stage 1, 2,000/class (albumentations) |
 | CycleGAN per disease (§2.3, §3.1) | TF tutorial, 100 epochs, ophthalmologists remove artifacts, 3,000 kept/class | Done, 100 epochs. Automatic kNN QC instead of clinicians; kept 3,000 / 2,610 / 1,248 / 2,199 / 832 (CSC/MH/MacTel/Stargardt/RP) |
-| Fig. 5: amount of augmentation | best at 2,000 basic + 3,000 GAN | Not done |
+| Fig. 5: amount of augmentation | best at 2,000 basic + 3,000 GAN | C2 execution ready, Part4b; no results yet |
 | Fig. 6: acceptance rate | 100 samples/class rated by 2 ophthalmologists; Stargardt and RP rejected most | **Not reproducible:** the paper's raters were two expert ophthalmologists (Fig. 6 caption; Methods: "Expert ophthalmologists reviewed the generated images"). Our substitute is automatic QC only: pass rate 84 / 65 / 31 / 55 / 21% (RP and MacTel lowest). Decision 2026-10-27: no agent or author rating; a non-expert sheet (`review_sheet.py`: each of 100 accepted/class next to its source NORMAL and the real training scans; looks real / flawed / unsure, with disease-specific reasons from the AI-drafted `docs/research/cyclegan_rubric.json`) exists but is not used for the replication |
 | Fig. 7: t-SNE | Inception-v3 features, none vs gan | Done: `figures.py tsne` -> `results/figures/tsne.{png,pdf}` from the saved joint coordinates; both panels are subsets of one embedding |
 | Table 3: independent test | none 88.4, basic 91.3, gan 92.1 % | Done, seed 42: 90.31 / 88.85 / 92.95 %. Seeds 1-5: 90.7 / 92.9 / 92.6 (gan ties basic) |
@@ -152,7 +152,7 @@ accepted GAN set and published CSVs. Run .agents/check for any edits. Do not pus
 | Fig. 9: one-vs-rest ROC | per-class curves | Done: `figures.py roc` -> `results/figures/roc.{png,pdf}`; legends use `results/stage4/auc.csv`, and all 27 curve areas match it |
 | Fig. 10: Grad-CAM | saliency maps | All 22 rare test images for gan and none (`analysis.py cam --n 22`), side by side in `review_sheet.py`, which asks where the strongest colour sits. Reviewed by the author (non-expert, not blinded to variant), 2026-10-27, `results/analysis/cam_review_seed42_Lam.csv`: on the abnormality gan 21/22, none 14/22; off the retina gan 0, none 7 (incl. all 4 Stargardt, 6 of the 7 correctly classified) |
 | Table 2: 5-fold CV on whole data | GANs retrained per fold, gan 93.9 ± 4.5 % | Not done |
-| Fig. 11: imbalance by under-sampling | "no significant impact" | Not done |
+| Fig. 11: imbalance by under-sampling | "no significant impact" | C3 execution ready, Part4b; approved fitting-only adaptation, no results yet |
 | kNN K=3 baseline | 91.2 % | Done: 86.40 % |
 | Prototypical network | trained, 80.8 % | Class-mean baseline only: 68.98 % (out of scope) |
 | Siamese network | 80.9 % | Out of scope |
@@ -366,10 +366,10 @@ These checks preserve the manifest and run of record; the unique cause is unreso
 | # | Work | Paper | Cost |
 |---|---|---|---|
 | C0 | **Full feature gate stopped on Colab; no heads ran.** Recomputed AUC current 0.995455, format 0.995409, framing 0.991455; framing must be <0.90. Headers pass; framing size-only scores tie on all 22 rare tests. `ready_for_heads=False`. [Evidence](../../results/c0/v1_gate_summary.csv), [fixed design](C0_DESIGN.md). D20=A (29 Oct 2026): close C0 as a limitation; C1/C2/C3 use current inputs | Table 4 | Features completed; head training blocked by the predeclared gate |
-| C1 | [Execution ready](C1_EXPERIMENT_PLAN.md), notebook 4.1-4.5: fixed250/final primary; es20 seeds 1-20 sensitivity (same as C0). Complete first 20, one SD-only recalculation for 1 pp at alpha .05/power .80 (floor 63/cap 243), fixed250 top-up seeds 21..N. Input arm waits on C0; original accepted GAN pool only, C5 reserved for C2. Drive-only immutable completed runs; no C1 outcomes yet | Tables 3-4 | D17=B fast: laptop 9.35-12.87 min/250 projected; conservative first stage 13.9-15.4 h, 63 pairs 41.6-43.1 h including assumed es20; excludes I/O, Colab unbenchmarked |
-| C2 | Amount of GAN images 0 / 500 / 1,000 / 2,000 / 3,000 (`--gan-per-class`), over seeds | Fig. 5 | as C1 |
-| C3 | Under-sampling to control class balance | Fig. 11 | as C1, needs a Stage 3 option |
-| C4 | 5-fold CV with per-fold Stage 1 + CycleGANs (25 GANs, ~50 A100-hours by `stage2.log`); without per-fold GANs the test fold leaks | Table 2 | GPU, large |
+| C1 | [Execution ready](C1_EXPERIMENT_PLAN.md), notebook4.1-4.5: fixed250/final primary; es20 seeds1-20 sensitivity. Complete first20, one SD-only recalculation for1pp (floor63/cap243), fixed250 top-up21..N. D20=A fixes current inputs; original v1 accepted pool only, v2 reserved for C2/C3. Drive-only immutable completed runs; no C1 outcomes yet | Tables3-4 | D17=B fast: laptop9.35-12.87min/250 projected; first stage13.9-15.4h,63pairs41.6-43.1h including assumed es20; excludes I/O, Colab unbenchmarked |
+| C2 | [Execution ready](C2_C3_DESIGN.md), Part4b: GAN amounts0/500/1000/2000/3000 per rare class, current/v2, fixed250 FINAL seeds1-20. N=0 basic baseline; existing non-nested-by-design subsets and pooled90/10 retained.100 new heads; no results | Fig.5 | CPU heads; GPU benefits first shared-v2 feature preparation; rough row-scaled laptop projection22.5h, Colab/Drive unbenchmarked |
+| C3 | [Execution ready](C2_C3_DESIGN.md), Part4b: Lam's A full/cap10000/cap5000 COMMON FITTING, current/v2, fixed250 FINAL seeds1-20. Nested common subsets, fixed common val/test,4500 rare fitting/class. Fitting-only adaptation, near-balanced;60 new heads, no results | Fig.11 | CPU heads; shared full-v2 cache; rough row-scaled laptop projection13.5h, not a bound |
+| C4 | **Dropped (D9)**; no implementation or execution planned. Per-fold GAN retraining would otherwise be required to avoid leakage | Table2 | Not scheduled |
 | C5 | **Completed on Colab.** Added MH 390, MacTel 1,752, Stargardt 801, RP 2,168; all five `accepted_v2` classes have 3,000 images. Existing checkpoints and original automatic QC only (no human ratings); logs report zero round-1/domain-A source overlap and unchanged v1 hashes. C1 keeps v1; C2 selects `--gan-pool v2` with separate caches. [Counts and provenance](../../results/stage2/c5_v2_counts.csv) | §2.3 | Generation/QC completed; no retraining |
 
 ### First Colab outcomes (T10a)

@@ -25,6 +25,8 @@ git diff --quiet HEAD -- data/manifest.csv
 "$PY" -m unittest discover -s tests -p test_c0.py
 "$PY" -m unittest discover -s tests -p test_c5.py
 "$PY" -m unittest discover -s tests -p test_c1.py
+"$PY" -m py_compile c23_experiment.py
+"$PY" -m unittest discover -s tests -p test_c23.py
 "$PY" -m py_compile fast_head.py benchmark_head.py
 "$PY" -m unittest discover -s tests -p test_fast_head.py
 "$PY" -m unittest discover -s tests -p test_fast_head_tf.py
