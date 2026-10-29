@@ -1,0 +1,139 @@
+{
+  "accessed_on": "2026-10-27",
+  "scope": "Targeted verification of the supplied proposal, project records, and selected primary sources. This is not a systematic novelty search.",
+  "proposal": {
+    "title": "Research Directions: Few-Shot OCT Diagnosis of Rare Retinal Diseases",
+    "url": "https://claude.ai/artifact/GhbYXwHseWAy1TevGEoRjv#55a3498b-90e7",
+    "access": "Read in the T3 collaborative browser after Lam authenticated. Proposal text and all five idea descriptions were inspected. Only section folding and browser navigation were used; document text was not edited.",
+    "version_fragment": "55a3498b-90e7",
+    "open_gaps_observed": [
+      {"id": 1, "idea": "Cost-effectiveness benchmark: generative augmentation vs. foundation-model few-shot"},
+      {"id": 2, "idea": "Rigorous re-evaluation: leakage, confidence intervals, real-clinic test set"},
+      {"id": 3, "idea": "Open-set detection: flag an unknown rare disease instead of forcing a known class"},
+      {"id": 4, "idea": "One conditional generator for all rare classes vs. one GAN per disease"},
+      {"id": 5, "idea": "External validation on local clinical OCT (e.g., a Vietnamese hospital)"}
+    ],
+    "recommended_design_observed": {
+      "combine_ideas": [1, 2],
+      "datasets": ["Kermany", "Yoo rare-disease dataset", "OCTDL", "optional local clinical set"],
+      "arms": ["no augmentation", "classic augmentation", "CycleGAN", "diffusion", "RETFound", "RETFound plus diffusion"],
+      "metrics": ["rare sensitivity and bootstrap intervals", "macro-F1", "balanced accuracy", "MCC", "expected calibration error", "FID", "expert acceptance rate", "GPU-hours", "expert time", "USD cost"],
+      "support_curve_suggestion": "1-, 5-, 10-, 20-shot",
+      "next_steps": ["confirm GPU resources", "confirm hospital-data access", "expand into a proposal"]
+    },
+    "claims_not_adopted_as_verified_findings": [
+      "High novelty and high feasibility ratings are judgments, not empirical statistics.",
+      "Public RETFound weights do not establish low compute or review cost; the official checkpoint has an access gate.",
+      "RETFound label efficiency at ten percent of labels is task-specific, not a guaranteed result for these five rare diseases.",
+      "An illustrative clinical scan-count range is not a powered patient-level sample-size calculation.",
+      "A first-ever clinic-sourced validation claim and predictions of journal tier were not established.",
+      "OCTDL categories cannot silently replace or extend the existing nine-class label space."
+    ]
+  },
+  "primary_sources": [
+    {
+      "key": "yoo2021",
+      "title": "Feasibility study to improve deep learning in OCT diagnosis of rare retinal diseases with few-shot classification",
+      "authors": "Yoo TK; Choi JY; Kim HK",
+      "year": 2021,
+      "doi": "10.1007/s11517-021-02321-1",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7829497/",
+      "retrieval_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7829497/fullTextXML",
+      "read_scope": "Full XML body present. Dataset methods, frozen-backbone/250-epoch description, augmentation and expert review, Tables 3 and 4.",
+      "archive": ".agents/reports/report-2026-10-27/Yoo2021.xml",
+      "sha256": "4b4a2e5833422421c503b2bb4dc22fe8ad86b360ff7de71600172a7953d6a883",
+      "verified_items": {
+        "rare_initial_training_total": 97,
+        "rare_test_counts_CSC_MH_MacTel_Stargardt_RP": [5, 5, 4, 4, 4],
+        "table3_accuracy_none_basic_gan": [88.4, 91.3, 92.1],
+        "backbone": "Convolutional layers left frozen; final fully connected layer trained.",
+        "checkpoint_selection": "The project final-head convention is not established by the paper."
+      }
+    },
+    {
+      "key": "tai2025",
+      "title": "Improvement Strategies for Few-Shot Learning in OCT Image Classification of Rare Retinal Diseases",
+      "authors": "Tai CY et al.",
+      "year": 2025,
+      "doi": "10.48550/arXiv.2505.20149",
+      "url": "https://arxiv.org/abs/2505.20149",
+      "full_text_url": "https://arxiv.org/html/2505.20149v1",
+      "read_scope": "Abstract and full-text methodology. Supports the existence of a U-GAT-IT/balancing/attention extension; its headline accuracy is not used as this project's result.",
+      "publication_status": "Preprint"
+    },
+    {
+      "key": "iwanicka",
+      "title": "Diffusion with Adversarial Fine-Tuning for Improving Rare Retinal Disease Diagnosis",
+      "authors": "Iwanicka D; Lu P",
+      "conference_year": 2025,
+      "proceedings_year": 2026,
+      "doi": "10.1007/978-3-031-98694-9_17",
+      "url": "https://eprints.whiterose.ac.uk/id/eprint/228674/",
+      "read_scope": "Author-repository abstract and bibliographic record only; full experimental methods not audited.",
+      "verified_observation": "Class-aware diffusion, attention and adversarial fine-tuning are used for rare OCT synthesis and a ResNet18 downstream task."
+    },
+    {
+      "key": "eyediff",
+      "title": "Boosting foundation models for rare eye disease diagnosis via a multimodal text-to-image generative framework",
+      "authors": "Chen R et al.",
+      "year": 2026,
+      "doi": "10.1038/s41746-026-02560-2",
+      "url": "https://www.nature.com/articles/s41746-026-02560-2",
+      "read_scope": "Publisher abstract and Results paragraphs on multiple foundation models, OCT tasks, rare disease tasks and external datasets. Not an exhaustive cost or methods audit.",
+      "verified_observation": "Synthetic augmentation of retinal foundation models and external evaluation already exist; a general first-ever novelty claim is not justified by this report."
+    },
+    {
+      "key": "retfound",
+      "title": "A foundation model for generalizable disease detection from retinal images",
+      "authors": "Zhou Y et al.",
+      "year": 2023,
+      "doi": "10.1038/s41586-023-06555-x",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10550819/",
+      "retrieval_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC10550819/fullTextXML",
+      "read_scope": "Full XML body present. Pretraining dataset descriptions, label-efficiency examples and reference 34.",
+      "archive": ".agents/reports/report-2026-10-27/retfound.xml",
+      "sha256": "d944c802df809ed894636b7f28298d48aa2670422903671599108c9685016db6",
+      "verified_observation": "The OCT pretraining corpus includes images attributed to reference 34, which identifies Kermany et al., Cell 2018, DOI 10.1016/j.cell.2018.02.010.",
+      "unverified": "Exact file/patient overlap between the pretraining data and this project's test manifest."
+    },
+    {
+      "key": "retfoundweights",
+      "title": "RETFound Nature OCT official model card and repository",
+      "url": "https://huggingface.co/YukunZhou/RETFound_mae_natureOCT",
+      "repository_url": "https://github.com/rmaphoh/RETFound",
+      "read_scope": "Access gate, model-card license and official repository access instructions.",
+      "verified_items": {"checkpoint_access": "gated", "model_card_license": "CC BY-NC 4.0"},
+      "unverified": "This project's access approval, executable checkpoint compatibility and measured adaptation cost. Weights were not downloaded."
+    },
+    {
+      "key": "octdl",
+      "title": "OCTDL: Optical Coherence Tomography Dataset for Image-Based Deep Learning Methods",
+      "authors": "Kulyabin M et al.",
+      "year": 2024,
+      "doi": "10.1038/s41597-024-03182-7",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11009408/",
+      "retrieval_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11009408/fullTextXML",
+      "read_scope": "Full XML body present. Table 2, Data Records, category/condition descriptions and patient-ID fields.",
+      "archive": ".agents/reports/report-2026-10-27/octdl.xml",
+      "sha256": "298d5ebceeaf2fbf8c1e4a46bcff2f2672a1cb1302595a695fff5367f71b9e61",
+      "reported_counts": {"images": 2064, "patients": 821, "RAO_images": 22, "RAO_patients": 11},
+      "labels": ["AMD", "DME", "ERM", "NO", "RAO", "RVO", "VID"],
+      "unverified": "Dataset files have not been downloaded, locally counted, or mapped to this project's nine classes."
+    },
+    {
+      "key": "skills",
+      "title": "Scientific Agent Skills: A Library of Procedural Knowledge for Research Agents",
+      "authors": "Kassis T; Agarwal V; He Y; Patel D; Brueckner AM",
+      "year": 2026,
+      "doi": "10.48550/arXiv.2609.00065",
+      "url": "https://arxiv.org/abs/2609.00065",
+      "read_scope": "Current bibliographic record and abstract; acknowledges procedural assistance only."
+    }
+  ],
+  "archive_portability": "XML payloads, browser captures and verification logs in .agents/reports are local and gitignored. Citation locations, hashes, proposal observations and verification limits are retained here. An absent local archive is not a missing project result CSV.",
+  "historical_artifacts_unavailable_here": [
+    "D:/Few-shot/.agents/reports/l7-audit/",
+    "D:/Few-shot/.agents/reports/c0-final/"
+  ],
+  "unsynchronized_drive_state": "unverified"
+}

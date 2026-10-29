@@ -1,0 +1,644 @@
+{
+  "as_of": "2026-10-27",
+  "base_commit": "864496027f21e7d074244f35f980abfb8e3d288a",
+  "scope": "Training-free audit of saved artifacts. SD uses n-1. Seed accuracies retain their saved two-decimal precision. Cluster CIs are read, not re-estimated.",
+  "script": "docs/research/build_report_evidence.py",
+  "source_sha256": {
+    "COLAB.md": "4cfd63800406b65883dd4ec089f7cf26b370b3601638d3f202a4b4502f50aa3c",
+    "colab_setup.ipynb": "66d90416ac920b6ca57aad0b994a90623facca56d54025ecb813dc3667e13767",
+    "data/manifest.csv": "21e5f4c139b0f6bed6b98dfea02ef9b5591bfc70d4f1cca8d59c66d0bfeda369",
+    "docs/research/C0_DESIGN.md": "b76fc0d9a444233eb95e7a1aa7ea7614034f184420d72d3b5563d7685c9a6f3b",
+    "docs/research/C0_REPORT.md": "10019ff93eb20827bf526bf888046a78b9110a8638d0de0c8a2d3b6e0e5eb7c7",
+    "docs/research/C1_EXPERIMENT_PLAN.md": "7ff52ae6cde56e2516c9c40652b52a67cb401541b95f2d22066f92c16569b519",
+    "docs/research/C1_HEAD_TIMING.json": "7c981b59f1c61cd07b32f56d60887cdd82fe2e4a060c44dbb04818d953c1bdef",
+    "docs/research/CONTEXT.md": "f20d4030101b7601f81bce6c835c8fea777f7676d94d5d695bb4f8d3db354fcf",
+    "docs/research/L7_BASELINE_AUDIT.md": "547b2afb22314d155f1f830075048fc0e1be8f6159b98a613e5fc6d0f0c80141",
+    "docs/research/L8_RCI_AUDIT.md": "96c8973a0156c0b95fd74573a51087cc39b3a042a583171e1c8c481dbc652be4",
+    "docs/research/PAPER_DISCREPANCIES.md": "4342cf791b0420e70721a3e592be60f4d46a541f3a9a22314dee7eb932a5b86d",
+    "docs/research/REPLICATION.md": "1603b562034bd81412c8eeb62b0f74209921a884f774a2af29587819ab8f8b77",
+    "docs/research/build_report_evidence.py": "ca8835e9bad9625ae1d30d945cb0a3baaa315e990607e0b478eaf0233b4dbb0b",
+    "docs/research/report_sources.json": "b946931efb6a1296b80c5ea9d7d7de5da0887da8ff7db47e6b973404b226fb85",
+    "results/analysis/cam_review_seed42_Lam.csv": "bb384128203377004155a4885c70e42fe2dec6883af41c72fa0ae786973c6ec9",
+    "results/analysis/cluster_seed42.csv": "4b2fd7faf0eb0e9d302fd45d643579b9a143fe8b5edb777711f68497d779def1",
+    "results/analysis/cluster_summary.csv": "efe86c075a0244321d90f3dab93666917977cfd64653083cb5d6f11d811e8a6f",
+    "results/analysis/knn_sweep.csv": "00d66e2d8e58f9a1c6aebc5b7cb98d8a308b09f7fc126ec9b3e6dda7d1ee51ea",
+    "results/analysis/paired_cluster_seed42.csv": "b76e51577a2d90c9534dc52b433d6e6258e9427b77e4b883f4efeaaab2bc016b",
+    "results/analysis/paired_seeds.csv": "6895f7ffaa0b42fcbdca28ea5b9b19e8513d5139b3cb12c15e31ce28813502e5",
+    "results/analysis/qc_summary.csv": "458d91bb565aae79a089cf38b183d5ed53e515fc10e262cd076758e6894e59d5",
+    "results/analysis/rare_recall.csv": "97622d80b481625b05e2f1dbff09318652e070885fa3702bffa83ae58c41fb8c",
+    "results/analysis/rci_paper_bounds.csv": "811c97ad976c816bbb896edf6bfa0a3f99000d1c7d83a4dd95f814eb11231e5c",
+    "results/seed_check.csv": "aca8337a4c39b96963128428b310e05bbec5ea1416eb707c0d8881fd2b2d25f0",
+    "results/stage2/qc_CSC.csv": "8770b3b62680963a2cadd684f4e104422c9003f69ae97dddba76a4d8bb84c378",
+    "results/stage2/qc_MH.csv": "dc79f301a905043402a08d084ffb9d7aecd18e196cd591fdb0dbd594ec697b58",
+    "results/stage2/qc_MacTel.csv": "c0e02f85dc23ec6e07e0633cc655c20f2033f955c16f0918e78edab477701101",
+    "results/stage2/qc_RP.csv": "0e721341262b12de0520cd075d8f5e0dcbf087c4b9b790525bf5ab3b020484f2",
+    "results/stage2/qc_Stargardt.csv": "98658df464d16a6ebd79527c0639422dff3d2ab0633346a8be052a65e38adee3",
+    "results/stage2/stage2.log": "4a98b504a923e81c581fda290be644c151c4b0701f7f74d30b3f4f61f8b0b826",
+    "results/stage3_basic/data_counts.csv": "24426e25158290be05d53b221c7c19339488d3e52ade8a7af41323e18b545c10",
+    "results/stage3_basic/history.csv": "7b18c8b09b5410a8c086649bd5e62798bba1b565dc355d6c73296271adb810fc",
+    "results/stage3_basic/test_predictions.csv": "f48c83d2874df21a0af7e10d1f1bca015be5892292236059804566a90ecf4b3d",
+    "results/stage3_gan/data_counts.csv": "fbbd583304cd819f40f9b8b625fdc16042d1c484b33b3f26f9cfdd3890a6ac4b",
+    "results/stage3_gan/history.csv": "8bb23d258fe4b1f9c75fe4e04ffa0e0894a79ed3140bbf41d1ed78fbad36918d",
+    "results/stage3_gan/test_predictions.csv": "b4bf84f65c3a45cdc2ee5a23bcb33a270e17761d62f7c01ad48071eac15c4773",
+    "results/stage3_none/data_counts.csv": "ba7aa80b8721045acf13178a7149830e6c3e8e024f3ed8cc32180f7709f0ed4a",
+    "results/stage3_none/history.csv": "11759d69e9808380fb9b8bf35656e0efac4d09c2e061ea62a056bcf860f7ddfd",
+    "results/stage3_none/test_predictions.csv": "86e65372367833cc609f0545490196d3a61e486a66baa132c3fd991fa781d62f",
+    "results/stage4/confusion_basic.csv": "15de41be8c2fcd178e123e50f4930e48851513bb227b61463b31098205688ba6",
+    "results/stage4/confusion_gan.csv": "70c765fb31b764a3f4803e19669f26c205da3c7222995be386e56745a13befd3",
+    "results/stage4/confusion_none.csv": "9152623d6a95b1656be70fad924ea8f133afc6f791b08f65eea23625f9ecac76",
+    "results/stage4/metrics.csv": "15e54831406f7d1e1367a4d6421ba3fca257cf8f49b6184e132292af379c5024",
+    "results/stage4/recall.csv": "4f497e8c5c1c13f5451ecca4a28577ef0d7679e81a72fd8b3a333c3a75bdf283",
+    "stage3_classifier.py": "acf173f6985254fe17f25663224caaa634d2d658184305d7422b9b5d95cfd2c9"
+  },
+  "statistics": {
+    "manifest_split_counts": {
+      "val": 9526,
+      "train": 74082,
+      "test": 1022
+    },
+    "rare_training_counts": {
+      "CSC": 27,
+      "MH": 26,
+      "MacTel": 25,
+      "Stargardt": 19,
+      "RP": 27
+    },
+    "patient_overlap": {
+      "test_patients": 633,
+      "fitting_overlap_patients": 506,
+      "fitting_overlap_images": 804,
+      "train_val_overlap_patients": 566,
+      "train_val_overlap_images": 914
+    },
+    "seed42": {
+      "none": {
+        "acc": 90.31311154598826,
+        "kappa": 0.8724760651572213,
+        "mcc": 0.8788154887264005,
+        "rci": 0.7875212374264309,
+        "correct": 923,
+        "common_correct": 906,
+        "rare_correct": 17,
+        "balanced_accuracy": 0.8304444444444444,
+        "macro_f1": 0.8729966221662271,
+        "rare_macro_recall": 0.77,
+        "recall": {
+          "NORMAL": 0.984,
+          "CNV": 0.992,
+          "DME": 0.936,
+          "DRUSEN": 0.712,
+          "CSC": 0.8,
+          "MH": 0.8,
+          "MacTel": 0.75,
+          "Stargardt": 0.75,
+          "RP": 0.75
+        },
+        "ci95_patient_cluster_acc": [
+          88.21359181148173,
+          92.31510729395377
+        ],
+        "epochs_run": 26,
+        "best_epoch_one_based": 6,
+        "confusion": [
+          [
+            246,
+            1,
+            1,
+            2,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            248,
+            2,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            2,
+            13,
+            234,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            2,
+            68,
+            2,
+            178,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            4,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            4,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            3,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3
+          ]
+        ]
+      },
+      "basic": {
+        "acc": 88.8454011741683,
+        "kappa": 0.8532450764899641,
+        "mcc": 0.8609196067300882,
+        "rci": 0.7600966143901174,
+        "correct": 908,
+        "common_correct": 890,
+        "rare_correct": 18,
+        "balanced_accuracy": 0.8455555555555555,
+        "macro_f1": 0.864307443004618,
+        "rare_macro_recall": 0.81,
+        "recall": {
+          "NORMAL": 0.992,
+          "CNV": 0.996,
+          "DME": 0.852,
+          "DRUSEN": 0.72,
+          "CSC": 0.8,
+          "MH": 1.0,
+          "MacTel": 0.5,
+          "Stargardt": 1.0,
+          "RP": 0.75
+        },
+        "ci95_patient_cluster_acc": [
+          86.74918677433514,
+          90.83098576448545
+        ],
+        "epochs_run": 27,
+        "best_epoch_one_based": 7,
+        "confusion": [
+          [
+            248,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            249,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            11,
+            25,
+            213,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            5,
+            64,
+            1,
+            180,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            4,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            5,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            0,
+            2
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3
+          ]
+        ]
+      },
+      "gan": {
+        "acc": 92.95499021526419,
+        "kappa": 0.9073413915161161,
+        "mcc": 0.9090238756008127,
+        "rci": 0.8140409627457472,
+        "correct": 950,
+        "common_correct": 931,
+        "rare_correct": 19,
+        "balanced_accuracy": 0.8915555555555555,
+        "macro_f1": 0.9013969399787325,
+        "rare_macro_recall": 0.86,
+        "recall": {
+          "NORMAL": 0.972,
+          "CNV": 0.984,
+          "DME": 0.916,
+          "DRUSEN": 0.852,
+          "CSC": 0.8,
+          "MH": 1.0,
+          "MacTel": 0.75,
+          "Stargardt": 1.0,
+          "RP": 0.75
+        },
+        "ci95_patient_cluster_acc": [
+          91.19063249917474,
+          94.61626168564433
+        ],
+        "epochs_run": 22,
+        "best_epoch_one_based": 2,
+        "confusion": [
+          [
+            243,
+            1,
+            2,
+            4,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            246,
+            2,
+            2,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            4,
+            11,
+            229,
+            5,
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            36,
+            1,
+            213,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            4,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            5,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3
+          ]
+        ]
+      }
+    },
+    "seeds_1_to_5": {
+      "none": {
+        "n": 5,
+        "mean": 90.688,
+        "sample_sd": 1.8570325791434001,
+        "range": [
+          87.87,
+          92.86
+        ]
+      },
+      "basic": {
+        "n": 5,
+        "mean": 92.934,
+        "sample_sd": 1.8524119412268973,
+        "range": [
+          90.9,
+          95.79
+        ]
+      },
+      "gan": {
+        "n": 5,
+        "mean": 92.586,
+        "sample_sd": 1.2891974247569693,
+        "range": [
+          91.49,
+          94.13
+        ]
+      }
+    },
+    "gan_minus_basic_seed_differences_pp": [
+      2.9399999999999977,
+      -4.300000000000011,
+      0.09999999999999432,
+      1.1799999999999926,
+      -1.6599999999999966
+    ],
+    "gan_minus_basic_paired_seed42": {
+      "a": "gan",
+      "b": "basic",
+      "subset": "all",
+      "metric": "acc",
+      "diff": "4.109589041095896",
+      "n_images": "1022",
+      "n_clusters": "655",
+      "ci_low": "2.4667249823689184",
+      "ci_high": "5.761382761230275",
+      "ci_width": "3.2946577788613562",
+      "n_boot": "5000",
+      "bootstrap_seed": "0",
+      "image_ci": "2.6-5.8",
+      "image_ci_width": "3.1999999999999997",
+      "width_ratio": "1.029580555894174"
+    },
+    "cam_author_review": {
+      "cam_none": {
+        "abnormality": 14,
+        "off": 7,
+        "retina": 1
+      },
+      "cam_gan": {
+        "abnormality": 21,
+        "retina": 1
+      }
+    },
+    "automatic_qc": [
+      {
+        "disease": "CSC",
+        "generated": "4000",
+        "passed": "3370",
+        "kept": "3000",
+        "pass_rate": "0.8425",
+        "kept_margin_median": "0.03274682500000001"
+      },
+      {
+        "disease": "MH",
+        "generated": "4000",
+        "passed": "2610",
+        "kept": "2610",
+        "pass_rate": "0.6525",
+        "kept_margin_median": "0.030410944999999995"
+      },
+      {
+        "disease": "MacTel",
+        "generated": "4000",
+        "passed": "1248",
+        "kept": "1248",
+        "pass_rate": "0.312",
+        "kept_margin_median": "0.016247239999999996"
+      },
+      {
+        "disease": "Stargardt",
+        "generated": "4000",
+        "passed": "2199",
+        "kept": "2199",
+        "pass_rate": "0.54975",
+        "kept_margin_median": "0.024919389999999986"
+      },
+      {
+        "disease": "RP",
+        "generated": "4000",
+        "passed": "832",
+        "kept": "832",
+        "pass_rate": "0.208",
+        "kept_margin_median": "0.013200254999999994"
+      }
+    ],
+    "cpu_timing": {
+      "seconds": 207.5818334,
+      "projected_250_seconds": 2075.818334,
+      "method": "25 completed epochs; wall time includes Python startup/cache loading; stopped because projection exceeds 30 minutes",
+      "variant": "gan",
+      "cpu": "AMD Ryzen AI 9 365 w/ Radeon 880M",
+      "command": "stage3_classifier.py --root D:/Few-shot --cache-dir D:/Few-shot/results/features --cache-only --variant gan --seed 1 --epochs 250 --patience 0 --restore last --out-dir .agents/reports/c1-timing",
+      "epochs_measured": 25,
+      "seed": 1,
+      "cache": "D:/Few-shot/results/features",
+      "date": "2026-10-27",
+      "packages": {
+        "numpy": "2.5.4",
+        "pandas": "3.0.6",
+        "scipy": "1.18.1",
+        "tensorflow": "2.21.0"
+      },
+      "completed_epochs": 25,
+      "note": "Timing only; not a C1 outcome. The next epoch had started when the verified PID was stopped. No complete head or C1 seed pair counted."
+    },
+    "generation_log_seconds": [
+      104,
+      116,
+      115,
+      126,
+      133
+    ],
+    "generation_log_total_seconds": 594
+  },
+  "latex_macros": {
+    "NoneAcc": "90.31",
+    "NoneMcc": "0.879",
+    "NoneKappa": "0.872",
+    "NoneRci": "0.788",
+    "NoneCi": "88.21--92.32",
+    "NoneRare": "17",
+    "NoneCommon": "906",
+    "NoneMacro": "83.04",
+    "NoneFone": "0.873",
+    "NoneRareMacro": "77.0",
+    "BasicAcc": "88.85",
+    "BasicMcc": "0.861",
+    "BasicKappa": "0.853",
+    "BasicRci": "0.760",
+    "BasicCi": "86.75--90.83",
+    "BasicRare": "18",
+    "BasicCommon": "890",
+    "BasicMacro": "84.56",
+    "BasicFone": "0.864",
+    "BasicRareMacro": "81.0",
+    "GanAcc": "92.95",
+    "GanMcc": "0.909",
+    "GanKappa": "0.907",
+    "GanRci": "0.814",
+    "GanCi": "91.19--94.62",
+    "GanRare": "19",
+    "GanCommon": "931",
+    "GanMacro": "89.16",
+    "GanFone": "0.901",
+    "GanRareMacro": "86.0",
+    "NoneSeedMean": "90.69",
+    "NoneSeedSd": "1.86",
+    "BasicSeedMean": "92.93",
+    "BasicSeedSd": "1.85",
+    "GanSeedMean": "92.59",
+    "GanSeedSd": "1.29",
+    "SeedDiff": "-0.35",
+    "SeedDiffSd": "2.77",
+    "PairedGain": "4.11",
+    "PairedCi": "2.47--5.76",
+    "TimingSeconds": "207.58",
+    "HeadMinutes": "34.60"
+  }
+}

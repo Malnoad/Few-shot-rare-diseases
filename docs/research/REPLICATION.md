@@ -6,6 +6,8 @@ Status checkpoint: 2026-10-29 (C0/C5 outcomes; other entries retain their dated 
 Sources: the paper PDF (main checkout, not in git), `results/stage4/*.csv`,
 `results/seed_check.csv`, `results/stage2/qc_*.csv`, the 22 Oct status report.
 
+[Research gap report](../report/Report.tex): historical 27 October snapshot with reproducible evidence; predates the C0 gate stop and C5 completion recorded below.
+
 ## Start here (2026-10-27)
 
 **Finished Claude branches are integrated as primary; Codex audits supplement them. L4 GAN-image ratings remain pending.** The

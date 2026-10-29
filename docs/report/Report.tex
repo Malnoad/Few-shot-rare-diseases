@@ -1,0 +1,822 @@
+% Self-contained working report. Compile from the repository root: pdflatex -output-directory=docs/report docs/report/Report.tex (twice).
+% Refresh/check numerical macros with docs/research/build_report_evidence.py.
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.1cm]{geometry}
+\usepackage{array,booktabs,longtable,tabularx}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{xurl}
+\usepackage{hyperref}
+\definecolor{Page}{HTML}{FFFFFF}
+\definecolor{Ink}{HTML}{000000}
+\definecolor{Link}{HTML}{000000}
+\definecolor{Rule}{HTML}{000000}
+\pagecolor{Page}\color{Ink}
+\hypersetup{colorlinks=true,urlcolor=Link,linkcolor=Link,citecolor=Link,
+  pdftitle={Few-shot OCT: results, open gaps, and research plan},pdfauthor={Lam}}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.48em}
+\setlength{\emergencystretch}{2em}
+\setlist{leftmargin=*,itemsep=0.2em,topsep=0.2em}
+\renewcommand{\arraystretch}{1.2}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\file}[1]{\nolinkurl{#1}}
+\newcommand{\ev}[1]{\textcolor{Link}{\textsf{[#1]}}}
+\newcommand{\pp}{percentage points}
+
+% BEGIN VERIFIED NUMBERS (build_report_evidence.py)
+\newcommand{\BasicAcc}{88.85}
+\newcommand{\BasicCi}{86.75--90.83}
+\newcommand{\BasicCommon}{890}
+\newcommand{\BasicFone}{0.864}
+\newcommand{\BasicKappa}{0.853}
+\newcommand{\BasicMacro}{84.56}
+\newcommand{\BasicMcc}{0.861}
+\newcommand{\BasicRare}{18}
+\newcommand{\BasicRareMacro}{81.0}
+\newcommand{\BasicRci}{0.760}
+\newcommand{\BasicSeedMean}{92.93}
+\newcommand{\BasicSeedSd}{1.85}
+\newcommand{\GanAcc}{92.95}
+\newcommand{\GanCi}{91.19--94.62}
+\newcommand{\GanCommon}{931}
+\newcommand{\GanFone}{0.901}
+\newcommand{\GanKappa}{0.907}
+\newcommand{\GanMacro}{89.16}
+\newcommand{\GanMcc}{0.909}
+\newcommand{\GanRare}{19}
+\newcommand{\GanRareMacro}{86.0}
+\newcommand{\GanRci}{0.814}
+\newcommand{\GanSeedMean}{92.59}
+\newcommand{\GanSeedSd}{1.29}
+\newcommand{\HeadMinutes}{34.60}
+\newcommand{\NoneAcc}{90.31}
+\newcommand{\NoneCi}{88.21--92.32}
+\newcommand{\NoneCommon}{906}
+\newcommand{\NoneFone}{0.873}
+\newcommand{\NoneKappa}{0.872}
+\newcommand{\NoneMacro}{83.04}
+\newcommand{\NoneMcc}{0.879}
+\newcommand{\NoneRare}{17}
+\newcommand{\NoneRareMacro}{77.0}
+\newcommand{\NoneRci}{0.788}
+\newcommand{\NoneSeedMean}{90.69}
+\newcommand{\NoneSeedSd}{1.86}
+\newcommand{\PairedCi}{2.47--5.76}
+\newcommand{\PairedGain}{4.11}
+\newcommand{\SeedDiff}{-0.35}
+\newcommand{\SeedDiffSd}{2.77}
+\newcommand{\TimingSeconds}{207.58}
+% END VERIFIED NUMBERS
+
+\title{Few-shot OCT Classification of Rare Retinal Diseases\\
+  \large Current results, problems requiring discussion, and research plan}
+\author{Lam\\\small Project working report}
+\date{Evidence checkpoint: 27 October 2026}
+
+\begin{document}
+\maketitle
+
+\textbf{Assessment.} I have implemented the main independent-test pipeline,
+but I have not established the paper's central ordering of GAN augmentation
+above basic augmentation across training seeds. My next priority is to complete
+the benchmark re-evaluation and the agreed C0/C1 experiments. I then propose
+extending the work with a focused comparison of accuracy and resource use
+against a retinal foundation model.
+
+In this report, I evaluate all five ideas in the research-directions artifact
+inspected on 27 October 2026. I treat its novelty and feasibility ratings as
+proposals, not measured findings. I draw the numerical results below from
+saved artifacts and record the new descriptive calculations in
+\file{docs/research/report_evidence.json}. I retain input SHA-256 hashes in that
+record and provide \file{docs/research/build_report_evidence.py} to reproduce
+it. I list the evidence IDs in the appendix and distinguish planned sample
+sizes, decision thresholds and extrapolated runtimes from measurements.
+\ev{E00}
+
+\section{Guide to the work packages}
+
+I use the labels C0--C5 for follow-up work on the Colab track, separately
+from Stages 0--4 of the original data-to-classifier pipeline. The numbers
+identify tasks, not a compulsory execution order. In
+Table~\ref{tab:work-packages}, I explain each task's question, activity and
+dependency. I use ``code ready'' to mean that an implementation is available,
+not that the experiment has produced results.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.06\linewidth}
+                  >{\raggedright\arraybackslash}p{0.28\linewidth}
+                  >{\raggedright\arraybackslash}p{0.33\linewidth}
+                  >{\raggedright\arraybackslash}p{0.22\linewidth}}
+\caption{What C0--C5 are for. Status is the saved project checkpoint, not
+a claim about unsynchronized Drive runs. Sources: the replication tracker
+and experiment plans. \ev{E08,E09,E10,E11}}
+\label{tab:work-packages}\\
+\toprule
+Code & Question I address & Work I plan & Status and dependency\\
+\midrule
+\endfirsthead
+\toprule
+Code & Question I address & Work I plan & Status and dependency\\
+\midrule
+\endhead
+\bottomrule\endfoot
+C0 &
+Does performance depend on file-format or image-framing cues? &
+I plan to compare current images, uniform grayscale PNGs, and grayscale
+images with square padding and resizing. I will extract features for each
+input arm, check remaining separation, and compare runs if the gate permits. &
+Code ready; sample diagnostics saved. I still need the full control before
+choosing my inputs for C1.\\
+C1 &
+Does GAN augmentation reliably improve accuracy over basic augmentation
+across classifier training seeds? &
+I plan paired seed runs of \texttt{none}, \texttt{basic} and \texttt{gan},
+with fixed250 final heads as primary and es20 as sensitivity. I will apply
+the predeclared, single variance-based sample-size update. &
+Protocol and code ready; no saved seed-pair outcomes. I will select inputs
+after C0 and retain the original v1 GAN pool.\\
+C2 &
+How many synthetic GAN images are useful? &
+I propose varying additional accepted GAN images per rare class across
+0/500/1,000/2,000/3,000, with the basic pool fixed, and comparing across
+seeds to address the paper's augmentation-amount experiment. &
+Planned. I would run this after C5 supplies the full v2 pools, separately
+from C1.\\
+C3 &
+Does reducing the dominance of common classes change performance? &
+I propose under-sampling common-class training images to vary class imbalance
+and compare classifier outcomes, addressing the paper's class-balance
+experiment. &
+Planned; I need a Stage 3 under-sampling option and will keep the test set fixed.\\
+C4 &
+Do conclusions persist across different training/evaluation folds? &
+I propose fivefold cross-validation, rebuilding basic augmentation and
+training CycleGANs within each training fold. I would exclude its evaluation
+fold from all fitting and selection. &
+Planned; I need more compute. I cannot reuse the original GANs across folds
+without leaking information from held-out images.\\
+C5 &
+How can C2 compare equal, complete GAN-image budgets across rare classes? &
+I plan to use existing GAN checkpoints to generate fresh candidates for
+MH, MacTel, Stargardt and RP, apply the original automatic QC, and build
+a separate v2 pool with 3,000 accepted images per class. &
+Code ready; GPU execution pending. I will complete C5 before C2 and retain
+C1's v1 pool.\\
+\end{longtable}
+
+\textbf{Execution sequence.} I plan to complete C0 and review its diagnostics
+before selecting C1's input arm and running its fixed protocol. Separately,
+I will complete C5 before C2. I regard C3 and C4 as later controls with their
+own designs and compute requirements. For C4, I would respect known patient
+and source groups; missing rare-patient identities remain a limitation.
+
+\textbf{Related labels.} L7 is the local audit of the unexpectedly strong
+real-only baseline; L8 is the RCI definition/numerical audit; L9 is the
+patient-cluster uncertainty analysis. The labels v1 and v2 identify the
+original and topped-up GAN pools. Fixed250 means 250 classifier epochs with
+the final head retained; es20 means early stopping with patience 20 and the
+best validation checkpoint retained. These are protocol names, not observed
+performance improvements. \ev{E08,E10,E11}
+
+\section{Current results}
+
+\subsection{What I have reproduced}
+
+I reproduce the independent-test experiment of Yoo, Choi and Kim
+\cite{yoo2021}: NORMAL, CNV, DME and DRUSEN from OCT2017, together with CSC,
+macular hole (MH), macular telangiectasia (MacTel), Stargardt disease and
+retinitis pigmentosa (RP). Optical coherence tomography is abbreviated OCT.
+The committed manifest contains 74,082 training, 9,526 validation and 1,022 test
+images. The test set contains 250 images per common class and 5/5/4/4/4 images
+for CSC/MH/MacTel/Stargardt/RP. Real rare-class training counts are
+27/26/25/19/27, totaling 124. \ev{E01}
+
+I use frozen ImageNet Inception-v3 features and train a softmax head. Throughout
+this report, I use \texttt{none} for real rare training images, \texttt{basic}
+for the existing basic-augmentation pool, and \texttt{gan} for basic
+augmentation plus the accepted CycleGAN pool. These are my actual saved
+training pools. For the augmented variants, I do not separately append the
+original rare images. I use augmented derivatives for rare validation in
+those variants; \texttt{none} has no rare validation images. \ev{E06}
+
+My saved work covers Stages 0--4, the original GAN training/generation/QC,
+seed-42 classifiers, the five-seed check, and ROC/t-SNE analysis data. I have
+not replicated the entire paper: the augmentation-amount experiment,
+under-sampling experiment and fold-specific fivefold cross-validation remain
+incomplete. I implemented a class-mean baseline, not the paper's trained
+prototypical network. I do not count C0/C1/C5 code readiness as experimental
+completion. \ev{E08,E09,E10,E11}
+
+\subsection{Training-seed variation changes the interpretation}
+
+\begin{table}[htbp]
+\centering
+\caption{Saved accuracy across training seeds 1--5. SD is the sample SD
+across five runs, not a confidence interval. All runs share the test set and
+the saved augmentation/GAN realization.}
+\label{tab:seeds}
+\begin{tabular}{lrrl}
+\toprule
+Variant & Mean accuracy (\%) & SD (\pp) & Range (\%)\\
+\midrule
+\texttt{none} & \NoneSeedMean & \NoneSeedSd & 87.87--92.86\\
+\texttt{basic} & \BasicSeedMean & \BasicSeedSd & 90.90--95.79\\
+\texttt{gan} & \GanSeedMean & \GanSeedSd & 91.49--94.13\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The paired GAN-minus-basic accuracy differences, in seed order, were
+$+2.94,-4.30,+0.10,+1.18,-1.66$ \pp. Their mean was
+$\SeedDiff$ \pp{} with sample SD $\SeedDiffSd$ \pp;
+GAN was ahead in three of five pairs. Basic and GAN had descriptively higher
+means than \texttt{none}, by 2.246 and 1.898 \pp, respectively.
+From these five pairs, I cannot establish GAN superiority or equivalence
+between GAN and basic augmentation. Historical seed accuracies were saved to
+two decimal places, and I retain that available precision. I do not have
+committed per-image predictions for these five seeds, so I cannot estimate
+their classwise intervals, calibration, or MCC variability here. \ev{E03}
+
+\subsection{The seed-42 run of record}
+
+\begin{table}[htbp]
+\centering\small
+\caption{The saved seed-42 classifiers. Accuracy intervals are the saved
+patient-cluster percentile intervals. The paper column is its Table 3,
+not a result from my reproduction. MCC denotes Matthews correlation coefficient.}
+\label{tab:seed42}
+\begin{tabularx}{\linewidth}{Yrrrr}
+\toprule
+Variant & Accuracy (\%) & 95\% CI (\%) & MCC & Paper accuracy (\%)\\
+\midrule
+\texttt{none} & \NoneAcc & \NoneCi & \NoneMcc & 88.4\\
+\texttt{basic} & \BasicAcc & \BasicCi & \BasicMcc & 91.3\\
+\texttt{gan} & \GanAcc & \GanCi & \GanMcc & 92.1\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Using the evidence-audit script, I recompute the saved confusion matrices from
+all three prediction CSVs, check test paths and labels against the manifest,
+and independently recalculate accuracy, Cohen's $\kappa$, MCC and relative
+classifier information (RCI). For \texttt{none}/\texttt{basic}/\texttt{gan}, $\kappa$ is
+\NoneKappa/\BasicKappa/\GanKappa, and RCI is
+\NoneRci/\BasicRci/\GanRci. The corresponding nine-class macro-F1 values,
+derived from the saved confusion matrices, are
+\NoneFone/\BasicFone/\GanFone. Balanced accuracy, defined here as unweighted
+mean class recall, is \NoneMacro/\BasicMacro/\GanMacro\%.
+I log these additional descriptive summaries in E00. \ev{E00,E02}
+
+At seed 42, GAN exceeded basic by $+\PairedGain$ \pp,
+with a saved paired patient-cluster 95\% CI of \PairedCi{} \pp.
+The bootstrap used 5,000 draws with RNG seed 0, resampling 633 common-class
+patient clusters and 22 assumed rare-image singleton clusters.
+This interval conditions on the fitted heads and existing image pools. It
+does not describe training-seed uncertainty. Rare patient identities are
+unknown; shared rare patients could make these intervals too narrow. The
+pairwise results are exploratory and not adjusted for multiple comparisons.
+\ev{E04}
+
+\subsection{Rare-class performance and where the gain comes from}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Rare-class recall at seed 42. Parentheses in the first column give
+the number of test images. Macro recall weights the five diseases equally.}
+\label{tab:rare}
+\begin{tabular}{lrrr}
+\toprule
+Class & \texttt{none} & \texttt{basic} & \texttt{gan}\\
+\midrule
+CSC (5) & 0.800 & 0.800 & 0.800\\
+MH (5) & 0.800 & 1.000 & 1.000\\
+MacTel (4) & 0.750 & 0.500 & 0.750\\
+Stargardt (4) & 0.750 & 1.000 & 1.000\\
+RP (4) & 0.750 & 0.750 & 0.750\\
+\midrule
+Correct / 22 & \NoneRare & \BasicRare & \GanRare\\
+Rare macro recall (\%) & \NoneRareMacro & \BasicRareMacro & \GanRareMacro\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+One rare test image changes its disease recall by 0.20 or 0.25. GAN and basic
+therefore differ by only one correctly classified rare image at seed 42.
+Of GAN's 42 additional correct predictions over basic, 41 are common-class
+images: common correct counts are \NoneCommon/\BasicCommon/\GanCommon.
+DRUSEN correct counts change from 180 to 213 between basic and GAN, while
+DME changes from 213 to 229. I therefore do not interpret the headline
+overall gain as evidence of a broad rare-disease rescue. \ev{E02}
+
+The paper's real-only recalls imply 3/22 rare images correct, compared with
+17/22 in my reproduction. Its initial rare training counts total 97, compared
+with my 124. My recorded training ran 26/27/22 epochs and selected minimum-validation-loss
+checkpoints at epochs 6/7/2. The paper states 250 classifier epochs and a frozen
+backbone, but does not establish my assumed final-head selection rule.
+I cannot isolate the individual effects of these comparability differences.
+The L7 audit reports no exact rare-image duplicates, but its original untracked
+pixel-audit files are unavailable in this checkout. I retain that historical
+finding without presenting it as a newly repeated duplicate audit.
+\ev{E06,E08}\cite{yoo2021}
+
+\subsection{Synthetic-image QC and visual observations}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Original automatic feature-distance QC, independently checked against
+the saved per-image QC CSVs. Each disease has 4,000 candidates. Passing and
+retained counts differ for CSC because retention is capped at 3,000.}
+\label{tab:qc}
+\begin{tabular}{lrrr}
+\toprule
+Disease & Passed & Retained & Pass rate (\%)\\
+\midrule
+CSC & 3,370 & 3,000 & 84.250\\
+MH & 2,610 & 2,610 & 65.250\\
+MacTel & 1,248 & 1,248 & 31.200\\
+Stargardt & 2,199 & 2,199 & 54.975\\
+RP & 832 & 832 & 20.800\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Automatic acceptance means that an image is closer to real rare-class images
+than to NORMAL in frozen Inception-v3 feature space. It does not establish
+clinical plausibility. Four classes lack the paper's target of 3,000 accepted
+GAN images. I will preserve this original pool (v1) in C1 and use the prepared
+C5 top-up to create a separate v2 pool for C2 only. I have dropped expert
+GAN-image ratings from the replication because the required ophthalmologist
+raters are unavailable. \ev{E05,E11}
+
+In my saved, unblinded, non-expert CAM review, I judged the strongest activation
+to lie on the abnormality in 21/22 GAN maps and 14/22 real-only maps; my off-retina
+responses were 0/22 and 7/22. I treat these as my observations about saliency,
+not lesion-localization ground truth or proof of pathology-based reasoning.
+I retain the review CSV but have not recreated the underlying untracked
+review assets for this report. \ev{E07}
+
+\section{Problems requiring discussion}
+
+\subsection{Patient overlap limits the central performance claim}
+
+The manifest identifies 633 common-class test patients. Of these, 566 patients
+accounting for 914/1,000 test images also occur in train or validation;
+506 patients accounting for 804 test images occur in the fitting split alone.
+I independently verify these counts with the evidence script. Patient-cluster
+resampling addresses dependence within the test set; it cannot remove
+train--test patient overlap. I therefore interpret my current accuracy as
+performance on the committed benchmark, not as an estimate of generalization
+to unseen patients.
+\ev{E01,E04}
+
+\textbf{Decision needed.} I will preserve the existing manifest as my replication
+record. I would design any patient-disjoint benchmark as a separately versioned
+experiment and fix patient/source identities and duplicate-group assignments
+before model fitting. I would maintain that separation in fitting, validation,
+augmentation, generator training and QC references. Rare filenames do not
+supply verified patient IDs, so I cannot certify the present rare split as
+patient-disjoint.
+
+\subsection{Dataset source and disease are entangled}
+
+The saved diagnostic reports that native image width/height alone identifies
+16/22 rare test labels, and that a rare-versus-common feature axis has test AUC
+0.9955. These diagnostics cannot distinguish disease morphology from
+acquisition or source effects. The C0 delivery report documents a bounded
+sample check: framing reduced the recomputed-axis AUC to 0.7125, but the fixed
+original axis retained AUC 0.9250. Those sample results are recorded in the
+delivery document; its referenced untracked \file{cue_check.json} is absent
+here. They are not full-cohort C0 results. \ev{E08,E09}
+
+\textbf{Decision needed.} I need to complete C0's full feature diagnostic before
+selecting the C1 input arm. The predeclared gate stops before head training if framing's
+full recomputed-axis AUC is at least 0.90. Passing this gate does not establish
+removal of source cues. I will also review the fixed-axis diagnostic and
+describe C0 as a preprocessing sensitivity experiment unless I obtain stronger
+source-matched evidence.
+
+\subsection{Seed uncertainty, protocol differences and metric comparability}
+
+C1 addresses classifier randomness and checkpoint schedule on the fixed
+benchmark. It cannot resolve unknown patient identities, historical feature
+provenance, generator-seed variation or the small test sample. Its seeds also
+change the augmented validation draw, so their variation includes more than
+head initialization. Matching cache path lists verifies identities and order,
+but not the historical backbone weights, input bytes or extraction environment.
+\ev{E06,E08,E10}
+
+I define RCI in this repository as $I(Y;\widehat{Y})/H(Y)$ and independently
+reproduce its saved values with the report audit. The saved L8 analysis gives a
+conditional upper bound of 0.970242 for the paper's GAN Table 4 recalls under
+this definition, below the reported 0.983. The bound is a saved analytical
+result; I have not rerun that optimization for this report. The paper's actual RCI
+implementation remains unknown. Its Table 4 also implies prototypical-network
+accuracy 86.1\%, whereas Table 3 reports 80.8\%. These inconsistencies warrant
+clarification, not an invented replacement formula. I have kept author
+correspondence on hold. \ev{E08}\cite{yoo2021}
+
+The saved K=3 Euclidean kNN accuracy is 86.40\%, versus the paper's 91.2\%.
+Changing to cosine K=1 reaches 91.10\% in the saved exploratory sweep, but that
+changes the specified method. The exact feature layer and postprocessing in
+the original baseline remain unresolved. \ev{E08}
+
+\subsection{The extension needs a different evidence standard}
+
+Overall accuracy is dominated by common classes. For a future rare-disease
+study, I propose predeclaring rare macro recall as the principal performance
+outcome and reporting disease-level denominators, common-class performance,
+macro-F1, balanced accuracy and MCC. For C1, I retain the already agreed
+primary outcome of overall accuracy. To assess calibration, I would need saved
+probabilities, a fixed calibration procedure and validation-only tuning.
+I have no measured expected-calibration-error or FID result to report here.
+
+Before making clinical or resource claims, I need additional records.
+GPU-hours alone do not describe CPU extraction, generator training, rejected
+images or expert time. I cannot treat automatic QC pass rates as expert
+acceptance rates. For a dollar-cost comparison, I would need the actual
+hardware, measured usage, billing basis/date and an explicit treatment of
+pretrained-model cost. I currently have no measured comparative dollar cost,
+energy saving, expert-review time or foundation-model accuracy to report.
+
+\section{Evaluation of the five proposed open gaps}
+
+\subsection{Idea 2: rigorous benchmark re-evaluation --- first priority}
+
+\textbf{Value.} I prioritize this direction because my findings already show
+patient overlap, limited rare test support, source-sensitive features and
+unstable seed ordering. I aim to provide a reproducible account of which
+augmentation conclusions survive explicit controls. Because confidence
+intervals and exact-duplicate checks are partly completed, I do not present
+them as entirely new work.
+
+\textbf{Remaining gap.} Similarity screening is not verified patient identity.
+Near-duplicate candidates need source tracing and adjudication. C0 cannot
+certify clinical generalization, and C1 cannot remove leakage. I propose
+completing the remaining controls before adding a separately named
+patient-disjoint evaluation, if suitable metadata exist. My aim is an auditable
+validity boundary and a stable comparison, even if GAN does not outperform
+basic augmentation.
+
+\subsection{Idea 1: cost versus rare-class performance --- second priority}
+
+\textbf{Value.} I regard this as the strongest extension after re-evaluation
+if I narrow the question to the marginal resource cost of useful rare-class
+performance. My minimal proposed design crosses frozen representation
+(ImageNet Inception-v3 versus RETFound-OCT) with training pool
+(basic versus basic plus GAN), retaining the real-only baseline as context.
+This would separate the augmentation contrast within each backbone. I would
+hold patient split, support identities, synthetic counts, tuning budget and
+evaluation rules fixed, and pair runs by seed and support selection.
+
+\textbf{Novelty boundary.} A newer generator by itself is a weak contribution.
+Tai et al. already combine U-GAT-IT, balancing and attention; Iwanicka and Lu
+study class-aware diffusion with adversarial fine-tuning; EyeDiff already
+examines synthetic augmentation of retinal foundation models across multiple
+datasets. I would base my contribution on the controlled resource/accuracy
+comparison and its failure conditions. Before claiming to be the first such
+study, I would need a dedicated, updated literature search.
+\cite{tai2025,iwanicka,eyediff}
+
+\textbf{Feasibility corrections.} The official Nature RETFound-OCT weights are
+access-gated and carry a non-commercial license. Public availability does not
+demonstrate low adaptation cost. More seriously, the RETFound paper explicitly
+includes Kermany OCT data in self-supervised pretraining. Exact overlap with
+my test files is unverified. I therefore need a pretraining-exposure audit
+before treating a common-class result on this benchmark as an unseen-image
+comparison. I would report marginal adaptation cost separately from the
+external pretraining resource. Reported label efficiency in other tasks
+does not guarantee the same behavior for these rare diseases.
+\cite{retfound,retfoundweights}
+
+The proposed 20-shot endpoint is not available for every class in the current
+fitting split: Stargardt has 19 real training images. A support curve must use
+feasible distinct real examples and preserve the holdout; augmented copies do
+not create additional real shots. Defining shots as patients would require
+patient identities that are currently missing. Diffusion and fine-tuning arms
+would be later extensions, after I establish whether the frozen-feature
+comparison is useful and decide on the scope and compute budget. \ev{E01}
+
+\subsection{Idea 5: local clinical external validation --- start feasibility early}
+
+\textbf{Value.} I see this as the most direct route to learning whether my
+model works outside the web-image benchmark. It could improve the scientific value
+of either re-evaluation or the cost comparison, but it is not currently a
+ready experiment. I do not yet have a verified hospital dataset, recruitment
+agreement, patient counts or expert labels in my project records.
+
+\textbf{Requirements.} I would need a clinical partner, applicable approvals,
+patient/eye/device metadata, label adjudication and a test-only use plan before
+claiming an external result. I would fix models and thresholds before opening
+that test, and plan independent patient counts per disease from the desired
+precision instead of adopting the artifact's illustrative scan-count range.
+I have not verified the suggestion that this would be the first clinic-sourced test;
+the existing EyeDiff work already includes external validation in related
+settings. A small convenience cohort would be a feasibility study, not
+clinical validation at deployment scale. \cite{eyediff}
+
+\subsection{Idea 3: open-set detection --- useful, but defer the main experiment}
+
+\textbf{Value.} I consider unseen-disease detection a meaningful question,
+but my present nine-class softmax outputs provide no open-set performance
+estimate. Low confidence, prototype distance or an energy score are candidate
+rules, not validated unknown-disease detectors.
+
+\textbf{Discriminating design.} I would hold a disease out of all supervised
+fitting, augmentation and selection stages, and choose rejection thresholds
+using separate validation identities and unknown categories. I would evaluate
+known-class recall alongside unknown-detection sensitivity and false-positive
+rate at the predeclared threshold. I would also keep known and unknown
+acquisition sources comparable; otherwise the detector could merely recognize
+the source. My small rare holdout and unknown patient identities limit this
+experiment, so I would treat it as a separate follow-up once the benchmark is
+stable.
+
+\subsection{Idea 4: one conditional generator --- lowest immediate priority}
+
+\textbf{Value.} A shared generator might reduce incremental cost as diseases
+are added, but I have not measured this. Class-conditioned diffusion
+and multimodal retinal generation already exist, which narrows the novelty
+of replacing five separate CycleGANs with one model. \cite{iwanicka,eyediff}
+
+\textbf{Decision rule.} I would pursue this only if my cost benchmark identifies
+per-disease generator training or review as the limiting expense. I would
+compare matched real-image budgets, compute, accepted synthetic counts and
+downstream rare recall as the disease set grows, and audit class-specific
+failures and memorization. A shared model can also introduce negative transfer;
+fewer model files alone do not establish lower total cost or better diagnosis.
+
+\subsection{OCTDL is a complementary task, not a replacement for missing labels}
+
+The OCTDL release described by Kulyabin et al. contains 2,064 images from
+821 patients and explicit patient IDs. Its RAO group has 22 images from
+11 patients. Its categories are AMD, DME, ERM, NORMAL, RAO, RVO and VID;
+it does not supply the same five rare-disease labels as my present experiment.
+I consider it promising for a separately specified patient-disjoint benchmark,
+but I cannot use it to directly validate all nine existing outputs. \cite{octdl}
+
+AMD does not map one-to-one onto CNV or DRUSEN, and the OCTDL description
+includes macular-hole pathology within its condition metadata. Hence a
+category absent by name is not automatically a clinically unseen pathology.
+I would define label mappings with expert input before pooling datasets or
+declaring open-set classes. More scans also do not guarantee an adequately sized rare
+test cohort: independent patient counts remain the relevant constraint.
+\cite{octdl}
+
+\section{Planning proposals for the upcoming weeks}
+
+\subsection{My experimental sequence}
+
+I propose the following work windows; they are not completed runs or a guarantee
+of Colab availability. I summarize task definitions and dependencies in
+Table~\ref{tab:work-packages}. I will review C0 before selecting C1's inputs,
+retain the original v1 GAN pool for C1, and reserve C5's top-up for C2.
+I need the code on GitHub before running it in Colab. I will make separate
+decisions about publishing code, new model dependencies and new dataset/split
+protocols. \ev{E09,E10,E11}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.16\linewidth}
+                  >{\raggedright\arraybackslash}p{0.43\linewidth}
+                  >{\raggedright\arraybackslash}p{0.32\linewidth}}
+\caption{My four-week proposal. Each later window depends on its stated
+prerequisites; I will carry incomplete work forward while retaining the analysis rule.}
+\label{tab:weeks}\\
+\toprule
+Window & My proposed work & Planned output / gate\\
+\midrule
+\endfirsthead
+\toprule Window & My proposed work & Planned output / gate\\\midrule
+\endhead
+\bottomrule\endfoot
+Week 1\\28 Oct--3 Nov &
+I plan to freeze the evidence inventory, complete the full C0 input/feature
+diagnostics, review source and duplicate candidates, and confirm Colab/Drive
+readiness. I could also begin clinical-partner feasibility discussions and
+review RETFound access. &
+C0 \file{full_axis.csv}, \file{gate.json}, inventories and source-audit notes.
+If the framing gate fails, I will stop C0 heads and decide on the next step.
+I will record which patient/source claims remain unverifiable.\\
+Week 2\\4--10 Nov &
+If C0 permits, I will run its paired heads and summarize all contrasts.
+I will select C1's input arm before seeing C1 outcomes, then start the agreed
+first 20 seed blocks under fixed250 and es20 across all three variants. &
+C0 decision record; C1 identities, commands, timings and complete run folders.
+I will finish all first-stage protocol/variant runs before the single
+variance recalculation and label partial summaries as incomplete.\\
+Week 3\\11--17 Nov &
+I plan to finish the first C1 stage if necessary, lock the variance-based
+top-up target, and run fixed250 seeds 21 through that target. I will also draft
+the narrower foundation-model comparison, support budgets and cost ledger
+for review. &
+Immutable \file{topup.json} and run schedule. If the target exceeds the
+predeclared cap, I will report infeasibility. I will begin new model work only
+under a separately accepted protocol.\\
+Week 4\\18--24 Nov &
+I will summarize C1 only if the locked schedule is complete; otherwise I will
+document progress and remaining compute. If the extension protocol and access
+are ready, I will begin its isolated feature/timing pilot; otherwise I will
+finalize the design. I will place C5 before any later C2 dose experiment. &
+Paired contrasts with uncertainty and the zero/1-pp interpretation; an updated
+evidence ledger. Any pilot supplies measured timing and feasibility, with no
+claim of completed foundation-model or clinical validation.\\
+\end{longtable}
+
+\subsection{C1 targets are protocol choices, not results}
+
+My fixed C1 plan makes final heads after 250 epochs the primary analysis
+and early-stopping patience 20 the sensitivity analysis on seeds 1--20.
+The primary contrast is mean GAN-minus-basic overall accuracy; the meaningful
+target is 1 \pp. I will complete both protocols and all variants for the first
+20 seeds, then perform one SD-only paired-$t$ power recalculation at two-sided
+$\alpha=0.05$ and target power 0.80. The total target has a floor of 63 paired
+seeds and a feasibility cap of 243. These numbers are predeclared planning
+rules. There are no saved C1 seed-pair outcomes at this checkpoint. \ev{E10}
+
+If the estimated target exceeds 243, I will report the study as beyond the
+declared budget. Otherwise I will complete the locked fixed250 schedule.
+The final paired-$t$ interval is nominal under this variance-adaptive sample
+size. I will follow the plan without significance-based stopping or repeated
+sample-size adjustment, and report the interval relative to both zero and
+1 \pp; detecting a nonzero effect is not the same as
+establishing an effect of at least 1 \pp. \ev{E10}
+
+\subsection{My runtime budget from measured timing}
+
+I base my runtime budget on the saved local CPU timing of 25 completed
+cached-head epochs in \TimingSeconds{} seconds. Its linear extrapolation is
+\HeadMinutes{} minutes for 250 epochs, including repeated startup overhead.
+My existing plan projects approximately 37--42 serial CPU hours for the first
+C1 stage and 112--116 hours for a 63-pair primary study including es20
+sensitivity. Those totals assume 20--50 epochs for the es20 heads; I treat them
+as forecasts, not measured Colab durations. I have not verified Colab CPU/GPU
+speed or session limits.
+\ev{E10}
+
+The original Stage 2 log separately records 104/116/115/126/133 seconds to
+generate 4,000 candidates for CSC/MH/MacTel/Stargardt/RP on the logged A100
+runtime. Their sum is 594 seconds for generation only. It excludes GAN
+training, QC, feature extraction, transfer and human review, so I cannot use
+it as the total cost of generative augmentation. I also cannot assume that
+the logged training hardware and software match a future foundation-model run.
+\ev{E05}
+
+\subsection{Records I will retain from each experiment}
+
+I will retain one immutable run identity: code revision, environment versions,
+manifest and input/cache hashes, preprocessing, backbone/checkpoint hash,
+pool version, real/synthetic counts, support selection, seed and complete
+command. I will save all test probabilities and labels, selected/best/final
+heads, history, timing, log and a completion marker, and distinguish
+patient-level uncertainty from training-seed uncertainty.
+
+For the cost comparison, I will additionally log hardware, CPU/GPU elapsed
+usage, feature-extraction and generator time, candidate/retained counts,
+storage and expert time if actually observed. I will record the billing
+source and date for any USD conversion and retain missing measurements as
+missing. I will use a new versioned output namespace for the extension and
+preserve canonical Stage 3/4 and \file{results/seed_check.csv}. \ev{E10,E11}
+
+\textbf{My decisions for the next meeting.} I need to select C1's input arm
+after C0, confirm the multi-session compute budget, and decide whether my
+next deliverable covers benchmark validity alone or also includes the narrow
+cost comparison. I also need to establish whether patient-identified external
+data and a clinician collaborator are realistically available. I have not
+initiated author contact about the unresolved paper details as part of
+preparing this report.
+
+\appendix
+\section{Evidence locations and reproduction}
+
+I give all paths below relative to the repository root. In preparing this
+report, I add descriptive summaries and interpretation while preserving the
+method, manifest, accepted images and published evaluation CSVs. I take C0,
+C1 and C5 execution status from the current plans and available saved
+artifacts; I cannot verify the content of unsynchronized private Drive folders.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.09\linewidth}
+                  >{\raggedright\arraybackslash}p{0.84\linewidth}}
+\toprule ID & Saved evidence and its scope\\\midrule
+\endfirsthead
+\toprule ID & Saved evidence and its scope\\\midrule
+\endhead
+\bottomrule\endfoot
+E00 & \file{docs/research/report_evidence.json}; generated/checked by
+\file{docs/research/build_report_evidence.py}. Contains source hashes,
+unrounded descriptive calculations and numerical LaTeX values. The companion
+\file{docs/research/report_sources.json} records the read proposal and primary
+source locations.\\
+E01 & \file{data/manifest.csv}: splits, real training/test counts, image
+identities and common-class patient overlap.\\
+E02 & \file{results/stage3_<variant>/test_predictions.csv};
+\file{results/stage4/metrics.csv}, \file{recall.csv},
+\file{confusion_<variant>.csv}: seed-42 outcomes and independently recomputed
+descriptive metrics.\\
+E03 & \file{results/seed_check.csv};
+\file{results/analysis/paired_seeds.csv}: historical seeds 1--5 and paired
+differences. These are distinct from the planned C1 runs.\\
+E04 & \file{results/analysis/cluster_seed42.csv},
+\file{paired_cluster_seed42.csv}, \file{cluster_summary.csv}:
+saved patient-cluster intervals and overlap summary. I do not regenerate
+bootstrap draws in the report audit.\\
+E05 & \file{results/stage2/qc_<disease>.csv};
+\file{results/analysis/qc_summary.csv}; \file{results/stage2/stage2.log}:
+automatic QC and measured generation timings.\\
+E06 & \file{results/stage3_<variant>/data_counts.csv}, \file{history.csv};
+\file{stage3_classifier.py}: actual pools, validation composition,
+checkpoint selection and classifier implementation.\\
+E07 & \file{results/analysis/cam_review_seed42_Lam.csv}: all 44 of my CAM
+responses. I do not treat these as expert ratings.\\
+E08 & \file{docs/research/L7_BASELINE_AUDIT.md},
+\file{L8_RCI_AUDIT.md}, \file{PAPER_DISCREPANCIES.md},
+\file{REPLICATION.md}; \file{results/analysis/rare_recall.csv},
+\file{rci_paper_bounds.csv}, \file{knn_sweep.csv}:
+bounded historical audits and unresolved comparisons. I do not treat their
+absent local scratch files as independently re-executed evidence.\\
+E09 & \file{docs/research/C0_DESIGN.md}, \file{C0_REPORT.md};
+\file{c0_experiment.py}; notebook Part C0: sample diagnostics, gate and pending
+full control. The sample JSON referenced by C0 is absent locally.\\
+E10 & \file{docs/research/C1_EXPERIMENT_PLAN.md},
+\file{C1_HEAD_TIMING.json}; \file{c1_experiment.py}; notebook Part 4:
+fixed250/es20 protocol, one variance recalculation, output protection and CPU
+timing. Forecasts are labelled separately from measurements.\\
+E11 & \file{COLAB.md}, C5 section; \file{c5_topup.py};
+\file{docs/research/CONTEXT.md}: agreed v1/v2 separation and pending GPU top-up.\\
+\end{longtable}
+
+I provide the following command to reproduce the training-free evidence check
+from this Windows worktree:
+\begin{quote}\small\ttfamily
+\detokenize{D:/Few-shot/.venv/Scripts/python.exe -X utf8}\par
+\detokenize{docs/research/build_report_evidence.py check}
+\end{quote}
+The two displayed lines form one command. The \texttt{write} mode deliberately
+refreshes only the report evidence record and the report's numerical macros.
+To compile the self-contained source, I would run \texttt{pdflatex -output-directory=docs/report docs/report/Report.tex}
+twice in a TeX installation with the packages listed in the preamble.
+I have checked the source structure, but final compilation and page layout
+remain unverified without a TeX engine.
+
+\textbf{Terminology.} I use ``GAN'' for the original CycleGAN pool unless I
+explicitly name a new version. Accuracy and balanced accuracy are percentages;
+differences are \pp; recall, macro-F1, $\kappa$, MCC, RCI and AUC are fractions
+unless a table labels them as percentages. A classifier seed is a training
+replicate, not a new patient cohort. A QC pass is an automatic decision,
+not a clinician's acceptance.
+
+\textbf{Preparation note.} I used agent assistance to organize the evidence,
+independently check saved-result arithmetic and draft this report. I also used
+Scientific Agent Skills to guide the appraisal and planning workflow
+\cite{skills}; these are procedural aids, not evidence for biological or
+clinical conclusions. I remain responsible for the research decisions and
+final interpretation.
+
+\begin{thebibliography}{9}
+\bibitem{yoo2021} Yoo TK, Choi JY, Kim HK. Feasibility study to improve deep
+learning in OCT diagnosis of rare retinal diseases with few-shot classification.
+\emph{Medical \& Biological Engineering \& Computing}. 2021;59:401--415.
+\href{https://doi.org/10.1007/s11517-021-02321-1}{doi:10.1007/s11517-021-02321-1}.
+Methods and Tables 3--4 checked in the full Europe PMC XML.
+
+\bibitem{tai2025} Tai CY et al. Improvement Strategies for Few-Shot Learning in
+OCT Image Classification of Rare Retinal Diseases. 2025. Preprint.
+\href{https://arxiv.org/abs/2505.20149}{arXiv:2505.20149}.
+Abstract and full-text methods checked.
+
+\bibitem{iwanicka} Iwanicka D, Lu P. Diffusion with Adversarial Fine-Tuning for
+Improving Rare Retinal Disease Diagnosis. MIUA 2025; proceedings volume
+published 2026. LNCS 15918:237--250.
+\href{https://doi.org/10.1007/978-3-031-98694-9_17}{doi:10.1007/978-3-031-98694-9\_17}.
+\href{https://eprints.whiterose.ac.uk/id/eprint/228674/}{Author-repository abstract and metadata checked};
+full experimental methods not audited here.
+
+\bibitem{eyediff} Chen R et al. Boosting foundation models for rare eye disease
+diagnosis via a multimodal text-to-image generative framework.
+\emph{npj Digital Medicine}. 2026;9:371.
+\href{https://doi.org/10.1038/s41746-026-02560-2}{doi:10.1038/s41746-026-02560-2}.
+Publisher abstract and relevant Results sections checked; not an exhaustive
+replication or cost audit.
+
+\bibitem{retfound} Zhou Y et al. A foundation model for generalizable disease
+detection from retinal images. \emph{Nature}. 2023;622:156--163.
+\href{https://doi.org/10.1038/s41586-023-06555-x}{doi:10.1038/s41586-023-06555-x}.
+Full-text pretraining dataset description and reference 34 checked in Europe PMC XML.
+
+\bibitem{retfoundweights} RETFound authors.
+\href{https://huggingface.co/YukunZhou/RETFound_mae_natureOCT}{Official Nature OCT checkpoint model card}
+and \href{https://github.com/rmaphoh/RETFound}{official repository}.
+Access gate and model-card license checked 27 October 2026; weights not downloaded.
+
+\bibitem{octdl} Kulyabin M et al. OCTDL: Optical Coherence Tomography Dataset
+for Image-Based Deep Learning Methods. \emph{Scientific Data}. 2024;11:365.
+\href{https://doi.org/10.1038/s41597-024-03182-7}{doi:10.1038/s41597-024-03182-7}.
+Full-text Data Records, label definitions and Table 2 checked in Europe PMC XML;
+dataset files not downloaded or counted locally.
+
+\bibitem{skills} Kassis T, Agarwal V, He Y, Patel D, Brueckner AM.
+Scientific Agent Skills: A Library of Procedural Knowledge for Research Agents.
+2026. \href{https://doi.org/10.48550/arXiv.2609.00065}{arXiv:2609.00065}.
+Author/year metadata checked against the current arXiv record on 27 October 2026.
+\end{thebibliography}
+\end{document}

@@ -38,6 +38,55 @@ explicit Note when no practical check exists. Agents add entries with the `log-m
 
 | 23 | 2026-10-29 | Codex · gpt-6.1-sol | T10a inspection repeated cp1252 output failure; extraction probes also assumed uniform source types and no leading blank/header lines | Repeated encoding issue (21/22) and assumptions about notebook serialization | Proposed check; note | Recovered with UTF-8 and parsed actual text. Escalation proposed: route notebook inspection through the persistent UTF-8 wrapper/round-trip check proposed in 22; compare joined source text separately from source JSON representation. No permanent fix applied pending Lam | yes |
 
+| 23 | 2026-10-27 | Codex · gpt-6.1-sol | Report inspection probed absent archive paths, guessed helper names, lost native-shell quotes, and assumed a PowerShell redirected UTF-16 log was UTF-8 | Repeated path/CLI and encoding assumptions from 5/7/14/22 | Proposed check | Extend entry 22's proposed wrapper with required-path validation, Python through UTF-8 stdin and an explicitly encoded log boundary; candidate and verification below. Not installed pending Lam's approval. | yes |
+| 24 | 2026-10-27 | Codex · gpt-6.1-sol | Initial report used C0/C1/C5 task codes without an upfront explanation; Lam requested clarification | Carried tracker vocabulary into a reader-facing report without defining it | Note | Added the explicitly requested C0--C5 purpose/activity/status table and dependency explanation in Report.tex. A label-presence test would not verify explanatory clarity; no permanent guard proposed. White/black formatting is Lam's new explicit preference, not an error in following the earlier dark-mode default. | no |
+| 25 | 2026-10-27 | Codex · gpt-6.1-sol | Report referred to Lam in the third person and mixed in plural author pronouns; Lam requested first-person singular | Wrote as an external adviser instead of consistently using the research author's perspective | Proposed check | Revised prose, planning tables and assistance disclosure to I/my; proposed narrative-pronoun screen below is not installed pending approval. | no |
+| 26 | 2026-10-27 | Codex · gpt-6.1-sol | A temporary prose-preservation screen falsely flagged changed repetitions of C1/v1 as numerical result changes | An unrestricted digit regex conflated task/pool identifiers with quantities | Check (existing) | The maintained report-evidence checker verifies actual result macros; the corrected temporary comparison separately confirms standalone quantities and bibliography. No new permanent guard installed. | yes: same temporary-verification overreach as entry 12 |
+
+## Proposed report-voice check for entry 25 (not installed)
+
+This bounded check catches plural author pronouns and third-person references
+to Lam in the narrative. It does not prove that every sentence uses the right
+voice; planning tense and attribution still require editorial review.
+
+```python
+import re
+from pathlib import Path
+text = Path("Report.tex").read_text(encoding="utf-8")
+body = text.split(r"\begin{document}", 1)[1].split(r"\begin{thebibliography}", 1)[0]
+assert not re.search(r"\b(?:we|our|us|Lam(?:'s)?)\b", body, re.IGNORECASE)
+```
+
+No permanent check or hook was added. The requested voice edit is applied;
+the proposed automation remains for Lam's approval.
+
+## Proposed inspection wrapper for entries 22--23 (not installed)
+
+Candidate `.agents/inspect-python.ps1`; a caller supplies paths discovered in the
+current checkout and Python source as a PowerShell here-string. Missing paths
+fail explicitly; Python source is not passed through native `-c` quoting.
+Approval is required before adding this wrapper or wiring a permanent check.
+
+```powershell
+param([string[]]$RequiredPath = @(), [Parameter(Mandatory)][string]$Code)
+$OutputEncoding = [System.Text.UTF8Encoding]::new()
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+foreach ($inspectionPath in $RequiredPath) {
+    if (-not (Test-Path -LiteralPath $inspectionPath)) { throw "Missing inspection input: $inspectionPath" }
+}
+$Code | & 'D:/Few-shot/.venv/Scripts/python.exe' -X utf8 -
+exit $LASTEXITCODE
+```
+
+Proposed verification: supply a temporary path and Python source that reads and
+prints Unicode, quotes and dollar signs literally; then supply an absent path
+and assert Python did not start. This would check the wrapper's I/O boundary,
+not attempt to police arbitrary terminal commands.
+If persistent log capture is added, write its bytes explicitly as UTF-8 and
+assert a non-ASCII log round-trip. Existing PowerShell redirection logs require
+BOM inspection before decoding; the report's verification record records its
+actual UTF-16 encoding. No log-capture guard was installed.
+
 ## Proposed check for entry 9 (not installed)
 
 This runs against the maintained sampler and the actual JavaScript exporter,
