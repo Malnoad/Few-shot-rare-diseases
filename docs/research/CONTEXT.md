@@ -25,6 +25,16 @@ In: the paper's pipeline (Stages 0-4), its metrics (Tables 3-4), knn/prototype
 baselines on frozen features, CAM. Out: the paper's Siamese network, a trained
 prototypical network, end-to-end fine-tuning of Inception-v3.
 
+Planning update (2026-11-05): [Active calendar](FM_3WEEK_SPRINT.md) runs **5 Nov–3 Dec**,
+with a **4–5 page IEEE draft due 11 Nov**: problems, related work, proposed methods,
+optional results and discussion. Report preparation comes first; bounded frozen-FM
+experiments follow, with nomination 19 Nov and experiment freeze 27 Nov. Colab Pro
+and fast decisions remain constraints; no new GAN/C1–C3 sweeps. [Full plan/rebuttals](FM_FEWSHOT_PLAN.md)
+retain the October đề cương and 29-paper evidence. This is planning, with no new
+implementation/results claimed; existing stage/C1–C3 protocols remain unchanged.
+The proposed K-shot study separates target-informed model selection from support
+labels and excludes existing all-rare-trained GAN pools from strict K-shot claims.
+
 ## Glossary
 - **Common classes:** NORMAL, CNV, DME, DRUSEN (Kermany OCT2017).
 - **Rare classes:** CSC, MH, MacTel, Stargardt, RP; 5/5/4/4/4 test images each.
