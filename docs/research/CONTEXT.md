@@ -3,6 +3,13 @@
 What every agent should know about this research. Keep it short (one or two
 screens). Agents read this before any research or analysis task.
 
+For the proposed frozen-encoder study and IEEE drafting, start with the
+[literature knowledge base](LITERATURE_KB.md), its [source index](LITERATURE_SOURCES.json)
+and the [Task 1 drafting prompt](TASK1_DRAFT_PROMPT.md). They cover the 49 supplied
+PDFs plus 17 targeted additions, distinguish reading depth and claim limits, and
+identify the authoritative [protocol](FM_PROTOCOL.md). The
+replication context below remains historical; the literature digest adds no results.
+
 ## Question
 Does adding CycleGAN-generated images of rare retinal diseases to the training set
 improve a few-shot 9-class OCT classifier, compared with real images only and with
