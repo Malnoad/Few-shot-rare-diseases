@@ -1,5 +1,9 @@
 # Running this project on Google Colab
 
+The [FM protocol v1.0](docs/research/FM_PROTOCOL.md) specifies the next study;
+its isolated loader/evaluator is not implemented by this notebook yet.
+These instructions continue to describe the existing reproduction runs.
+
 For the remaining replication runs (C5, C0, C1) in order, with what to bring back, see
 [`guide.md`](guide.md). This file is the background reference.
 

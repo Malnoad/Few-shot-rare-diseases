@@ -35,7 +35,18 @@ implementation/results claimed; existing stage/C1–C3 protocols remain unchange
 The proposed K-shot study separates target-informed model selection from support
 labels and excludes existing all-rare-trained GAN pools from strict K-shot claims.
 
+Planning update (2026-11-05): [FM protocol v1.0](FM_PROTOCOL.md) is design-final
+after the requested GPT-6.1-Sol, Claude Opus 5.5 and Gemini 4 Argon High rebuttal;
+[findings and resolutions](FM_FINAL_REBUTTAL.md) distinguish design decisions from
+future implementation/data gates. The bounded study uses frozen encoders,
+real-only paired five-way K-shot episodes and a matched nine-way source audit
+(1,000 common fitting images/class). The nominee is fixed before legacy/external
+reporting. IEEE draft due 11 Nov (4–5 pages; results optional), final package 3 Dec.
+No new FM results or implementation are claimed. Existing replication, C1–C3
+protocols, datasets, accepted GAN pools and recorded results remain unchanged.
+
 ## Glossary
+
 - **Common classes:** NORMAL, CNV, DME, DRUSEN (Kermany OCT2017).
 - **Rare classes:** CSC, MH, MacTel, Stargardt, RP; 5/5/4/4/4 test images each.
 - **Variant:** `none` / `basic` / `gan` rare-class training pool in Stage 3.

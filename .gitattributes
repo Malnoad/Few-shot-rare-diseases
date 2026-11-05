@@ -3,3 +3,6 @@
 .agents/run-python.sh text eol=lf
 .agents/hooks/* text eol=lf
 .claude/hooks/*.sh text eol=lf
+# Frozen protocol: its SHA256 is part of the FM input lock, so bytes must not change on checkout.
+docs/research/FM_PROTOCOL.md text eol=lf
+docs/report/fm_ieee/verification/protocol_v1_0.md text eol=lf

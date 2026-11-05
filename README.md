@@ -1,5 +1,9 @@
 # Few-shot classification of rare retinal diseases in OCT
 
+The next study is specified in the [finalized FM protocol](docs/research/FM_PROTOCOL.md),
+with [review resolutions and reuse boundaries](docs/research/FM_FINAL_REBUTTAL.md).
+Its loader/evaluator and results are future work; the pipeline below is the Yoo reproduction.
+
 A reproduction of:
 
 > Yoo TK, Choi JY, Kim HK. **Feasibility study to improve deep learning in OCT diagnosis of
