@@ -1,0 +1,14 @@
+{
+  "protocol_v1_0.md": {
+    "original_path": "C:\\Users\\ThinkBook\\.t3\\worktrees\\Few-shot\\t3-d8b2f581\\docs\\research\\FM_PROTOCOL.md",
+    "sha256": "4e8df8d91c0021187c05b103a9b0a0e0319a055fd91108da1f4cf3045d00c5df"
+  },
+  "literature_kb_snapshot.md": {
+    "original_path": "C:\\Users\\ThinkBook\\.t3\\worktrees\\Few-shot\\t3-3276417a\\docs\\research\\LITERATURE_KB.md",
+    "sha256": "6fc48375aef61cd5ed17dad262b29c5fb23c28ceaae7c47508b17cf0defcc614"
+  },
+  "literature_sources_snapshot.json": {
+    "original_path": "C:\\Users\\ThinkBook\\.t3\\worktrees\\Few-shot\\t3-3276417a\\docs\\research\\LITERATURE_SOURCES.json",
+    "sha256": "fd4e5d88f7997ea5f48eafd1ea09f7f79f42a5193c81318982b3122442725a41"
+  }
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "R01",
+    "path": "D:\\Few-shot\\retinal imaging\\[MBEC 2021] GAN-FSL-OCT - Feasibility Study to Improve Deep Learning in OCT Diagnosis of Rare Retinal Diseases with Few-Shot Classification.pdf",
+    "sha256": "4611767a28ac3743a147673665ab11b86ecbbf276f9ae963f39fc1f4f1ac7f11",
+    "matches_supplied_index": true
+  },
+  {
+    "id": "R03",
+    "path": "D:\\Few-shot\\retinal imaging\\Few-shot and metric_meta-learning\\[arXiv 2020] tSNE-FSL - Automatic Detection of Rare Pathologies in Fundus Photographs Using Few-Shot Learning.pdf",
+    "sha256": "7bf828a706c112dad660e4c324bb756c32d05408e38461d5d49c4e95409bcccb",
+    "matches_supplied_index": true
+  }
+]

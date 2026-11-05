@@ -1,0 +1,16 @@
+{
+  "kind": "Vector workflow schematic; no measured data or patient images",
+  "source": "verification/protocol_v1_0.md sections 3-8",
+  "dimensions_inches": [
+    7.16,
+    2.38
+  ],
+  "formats": [
+    "pdf",
+    "svg",
+    "png"
+  ],
+  "png_dpi": 300,
+  "matplotlib": "3.11.2",
+  "alt_text": "Locked rare-image inventories and frozen encoders feed paired five-way K-shot development and reporting, and a separate deterministic nine-way real-only source audit. The first branch nominates on development data only. The second reports NORMAL false-rare rates separately by source."
+}

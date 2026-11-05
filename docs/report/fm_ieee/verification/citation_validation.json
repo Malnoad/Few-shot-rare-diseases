@@ -1,0 +1,168 @@
+{
+  "filepath": "docs/report/fm_ieee/references.bib",
+  "total_entries": 22,
+  "valid_entries": 21,
+  "errors": [
+    {
+      "type": "invalid_author_format",
+      "field": "author",
+      "severity": "high",
+      "message": "Entry RETFound2023: Authors should be separated by \" and \", not \";\" or \"&\"",
+      "entry": "RETFound2023"
+    }
+  ],
+  "warnings": [
+    {
+      "type": "missing_recommended_field",
+      "field": "volume",
+      "severity": "medium",
+      "message": "Entry DINOv2: Missing recommended field \"volume\"",
+      "entry": "DINOv2"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry DINOv2: Missing recommended field \"pages\"",
+      "entry": "DINOv2"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "doi",
+      "severity": "medium",
+      "message": "Entry DINOv2: Missing recommended field \"doi\"",
+      "entry": "DINOv2"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "volume",
+      "severity": "medium",
+      "message": "Entry SimpleShot2019: Missing recommended field \"volume\"",
+      "entry": "SimpleShot2019"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry SimpleShot2019: Missing recommended field \"pages\"",
+      "entry": "SimpleShot2019"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry STARTUP2021: Missing recommended field \"pages\"",
+      "entry": "STARTUP2021"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "volume",
+      "severity": "medium",
+      "message": "Entry Kassis2026: Missing recommended field \"volume\"",
+      "entry": "Kassis2026"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry Kassis2026: Missing recommended field \"pages\"",
+      "entry": "Kassis2026"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry ProtoNets2017: Missing recommended field \"pages\"",
+      "entry": "ProtoNets2017"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry Quellec2020: Missing recommended field \"pages\"",
+      "entry": "Quellec2020"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry MIRAGE2025: Missing recommended field \"pages\"",
+      "entry": "MIRAGE2025"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry EyeCLIP2025: Missing recommended field \"pages\"",
+      "entry": "EyeCLIP2025"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry EyeDiff2026: Missing recommended field \"pages\"",
+      "entry": "EyeDiff2026"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry OCTDL2024: Missing recommended field \"pages\"",
+      "entry": "OCTDL2024"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry OCTID2020: Missing recommended field \"pages\"",
+      "entry": "OCTID2020"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry PathPT2026: Missing recommended field \"pages\"",
+      "entry": "PathPT2026"
+    },
+    {
+      "type": "unused_citation",
+      "entry": "IEEEcontrol",
+      "severity": "medium",
+      "message": "Unused citation: Reference \"IEEEcontrol\" is defined in the BibTeX file but not cited in the manuscript."
+    }
+  ],
+  "duplicates": [],
+  "venue_standard_checked": null,
+  "min_count_checked": null,
+  "manuscript_results": {
+    "checked": true,
+    "manuscript_filepath": "docs/report/fm_ieee/main.tex",
+    "cited_keys": [
+      "PathPT2026",
+      "CLAP2024",
+      "Quellec2020",
+      "OCTDL2024",
+      "OCTID2020",
+      "Kassis2026",
+      "BenchReAD2025",
+      "DINOv2",
+      "ProtoNets2017",
+      "RETFound2023",
+      "Generalist2025",
+      "EyeDiff2026",
+      "Kermany2018",
+      "CoCoOp2022",
+      "CrossDomain2020",
+      "EyeCLIP2025",
+      "FairNLP2023",
+      "Yoo2021",
+      "STARTUP2021",
+      "SimpleShot2019",
+      "MIRAGE2025"
+    ],
+    "missing_keys": [],
+    "unused_keys": [
+      "IEEEcontrol"
+    ]
+  }
+}

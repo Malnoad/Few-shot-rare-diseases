@@ -1,0 +1,24 @@
+{
+  "scholarly_and_tooling_references": 21,
+  "resolved_unique_citations": 21,
+  "duplicate_keys": 0,
+  "generic_errors": [
+    {
+      "type": "invalid_author_format",
+      "field": "author",
+      "severity": "high",
+      "message": "Entry RETFound2023: Authors should be separated by \" and \", not \";\" or \"&\"",
+      "entry": "RETFound2023"
+    }
+  ],
+  "adjudicated_errors_in_citations": 0,
+  "adjudication": "RETFound's braced corporate author UK Biobank Eye & Vision Consortium contains an escaped ampersand, not an author separator. Published byline checked in retinal_refs/verification_report.md; preserve the byline rather than deleting the consortium to satisfy a heuristic.",
+  "style_control": "IEEEcontrol is a nonprinting IEEEtranBSTCTL record, not a 22nd reference.",
+  "recommended_field_warnings": "No invented volume/pages/DOI for records without them. Article identifiers are labeled Art. no. See VERIFICATION.md.",
+  "publication_choices": {
+    "DINOv2": "TMLR January 2024, verified primary PDF header and byline",
+    "OCTID2020": "Verified journal version, Computers & Electrical Engineering 81, article 106532 (2020)",
+    "BenchReAD2025": "Official MICCAI 2025 conference version; conflicting Springer 2026 citation metadata disclosed"
+  },
+  "limits": "No comprehensive correction/retraction audit. Primary reading scopes, access failures and unverified details remain explicit."
+}

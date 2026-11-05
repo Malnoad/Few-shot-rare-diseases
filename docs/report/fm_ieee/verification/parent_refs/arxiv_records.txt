@@ -1,0 +1,285 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/1cIg3LDrHQigazxiI1h5ehPpyaQ</id>
+  <title>arXiv Query: search_query=&amp;id_list=2304.07193,1911.04623,2010.07734,2203.05557,2305.16938,2312.12730,2609.00065,1912.07200&amp;start=0&amp;max_results=8</title>
+  <updated>2026-11-05T06:09:25Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=8&amp;id_list=2304.07193,1911.04623,2010.07734,2203.05557,2305.16938,2312.12730,2609.00065,1912.07200" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>8</opensearch:itemsPerPage>
+  <opensearch:totalResults>8</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/1911.04623v2</id>
+    <title>SimpleShot: Revisiting Nearest-Neighbor Classification for Few-Shot Learning</title>
+    <updated>2019-11-16T00:35:54Z</updated>
+    <link href="https://arxiv.org/abs/1911.04623v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1911.04623v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Few-shot learners aim to recognize new object classes based on a small number of labeled training examples. To prevent overfitting, state-of-the-art few-shot learners use meta-learning on convolutional-network features and perform classification using a nearest-neighbor classifier. This paper studies the accuracy of nearest-neighbor baselines without meta-learning. Surprisingly, we find simple feature transformations suffice to obtain competitive few-shot learning accuracies. For example, we find that a nearest-neighbor classifier used in combination with mean-subtraction and L2-normalization outperforms prior results in three out of five settings on the miniImageNet dataset.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2019-11-12T00:44:10Z</published>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Yan Wang</name>
+    </author>
+    <author>
+      <name>Wei-Lun Chao</name>
+    </author>
+    <author>
+      <name>Kilian Q. Weinberger</name>
+    </author>
+    <author>
+      <name>Laurens van der Maaten</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2010.07734v2</id>
+    <title>Self-training for Few-shot Transfer Across Extreme Task Differences</title>
+    <updated>2021-03-17T16:11:57Z</updated>
+    <link href="https://arxiv.org/abs/2010.07734v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2010.07734v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Most few-shot learning techniques are pre-trained on a large, labeled "base dataset". In problem domains where such large labeled datasets are not available for pre-training (e.g., X-ray, satellite images), one must resort to pre-training in a different "source" problem domain (e.g., ImageNet), which can be very different from the desired target task. Traditional few-shot and transfer learning techniques fail in the presence of such extreme differences between the source and target tasks. In this paper, we present a simple and effective solution to tackle this extreme domain gap: self-training a source domain representation on unlabeled data from the target domain. We show that this improves one-shot performance on the target domain by 2.9 points on average on the challenging BSCD-FSL benchmark consisting of datasets from multiple domains. Our code is available at https://github.com/cpphoo/STARTUP.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2020-10-15T13:23:59Z</published>
+    <arxiv:comment>Published as a conference paper at ICLR 2021(oral)</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Cheng Perng Phoo</name>
+    </author>
+    <author>
+      <name>Bharath Hariharan</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2312.12730v2</id>
+    <title>A Closer Look at the Few-Shot Adaptation of Large Vision-Language Models</title>
+    <updated>2024-03-25T18:49:52Z</updated>
+    <link href="https://arxiv.org/abs/2312.12730v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2312.12730v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Efficient transfer learning (ETL) is receiving increasing attention to adapt large pre-trained language-vision models on downstream tasks with a few labeled samples. While significant progress has been made, we reveal that state-of-the-art ETL approaches exhibit strong performance only in narrowly-defined experimental setups, and with a careful adjustment of hyperparameters based on a large corpus of labeled samples. In particular, we make two interesting, and surprising empirical observations. First, to outperform a simple Linear Probing baseline, these methods require to optimize their hyper-parameters on each target task. And second, they typically underperform -- sometimes dramatically -- standard zero-shot predictions in the presence of distributional drifts. Motivated by the unrealistic assumptions made in the existing literature, i.e., access to a large validation set and case-specific grid-search for optimal hyperparameters, we propose a novel approach that meets the requirements of real-world scenarios. More concretely, we introduce a CLass-Adaptive linear Probe (CLAP) objective, whose balancing term is optimized via an adaptation of the general Augmented Lagrangian method tailored to this context. We comprehensively evaluate CLAP on a broad span of datasets and scenarios, demonstrating that it consistently outperforms SoTA approaches, while yet being a much more efficient alternative.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-12-20T02:58:25Z</published>
+    <arxiv:comment>CVPR 2024. Code: https://github.com/jusiro/CLAP</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Julio Silva-Rodríguez</name>
+    </author>
+    <author>
+      <name>Sina Hajimiri</name>
+    </author>
+    <author>
+      <name>Ismail Ben Ayed</name>
+    </author>
+    <author>
+      <name>Jose Dolz</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1912.07200v3</id>
+    <title>A Broader Study of Cross-Domain Few-Shot Learning</title>
+    <updated>2020-07-17T21:33:27Z</updated>
+    <link href="https://arxiv.org/abs/1912.07200v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1912.07200v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Recent progress on few-shot learning largely relies on annotated data for meta-learning: base classes sampled from the same domain as the novel classes. However, in many applications, collecting data for meta-learning is infeasible or impossible. This leads to the cross-domain few-shot learning problem, where there is a large shift between base and novel class domains. While investigations of the cross-domain few-shot scenario exist, these works are limited to natural images that still contain a high degree of visual similarity. No work yet exists that examines few-shot learning across different imaging methods seen in real world scenarios, such as aerial and medical imaging. In this paper, we propose the Broader Study of Cross-Domain Few-Shot Learning (BSCD-FSL) benchmark, consisting of image data from a diverse assortment of image acquisition methods. This includes natural images, such as crop disease images, but additionally those that present with an increasing dissimilarity to natural images, such as satellite images, dermatology images, and radiology images. Extensive experiments on the proposed benchmark are performed to evaluate state-of-art meta-learning approaches, transfer learning approaches, and newer methods for cross-domain few-shot learning. The results demonstrate that state-of-art meta-learning methods are surprisingly outperformed by earlier meta-learning approaches, and all meta-learning methods underperform in relation to simple fine-tuning by 12.8% average accuracy. Performance gains previously observed with methods specialized for cross-domain few-shot learning vanish in this more challenging benchmark. Finally, accuracy of all methods tend to correlate with dataset similarity to natural images, verifying the value of the benchmark to better represent the diversity of data seen in practice and guiding future research.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2019-12-16T05:29:07Z</published>
+    <arxiv:comment>ECCV 2020. Website: https://www.learning-with-limited-labels.com/</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Yunhui Guo</name>
+    </author>
+    <author>
+      <name>Noel C. Codella</name>
+    </author>
+    <author>
+      <name>Leonid Karlinsky</name>
+    </author>
+    <author>
+      <name>James V. Codella</name>
+    </author>
+    <author>
+      <name>John R. Smith</name>
+    </author>
+    <author>
+      <name>Kate Saenko</name>
+    </author>
+    <author>
+      <name>Tajana Rosing</name>
+    </author>
+    <author>
+      <name>Rogerio Feris</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2304.07193v2</id>
+    <title>DINOv2: Learning Robust Visual Features without Supervision</title>
+    <updated>2024-02-02T10:24:09Z</updated>
+    <link href="https://arxiv.org/abs/2304.07193v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2304.07193v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The recent breakthroughs in natural language processing for model pretraining on large quantities of data have opened the way for similar foundation models in computer vision. These models could greatly simplify the use of images in any system by producing all-purpose visual features, i.e., features that work across image distributions and tasks without finetuning. This work shows that existing pretraining methods, especially self-supervised methods, can produce such features if trained on enough curated data from diverse sources. We revisit existing approaches and combine different techniques to scale our pretraining in terms of data and model size. Most of the technical contributions aim at accelerating and stabilizing the training at scale. In terms of data, we propose an automatic pipeline to build a dedicated, diverse, and curated image dataset instead of uncurated data, as typically done in the self-supervised literature. In terms of models, we train a ViT model (Dosovitskiy et al., 2020) with 1B parameters and distill it into a series of smaller models that surpass the best available all-purpose features, OpenCLIP (Ilharco et al., 2021) on most of the benchmarks at image and pixel levels.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-04-14T15:12:19Z</published>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Maxime Oquab</name>
+    </author>
+    <author>
+      <name>Timothée Darcet</name>
+    </author>
+    <author>
+      <name>Théo Moutakanni</name>
+    </author>
+    <author>
+      <name>Huy Vo</name>
+    </author>
+    <author>
+      <name>Marc Szafraniec</name>
+    </author>
+    <author>
+      <name>Vasil Khalidov</name>
+    </author>
+    <author>
+      <name>Pierre Fernandez</name>
+    </author>
+    <author>
+      <name>Daniel Haziza</name>
+    </author>
+    <author>
+      <name>Francisco Massa</name>
+    </author>
+    <author>
+      <name>Alaaeldin El-Nouby</name>
+    </author>
+    <author>
+      <name>Mahmoud Assran</name>
+    </author>
+    <author>
+      <name>Nicolas Ballas</name>
+    </author>
+    <author>
+      <name>Wojciech Galuba</name>
+    </author>
+    <author>
+      <name>Russell Howes</name>
+    </author>
+    <author>
+      <name>Po-Yao Huang</name>
+    </author>
+    <author>
+      <name>Shang-Wen Li</name>
+    </author>
+    <author>
+      <name>Ishan Misra</name>
+    </author>
+    <author>
+      <name>Michael Rabbat</name>
+    </author>
+    <author>
+      <name>Vasu Sharma</name>
+    </author>
+    <author>
+      <name>Gabriel Synnaeve</name>
+    </author>
+    <author>
+      <name>Hu Xu</name>
+    </author>
+    <author>
+      <name>Hervé Jegou</name>
+    </author>
+    <author>
+      <name>Julien Mairal</name>
+    </author>
+    <author>
+      <name>Patrick Labatut</name>
+    </author>
+    <author>
+      <name>Armand Joulin</name>
+    </author>
+    <author>
+      <name>Piotr Bojanowski</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2305.16938v2</id>
+    <title>Few-shot Fine-tuning vs. In-context Learning: A Fair Comparison and Evaluation</title>
+    <updated>2023-05-30T08:34:49Z</updated>
+    <link href="https://arxiv.org/abs/2305.16938v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2305.16938v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Few-shot fine-tuning and in-context learning are two alternative strategies for task adaptation of pre-trained language models. Recently, in-context learning has gained popularity over fine-tuning due to its simplicity and improved out-of-domain generalization, and because extensive evidence shows that fine-tuned models pick up on spurious correlations. Unfortunately, previous comparisons of the two approaches were done using models of different sizes. This raises the question of whether the observed weaker out-of-domain generalization of fine-tuned models is an inherent property of fine-tuning or a limitation of the experimental setup. In this paper, we compare the generalization of few-shot fine-tuning and in-context learning to challenge datasets, while controlling for the models used, the number of examples, and the number of parameters, ranging from 125M to 30B. Our results show that fine-tuned language models can in fact generalize well out-of-domain. We find that both approaches generalize similarly; they exhibit large variation and depend on properties such as model size and the number of examples, highlighting that robust task adaptation remains a challenge.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-05-26T13:55:17Z</published>
+    <arxiv:comment>Accepted to Findings of ACL 2023</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Marius Mosbach</name>
+    </author>
+    <author>
+      <name>Tiago Pimentel</name>
+    </author>
+    <author>
+      <name>Shauli Ravfogel</name>
+    </author>
+    <author>
+      <name>Dietrich Klakow</name>
+    </author>
+    <author>
+      <name>Yanai Elazar</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2203.05557v2</id>
+    <title>Conditional Prompt Learning for Vision-Language Models</title>
+    <updated>2022-10-06T11:52:39Z</updated>
+    <link href="https://arxiv.org/abs/2203.05557v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2203.05557v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>With the rise of powerful pre-trained vision-language models like CLIP, it becomes essential to investigate ways to adapt these models to downstream datasets. A recently proposed method named Context Optimization (CoOp) introduces the concept of prompt learning -- a recent trend in NLP -- to the vision domain for adapting pre-trained vision-language models. Specifically, CoOp turns context words in a prompt into a set of learnable vectors and, with only a few labeled images for learning, can achieve huge improvements over intensively-tuned manual prompts. In our study we identify a critical problem of CoOp: the learned context is not generalizable to wider unseen classes within the same dataset, suggesting that CoOp overfits base classes observed during training. To address the problem, we propose Conditional Context Optimization (CoCoOp), which extends CoOp by further learning a lightweight neural network to generate for each image an input-conditional token (vector). Compared to CoOp's static prompts, our dynamic prompts adapt to each instance and are thus less sensitive to class shift. Extensive experiments show that CoCoOp generalizes much better than CoOp to unseen classes, even showing promising transferability beyond a single dataset; and yields stronger domain generalization performance as well. Code is available at https://github.com/KaiyangZhou/CoOp.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-03-10T18:59:41Z</published>
+    <arxiv:comment>CVPR 2022. Update: Adds results on the DOSCO (DOmain Shift in COntext) benchmark</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Kaiyang Zhou</name>
+    </author>
+    <author>
+      <name>Jingkang Yang</name>
+    </author>
+    <author>
+      <name>Chen Change Loy</name>
+    </author>
+    <author>
+      <name>Ziwei Liu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2609.00065v2</id>
+    <title>Scientific Agent Skills: A Library of Procedural Knowledge for Research Agents</title>
+    <updated>2026-09-02T21:50:40Z</updated>
+    <link href="https://arxiv.org/abs/2609.00065v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.00065v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>A language-model agent asked to analyse an experiment will usually return working code. Whether the analysis is defensible is a different question. A defensible analysis depends on procedural choices: which test the field accepts, which identifier namespace is authoritative, and which caveats must accompany a result. We present Scientific Agent Skills, an open library of 163 such procedures in 16 areas of practice, including genomics, cheminformatics, medical imaging, study design and scientific communication. Each skill is a directory built around a versioned, human-readable instruction file. An agent loads the file only when a task calls for it; the directory often also contains reference material and runnable scripts. We report no task-level evaluation and no host selection rate. We measure two properties of the documentation corpus: the always-resident descriptions of all 163 skills cost 7.1% of a 200,000-token window, and the median documented workflow fits within 23.9% of it, although 29 of 46 would overflow if every reference file were loaded. Openly licensed and available at https://github.com/K-Dense-AI/scientific-agent-skills.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-08-30T15:40:35Z</published>
+    <arxiv:comment>31 pages, 16 figures, 2 tables, 1 listing. v2: adds a figure of how the documented workflows compose skills, quotes the skill clauses behind the introduction's examples, replaces the appendix listing with a procedural skill, names supported hosts and the pinned install path, and reports the two corpus findings in the abstract</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Timothy Kassis</name>
+    </author>
+    <author>
+      <name>Vinayak Agarwal</name>
+    </author>
+    <author>
+      <name>Yuhuan He</name>
+    </author>
+    <author>
+      <name>Darshil Patel</name>
+    </author>
+    <author>
+      <name>Aubrey M. Brueckner</name>
+    </author>
+  </entry>
+</feed>

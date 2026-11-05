@@ -1,0 +1,452 @@
+[
+  {
+    "file": "raw/R01_crossref.json",
+    "requested_url": "https://api.crossref.org/works/10.1007/s11517-021-02321-1",
+    "retrieved_utc": "2026-11-05T06:06:21.342017+00:00",
+    "status": 200,
+    "final_url": "https://api.crossref.org/works/10.1007/s11517-021-02321-1",
+    "content_type": "application/json",
+    "bytes": 27153,
+    "sha256": "fd94ddc4960652f9ceaba80afedbab2c67272d0bb7263af5a0e2d8f7ff642fad"
+  },
+  {
+    "file": "raw/R03_crossref.json",
+    "requested_url": "https://api.crossref.org/works/10.1016/j.media.2020.101660",
+    "retrieved_utc": "2026-11-05T06:06:21.342017+00:00",
+    "status": 200,
+    "final_url": "https://api.crossref.org/works/10.1016/j.media.2020.101660",
+    "content_type": "application/json",
+    "bytes": 16813,
+    "sha256": "addb1f874743dc484d7011277bae5b2eb037b84be20b32d9003809fd02fbfaa3"
+  },
+  {
+    "file": "raw/A01_crossref.json",
+    "requested_url": "https://api.crossref.org/works/10.1016/j.cell.2018.02.010",
+    "retrieved_utc": "2026-11-05T06:06:21.343039+00:00",
+    "status": 200,
+    "final_url": "https://api.crossref.org/works/10.1016/j.cell.2018.02.010",
+    "content_type": "application/json",
+    "bytes": 16092,
+    "sha256": "dc77e71b080edef03df84f488106dbdcabaae5d3e7bed10976a669edba1662ea"
+  },
+  {
+    "file": "raw/A02_crossref.json",
+    "requested_url": "https://api.crossref.org/works/10.1038/s41586-023-06555-x",
+    "retrieved_utc": "2026-11-05T06:06:21.343039+00:00",
+    "status": 429,
+    "final_url": "https://api.crossref.org/works/10.1038/s41586-023-06555-x",
+    "content_type": null,
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "file": "raw/A04_crossref.json",
+    "requested_url": "https://api.crossref.org/works/10.1038/s41746-025-01852-3",
+    "retrieved_utc": "2026-11-05T06:06:21.344049+00:00",
+    "status": 429,
+    "final_url": "https://api.crossref.org/works/10.1038/s41746-025-01852-3",
+    "content_type": null,
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "file": "raw/A05_crossref.json",
+    "requested_url": "https://api.crossref.org/works/10.1038/s41746-025-01772-2",
+    "retrieved_utc": "2026-11-05T06:06:21.344049+00:00",
+    "status": 200,
+    "final_url": "https://api.crossref.org/works/10.1038/s41746-025-01772-2",
+    "content_type": "application/json",
+    "bytes": 23292,
+    "sha256": "e24a70b61d8c525f3cd2bad8d495805072c48a77016eb784e2f07296ea4a35c6"
+  },
+  {
+    "file": "raw/A06_crossref.json",
+    "requested_url": "https://api.crossref.org/works/10.1038/s41746-026-02560-2",
+    "retrieved_utc": "2026-11-05T06:06:22.855243+00:00",
+    "status": 200,
+    "final_url": "https://api.crossref.org/works/10.1038/s41746-026-02560-2",
+    "content_type": "application/json",
+    "bytes": 22640,
+    "sha256": "779f8102a9f4b05e47ddfdd5804c1e8c9c9eeb3a90a16be1c52da556cc0c80c4"
+  },
+  {
+    "file": "raw/A08_crossref.json",
+    "requested_url": "https://api.crossref.org/works/10.1007/978-3-032-04937-7_4",
+    "retrieved_utc": "2026-11-05T06:06:22.865161+00:00",
+    "status": 200,
+    "final_url": "https://api.crossref.org/works/10.1007/978-3-032-04937-7_4",
+    "content_type": "application/json",
+    "bytes": 14799,
+    "sha256": "7150a6d7a55acb9234f28038d852eaf752e2e4781ee6220fc2f798982dd89963"
+  },
+  {
+    "file": "raw/A09_crossref.json",
+    "requested_url": "https://api.crossref.org/works/10.1038/s41597-024-03182-7",
+    "retrieved_utc": "2026-11-05T06:06:22.904032+00:00",
+    "status": 200,
+    "final_url": "https://api.crossref.org/works/10.1038/s41597-024-03182-7",
+    "content_type": "application/json",
+    "bytes": 25728,
+    "sha256": "48c04250a38f594abe1aaeceb59f3a360c736e6ac8d3cd0073700a13fda29d5a"
+  },
+  {
+    "file": "raw/A15_crossref.json",
+    "requested_url": "https://api.crossref.org/works/10.1038/s41467-026-71715-2",
+    "retrieved_utc": "2026-11-05T06:06:22.909026+00:00",
+    "status": 200,
+    "final_url": "https://api.crossref.org/works/10.1038/s41467-026-71715-2",
+    "content_type": "application/json",
+    "bytes": 17855,
+    "sha256": "1d26c4b1396457fdec5f12f7f7eaf1cc5c17862ac3a94b9181464b0c1fff3e9d"
+  },
+  {
+    "file": "raw/arxiv_batch.xml",
+    "requested_url": "https://export.arxiv.org/api/query?id_list=2509.03421,1812.07056,1907.09449&max_results=3",
+    "retrieved_utc": "2026-11-05T06:06:23.354241+00:00",
+    "status": 200,
+    "final_url": "https://export.arxiv.org/api/query?id_list=2509.03421,1812.07056,1907.09449&max_results=3",
+    "content_type": "application/atom+xml; charset=utf-8",
+    "bytes": 9565,
+    "sha256": "6a599d3b7b412522ae22c9be12923eeb2cd796f5b074e9874308003e4dc187d4"
+  },
+  {
+    "file": "raw/A02_publisher.html",
+    "requested_url": "https://www.nature.com/articles/s41586-023-06555-x",
+    "retrieved_utc": "2026-11-05T06:06:23.789330+00:00",
+    "status": 200,
+    "final_url": "https://www.nature.com/articles/s41586-023-06555-x",
+    "content_type": "text/html; charset=utf-8",
+    "bytes": 524123,
+    "sha256": "a03fc18304a01820bf0cd69d407134baedf51bce299a663dae2f5f4a6c559312"
+  },
+  {
+    "file": "raw/A04_publisher.html",
+    "requested_url": "https://www.nature.com/articles/s41746-025-01852-3",
+    "retrieved_utc": "2026-11-05T06:06:24.050184+00:00",
+    "status": 200,
+    "final_url": "https://www.nature.com/articles/s41746-025-01852-3",
+    "content_type": "text/html; charset=utf-8",
+    "bytes": 612725,
+    "sha256": "6c35d7a2eeecf972220cf643cd2aa7a2faf1845fd361c7e1536eba8717367775"
+  },
+  {
+    "file": "raw/A05_publisher.html",
+    "requested_url": "https://www.nature.com/articles/s41746-025-01772-2",
+    "retrieved_utc": "2026-11-05T06:06:24.068224+00:00",
+    "status": 200,
+    "final_url": "https://www.nature.com/articles/s41746-025-01772-2",
+    "content_type": "text/html; charset=utf-8",
+    "bytes": 448728,
+    "sha256": "48d1e7955af5fc355dbf961dbd64579fe2fcc37899b00ab42fde4c9d52291a6b"
+  },
+  {
+    "file": "raw/A06_publisher.html",
+    "requested_url": "https://www.nature.com/articles/s41746-026-02560-2",
+    "retrieved_utc": "2026-11-05T06:06:24.106950+00:00",
+    "status": 200,
+    "final_url": "https://www.nature.com/articles/s41746-026-02560-2",
+    "content_type": "text/html; charset=utf-8",
+    "bytes": 415484,
+    "sha256": "c89de7a03b1e71dd10bafb3219c729ee4a830799f5b27e4f897a45c26479125e"
+  },
+  {
+    "file": "raw/A09_publisher.html",
+    "requested_url": "https://www.nature.com/articles/s41597-024-03182-7",
+    "retrieved_utc": "2026-11-05T06:06:24.143947+00:00",
+    "status": 200,
+    "final_url": "https://www.nature.com/articles/s41597-024-03182-7",
+    "content_type": "text/html; charset=utf-8",
+    "bytes": 415038,
+    "sha256": "849460f9115259ac22bc0371370a0abbae55f639939f072b9abd4a33244c47ab"
+  },
+  {
+    "file": "raw/A15_publisher.html",
+    "requested_url": "https://www.nature.com/articles/s41467-026-71715-2",
+    "retrieved_utc": "2026-11-05T06:06:24.478994+00:00",
+    "status": 200,
+    "final_url": "https://www.nature.com/articles/s41467-026-71715-2",
+    "content_type": "text/html; charset=utf-8",
+    "bytes": 421357,
+    "sha256": "c5eafe782e6d92bc03c4a8b562771819e36cc118362d68189587f492b5aac33a"
+  },
+  {
+    "file": "raw/A07_arxiv.html",
+    "requested_url": "https://arxiv.org/abs/2509.03421",
+    "retrieved_utc": "2026-11-05T06:06:26.884673+00:00",
+    "status": 200,
+    "final_url": "https://arxiv.org/abs/2509.03421",
+    "content_type": "text/html; charset=utf-8",
+    "bytes": 46656,
+    "sha256": "be67a18d6002709aaa0aaf4d79398782ff30c43dc1345f6132abd0649d3b697c"
+  },
+  {
+    "file": "raw/A10_arxiv.html",
+    "requested_url": "https://arxiv.org/abs/1812.07056",
+    "retrieved_utc": "2026-11-05T06:06:27.416061+00:00",
+    "status": 200,
+    "final_url": "https://arxiv.org/abs/1812.07056",
+    "content_type": "text/html; charset=utf-8",
+    "bytes": 41080,
+    "sha256": "84e4cc44402bc24070a594674ce1ffe5070820e66f39622241b49eee863efea1"
+  },
+  {
+    "file": "raw/A08_miccai.html",
+    "requested_url": "https://papers.miccai.org/miccai-2025/0092-Paper1683.html",
+    "retrieved_utc": "2026-11-05T06:06:27.755837+00:00",
+    "status": 200,
+    "final_url": "https://papers.miccai.org/miccai-2025/0092-Paper1683.html",
+    "content_type": "text/html",
+    "bytes": 110311,
+    "sha256": "8a88f0f31f21ded0ac144f1fa0c257ba36d70c459cdf50c0a758a4d9267e5362"
+  },
+  {
+    "file": "raw/A02_crossref_retry.json",
+    "requested_url": "https://api.crossref.org/works/10.1038/s41586-023-06555-x",
+    "final_url": "https://api.crossref.org/works/10.1038/s41586-023-06555-x",
+    "status": 200,
+    "retrieved_utc": "2026-11-05T06:06:50.448320+00:00",
+    "sha256": "9ab154ac7390f49700166c1b41998c6e1f1ded048e67f061ecc6017263dc3a5f",
+    "bytes": 37054
+  },
+  {
+    "file": "raw/A04_crossref_retry.json",
+    "requested_url": "https://api.crossref.org/works/10.1038/s41746-025-01852-3",
+    "final_url": "https://api.crossref.org/works/10.1038/s41746-025-01852-3",
+    "status": 200,
+    "retrieved_utc": "2026-11-05T06:06:51.423968+00:00",
+    "sha256": "ac3d52742c71f9386e58eaae9acc77d0315fd33d5c8ad995896fe93c00381364",
+    "bytes": 38580
+  },
+  {
+    "file": "raw/R01_publisher.html",
+    "requested_url": "https://link.springer.com/article/10.1007/s11517-021-02321-1",
+    "retrieved_utc": "2026-11-05T06:08:31.231189+00:00",
+    "status": 200,
+    "final_url": "https://link.springer.com/article/10.1007/s11517-021-02321-1",
+    "bytes": 397288,
+    "sha256": "31c3aa2dc59cf8a594da747e904b612a24445e63e99ee9bee611ad4903203ac8",
+    "content_type": "text/html; charset=utf-8"
+  },
+  {
+    "file": "raw/R03_arxiv.html",
+    "requested_url": "https://arxiv.org/abs/1907.09449v3",
+    "retrieved_utc": "2026-11-05T06:08:31.232194+00:00",
+    "status": 200,
+    "final_url": "https://arxiv.org/abs/1907.09449v3",
+    "bytes": 46139,
+    "sha256": "52e7458fe8e28e838e218b45f0ccf04b51bd9355fb81570382799b9c0694bfc2",
+    "content_type": "text/html; charset=utf-8"
+  },
+  {
+    "file": "raw/A01_publisher.html",
+    "requested_url": "https://www.sciencedirect.com/science/article/pii/S0092867418301545",
+    "retrieved_utc": "2026-11-05T06:08:31.233199+00:00",
+    "status": 403,
+    "final_url": "https://www.sciencedirect.com/science/article/pii/S0092867418301545",
+    "bytes": 832981,
+    "sha256": "66038a05ae5e3680e1e69d7ed9ac6ac7631c39a59b6b5c3cf4bd1ec88e1eb5d6",
+    "content_type": "text/html; charset=UTF-8"
+  },
+  {
+    "file": "raw/A01_pubmed.xml",
+    "requested_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=29474911&retmode=xml",
+    "retrieved_utc": "2026-11-05T06:08:31.234202+00:00",
+    "status": 200,
+    "final_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=29474911&retmode=xml",
+    "bytes": 18801,
+    "sha256": "9c861045048ece47d035a4bb7b8bb8fa715fe148cb6d0c055948efa35ed8cad8",
+    "content_type": "text/xml; charset=UTF-8"
+  },
+  {
+    "file": "raw/A02_publisher.ris",
+    "requested_url": "https://www.nature.com/articles/s41586-023-06555-x.ris",
+    "retrieved_utc": "2026-11-05T06:08:31.898125+00:00",
+    "status": 404,
+    "final_url": "https://www.nature.com/articles/s41586-023-06555-x.ris",
+    "bytes": 99497,
+    "sha256": "8ed2bbedd7f13cb850b9ec216fc9bd2ad87e8059170b70d2454bdf5a5ff12121",
+    "content_type": "text/html; charset=utf-8"
+  },
+  {
+    "file": "raw/A08_springer.html",
+    "requested_url": "https://link.springer.com/chapter/10.1007/978-3-032-04937-7_4",
+    "retrieved_utc": "2026-11-05T06:08:31.974222+00:00",
+    "status": 200,
+    "final_url": "https://link.springer.com/chapter/10.1007/978-3-032-04937-7_4",
+    "bytes": 332129,
+    "sha256": "a295ddb3aa91b753e9439d97765c75f3ab2333676e050892d4e9fc61f585ec40",
+    "content_type": "text/html; charset=utf-8"
+  },
+  {
+    "file": "raw/A08_paper.pdf",
+    "requested_url": "https://papers.miccai.org/miccai-2025/paper/1683_paper.pdf",
+    "retrieved_utc": "2026-11-05T06:08:32.003839+00:00",
+    "status": 200,
+    "final_url": "https://papers.miccai.org/miccai-2025/paper/1683_paper.pdf",
+    "bytes": 1416084,
+    "sha256": "fddb87063df78d2effc5018a3de63a66513a0f76a2b6196e72e01a65bf5977ec",
+    "content_type": "application/pdf"
+  },
+  {
+    "file": "raw/A10_journal_crossref.json",
+    "requested_url": "https://api.crossref.org/works/10.1016/j.compeleceng.2019.106532",
+    "retrieved_utc": "2026-11-05T06:08:34.084295+00:00",
+    "status": 200,
+    "final_url": "https://api.crossref.org/works/10.1016/j.compeleceng.2019.106532",
+    "bytes": 9649,
+    "sha256": "66205f1e5f69fee665a6bae994a5e15c634ad8552273c88ee972cf2d4f40296b",
+    "content_type": "application/json"
+  },
+  {
+    "file": "raw/A10_journal_publisher.html",
+    "requested_url": "https://www.sciencedirect.com/science/article/abs/pii/S0045790618330842",
+    "retrieved_utc": "2026-11-05T06:08:34.551350+00:00",
+    "status": 403,
+    "final_url": "https://www.sciencedirect.com/science/article/abs/pii/S0045790618330842",
+    "bytes": 832981,
+    "sha256": "217125b94425ad6dc93c9fc873a4a70a9283e0def9050b4e8fca1cbbbe5d4944",
+    "content_type": "text/html; charset=UTF-8"
+  },
+  {
+    "file": "raw/A07_datacite.json",
+    "requested_url": "https://api.datacite.org/dois/10.48550/arxiv.2509.03421",
+    "retrieved_utc": "2026-11-05T06:08:34.833352+00:00",
+    "status": 200,
+    "final_url": "https://api.datacite.org/dois/10.48550/arxiv.2509.03421",
+    "bytes": 18186,
+    "sha256": "1934a2c5b08b28b6467f9a188c29672561207215045861d1a4ec59b0098b403c",
+    "content_type": "application/json; charset=utf-8"
+  },
+  {
+    "file": "raw/A10_datacite.json",
+    "requested_url": "https://api.datacite.org/dois/10.48550/arxiv.1812.07056",
+    "retrieved_utc": "2026-11-05T06:08:35.428491+00:00",
+    "status": 200,
+    "final_url": "https://api.datacite.org/dois/10.48550/arxiv.1812.07056",
+    "bytes": 9394,
+    "sha256": "19331de21f2edf41f4c4075957565694605ef2c2c0c6798a53ed7dd93b94503f",
+    "content_type": "application/json; charset=utf-8"
+  },
+  {
+    "file": "raw/A02_citation.ris",
+    "requested_url": "https://citation-needed.springer.com/v2/references/10.1038/s41586-023-06555-x?format=refman&flavour=citation",
+    "retrieved_utc": "2026-11-05T06:12:18.547886+00:00",
+    "status": 200,
+    "final_url": "https://citation-needed.springer.com/v2/references/10.1038/s41586-023-06555-x?format=refman&flavour=citation",
+    "bytes": 3689,
+    "sha256": "9549b494782d3889777338a4fcc590a71413f693f50d8d63f325b9aef4a46923"
+  },
+  {
+    "file": "raw/A09_repo_README.md",
+    "requested_url": "https://raw.githubusercontent.com/MikhailKulyabin/OCTDL/main/README.md",
+    "retrieved_utc": "2026-11-05T06:12:18.548887+00:00",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/MikhailKulyabin/OCTDL/main/README.md",
+    "bytes": 3455,
+    "sha256": "46c39d53b74c99d4abb69cccca7ca3b6d321e28c4d4b4486d8046e66d7db6c50"
+  },
+  {
+    "file": "raw/excluded_unrelated_zenodo_10844444.json",
+    "requested_url": "https://zenodo.org/api/records/10844444",
+    "retrieved_utc": "2026-11-05T06:12:18.549918+00:00",
+    "status": 200,
+    "final_url": "https://zenodo.org/api/records/10844445",
+    "bytes": 3763,
+    "sha256": "0923821308ec41c8109aa56b43d5750ef731d282825b30ca933210440b0b9807",
+    "excluded": "Incorrect guessed record ID; title identifies unrelated cuNMF software. Not evidence for OCTDL."
+  },
+  {
+    "file": "raw/A10_dataverse.html",
+    "requested_url": "https://dataverse.scholarsportal.info/dataverse/OCTID",
+    "retrieved_utc": "2026-11-05T06:12:19.324675+00:00",
+    "status": 200,
+    "final_url": "https://borealisdata.ca/dataverse/OCTID",
+    "bytes": 82962,
+    "sha256": "f83c150aa14574b4cb0053fe49aa740c31d8d5dd58daece2fc5e79d3bad1edc3"
+  },
+  {
+    "file": "raw/A09_zenodo_10839556.json",
+    "requested_url": "https://zenodo.org/api/records/10839556",
+    "retrieved_utc": "2026-11-05T06:13:47.367372+00:00",
+    "status": 200,
+    "final_url": "https://zenodo.org/api/records/10839556",
+    "bytes": 7133,
+    "sha256": "10cf6d0a65d8ca789a3cabc1740467f0afa1939017cdf4ff4554c59aa415fd8b"
+  },
+  {
+    "file": "raw/A09_labels.csv",
+    "requested_url": "https://zenodo.org/records/10839556/files/OCTDL_labels.csv?download=1",
+    "retrieved_utc": "2026-11-05T06:13:47.371370+00:00",
+    "status": 200,
+    "final_url": "https://zenodo.org/records/10839556/files/OCTDL_labels.csv?download=1",
+    "bytes": 109541,
+    "sha256": "b7db437cfe67741623f26e8bb2cef0f4d6828d6d86150f752f412da1c4ee8b3a"
+  },
+  {
+    "file": "raw/A07_arxiv.html_full",
+    "requested_url": "https://arxiv.org/html/2509.03421v1",
+    "retrieved_utc": "2026-11-05T06:13:47.374361+00:00",
+    "status": 404,
+    "final_url": "https://arxiv.org/html/2509.03421v1",
+    "bytes": 6399,
+    "sha256": "69ecb4565990bd3e6223bb906da4d7f9de53a8b5dce5d960d971108feea3272d"
+  },
+  {
+    "file": "raw/A01_elsevier.xml",
+    "requested_url": "https://api.elsevier.com/content/article/pii/S0092867418301545?httpAccept=text/xml",
+    "retrieved_utc": "2026-11-05T06:13:48.308567+00:00",
+    "status": 200,
+    "final_url": "https://api.elsevier.com/content/article/pii/S0092867418301545?httpAccept=text/xml",
+    "bytes": 1944,
+    "sha256": "ca0b329da1c7fb302b6fba4ea163914016aefe79c04ed33dad7f476306a31884"
+  },
+  {
+    "file": "raw/A10_dataset_W43PFI.json",
+    "requested_url": "https://dataverse.scholarsportal.info/api/datasets/:persistentId/?persistentId=doi:10.5683/SP2/W43PFI",
+    "final_url": "https://borealisdata.ca/api/datasets/:persistentId/?persistentId=doi:10.5683/SP2/W43PFI",
+    "status": 200,
+    "bytes": 3928,
+    "retrieved_utc": "2026-11-05T06:15:10.706358+00:00",
+    "sha256": "ff32a330a15a4311d224dfd06b6292ad4790db93bf8cbf757b23dcd1ae25041e"
+  },
+  {
+    "file": "raw/web_generalist_find_failures.json",
+    "tool": "web.run",
+    "retrieved_utc": "2026-11-05T06:15:50.131Z",
+    "bytes": 1285,
+    "sha256": "d182c72fac1461de591952af1bba26b9c21adabc4aea41bce2537e60b764b129",
+    "scope": "Raw tool response; only primary records/passages named in verification report are used as evidence."
+  },
+  {
+    "file": "raw/web_generalist_pdf_and_discovery.json",
+    "tool": "web.run",
+    "retrieved_utc": "2026-11-05T06:15:50.106Z",
+    "bytes": 36717,
+    "sha256": "ce5e8e1fa276f82c9e565913d7404088c19a5d542b442a25b16bcb7a4bee7d84",
+    "scope": "Raw tool response; only primary records/passages named in verification report are used as evidence."
+  },
+  {
+    "file": "raw/web_kermany_indexed_primary.json",
+    "tool": "web.run",
+    "retrieved_utc": "2026-11-05T06:15:50.153Z",
+    "bytes": 38737,
+    "sha256": "3342c9b175e63c2c00ec1630401292ffb03c59e999f62c68ee61f628f525bd99",
+    "scope": "Raw tool response; only primary records/passages named in verification report are used as evidence."
+  },
+  {
+    "file": "raw/web_primary_pdf_open.json",
+    "tool": "web.run",
+    "retrieved_utc": "2026-11-05T06:15:50.035Z",
+    "bytes": 28228,
+    "sha256": "7149d362f8daf925c63728fb99083f2048e7e013957cc8341bb8c96fa80aaea3",
+    "scope": "Raw tool response; only primary records/passages named in verification report are used as evidence."
+  },
+  {
+    "file": "raw/web_quellec_methods_find.json",
+    "tool": "web.run",
+    "retrieved_utc": "2026-11-05T06:15:50.080Z",
+    "bytes": 13542,
+    "sha256": "350b2c00ab433456f7ab0fd14746d4f55943d735c99200bbc89df2239ddfdcc5",
+    "scope": "Raw tool response; only primary records/passages named in verification report are used as evidence."
+  }
+]

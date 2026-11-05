@@ -1,0 +1,26 @@
+{
+  "files": {
+    "main.pdf": "f5b4a61430e49b226ef1d791d46fd6846adf4665b1482f61082f8fe144906eb2",
+    "main.tex": "73d8dc7f76b29e86f7dda9b7a314d5156f4c2c70e520efd79bb3c889819967b4",
+    "references.bib": "733d0938918bbca8c55db8fe4b14222bd240e57582df6a6ddca3c4de7398f3fb",
+    "main.bbl": "94af3af5261f6befa2ef23fe119992ede20c2874372ab29a085adcd6bb8a7bbe",
+    "methods_figure.pdf": "06c62d8771d89d07f379c7cac75d8197350b46424534e77cb8e005551b0c0cb9",
+    "methods_figure.svg": "4bb728b212fb0ce2bf23918dae2e2f138e1a88f617e5e88adc30d3071b1f67db",
+    "methods_figure.png": "d324ebf9b36a9ce77dd0e622719c4c16e10f28cd609cae2f2b25abad59d1d4a6",
+    "make_figure.py": "0da7e7b568c4da28315754112111a890c2179099ad03249a7829d9285b0b86b0",
+    "CLAIM_SOURCE_LEDGER.md": "e288658049ed589a46f4caa94ede01aac0680aca4ddfc6aa9c1ed29bfde24db6",
+    "README.md": "964e4164dc244cd0cd2d9bd86742889741a9f9db74a697522d57278795a13bd5",
+    "VERIFICATION.md": "056bf00ee59b060074b8196feabc34dc899861f58de72f95a09d6f10afd92d7c",
+    "verification/protocol_v1_0.md": "4e8df8d91c0021187c05b103a9b0a0e0319a055fd91108da1f4cf3045d00c5df",
+    "verification/input_provenance.json": "3a45e5acfac5af10ed77063ac239e72d1bdd45ae0b1de004b205bd71174500d9",
+    "verification/figure_provenance.json": "3b7e356942411babba50b336a6c78ff9291c254721456888bbd92510d68ed472",
+    "verification/package_checks.json": "c2c55acdf02086fad1a9d7f28bde7598f7d9b756e8ce5aa025d6993b209b1123",
+    "verification/citation_assessment.json": "a64f27aa915693ec9cbb967e577d9f925ed75eec6f394c13164d4c0ca96bd26f",
+    "verification/manifest_counts.json": "1bb96cf838d8d7d7fb493ebc5f042bd16d8b504c0c6a89eef42ec5c3cd3eb12e",
+    "verification/retinal_refs/verification_report.md": "34c3e1983ea33684bea5723400ae99ad90851adf24a9fdb4d106d69f01b6b8f5",
+    "verification/retinal_refs/field_verification.json": "13842f0b6b5314873a8e48a773a05b24316ad10d8c4105b29410de72757a0513",
+    "verification/parent_refs/REFERENCE_AUDIT.md": "dfe93020f2718052c0da992823c7a7e3d3c86241798b4162ff89f669b6bc94f2"
+  },
+  "source_zip_sha256": "dbf70e267e1e09ecac23388daf0d34c5c701eee4cb6c2a0dd539e9d7d9a7e2a1",
+  "zip_note": "Authored submission sources, figure and concise audit records; no retrieved paper full texts, study data or results."
+}

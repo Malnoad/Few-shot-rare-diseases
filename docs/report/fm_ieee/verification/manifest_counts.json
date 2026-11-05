@@ -1,0 +1,27 @@
+{
+  "rows": 84630,
+  "rare_counts": {
+    "train": {
+      "CSC": 27,
+      "MH": 26,
+      "MacTel": 25,
+      "Stargardt": 19,
+      "RP": 27
+    },
+    "val": {
+      "CSC": 0,
+      "MH": 0,
+      "MacTel": 0,
+      "Stargardt": 0,
+      "RP": 0
+    },
+    "test": {
+      "CSC": 5,
+      "MH": 5,
+      "MacTel": 4,
+      "Stargardt": 4,
+      "RP": 4
+    }
+  },
+  "note": "Image counts only; no new patient grouping or experiment."
+}

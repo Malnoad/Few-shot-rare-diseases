@@ -1,0 +1,66 @@
+[
+  {
+    "name": "DINOv2_README",
+    "url": "https://raw.githubusercontent.com/facebookresearch/dinov2/main/README.md",
+    "status": 200,
+    "sha256": "d1bc2e9686522bbd66ed6123dc81eb36b3a98e8ea9a2ca97778f54a1c641c9e1",
+    "local": "DINOv2_README.txt",
+    "accessed_utc": "2026-11-05T06:08:58.020050+00:00"
+  },
+  {
+    "name": "ProtoNets",
+    "url": "https://papers.nips.cc/paper_files/paper/2017/hash/cb8da6767461f2812ae4290eac7cbc42-Bibtex.bib",
+    "error": "404 Client Error: Not Found for url: https://papers.nips.cc/paper_files/paper/2017/hash/cb8da6767461f2812ae4290eac7cbc42-Bibtex.bib"
+  },
+  {
+    "name": "CoCoOp",
+    "url": "https://openaccess.thecvf.com/content/CVPR2022/html/Zhou_Conditional_Prompt_Learning_for_Vision-Language_Models_CVPR_2022_paper.html",
+    "status": 200,
+    "sha256": "0bbcfc81d2fe4f167924732a49110ed2b12f1d137f4f82b87ab3edb048c93a7f",
+    "local": "CoCoOp.txt",
+    "accessed_utc": "2026-11-05T06:09:01.262819+00:00"
+  },
+  {
+    "name": "CLAP",
+    "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Silva-Rodriguez_A_Closer_Look_at_the_Few-Shot_Adaptation_of_Large_Vision-Language_CVPR_2024_paper.html",
+    "status": 200,
+    "sha256": "24d0de173682bb2664aa6db2887ccfb8c5184a8b56a83557b09ad99b19b0b14b",
+    "local": "CLAP.txt",
+    "accessed_utc": "2026-11-05T06:09:01.935018+00:00"
+  },
+  {
+    "name": "FairNLP",
+    "url": "https://aclanthology.org/2023.findings-acl.779.bib",
+    "status": 200,
+    "sha256": "3ef5582cf9d6b99ccd9110a366b2f3fc6ce0e1a92a1813a9c32cf2bf17c58c90",
+    "local": "FairNLP.txt",
+    "accessed_utc": "2026-11-05T06:09:03.479410+00:00"
+  },
+  {
+    "name": "IEEEtran",
+    "url": "https://ctan.org/pkg/ieeetran",
+    "error": "HTTPSConnectionPool(host='ctan.org', port=443): Max retries exceeded with url: /pkg/ieeetran (Caused by ConnectTimeoutError(<HTTPSConnection(host='ctan.org', port=443) at 0x19f7d14be90>, 'Connection to ctan.org timed out. (connect timeout=40)'))"
+  },
+  {
+    "name": "arxiv_records",
+    "url": "https://export.arxiv.org/api/query?id_list=2304.07193,1911.04623,2010.07734,2203.05557,2305.16938,2312.12730,2609.00065,1912.07200&max_results=8",
+    "status": 200,
+    "sha256": "2c3be8fc1a8e2960d7cc4f16c0dc5717223dbea5e7497284d0bd9ab100774f1f",
+    "local": "arxiv_records.txt",
+    "accessed_utc": "2026-11-05T06:09:25.943124+00:00"
+  },
+  {
+    "name": "CrossDomain",
+    "url": "https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123720120.pdf",
+    "status": 200,
+    "sha256": "fcc685f3b30aba9fabda1379e0e0fa74b83a55384a433a5d6ec51bc19d01426a",
+    "local": "CrossDomain.pdf",
+    "accessed_utc": "2026-11-05T06:09:31.005167+00:00"
+  },
+  {
+    "name": "crossdomain_crossref",
+    "url": "https://api.crossref.org/works?query.title=A+Broader+Study+of+Cross-Domain+Few-Shot+Learning&rows=3",
+    "sha256": "ac7db0135ca3a2435f827f7cbdb3161a39faf6c2b45f48a0f386a7d725d8cd30",
+    "status": 200
+  }
+]

@@ -1,0 +1,14 @@
+Artifact verification, 2026-11-05
+PASS: exactly 12 requested source IDs and 12 unique requested BibTeX keys.
+PASS: brace-aware BibTeX parser reads all entries; complete published author names/order, titles, years and DOIs match field_verification.json.
+PASS: Kermany Crossref/PubMed author rosters agree in all 39 positions (initial punctuation normalized).
+PASS: article identifiers explicitly labeled Art. no.; no invented article-page ranges or preprint venue/volume/pages.
+PASS: 47 retained HTTP/web-tool responses match retrieval_manifest.json SHA256 values.
+PASS: R01/R03 local PDF SHA256 values match supplied index (see local_source_checks.json).
+PASS: correct OCTDL release title/ID and label CSV hash; unrelated guessed record explicitly excluded.
+SCOPE: all batch tool writes targeted docs/report/fm_ieee/verification/retinal_refs/. Shared-checkout parent files are excluded from attribution. No whole-checkout clean-status claim.
+QUALIFIED: generic citation validator reports one false-positive corporate-author ampersand error, six page warnings on article-number records, zero duplicates; see bibtex_validation.json.
+NOT RUN: repository .agents/check; no code changed and script can write outside sole owned directory.
+NOT RUN: manuscript key resolution or PDF typesetting (parent owns manuscript).
+UNRESOLVED: BenchReAD 2025 conference/2026 publisher-citation discrepancy; parent choice of OCTID preprint vs 2020 journal version.
+LIMITS: no full supplements/code/correction/retraction audit; A07 detailed methods, EyeDiff freeze schedule and external clinical mappings unverified here.

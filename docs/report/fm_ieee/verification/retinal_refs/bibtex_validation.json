@@ -1,0 +1,68 @@
+{
+  "filepath": "docs/report/fm_ieee/verification/retinal_refs/retinal_refs.bib",
+  "total_entries": 12,
+  "valid_entries": 11,
+  "errors": [
+    {
+      "type": "invalid_author_format",
+      "field": "author",
+      "severity": "high",
+      "message": "Entry RETFound2023: Authors should be separated by \" and \", not \";\" or \"&\"",
+      "entry": "RETFound2023"
+    }
+  ],
+  "warnings": [
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry Quellec2020: Missing recommended field \"pages\"",
+      "entry": "Quellec2020"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry MIRAGE2025: Missing recommended field \"pages\"",
+      "entry": "MIRAGE2025"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry EyeCLIP2025: Missing recommended field \"pages\"",
+      "entry": "EyeCLIP2025"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry EyeDiff2026: Missing recommended field \"pages\"",
+      "entry": "EyeDiff2026"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry OCTDL2024: Missing recommended field \"pages\"",
+      "entry": "OCTDL2024"
+    },
+    {
+      "type": "missing_recommended_field",
+      "field": "pages",
+      "severity": "medium",
+      "message": "Entry PathPT2026: Missing recommended field \"pages\"",
+      "entry": "PathPT2026"
+    }
+  ],
+  "duplicates": [],
+  "venue_standard_checked": null,
+  "min_count_checked": null,
+  "manuscript_results": {
+    "checked": false,
+    "manuscript_filepath": null,
+    "cited_keys": [],
+    "missing_keys": [],
+    "unused_keys": []
+  }
+}
