@@ -25,6 +25,12 @@ from the raw public datasets as five ordered scripts.
 
 ## Status
 
+**Closeout, 6 November 2026:** core pipeline Stages 0–4 are complete with the
+documented deviations below. C2 (GAN amount, 100/100 runs) and C3 (common fitting
+caps, 60/60 runs) are complete and their aggregate results have been verified.
+The planned C1 seed sweep remains open: no C1 outputs were observed in the
+inspected project Drive root. [Stage register, results and verification scope](docs/research/REPLICATION.md).
+
 C5 completed on Colab: all five classes now have 3,000 images in the separate
 `accepted_v2` pool for C2/C3; C1 keeps v1. C0 stopped before heads at its predeclared
 gate: normalizing format and framing did not reduce the strong rare-versus-common
@@ -40,8 +46,12 @@ C2/C3 use current inputs
 | Stage 2 — CycleGAN | ✅ trained 100 epochs × 5 diseases, 4,000 generated each, filtered by automatic QC (no clinician review) |
 | Stage 3 — classifier `none`, `basic`, `gan` | ✅ complete at seed 42, plus a 5-seed check |
 | Stage 4 — metrics, baselines | ✅ complete |
-| Stage 4 — CAM heatmaps | ✅ generated locally (`analysis.py cam`), not yet reviewed |
-| Paper Table 2 (5-fold CV), Figs. 5 and 11, Siamese / prototypical networks | ❌ not done, see [`docs/research/REPLICATION.md`](docs/research/REPLICATION.md) |
+| Stage 4 — CAM heatmaps | ✅ all 22 rare test images reviewed by the author; non-expert, unblinded |
+| C2 — GAN amount (Fig. 5 adaptation) | ✅ 100/100 fixed250 final-head runs, 20 seeds × 5 amounts |
+| C3 — common fitting caps (Fig. 11 adaptation) | ✅ 60/60 fixed250 final-head runs, 20 seeds × 3 conditions |
+| C1 — primary fixed250 seed sweep with original v1 pool | Open; implementation ready, execution not verified |
+| C0 / C4 | Closed at the preprocessing gate / cross-validation dropped by scope decision |
+| Expert review, segmentation, Siamese / trained prototypical networks | Unavailable or outside the agreed scope; not pending implementation |
 
 **Short version:** at seed 42 the CycleGAN variant reaches 92.95% against the paper's 92.1%,
 but over five training seeds it is not distinguishable from basic augmentation (`gan` ahead on
@@ -50,6 +60,16 @@ by 1.9, `basic` by 2.2 points) and get more rare test images right, but five see
 separate the accuracy gains from training noise.
 Paper item by item, with the work left: [`docs/research/REPLICATION.md`](docs/research/REPLICATION.md).
 How to run everything on Colab: [`COLAB.md`](COLAB.md).
+
+The completed v2 sensitivity experiments add two findings. **C2:** mean accuracy
+is non-monotonic across GAN amounts; every GAN-versus-basic accuracy interval
+includes zero, while rare macro recall rises descriptively from 81.25% to 90.25%.
+**C3:** the 10,000-per-common-class fitting cap has the highest observed mean
+accuracy, 94.08% versus 92.55% with full common fitting data (paired difference
++1.53 pp, nominal 95% CI 0.16–2.90). The 5,000 cap gives 92.66% (difference
++0.11 pp, CI −1.36–1.58). These are exploratory seed/subset comparisons on the
+fixed test cohort, without multiplicity adjustment. C2/C3 use v2; they do not
+complete the predeclared C1 protocol on v1.
 
 ---
 
@@ -181,20 +201,21 @@ Three of the paper's numbers can't be matched as printed: its RCI values, Table 
 |---|---|---|
 | Two ophthalmologists removed bad CycleGAN images | Automatic filter (`stage2_cyclegan.py qc`): keep images closer to real disease than to NORMAL in Inception-v3 feature space | No clinician has reviewed the accepted images |
 | 3,000 accepted GAN images per disease | CSC 3,000, MH 2,610, MacTel 1,248, Stargardt 2,199, RP 832 passed QC | Four classes below target; Stage 3 warns and continues |
-
-C1 keeps that original accepted set (`--gan-pool v1`, the Stage 3 default).
-C5 completed in Colab **3.4c.1-3.4c.6**, adding MH 390, MacTel 1,752,
-Stargardt 801 and RP 2,168 from existing checkpoints with automatic QC.
-The separate `accepted_v2` pool has 3,000 per class; C2 must select
-`--gan-pool v2`. Logs report v1 hashes unchanged
-([counts](results/stage2/c5_v2_counts.csv)). See [the C5 guide](COLAB.md#c5-top-up-before-c2-keep-c1s-pool-fixed-d7)
-for budgets, resume, provenance and cache isolation.
 | 250 epochs | Early stopping on validation loss, patience 20 (`--patience 0` runs all 250) | Heads stopped after 22–27 epochs |
 | Trained prototypical network, Siamese network | Nearest class-mean (`proto`); no Siamese network | `proto` row not comparable |
 | kNN K=3 on "Inception-v3 trained without augmentation" | K=3 Euclidean on frozen ImageNet features | 86.4 vs 91.2%; cosine K=1 gives 91.1% ([`knn_sweep.csv`](results/analysis/knn_sweep.csv)), cause not established |
 | RCI 0.92–0.98 | RCI = I(true; pred) / H(true) from the confusion matrix, 0.76–0.81 | The cited definition (Sindhwani 2001 via the paper's ref. 38) is ours, and the paper's gan 0.983 is above the 0.970 maximum that definition allows with its own Table 4 recalls; formula actually used unknown ([`rci_paper_bounds.csv`](results/analysis/rci_paper_bounds.csv), REPLICATION.md L8) |
 | Table 2: 5-fold CV with GANs retrained per fold | Not done (25 CycleGANs, ~50 A100-hours) | Only the independent-test comparison (Table 3) is reproduced |
 | Basic augmentation in MATLAB | albumentations, same transform ranges | |
+
+C1 keeps the original accepted set (`--gan-pool v1`, the Stage 3 default).
+C5 completed in Colab **3.4c.1-3.4c.6**, adding MH 390, MacTel 1,752,
+Stargardt 801 and RP 2,168 from existing checkpoints with automatic QC.
+The separate `accepted_v2` pool has 3,000 per class; both completed C2/C3 sweeps
+selected `--gan-pool v2`. Logs report v1 hashes unchanged
+([counts](results/stage2/c5_v2_counts.csv)). See [the C5 guide](COLAB.md#c5-top-up-before-c2-keep-c1s-pool-fixed-d7)
+for provenance and cache isolation. C2/C3 ran 250 epochs and retained final heads;
+the early-stopped seed-42 results above remain the historical run of record.
 
 ---
 
@@ -457,7 +478,8 @@ lock the trainer in run provenance. Switch back with `--trainer keras` in a
 separate experiment directory. See the [exactness gate and laptop benchmark](docs/research/T12_FAST_TRAINER.md).
 C2/C3 notebook Part 4b passes `--trainer fast` and includes it in immutable run
 identity. See the [C2/C3 execution plan](docs/research/C2_C3_DESIGN.md): current/v2,
-fixed250 final, seeds1-20, isolated Drive outputs; no C2/C3 results exist yet.
+fixed250 final, seeds1-20, isolated Drive outputs. Both sweeps completed; see
+the [verified results and stage closeout](docs/research/REPLICATION.md).
 
 Options: `--epochs 250`, `--batch 10`, `--lr 1e-3`, `--patience 20` (early stopping on val
 loss; `0` = run all epochs as in the paper), `--gan-per-class 3000`, `--seed 42`,

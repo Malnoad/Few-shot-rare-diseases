@@ -4,8 +4,11 @@ The [FM protocol v1.0](docs/research/FM_PROTOCOL.md) specifies the next study;
 its isolated loader/evaluator is not implemented by this notebook yet.
 These instructions continue to describe the existing reproduction runs.
 
-For the remaining replication runs (C5, C0, C1) in order, with what to bring back, see
-[`guide.md`](guide.md). This file is the background reference.
+**Status, 6 November 2026:** Stages 0–4, C5, C2 (100 runs) and C3 (60 runs) are
+complete. C0 is closed at its gate and C4 was dropped. C1 remains the planned
+unverified experiment. See the [stage closeout](docs/research/REPLICATION.md)
+for results and evidence; [`guide.md`](guide.md) retains the execution recipes.
+This file is the background reference.
 
 Everything runs in Colab. Nothing needs to be installed on your PC except for one optional
 job: preparing the raw data the first time (see *One-time preparation*).
@@ -242,6 +245,15 @@ training-seed CIs describe different uncertainties; C1 does not resolve leakage.
 
 ## C2/C3 (Part 4b): manual execution
 
+Both sweeps in `c2/v1` and `c3/v1` are complete: C2 has 100/100 planned records
+and C3 has 60/60; both use the v2 GAN pool.
+Their four summary CSVs, `identity.json` and `schedule.json` were downloaded and
+verified on 6 November; all summaries and paired contrasts reproduce from
+`runs.csv` within 1e-12. [Results and audit limits](docs/research/REPLICATION.md).
+The instructions below are the reproducibility/resume reference. Completed
+outputs remain in their isolated Drive folders; they do not replace canonical
+Stage 3/4 results or the still-open C1 sweep.
+
 Run **Part 1 -> 4b.1 -> 4b.2** for the shared immutable feature bundle; prefer
 A100/L4/T4 for first extraction of the 15,000 new v2 images. Original common,
 basic and test caches come from `R/features`; the completed C5 pool is
@@ -277,9 +289,12 @@ Package-version mismatch stops resume;
 recreate the recorded environment from identity.json or bring back the blocker.
 Never relax identity checks or mix package versions in the same sweep.
 
-100 C2 +60 C3 heads project to about22.5+13.5 laptop compute hours after unmeasured
-linear scaling from T12's91,860-row v1 head to96,458-row v2. This is not an upper
-bound; Colab, feature extraction and Drive I/O are unbenchmarked.
+The pre-execution forecast for 100 C2 + 60 C3 heads was about 22.5 + 13.5 laptop
+compute hours after unmeasured linear scaling from T12's 91,860-row v1 head to
+96,458-row v2. This is not an upper
+bound and did not benchmark Colab, feature extraction or Drive I/O. Completed
+run records total 21.90 head-hours for C2 and 10.51 for C3; these are sums of
+per-head elapsed minutes, excluding preparation and gaps between runs.
 Allow roughly1-2GiB extra Drive space and check actual free space. Bring back
 `runs.csv`, `summary.csv`, `paired_differences.csv`, `contrasts.csv`,
 `identity.json`, `schedule.json` from each experiment. Exploratory nominal seed

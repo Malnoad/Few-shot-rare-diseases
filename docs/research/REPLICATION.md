@@ -1,7 +1,138 @@
 # Replication tracker: Yoo et al. 2021 (MBEC 59:401-415)
 
-What the paper reports, what this repo reproduces, and the prioritized work left.
-Status checkpoint: 2026-10-29 (C0/C5 outcomes; other entries retain their dated scope). Update the tables when an item changes state.
+What the paper reports, what this repo reproduces, and the work left.
+Status checkpoint: **6 November 2026**, after completed C2/C3 summary verification.
+Older checkpoints below retain their dated scope.
+
+## Stage closeout (6 November 2026)
+
+The core pipeline has completed Stages 0–4 with documented deviations from the
+paper. C2 and C3 execution and summarization are complete. The planned C1
+protocol remains open: no C1 output folder was observed in the inspected
+`octfsl` Drive root. This closeout does not cancel C1 or establish GAN superiority.
+
+| Stage | Finalized state / evidence |
+|---|---|
+| Stage 0: data manifest and splits | Complete; committed `data/manifest.csv` remains fixed |
+| Stage 1: basic augmentation | Complete; 2,000 images per rare class |
+| Stage 2: per-disease CycleGAN and automatic QC | Complete; original v1 retained, C5 v2 completed at 3,000 accepted/class; no clinician review |
+| Stage 3: classifier | Historical seed-42 none/basic/gan heads and five-seed check complete; C2/C3 fixed250 final-head sweeps complete |
+| Stage 4: evaluation and interpretation assets | Metrics/baselines, paired analysis, patient-cluster CIs, ROC/t-SNE and author CAM review complete; trained prototypical/Siamese networks are outside scope |
+| C0: preprocessing control | Closed at the failed separation gate as a limitation (D20=A); no heads |
+| C1: primary seed sweep on v1 | **Open:** implementation ready, execution unverified; retain the predeclared plan |
+| C2: GAN amount on v2 | **Complete:** 100/100 planned records, 20 seeds × 5 amounts |
+| C3: common fitting caps on v2 | **Complete:** 60/60 planned records, 20 seeds × 3 conditions |
+| C4: five-fold cross-validation | Dropped by scope decision (D9) |
+| C5: accepted GAN top-up | Complete; v1 preserved and v2 has 3,000/class |
+
+Remaining: execute and summarize [C1](C1_EXPERIMENT_PLAN.md), or obtain an explicit
+scope decision to close it as unperformed. Journal-specific figure dimensions
+and captions remain editorial work. Expert ratings, expert baseline,
+segmentation, Siamese and trained prototypical networks are unavailable or
+outside scope; MobileNet/ResNet remain unrun extensions, not required closeout tasks.
+
+## Completed C2 and C3 results
+
+Both use current inputs, C5's v2 pool, the fast trainer, 250 epochs and final
+heads. Every condition has 20 seeds on the same committed 1,022-image test set,
+including only 22 rare images. Accuracy and recall percentages below are rounded
+for display. CIs are exploratory nominal paired-t intervals without multiplicity
+adjustment; they describe seed/subset variability, not new-patient uncertainty.
+
+**C2 — GAN amount per rare class**, with 2,000 basic source images/class fixed.
+N=0 is basic augmentation. Sources:
+[summary](https://drive.google.com/file/d/1GZHXrtlLALnTa--fFfwKRvdTvWQ-2NA_/view),
+[contrasts](https://drive.google.com/file/d/1jNgVZxXF5yD6pjQlS5S4NdefxBpHwZ2z/view),
+[runs](https://drive.google.com/file/d/1AaSEoXL-AvyAzbEH5HNd-2kI4Ndm7K3a/view),
+[output folder](https://drive.google.com/drive/folders/1eiknB_zZ5-N58egodczXimjxQ6d-lVbN).
+
+| GAN/class | Accuracy % mean ± SD | Accuracy difference vs N=0, pp [95% CI] | Rare macro recall % mean | Rare correct /22 mean |
+|---|---:|---:|---:|---:|
+| 0 (basic) | 92.51 ± 1.90 | Reference | 81.25 | 18.05 |
+| 500 | 92.16 ± 2.20 | −0.36 [−1.68, 0.97] | 85.70 | 19.00 |
+| 1,000 | 93.32 ± 1.96 | +0.80 [−0.45, 2.05] | 88.40 | 19.60 |
+| 2,000 | 91.85 ± 2.10 | −0.66 [−1.92, 0.60] | 90.05 | 20.00 |
+| 3,000 | 92.55 ± 2.63 | +0.03 [−1.61, 1.68] | 90.25 | 20.05 |
+
+Overall accuracy is non-monotonic and every amount-versus-basic accuracy CI
+includes zero. Rare recall increases descriptively with GAN amount. These
+results neither establish overall GAN superiority/equivalence nor identify a
+validated optimal amount. The sampler, pooled validation composition, fitting
+size and update-count limitations remain in the [fixed design](C2_C3_DESIGN.md).
+
+**C3 — common fitting caps**, always 2,000 basic + 3,000 GAN/class. Sources:
+[summary](https://drive.google.com/file/d/1tHe-R0lkOLoTVuZj1Gz_MeGjByN3R_gs/view),
+[contrasts](https://drive.google.com/file/d/1dlNPpyve7t_vNOrijcimIADEnj3-VlLW/view),
+[runs](https://drive.google.com/file/d/1N4QrZTRotfOkWKz_y_FPKCk7cxMGL5xN/view),
+[output folder](https://drive.google.com/drive/folders/1G_CoTeE5iEDGorvPbBVg3LNsIcDOY05z).
+
+| Common fitting | Accuracy % mean ± SD | MCC mean | Rare macro recall % mean | Accuracy difference vs full, pp [95% CI] |
+|---|---:|---:|---:|---:|
+| Full | 92.55 ± 2.63 | 0.9056 | 90.25 | Reference |
+| Cap 10,000/class | 94.08 ± 1.00 | 0.9228 | 90.35 | +1.53 [0.16, 2.90] |
+| Cap 5,000/class | 92.66 ± 0.90 | 0.9042 | 90.75 | +0.11 [−1.36, 1.58] |
+
+The 10,000 cap has the highest observed mean and beats full in 14/20 seeds;
+the paired median gain is 0.54 pp. Large gains in poorly performing full-data
+seeds 8/14/20 create right-skew, so its narrowly positive nominal interval is
+tentative. The 5,000 cap wins in 10/20 seeds and its interval allows benefit or
+harm; this is not evidence of equivalence or no impact. The fitting-only
+adaptation changes class balance, data quantity and update count together.
+
+### Verification and preservation
+
+All 12 summary/provenance files were downloaded on 6 November. C2 has 100 unique
+planned rows, 25 summary rows, 400 paired differences and 20 contrasts; C3 has
+60, 15, 200 and 10 respectively. All planned seeds/conditions are present and
+numeric fields are finite. Every summary, difference and interval recomputes
+from `runs.csv` with `c23_experiment.metric_summary()` within 1e-12. Identity
+hashes match the run records; schedules and all seven recorded source-script
+hashes match Git revision `a9ea5429ebac7f1c034a9e706f0e3b1721b7dbd0`.
+
+The C3 inspection additionally verified all 33 inventoried artifacts of seed
+20's three conditions, their 250-epoch histories, final-head equality,
+predictions/test identities, nested common fitting subsets and unchanged rare
+splits/common validation. None of those three logs contained a traceback.
+This is targeted artifact verification, not an independent rehash/replay of all
+160 heads or certification of the legacy feature provenance. C2 N=3000 and C3
+full use the same data/protocol/seeds; their matching outcomes are not additional
+independent patient evidence.
+
+Exact downloaded summaries/provenance are archived locally in
+`.agents/reports/replication-closeout-2026-11-06/{c2,c3}/` (gitignored).
+Permanent experiment outputs remain in Drive `c2/v1` and `c3/v1`; the original
+manifest, v1 pool, feature caches, canonical Stage 3/4 results and
+`results/seed_check.csv` were not overwritten. C2/C3 do not substitute for C1's
+locked v1 primary/sensitivity schedule. Source/disease confounding, train/test
+patient overlap and unknown rare-patient identity remain limitations.
+
+The [5 November error/recovery audit](C2_C3_RUN_REPORT.md) is retained as a
+historical snapshot; its pending status is superseded by this closeout.
+
+### Closeout checks
+
+- Entry points: only the `c23-plan` markdown cell changed in the notebook;
+  every code cell, execution output and metadata object matches HEAD. Stage
+  scripts, CLI flags and locked experiment settings are unchanged.
+- Reverse actions: not applicable; no experiment action was added.
+- Data/schemas: the manifest, input pools, cache lists and canonical results are
+  unchanged; no cache invalidation or experiment rerun was needed.
+- Docs: README, COLAB, research context, run guide, fixed-design status and
+  notebook status now agree with this stage register. The old error audit is
+  labelled historical.
+- Repository command: `bash .agents/check` using the main checkout's Python
+  environment. Final output:
+
+  ```text
+  Identity check: PASS (0 outgoing commits; author and committer match local noreply)
+  Agent checks: PASS
+  ```
+
+`git diff --check` and notebook JSON/preservation checks also passed. The full
+check log and the 12 source-file hashes are retained under the local closeout
+archive. Notebook code was not executed in this documentation closeout; the
+validated source-only change requires no new training. Changes are local and
+have not been committed or pushed.
 
 Sources: the paper PDF (main checkout, not in git), `results/stage4/*.csv`,
 `results/seed_check.csv`, `results/stage2/qc_*.csv`, the 22 Oct status report.
@@ -110,7 +241,7 @@ contradict or leave unresolved, with source pointers and any required training
 experiment. It does not require finding a single cause. Do not train, regenerate
 features or change the manifest, accepted GAN set or published results.
 
-### Remaining training-free queue
+### Remaining work and closed reviews
 
 1. **L4 closed:** expert human review is not reproducible; automatic QC is the
    substitute. L3 non-expert CAM review is committed. No GAN image is accepted
@@ -144,7 +275,7 @@ accepted GAN set and published CSVs. Run .agents/check for any edits. Do not pus
 |---|---|---|
 | Basic augmentation (§2.3) | flips, ±5% shift, ±30° rotation, 0-20% zoom, ±10% brightness, elastic (MATLAB) | Done: Stage 1, 2,000/class (albumentations) |
 | CycleGAN per disease (§2.3, §3.1) | TF tutorial, 100 epochs, ophthalmologists remove artifacts, 3,000 kept/class | Done, 100 epochs. Automatic kNN QC instead of clinicians; kept 3,000 / 2,610 / 1,248 / 2,199 / 832 (CSC/MH/MacTel/Stargardt/RP) |
-| Fig. 5: amount of augmentation | best at 2,000 basic + 3,000 GAN | C2 execution ready, Part4b; no results yet |
+| Fig. 5: amount of augmentation | best at 2,000 basic + 3,000 GAN | C2 complete: 100/100 planned records. Overall accuracy is non-monotonic; all amount-versus-basic accuracy CIs include zero. Rare recall rises descriptively; see completed results above |
 | Fig. 6: acceptance rate | 100 samples/class rated by 2 ophthalmologists; Stargardt and RP rejected most | **Not reproducible:** the paper's raters were two expert ophthalmologists (Fig. 6 caption; Methods: "Expert ophthalmologists reviewed the generated images"). Our substitute is automatic QC only: pass rate 84 / 65 / 31 / 55 / 21% (RP and MacTel lowest). Decision 2026-10-27: no agent or author rating; a non-expert sheet (`review_sheet.py`: each of 100 accepted/class next to its source NORMAL and the real training scans; looks real / flawed / unsure, with disease-specific reasons from the AI-drafted `docs/research/cyclegan_rubric.json`) exists but is not used for the replication |
 | Fig. 7: t-SNE | Inception-v3 features, none vs gan | Done: `figures.py tsne` -> `results/figures/tsne.{png,pdf}` from the saved joint coordinates; both panels are subsets of one embedding |
 | Table 3: independent test | none 88.4, basic 91.3, gan 92.1 % | Done, seed 42: 90.31 / 88.85 / 92.95 %. Seeds 1-5: 90.7 / 92.9 / 92.6 (gan ties basic) |
@@ -152,7 +283,7 @@ accepted GAN set and published CSVs. Run .agents/check for any edits. Do not pus
 | Fig. 9: one-vs-rest ROC | per-class curves | Done: `figures.py roc` -> `results/figures/roc.{png,pdf}`; legends use `results/stage4/auc.csv`, and all 27 curve areas match it |
 | Fig. 10: Grad-CAM | saliency maps | All 22 rare test images for gan and none (`analysis.py cam --n 22`), side by side in `review_sheet.py`, which asks where the strongest colour sits. Reviewed by the author (non-expert, not blinded to variant), 2026-10-27, `results/analysis/cam_review_seed42_Lam.csv`: on the abnormality gan 21/22, none 14/22; off the retina gan 0, none 7 (incl. all 4 Stargardt, 6 of the 7 correctly classified) |
 | Table 2: 5-fold CV on whole data | GANs retrained per fold, gan 93.9 ± 4.5 % | Not done |
-| Fig. 11: imbalance by under-sampling | "no significant impact" | C3 execution ready, Part4b; approved fitting-only adaptation, no results yet |
+| Fig. 11: imbalance by under-sampling | "no significant impact" | C3 complete: 60/60 planned records. Cap10000 − full +1.53 pp [0.16, 2.90], exploratory nominal CI; cap5000 inconclusive. Authorized fitting-only adaptation; no equivalence/no-impact conclusion |
 | kNN K=3 baseline | 91.2 % | Done: 86.40 % |
 | Prototypical network | trained, 80.8 % | Class-mean baseline only: 68.98 % (out of scope) |
 | Siamese network | 80.9 % | Out of scope |
@@ -362,13 +493,13 @@ counts does not establish the paper's test-image identities. Similarity scores
 have no validated duplicate threshold here, and extra seeds do not add patients.
 These checks preserve the manifest and run of record; the unique cause is unresolved.
 
-### Colab track (needs training)
+### Colab experiments: finalized states and remaining C1
 | # | Work | Paper | Cost |
 |---|---|---|---|
 | C0 | **Full feature gate stopped on Colab; no heads ran.** Recomputed AUC current 0.995455, format 0.995409, framing 0.991455; framing must be <0.90. Headers pass; framing size-only scores tie on all 22 rare tests. `ready_for_heads=False`. [Evidence](../../results/c0/v1_gate_summary.csv), [fixed design](C0_DESIGN.md). D20=A (29 Oct 2026): close C0 as a limitation; C1/C2/C3 use current inputs | Table 4 | Features completed; head training blocked by the predeclared gate |
 | C1 | [Execution ready](C1_EXPERIMENT_PLAN.md), notebook4.1-4.5: fixed250/final primary; es20 seeds1-20 sensitivity. Complete first20, one SD-only recalculation for1pp (floor63/cap243), fixed250 top-up21..N. D20=A fixes current inputs; original v1 accepted pool only, v2 reserved for C2/C3. Drive-only immutable completed runs; no C1 outcomes yet | Tables3-4 | D17=B fast: laptop9.35-12.87min/250 projected; first stage13.9-15.4h,63pairs41.6-43.1h including assumed es20; excludes I/O, Colab unbenchmarked |
-| C2 | [Execution ready](C2_C3_DESIGN.md), Part4b: GAN amounts0/500/1000/2000/3000 per rare class, current/v2, fixed250 FINAL seeds1-20. N=0 basic baseline; existing non-nested-by-design subsets and pooled90/10 retained.100 new heads; no results | Fig.5 | CPU heads; GPU benefits first shared-v2 feature preparation; rough row-scaled laptop projection22.5h, Colab/Drive unbenchmarked |
-| C3 | [Execution ready](C2_C3_DESIGN.md), Part4b: Lam's A full/cap10000/cap5000 COMMON FITTING, current/v2, fixed250 FINAL seeds1-20. Nested common subsets, fixed common val/test,4500 rare fitting/class. Fitting-only adaptation, near-balanced;60 new heads, no results | Fig.11 | CPU heads; shared full-v2 cache; rough row-scaled laptop projection13.5h, not a bound |
+| C2 | **Complete, 6 Nov:** 100/100 planned records and all four summary CSVs verified. Current/v2, amounts0/500/1000/2000/3000, fixed250 FINAL seeds1-20; N=0 basic. See completed results above and [fixed design](C2_C3_DESIGN.md) | Fig.5 | Recorded heads sum21.90h; excludes preparation and between-run gaps |
+| C3 | **Complete, 6 Nov:** 60/60 planned records and all four summary CSVs verified. Full/cap10000/cap5000 COMMON FITTING, current/v2, fixed250 FINAL seeds1-20; nested common subsets, fixed common val/test,4500 rare fitting/class. See completed results above | Fig.11 | Recorded heads sum10.51h; mean full/cap10000/cap5000 14.95/9.57/7.01min |
 | C4 | **Dropped (D9)**; no implementation or execution planned. Per-fold GAN retraining would otherwise be required to avoid leakage | Table2 | Not scheduled |
 | C5 | **Completed on Colab.** Added MH 390, MacTel 1,752, Stargardt 801, RP 2,168; all five `accepted_v2` classes have 3,000 images. Existing checkpoints and original automatic QC only (no human ratings); logs report zero round-1/domain-A source overlap and unchanged v1 hashes. C1 keeps v1; C2 selects `--gan-pool v2` with separate caches. [Counts and provenance](../../results/stage2/c5_v2_counts.csv) | §2.3 | Generation/QC completed; no retraining |
 

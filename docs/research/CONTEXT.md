@@ -26,6 +26,13 @@ basic augmentation? (Reproduction of Yoo et al. 2021.)
   cause for the strong real-only baseline ([audit](L7_BASELINE_AUDIT.md)).
   L8 independently verifies our RCI calculation; the paper's implementation
   remains unresolved ([audit](L8_RCI_AUDIT.md)).
+- Completed v2 sensitivities (6 Nov): C2 has 100/100 runs; mean overall accuracy
+  is non-monotonic and all GAN-amount versus basic accuracy CIs include zero.
+  Rare macro recall rises descriptively from 81.25% (N=0) to 90.25% (N=3000).
+  C3 has 60/60 runs: full/cap10000/cap5000 accuracy means 92.55/94.08/92.66%;
+  cap10000 − full is +1.53 pp, nominal 95% CI 0.16–2.90. These exploratory
+  fixed-cohort comparisons do not complete C1's predeclared v1 protocol.
+  [Final stage register, sources and verification](REPLICATION.md).
 
 ## Scope
 In: the paper's pipeline (Stages 0-4), its metrics (Tables 3-4), knn/prototype
@@ -98,6 +105,7 @@ protocols, datasets, accepted GAN pools and recorded results remain unchanged.
 | 2026-10-29 | Record first Colab outcomes: C5 done; C0 gate stopped, no heads. D20=A (29 Oct 2026): stop C0 at the gate as a limitation; C1 and later C2/C3 use current inputs | Normalizing format and framing did not reduce strong rare-versus-common separation (AUC 0.995 to 0.991). The separation does not come from the tested file-format/framing differences; disease and dataset source remain confounded and this cannot tell them apart | b109d0d notebook cells 19-24, 29-32; [C5 counts](../../results/stage2/c5_v2_counts.csv), [C0 gate](../../results/c0/v1_gate_summary.csv) |
 | 2026-10-29 | D17=B: accelerate cached Stage 3 heads without changing the maths; C1 selects fast; C0 trainer support retained but heads stopped under D20=A; historical Stage 3 default stays keras | Compiled epoch calls the same Keras steps; identical-order full-epoch gate passes with zero weight/val-loss difference on laptop | [T12 gate and benchmark](T12_FAST_TRAINER.md) |
 | 2026-10-29 | C2/C3 ready for manual Colab: current inputs, v2, fixed250 FINAL, seeds1-20 (D18=A). Lam chose C3 A: common fitting caps10000/5000, nested per class/seed, common val/test fixed | Fig11 counts visually checked; fitting-only adaptation, cap5000 vs4500 rare fitting is near-balanced. C2 N=0 is basic; original non-nested-by-design sampling and pooled rare90/10 preserved | [Design and source/decision provenance](C2_C3_DESIGN.md); notebook Part4b; `c23_experiment.py` |
+| 2026-11-06 | Close completed stages with verified C2/C3 aggregate results; retain C1 as open | All 160 planned result records and 600 paired differences validate; no C1 folder was observed in the inspected project Drive root. No protocol, split or canonical result changed | [Stage closeout](REPLICATION.md) |
 
 ## Known pitfalls
 - Rare test classes have 4-5 images: one image moves recall by 0.20-0.25.

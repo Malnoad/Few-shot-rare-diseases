@@ -1,6 +1,8 @@
 # C2/C3: fixed Colab execution plan (29 October 2026)
 
-Implementation ready; **no C2/C3 heads have been trained**. C2 asks how GAN
+**Execution update, 6 November 2026:** C2 completed 100/100 planned runs and C3
+completed 60/60; [aggregate results and verification](REPLICATION.md). The protocol
+below remains the specification fixed on 29 October. C2 asks how GAN
 amount changes performance; C3 asks how random common-class under-sampling changes
 performance after augmentation. These are exploratory sensitivity experiments,
 not a new patient study or a test of clinical generalization.
@@ -194,6 +196,10 @@ cohort/GAN realization, not independent patients; more seeds cannot fix leakage,
 unknown rare patient identity, or source/disease confounding.
 
 ## Execution budget and handoff
+
+The following is the pre-execution forecast. The completed records sum to 21.90
+head-hours for C2 and 10.51 for C3, excluding preparation and between-run gaps;
+see the stage closeout for verification scope. The forecast was not a timing bound.
 
 No new timing run. T12's slowest laptop fast-trainer projection is
 **12.87 min/250-epoch v1 GAN head**, with91,860 fitting rows. Our largest v2

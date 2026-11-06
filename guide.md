@@ -1,25 +1,32 @@
 # Colab training guide
 
-A run sheet for the training that is left in the replication: which notebook cells to
+A run sheet for reproducing the completed experiments and executing the remaining
+C1 protocol: which notebook cells to
 run, in what order, on which runtime, and what to bring back. Background (how Drive,
 GitHub and the runtime fit together, what is in Drive, troubleshooting) is in
 [`COLAB.md`](COLAB.md). Why each run exists is in
 [`docs/research/REPLICATION.md`](docs/research/REPLICATION.md).
+
+**Closeout, 6 November 2026:** C5, C2 (100 runs) and C3 (60 runs) are complete;
+C0 is closed at its gate and its heads must not run. C1 remains open, with no
+verified execution outputs in the inspected project Drive root. Completed-run
+recipes below are retained for reproducibility. [Current results and evidence](docs/research/REPLICATION.md).
 
 Open the notebook from GitHub so it always matches the code:
 `https://colab.research.google.com/github/Malnoad/Few-shot-rare-diseases/blob/main/colab_setup.ipynb`
 
 ## What the runs are for
 
-| Run | Answers | Paper item | Runtime | Ready? |
+| Run | Answers | Paper item | Runtime | State (6 Nov 2026) |
 |---|---|---|---|---|
-| **1. C5** GAN top-up | Brings MH, MacTel, Stargardt and RP to 3,000 accepted GAN images in a separate pool (`accepted_v2`), for C2/C3 | §2.3, Fig. 5 | GPU | yes |
-| **2. C0** features and gate | Does the rare-image file format/framing act as a "which dataset" cue? | Table 4 | GPU | yes |
+| **1. C5** GAN top-up | Brings MH, MacTel, Stargardt and RP to 3,000 accepted GAN images in a separate pool (`accepted_v2`), for C2/C3 | §2.3, Fig. 5 | GPU | complete |
+| **2. C0** features and gate | Does the rare-image file format/framing act as a "which dataset" cue? | Table 4 | GPU | complete; closed at gate |
 | **3. C0** heads | Does removing that cue change rare-class recall? | Table 4 | CPU | no: stopped at gate, D20=A |
-| **4. C1** seed sweep | Does GAN beat basic augmentation under the paper's 250-epoch schedule, over enough seeds? | Tables 3, 4 | CPU | yes: current inputs (D20=A), fast (D17=B) |
-| **5. C2 / C3** | Amount of GAN images; common fitting caps | Figs. 5, 11 | GPU for first v2 features; CPU heads | yes: Part 4b, current/v2, fixed250 final, seeds 1-20 |
+| **4. C1** seed sweep | Does GAN beat basic augmentation under the paper's 250-epoch schedule, over enough seeds? | Tables 3, 4 | CPU | open; implementation ready, execution unverified |
+| **5. C2 / C3** | Amount of GAN images; common fitting caps | Figs. 5, 11 | GPU for first v2 features; CPU heads | complete: 100/100 and 60/60 planned records |
 
-Runs 1 and 2 don't depend on each other or on any open decision. Start there.
+C1 is the remaining planned experiment. Preserve the completed C2/C3 outputs
+and their frozen revision; do not rerun completed work to improve its results.
 
 ## Before the first run
 
@@ -34,7 +41,8 @@ Runs 1 and 2 don't depend on each other or on any open decision. Start there.
 
 ## Rules for every session
 
-1. Run **Part 1** first, every session.
+1. Run **Part 1** first in a fresh runtime. In an intact pinned C2/C3 kernel,
+   skip Part 1 and follow the retained-kernel instructions in `COLAB.md`.
 2. Restore real images with Part 3 cells (3.1, 3.2, 3.3, 3.4b as each run lists). Do
    **not** run Part 2 in a session for runs 1-3: Part 2 makes empty placeholder images
    that C0 and C5 reject.
