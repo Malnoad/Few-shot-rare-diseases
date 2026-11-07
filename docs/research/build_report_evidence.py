@@ -41,7 +41,15 @@ def close(actual: float, expected: float) -> None:
     assert math.isclose(actual, expected, rel_tol=0, abs_tol=1e-10), (actual, expected)
 
 
+def fingerprint(path: Path) -> str:
+    """SHA256 of a text input with CRLF folded to LF, so Windows and Colab checkouts agree."""
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
 def compute(root: Path) -> tuple[dict[str, object], dict[str, str], list[str]]:
+    # Report.tex is the dated 27 Oct evidence checkpoint. Fingerprint the saved results and
+    # the audits it cites; living documents that later work keeps editing (CONTEXT, REPLICATION,
+    # COLAB, the notebook, the C1 plan, stage3_classifier.py) are deliberately not fingerprinted.
     inputs = ["data/manifest.csv", "results/seed_check.csv", "results/stage4/metrics.csv",
               "results/stage4/recall.csv", "results/analysis/cluster_seed42.csv",
               "results/analysis/paired_cluster_seed42.csv", "results/analysis/cluster_summary.csv",
@@ -49,12 +57,10 @@ def compute(root: Path) -> tuple[dict[str, object], dict[str, str], list[str]]:
               "results/analysis/cam_review_seed42_Lam.csv", "results/analysis/rare_recall.csv",
               "results/analysis/rci_paper_bounds.csv", "docs/research/C1_HEAD_TIMING.json",
               "results/stage2/stage2.log", "results/analysis/knn_sweep.csv",
-              "docs/research/CONTEXT.md", "docs/research/REPLICATION.md",
               "docs/research/C0_DESIGN.md", "docs/research/C0_REPORT.md",
-              "docs/research/C1_EXPERIMENT_PLAN.md", "docs/research/L7_BASELINE_AUDIT.md",
+              "docs/research/L7_BASELINE_AUDIT.md",
               "docs/research/L8_RCI_AUDIT.md", "docs/research/PAPER_DISCREPANCIES.md",
-              "docs/research/report_sources.json", "docs/research/build_report_evidence.py",
-              "COLAB.md", "stage3_classifier.py", "colab_setup.ipynb"]
+              "docs/research/report_sources.json", "docs/research/build_report_evidence.py"]
     man = rows(root, inputs[0])
     test = [row for row in man if row["split"] == "test"]
     normalize = lambda value: value.replace("\\", "/")
@@ -190,7 +196,7 @@ def main() -> None:
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     data, macros, inputs = compute(root)
-    source_hashes = {name: hashlib.sha256((root/name).read_bytes()).hexdigest() for name in sorted(set(inputs))}
+    source_hashes = {name: fingerprint(root/name) for name in sorted(set(inputs))}
     report = root / "docs/report/Report.tex"
     text = report.read_text(encoding="utf-8")
     assert text.count(BEGIN) == text.count(END) == 1
