@@ -91,6 +91,32 @@ actual UTF-16 encoding. No log-capture guard was installed.
 
 | 27 | 2026-10-29 | Codex · gpt-6.1-sol | T9 paper-text inspection again failed on Unicode stdout | Repeated omitted UTF-8 boundary (3/10/14/21–23) | Proposed check | Corrected session encoding; persistent UTF-8 wrapper/Unicode round-trip from entry22 remains proposed, not installed pending Lam | yes |
 | 28 | 2026-10-29 | Codex · gpt-6.1-sol | T9 sampler fixture incorrectly expected CSC500 not to nest in1000; several atomic patches guessed nonexistent final context | Assumed individual sample behavior and patch context before inspecting them | Note | Corrected fixture uses exact Stage3 sampler calls and later-class non-nesting; corrected patches use opened context. No extra guard installed | yes: context repeats13 |
+| 29 | 2026-10-30 | Codex · gpt-6.1-sol | A direct PowerShell curl.exe literature query lost embedded quotes, returned unrelated records and reported a host-parsing error | Repeated native-command argument quoting assumption (5/10/23) | Proposed check | Extend the pending inspection wrapper with a curl argument boundary test and assert the API echoes the exact requested query before screening results; corrected lookup used Python subprocess argv and verified request.queryString. No permanent fix applied pending Lam | yes |
+| 30 | 2026-10-30 | Codex · gpt-6.1-sol | Repeated the tracker's no-masks segmentation exclusion without checking the source release, and omitted the explicit C6 drop from the planning summary | Treated local/tracker absence and scope decisions as verified feasibility evidence | Proposed rule | Require each exclusion to cite either Lam's actual decision or a dated source-release/resource check; absent local files and cancelled threads alone do not establish impossibility or experiment cancellation. Mendeley v2 lists Segmentation_manual.zip; range-read directory confirms 72 PNGs, contents/mapping still unverified. No permanent rule/check applied pending Lam | no |
+| 31 | 2026-10-30 | Codex · gpt-6.1-sol | A read-only NPZ inventory failed because numpy.lib.format._read_array_header is absent | Assumed a private NumPy helper was available in the installed version | Note | Corrected the temporary probe using introspected public versioned header readers; completed the inventory without loading feature values. No maintained caller or permanent prevention change added | no |
+| 32 | 2026-10-30 | Codex · gpt-6.1-sol | An HTML patch failed because its paragraph was embedded in a longer line | Guessed patch line boundaries instead of deriving them from current file text (repeat of 28) | Proposed check | Corrected the temporary edit with exact current lines and assert text.count(anchor) == 1 for each replacement. A retained report-edit helper could enforce that check if approved; no permanent helper/check installed | yes |
+| 33 | 2026-10-30 | Codex / gpt-6.1-sol | Colab pilot cell lookup raised TypeError before execution because a text cell lacked getCellId; later a file-provider probe treated its files property as an array | Assumed heterogeneous Colab browser objects shared a collection shape | Note | Notebook cells are resolved through the observed model getId method. The retained execution monitor reads files through Python and explicit JSON rather than the raw file-provider object. No maintained browser adapter exists here for a permanent check; no new rule or dependency installed. | yes, during full-run inspection |
+| 34 | 2026-10-30 | Codex / gpt-6.1-sol | A local tracker replacement patch combined Delete File and Add File for the same path; apply_patch rejected it before mutation | Assumed replacement operations for one path could share a patch | Note | Corrected with Update File. Retained Drive tracker writes already use temporary-file replacement; there is no maintained local patch wrapper to attach a meaningful check. No permanent rule or dependency installed. | no |
+| 35 | 2026-10-30 | Codex / gpt-6.1-sol | Preview wait timed out at15s during a read-only audit; orchestration continued into a cell-source update before execution settled | Treated a returned MCP isError result as if the preceding notebook action had completed | Proposed check | Abort dependent mutations on result.isError and require an idle kernel before setText/manualExecute; exact proposed guard below, not installed pending Lam. Existing audit was polled and proved exit0; training writer/data/lock untouched. | no |
+| 36 | 2026-10-30 | Codex / gpt-6.1-sol | Local capture transfer exceeded Windows process command length; CreateProcess rejected it before execution | Put a large base64 artifact payload in the shell command rather than a data file | Note | Staged payload with apply_patch and decoded through a short file-based command. This is a one-off tool transport boundary, with no maintained project launcher to attach a meaningful check; no permanent rule/dependency installed. | no |
+| 37 | 2026-10-30 | Codex / gpt-6.1-sol | Portable Colab timing setup raised FileNotFoundError when nvidia-smi was absent | Made optional NVIDIA metadata collection unconditional before checking TensorFlow GPU visibility | Proposed check | Exact code/test patch: .agents/reports/c23-highend-pilot/nvidia-smi-preflight.patch. Require a TensorFlow GPU in an isolated probe; collect nvidia-smi only when available. Mocked CPU, missing-tool GPU and normal GPU cases pass; git apply --check passes. Not applied pending Lam approval; no pilot launched. | no |
+| 38 | 2026-11-02 | Codex / gpt-6.1-sol | One-off guide verification falsely failed a Unicode-arrow match; a later successful git diff command masked that Python failure in the shell exit code | Repeated native PowerShell stdin encoding assumption from22 and failed to propagate the first command's status | Note; existing wrapper proposal retained | Task verification was rerun successfully from the UTF-8 file .agents/reports/c23-guide/verify_guide.py using ASCII escapes. Entry22's persistent UTF-8 wrapper remains uninstalled pending Lam; proposed wrapper must also exit on nonzero child status. No AGENTS or harness change applied. | yes:22 |
+| 39 | 2026-11-02 | Codex / gpt-6.1-sol | A temporary JavaScript wrapper for a read-only Git audit failed syntax parsing before any command executed | Unbalanced function-call parentheses in ad hoc orchestration | Note | functions.exec rejected the script before operations; corrected the result binding and reran the remote-SHA/bundle checks successfully. No maintained wrapper exists here for a project regression test; no permanent rule or dependency added. | no |
+| 40 | 2026-11-03 | Codex · gpt-6.1-sol | FM-plan inspection passed a literal wildcard to rg, guessed an L9 filename and a manifest field, lost embedded curl quotes, and submitted two patches with stray unmatched context | Repeated shell/path/schema/context assumptions (5/7/14/22/28) | Proposed check | Extend the proposed inspection wrapper below with schema assertions and a native-argument round-trip; corrected reads use discovered paths, manifest label, rg -g, subprocess argv and opened patch context. No permanent fix installed | yes |
+| 41 | 2026-11-03 | T3 Gemini · gemini-4-argon-high, audited by Codex · gpt-6.1-sol | Rebuttal R1 invented external FRR and project methods, misattributed AUC and cited the wrong Yoo paper | Reconstructed project facts despite failed reads instead of limiting conclusions to verified inputs | Proposed check | Reject unsupported claims, retain explicit dispositions in FM_FEWSHOT_PLAN.md and request corrected R2; proposed artifact-backed quantitative claim check below, not installed pending Lam | no |
+| 42 | 2026-11-05 | Codex · gpt-6.1-sol | Tried reading nature-writing/core files before resolving the manifest's static/core paths | Repeated guessed-path inspection from 14/22/40 | Proposed check (existing) | Corrected reads use exact manifest paths. Entry 40's required-path inspection check remains proposed; no permanent wrapper or rule installed without Lam's approval | yes |
+| 43 | 2026-11-05 | Codex · gpt-6.1-sol | Presentation verification failed before execution with a PowerShell missing-string-terminator error | Nested Python regex quotes inside a native -c argument repeated entries 5/10/15/23 | Proposed check | Rerun verification through a UTF-8 here-string on stdin. Proposed persistent change: adopt the exact .agents/inspect-python.ps1 candidate and missing-path/Unicode/quote round-trip verification above; not installed pending Lam approval. | yes |
+| 44 | 2026-11-05 | Codex · gpt-6.1-sol | Initial protocol-writing orchestration cell failed JavaScript parsing before any write | Embedded Markdown backticks terminated the JavaScript template literal | Note | Reissued the temporary cell with literal text safely delimited. No maintained call site exists for a persistent check; no permanent guard or workflow change installed. | related quoting failures:5/43 |
+| 45 | 2026-11-05 | Codex · gpt-6.1-sol | Two temporary document-replacement anchor checks failed before any disk mutation | Used a leftover placeholder anchor and then assumed separate instead of the actual separately | Existing check | The orchestration helper requires the old passage before replacement and checkpoints staged text; inspected actual passages and resumed. No production helper or permanent workflow fix was added. | related context assumptions:13/28 |
+| 46 | 2026-11-05 | Codex · gpt-6.1-sol | Presentation replacement stopped because a previous-turn store value was unavailable | Assumed transient tool storage retained the earlier HTML instead of reading its saved file | Note | Read the existing UTF-8 file explicitly and reran the replacement; no research files or results were affected. No persistent guard installed. | no |
+| 47 | 2026-11-05 | Codex / gpt-6.1-sol | Assumed Lam wanted me to choose clarification topics and offered a topic menu | Treated a request to read context for discussion as permission to set the teaching agenda | Note; rule proposed | Proposed wording: When Lam asks me to review context for questions, read it and let Lam choose what needs explanation. No permanent rule applied; conversational intent has no reliable automated check. | no |
+| 48 | 2026-11-05 | Codex / gpt-6.1-sol | Literature inspection repeated PowerShell native -c quote loss and a child parser's cp1252 Unicode failure | Parent UTF-8 mode was assumed to cover a separately spawned Python process; inline source still crossed native argument parsing | Proposed check, recurrence | Corrected session commands use stdin and explicit child -X utf8. Extend the existing entry22 inspect-python wrapper proposal with a child-process Unicode round-trip; no permanent wrapper or check installed pending Lam | yes: 3/10/14/22/23/27 |
+| 49 | 2026-11-05 | Codex / gpt-6.1-sol | Scratch literature builders hit truncated JSON, tuple-key JSON serialization and a variable missing from a fresh exec isolate | Assumed output capacity and transient state instead of bounding batches and explicitly loading stored values | Note | Split extraction into bounded batches, used JSON-safe keys and loaded cross-call state explicitly; artifacts are checked against the original 49-file inventory. No permanent guard applied to one-off scratch code | no |
+| 50 | 2026-11-05 | Codex / gpt-6.1-sol | Starter prompt repeated the full protocol and grew to about 1,300 words; Lam asked for a shorter prompt | Confused a reusable task entry point with a self-contained protocol document | Note | Shortened the requested prompt to objective, knowledge-base pointer, outputs and completion checks. Detailed settings remain in the authoritative documents; no permanent rule/check added | no |
+| 51 | 2026-11-05 | Codex · gpt-6.1-sol | IEEE drafting probed a starter file in the wrong worktree and guessed a ProtoNets BibTeX URL under /hash/ rather than following its /file/ link | Repeated cross-worktree path/lookup assumptions from 7/14/23 | Proposed check | Extend the already proposed inspection wrapper's RequiredPaths validation (entry 23); resolve local inputs from the supplied source index and remote assets from actual primary-page links. Existing candidate remains uninstalled pending Lam's approval. | yes |
+| 52 | 2026-11-05 | Codex · gpt-6.1-sol, delegated citation audit | A guessed Zenodo ID returned unrelated software; the audit excluded it and recovered OCTDL's actual release. An inspection also repeated the stdout-encoding failure | Guessed record identity and repeated Windows encoding assumptions | Proposed check | Proposed metadata guard: assert the expected title and DOI before recording a dataset response as evidence; retain excluded responses separately. Reuse entry 22's proposed UTF-8 round-trip wrapper. No permanent guard installed. | yes: encoding repeats 22/23 |
+| 53 | 2026-11-05 | Codex / gpt-6.1-sol | Browser click rejected role selector with unsupported exact=true | Assumed locator syntax accepted an attribute not supported by the live browser tool | Note | Recovered with observed page-model/DOM reads. No project browser-selector wrapper exists to validate; no repository guard changed. | no |
+| 54 | 2026-11-05 | Codex / gpt-6.1-sol | Optional D:/Few-shot/drive mirror listing failed because the directory is absent | Assumed a documented optional mirror existed; repeats path-assumption entries 7/14/23 | Proposed check | Extend the pending inspection-wrapper proposal (22/23) with Test-Path -LiteralPath $taskMirror -PathType Container before optional mirror reads; report unavailable and use the authorized browser source. No persistent fix applied pending Lam. | yes |
 
 ## Proposed check for entry 9 (not installed)
 
@@ -127,3 +153,48 @@ result = subprocess.run(["node", "-e", prefix + "const csvCell = " + js + "proce
 assert list(csv.DictReader(io.StringIO(result.stdout))) == [fixture]
 print("Review sample uniqueness and CSV round-trip: PASS")
 ```
+
+## Proposed preview sequencing check for entry 35 (not installed)
+
+Add these checks to the maintained browser orchestration wrapper if approved.
+They stop follow-up mutations after a tool error and while a cell is executing;
+the existing process is inspected rather than restarted after a timeout.
+
+```javascript
+if (result.isError) {
+  throw new Error("Preview action failed; inspect pending execution before further notebook mutations");
+}
+if (colab.global.notebook.isExecuting()) {
+  throw new Error("Notebook execution pending; poll the existing process before editing a cell");
+}
+```
+
+## Proposed quantitative-claim check for entry 41 (not installed)
+
+Require an evidence row for every observed numerical project result, with
+`source_csv`, `row_match`, `field` and `value`; planned values carry a separate
+status and cannot appear as observed. A validator should perform the equivalent
+of this check before accepting a reviewer result into a maintained report:
+
+```python
+records = list(csv.DictReader((root / claim["source_csv"]).open(encoding="utf-8-sig")))
+matched = [r for r in records if all(r[k] == v for k, v in claim["row_match"].items())]
+assert len(matched) == 1
+assert math.isclose(float(matched[0][claim["field"]]), claim["value"], abs_tol=1e-10, rel_tol=0)
+```
+
+This extends the artifact-verification approach already used by
+`docs/research/build_report_evidence.py`; it does not validate causal prose,
+paper identity or clinical claims. The proposed fixture should accept C0's
+`current` / `recomputed_axis_auc` value 0.995455 and fail a missing source,
+missing column or different value. No new checker or hook was installed.
+
+## Proposed extension for entry 40 (not installed)
+
+Extend entry 22's inspection-wrapper verification with these exact assertions:
+`assert {'path', 'label', 'pid', 'split'} <= set(csv.DictReader(manifest).fieldnames)`
+for manifest consumers, and a subprocess argument round-trip that verifies
+`['optical coherence tomography', '"few-shot"']` arrives unchanged. Exercise
+required-path validation with a missing file and require a nonzero exit before
+inspection starts. These are proposed checks of a maintained inspection wrapper,
+not a new restriction on research code; Lam's approval is still required.
