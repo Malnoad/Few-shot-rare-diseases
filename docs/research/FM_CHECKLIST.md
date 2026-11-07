@@ -52,7 +52,7 @@ document was written (first commit if older than 4 Nov). Paths are relative to t
 - [x] Protocol v1.0 finalized after final-round review (5 Nov; hash above)
 - [x] Five-page IEEEtran draft with 21 references; `verify_package.py` PASS on 5 Nov (`VERIFICATION.md`)
 - [x] Preserve the protocol and draft sources in git: committed 7 Nov on `t3/proposal-project-checklist` (protocol blob hash checked against `4e8df8d9…c5df`); reaches `main` only after Lam's merge
-- [ ] Bring the C2/C3 aggregate CSVs from Drive into `results/` (the closeout cites Drive files owned by a second account)
+- [x] Bring the C2/C3 results from Drive into `results/c2/v1/` and `results/c3/v1/` (7 Nov): 1,760 run-marker hashes matched, summaries recompute from `runs.csv` (`REPLICATION.md`, "Local copies")
 - [ ] Checkpoint and fallback access attempted by 6 Nov: RETFound terms, DINOv2, MIRAGE, BiomedCLIP (§9). Must not delay the report.
 - [ ] Replace "Lam" with the full author/affiliation block
 - [ ] Confirm the course template and submission hour

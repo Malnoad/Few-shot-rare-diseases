@@ -1,0 +1,11 @@
+metric,condition,control,n_pairs,mean_diff,sd_diff,ci95_lo,ci95_hi,complete,inference
+acc,cap10000,full,20,1.5264187866927634,2.9274103633168953,0.15634856315751544,2.896489010228011,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+acc,cap5000,full,20,0.10763209393346429,3.135441573154385,-1.3597997327906923,1.575063920657621,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+mcc,cap10000,full,20,0.017222312259940052,0.034820751226036784,0.0009256990437911151,0.03351892547608899,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+mcc,cap5000,full,20,-0.0013586915399720289,0.03747235694948259,-0.01889629443483909,0.016178911354895034,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+rare_macro,cap10000,full,20,0.0010000000000000009,0.0430299773108053,-0.019138649289378713,0.021138649289378714,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+rare_macro,cap5000,full,20,0.004999999999999982,0.041989973740606694,-0.014651912635797645,0.024651912635797607,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+common_macro,cap10000,full,20,0.015599999999999992,0.02995329698046609,0.0015814254933678908,0.029618574506632092,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+common_macro,cap5000,full,20,0.0010500000000000175,0.031845804482818346,-0.013854295281990702,0.015954295281990737,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+rare_correct,cap10000,full,20,0.0,0.8583950752789521,-0.40174126163045226,0.40174126163045226,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+rare_correct,cap5000,full,20,0.05,0.8870412083230168,-0.36514806458329596,0.46514806458329594,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim

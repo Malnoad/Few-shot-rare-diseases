@@ -1,0 +1,435 @@
+{
+  "experiment": "c3",
+  "input_arm": "current",
+  "gan_pool": "v2",
+  "trainer": "fast",
+  "manifest_sha256": "744bc632c4395d89bdbdc417adc163a8b74b7d038c657225c16ae5b9be3d0ed5",
+  "bundle_identity_sha256": "121b7ab8d92c9b525ce55e03495307b0d0bbf9468fa27bff3c9e28825f84a688",
+  "caches": {
+    "major_train": "95cebcab95c62cb900fccf4d2fc909b7775f9a7ef4897c5ef24d258f502b7c37",
+    "major_val": "68bb8e9773f5783721574cc4b0fca2a771b16d0d10ef90121a8fab4e4cf03cc2",
+    "test": "17a562337d8f8d9dedf15e480773fabb0f99805130b25bb29d766ced0487d68d",
+    "basic_CSC": "8c06abcbe7775ffabcd10b6472332e3bdeef7ed861bac42b8fd382aac511894b",
+    "basic_MH": "8219adbded7a1bc64bab72d77971204fcd0c5c7f1c88e23a01c61dfa290bc4da",
+    "basic_MacTel": "77c52256647e55b8fe919030b36cea8638b4b867112f852790fde9f267f42878",
+    "basic_Stargardt": "4013b6f4a7e7b99a501f7182325414ff833b39c6e4889521a11787bd86f28b7d",
+    "basic_RP": "074a7a24a0deb88f1f9b489aec72fcb3e92f18d5c277845073dc049d684c2539",
+    "gan_v2_CSC": "b2497efea4fa2e4ef7e47265a7f8e5d554161aaacc03c9d9358df467b10b569f",
+    "gan_v2_MH": "4caccc27832443b8f2fb5db5b4e51b9418e2d0af33a3254cf132628debc43c71",
+    "gan_v2_MacTel": "e0920ac96d38d2d0654e8e10b9d3ee3db608df57ec909f6d54028a1fa3aca3d5",
+    "gan_v2_Stargardt": "02267f4b7978e57b3eac2b4b9a81ac019b82e6ecc33bc743d86ce964c8c6b743",
+    "gan_v2_RP": "4488a9626c4be59d5fdf4e18d8386f86179568c09c94211de7bac64701a499ae"
+  },
+  "scripts": {
+    "stage3_classifier.py": "4253b17c9888e1e79b4ff48fe31f7fd15b3b20f0d1e5f841a8319c111a3dd1fd",
+    "c23_experiment.py": "872ee80bb88fcebb326208e1a434d21e1cf43eaa5a80e2a7f70ab7a1cfce9f86",
+    "c1_experiment.py": "e88a47b65d3ad95740b74e8baf518a0de0f071a0a060fe67e065a810abc2cbf0",
+    "c0_experiment.py": "486a0f91ef557d399c646ba71474cab828db66a90d2f278ad9b2f84bd934adcc",
+    "c5_topup.py": "43cb29ad60987b0b6a3472f421bdda3fe1ef650a941f316a1c13e3725b564c47",
+    "stage1b_normalize.py": "fec5469337ac26d1fcc8d50c5927f62edd222662b6eb986e63868b1fc5c0ff8d",
+    "fast_head.py": "a7acebf9cef6464652b629e85b1fb53fe931770b21a615cd57ae037e1b12c145"
+  },
+  "revision": "a9ea5429ebac7f1c034a9e706f0e3b1721b7dbd0",
+  "packages": {
+    "numpy": "2.1.3",
+    "pandas": "2.2.3",
+    "scipy": "1.16.3",
+    "tensorflow": "2.21.0",
+    "keras": "3.13.2",
+    "scikit-learn": "1.6.1"
+  },
+  "protocol": {
+    "epochs": 250,
+    "patience": 0,
+    "restore": "last",
+    "batch": 10,
+    "lr": 0.001,
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "schedule": [
+      [
+        1,
+        "full",
+        3000,
+        null
+      ],
+      [
+        1,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        1,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        2,
+        "full",
+        3000,
+        null
+      ],
+      [
+        2,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        2,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        3,
+        "full",
+        3000,
+        null
+      ],
+      [
+        3,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        3,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        4,
+        "full",
+        3000,
+        null
+      ],
+      [
+        4,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        4,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        5,
+        "full",
+        3000,
+        null
+      ],
+      [
+        5,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        5,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        6,
+        "full",
+        3000,
+        null
+      ],
+      [
+        6,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        6,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        7,
+        "full",
+        3000,
+        null
+      ],
+      [
+        7,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        7,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        8,
+        "full",
+        3000,
+        null
+      ],
+      [
+        8,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        8,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        9,
+        "full",
+        3000,
+        null
+      ],
+      [
+        9,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        9,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        10,
+        "full",
+        3000,
+        null
+      ],
+      [
+        10,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        10,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        11,
+        "full",
+        3000,
+        null
+      ],
+      [
+        11,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        11,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        12,
+        "full",
+        3000,
+        null
+      ],
+      [
+        12,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        12,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        13,
+        "full",
+        3000,
+        null
+      ],
+      [
+        13,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        13,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        14,
+        "full",
+        3000,
+        null
+      ],
+      [
+        14,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        14,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        15,
+        "full",
+        3000,
+        null
+      ],
+      [
+        15,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        15,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        16,
+        "full",
+        3000,
+        null
+      ],
+      [
+        16,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        16,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        17,
+        "full",
+        3000,
+        null
+      ],
+      [
+        17,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        17,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        18,
+        "full",
+        3000,
+        null
+      ],
+      [
+        18,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        18,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        19,
+        "full",
+        3000,
+        null
+      ],
+      [
+        19,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        19,
+        "cap5000",
+        3000,
+        5000
+      ],
+      [
+        20,
+        "full",
+        3000,
+        null
+      ],
+      [
+        20,
+        "cap10000",
+        3000,
+        10000
+      ],
+      [
+        20,
+        "cap5000",
+        3000,
+        5000
+      ]
+    ],
+    "common_sampling": "fitting only; independent class streams; nested caps"
+  },
+  "shuffle_policy": "fast: fresh tf.random.shuffle each epoch after set_random_seed; keras: installed array-adapter behavior; not seeded-equivalent",
+  "limitation": "Seeds share patients; source/disease confounding and legacy base feature history unresolved"
+}

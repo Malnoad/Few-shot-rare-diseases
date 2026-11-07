@@ -1,0 +1,24 @@
+{
+  "seed": 6,
+  "condition": "cap10000",
+  "acc": 93.83561643835617,
+  "mcc": 0.9195624429243588,
+  "rare_macro": 0.95,
+  "common_macro": 0.938,
+  "rare_correct": 21,
+  "minutes": 9.323415011650043,
+  "identity_sha256": "e9a653013bf5e7c082fefccdc087c72e78dc9438151739ff820109e9b9b2b582",
+  "files": {
+    "head.npz": "1242ba1e50c6f1f1c845be60d21d797cab9c4757f5d90ea1add52459d697e57e",
+    "last_head.npz": "1242ba1e50c6f1f1c845be60d21d797cab9c4757f5d90ea1add52459d697e57e",
+    "best.weights.h5": "1449f2f28ad25145504a33819e0ff76dcf02e885f21cd1f852ca328bcbf1dd4a",
+    "history.csv": "9d8171a4b2d90c812ed28424c14dd28ecc71e2f2d4ca08ad67bc13d8a11ab542",
+    "trainer.json": "4e91d4c250c21dd23512279d12d03171931bb4f23b6842a2feb0af18099a58b8",
+    "data_counts.csv": "7dbd68da8573e32ea095d7b289384d2e7b467872ef33148542eb34acc2bd954e",
+    "test_predictions.csv": "48d925a9a1c405e4a9b4f7724b814c9545911837d61654b52b02fc67a6a6718d",
+    "val_predictions.csv": "c51a9bca26c694871dcb9b32be6d45655a41dd7a5cf386581d538a5f9ee01a9b",
+    "run.log": "7b3a895e20cf2e1ec867a20f44cf1d30f55d6fac2ce7501cd85d9b316f606822",
+    "run.json": "1d32830d244de4d7a5ec8aa215ab8f0e8fd0e2b96bf740d1bb883a05b945cdc5",
+    "selection.json.gz": "8c7a6d3df1db05ba13c75b796fc4b6eef424a3eb7f5a82da14c07164699a6146"
+  }
+}

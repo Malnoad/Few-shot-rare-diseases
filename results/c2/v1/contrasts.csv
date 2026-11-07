@@ -1,0 +1,21 @@
+metric,condition,control,n_pairs,mean_diff,sd_diff,ci95_lo,ci95_hi,complete,inference
+acc,n0500,n0000,20,-0.35714285714285693,2.82632350000088,-1.6799029723464098,0.9656172580606959,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+acc,n1000,n0000,20,0.8023483365949119,2.6712979565799566,-0.44785759092457356,2.0525542641143972,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+acc,n2000,n0000,20,-0.6604696673189828,2.7015487800613016,-1.9248334160338034,0.6038940813958377,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+acc,n3000,n0000,20,0.03424657534246407,3.511799085734013,-1.6093259892333207,1.677819139918249,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+mcc,n0500,n0000,20,-0.004235883348802305,0.033961949246943686,-0.020130564866473747,0.011658798168869135,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+mcc,n1000,n0000,20,0.009844146012215454,0.03167518825515213,-0.004980298417258456,0.024668590441689363,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+mcc,n2000,n0000,20,-0.0073358869075971665,0.0316556425506321,-0.022151183665772078,0.007479409850577744,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+mcc,n3000,n0000,20,0.0009528182098669125,0.04155035022364945,-0.018493344286593737,0.020398980706327563,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+rare_macro,n0500,n0000,20,0.044500000000000026,0.03734265234568277,0.027023100728290266,0.06197689927170978,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+rare_macro,n1000,n0000,20,0.07150000000000004,0.035876249290552865,0.05470939848370924,0.08829060151629084,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+rare_macro,n2000,n0000,20,0.08800000000000006,0.029486839169543522,0.07419973446886682,0.1018002655311333,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+rare_macro,n3000,n0000,20,0.09000000000000005,0.036273812505500574,0.0730233331716511,0.106976666828349,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+common_macro,n0500,n0000,20,-0.004599999999999988,0.02912296977337736,-0.018229969411672157,0.009029969411672181,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+common_macro,n1000,n0000,20,0.0066500000000000005,0.02730967632639813,-0.0061313219554190715,0.01943132195541907,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+common_macro,n2000,n0000,20,-0.008699999999999986,0.027747166759110615,-0.021686073780599384,0.004286073780599411,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+common_macro,n3000,n0000,20,-0.0016499999999999959,0.035842161295264935,-0.018424647843410066,0.015124647843410076,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+rare_correct,n0500,n0000,20,0.95,0.7591546545162482,0.5947046849856666,1.3052953150143334,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+rare_correct,n1000,n0000,20,1.55,0.7591546545162483,1.1947046849856666,1.9052953150143335,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+rare_correct,n2000,n0000,20,1.95,0.6048053188292996,1.6669423977085014,2.2330576022914985,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim
+rare_correct,n3000,n0000,20,2.0,0.7254762501100116,1.6604666634330212,2.339533336566979,True,exploratory nominal paired-t; no multiplicity adjustment; no equivalence claim

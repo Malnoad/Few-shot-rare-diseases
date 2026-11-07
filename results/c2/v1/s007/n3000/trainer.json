@@ -1,0 +1,14 @@
+{
+  "trainer": "fast",
+  "seed": 7,
+  "epochs": 250,
+  "batch": 10,
+  "lr": 0.001,
+  "patience": 0,
+  "restore": "last",
+  "variant": "gan",
+  "gan_pool": "v2",
+  "gan_per_class": 3000,
+  "tensorflow": "2.21.0",
+  "keras": "3.13.2"
+}

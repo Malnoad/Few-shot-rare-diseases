@@ -1,0 +1,16 @@
+{
+  "trainer": "fast",
+  "seed": 9,
+  "epochs": 250,
+  "batch": 10,
+  "lr": 0.001,
+  "patience": 0,
+  "restore": "last",
+  "variant": "gan",
+  "gan_pool": "v2",
+  "gan_per_class": 3000,
+  "tensorflow": "2.21.0",
+  "keras": "3.13.2",
+  "major_train_per_class": 5000,
+  "common_sampling": "SeedSequence([seed,class_index,2303]); nested; original row order"
+}

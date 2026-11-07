@@ -40,8 +40,8 @@ for display. CIs are exploratory nominal paired-t intervals without multiplicity
 adjustment; they describe seed/subset variability, not new-patient uncertainty.
 
 **C2 — GAN amount per rare class**, with 2,000 basic source images/class fixed.
-N=0 is basic augmentation. Sources:
-[summary](https://drive.google.com/file/d/1GZHXrtlLALnTa--fFfwKRvdTvWQ-2NA_/view),
+N=0 is basic augmentation. Sources: committed copies in [`results/c2/v1/`](../../results/c2/v1/);
+Drive originals: [summary](https://drive.google.com/file/d/1GZHXrtlLALnTa--fFfwKRvdTvWQ-2NA_/view),
 [contrasts](https://drive.google.com/file/d/1jNgVZxXF5yD6pjQlS5S4NdefxBpHwZ2z/view),
 [runs](https://drive.google.com/file/d/1AaSEoXL-AvyAzbEH5HNd-2kI4Ndm7K3a/view),
 [output folder](https://drive.google.com/drive/folders/1eiknB_zZ5-N58egodczXimjxQ6d-lVbN).
@@ -60,8 +60,8 @@ results neither establish overall GAN superiority/equivalence nor identify a
 validated optimal amount. The sampler, pooled validation composition, fitting
 size and update-count limitations remain in the [fixed design](C2_C3_DESIGN.md).
 
-**C3 — common fitting caps**, always 2,000 basic + 3,000 GAN/class. Sources:
-[summary](https://drive.google.com/file/d/1tHe-R0lkOLoTVuZj1Gz_MeGjByN3R_gs/view),
+**C3 — common fitting caps**, always 2,000 basic + 3,000 GAN/class. Sources: committed copies in [`results/c3/v1/`](../../results/c3/v1/);
+Drive originals: [summary](https://drive.google.com/file/d/1tHe-R0lkOLoTVuZj1Gz_MeGjByN3R_gs/view),
 [contrasts](https://drive.google.com/file/d/1dlNPpyve7t_vNOrijcimIADEnj3-VlLW/view),
 [runs](https://drive.google.com/file/d/1N4QrZTRotfOkWKz_y_FPKCk7cxMGL5xN/view),
 [output folder](https://drive.google.com/drive/folders/1G_CoTeE5iEDGorvPbBVg3LNsIcDOY05z).
@@ -80,6 +80,15 @@ harm; this is not evidence of equivalence or no impact. The fitting-only
 adaptation changes class balance, data quantity and update count together.
 
 ### Verification and preservation
+
+**Local copies (7 November).** The complete `c2/v1` and `c3/v1` Drive folders were
+downloaded and every artefact hash in the 160 run markers (`complete.json`) matched:
+1,100 for C2 and 660 for C3. Each `runs.csv` row equals its run marker, and every
+`summary.csv` mean and SD recomputes from `runs.csv` within 1e-9. The repo keeps the
+six experiment-level files and, per run, `complete.json`, `run.json`, `trainer.json`,
+`data_counts.csv` and `test_predictions.csv` (`results/c2/v1/`, `results/c3/v1/`).
+Weights, heads, histories, logs, validation predictions and `selection.json.gz` stay on
+Drive; `complete.json` still records their hashes.
 
 All 12 summary/provenance files were downloaded on 6 November. C2 has 100 unique
 planned rows, 25 summary rows, 400 paired differences and 20 contrasts; C3 has
