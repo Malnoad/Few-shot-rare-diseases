@@ -27,7 +27,7 @@ Before any research or analysis task, read `docs/research/CONTEXT.md`.
 ## Known mistakes
 Rules learned from real agent mistakes (details in `.agents/mistakes.md`).
 Keep this list short; when a rule becomes a check, remove it from here.
-- [none yet]
+- Edit text containing backslashes (LaTeX) with the Edit tool, not sed or heredocs; read the line back.
 
 ## Hit Every Surface (Pre-Completion Checklist)
 Before calling work done, walk this list and state which entries apply:

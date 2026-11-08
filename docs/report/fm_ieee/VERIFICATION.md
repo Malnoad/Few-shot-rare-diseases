@@ -101,4 +101,4 @@ Confirm the required full name/affiliation block, any course-specific template a
 
 ## Author update, 8 November 2026
 
-Only the author block and PDF author metadata in `main.tex` changed, then the PDF was rebuilt with the same Tectonic 0.17.0 engine: five pages, no overfull boxes or undefined references, title block inspected. New `main.pdf` SHA256: `872a658665a3e7a12ef3461f0f3efe815e290c868c4f054dd4c0d8cf7fe8e1e6`. `verification/package_checks.json` and the other records above describe the 5 November build; `verify_package.py` was not rerun.
+Only the author block and PDF author metadata in `main.tex` changed, then the PDF was rebuilt with the same Tectonic 0.17.0 engine: five pages, no overfull boxes or undefined references, title block inspected. Current `main.pdf` SHA256: `7e30690e0148c17d2db2deb6bc9404576e22d1cb17555d3be9ab7950b95978d4`, after the closing note was also changed to "The authors remain responsible for this work." (four-author group). `verification/package_checks.json` and the other records above describe the 5 November build; `verify_package.py` was not rerun.
