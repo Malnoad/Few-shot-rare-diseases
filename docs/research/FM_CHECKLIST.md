@@ -54,7 +54,8 @@ document was written (first commit if older than 4 Nov). Paths are relative to t
 - [x] Preserve the protocol and draft sources in git: committed 7 Nov on `t3/proposal-project-checklist` (protocol blob hash checked against `4e8df8d9…c5df`); reaches `main` only after Lam's merge
 - [x] Bring the C2/C3 results from Drive into `results/c2/v1/` and `results/c3/v1/` (7 Nov): 1,760 run-marker hashes matched, summaries recompute from `runs.csv` (`REPLICATION.md`, "Local copies")
 - [ ] Checkpoint and fallback access attempted by 6 Nov: RETFound terms, DINOv2, MIRAGE, BiomedCLIP (§9). Must not delay the report.
-- [ ] Replace "Lam" with the full author/affiliation block
+- [x] Author names in `main.tex` and rebuilt `main.pdf` (8 Nov: five pages, title block checked by eye)
+- [ ] Add affiliations if the course requires them
 - [ ] Confirm the course template and submission hour
 - [ ] Full draft 8 Nov · optional-results cutoff 9 Nov 18:00 · PDF freeze 10 Nov 18:00
 - [ ] Lam submits 11 Nov

@@ -46,7 +46,7 @@ D:/Few-shot/.venv/Scripts/python.exe docs/report/fm_ieee/verify_package.py
 
 ## Before submission
 
-Replace “Lam” with the required full author/affiliation block and confirm the course's template and submission hour. The methods, proposal status and literature are complete; new experimental results are not required. The source package includes an explicit AI/tooling disclosure for author review.
+Author names were added on 8 November (Doan Tung Lam, Ha Quang Minh, Pham Duc Anh, Ngo Hoang Phuc). Add affiliations if the course requires them, and confirm the course's template and submission hour. The methods, proposal status and literature are complete; new experimental results are not required. The source package includes an explicit AI/tooling disclosure for author review.
 
 ## Not committed
 

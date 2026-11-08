@@ -98,3 +98,7 @@ Operational lookup mistakes were recorded in `.agents/mistakes.md` as required. 
 ## Author check before submission
 
 Confirm the required full name/affiliation block, any course-specific template and the submission hour. Review the prose, historical framing and AI/tooling disclosure. Access/loading, duplicate/group feasibility, external terms/inventories and clinical mappings are explicitly future gates and do not block this completed proposed-methods report.
+
+## Author update, 8 November 2026
+
+Only the author block and PDF author metadata in `main.tex` changed, then the PDF was rebuilt with the same Tectonic 0.17.0 engine: five pages, no overfull boxes or undefined references, title block inspected. New `main.pdf` SHA256: `872a658665a3e7a12ef3461f0f3efe815e290c868c4f054dd4c0d8cf7fe8e1e6`. `verification/package_checks.json` and the other records above describe the 5 November build; `verify_package.py` was not rerun.
