@@ -2,7 +2,8 @@
 
 The next study is specified in the [finalized FM protocol](docs/research/FM_PROTOCOL.md),
 with [review resolutions and reuse boundaries](docs/research/FM_FINAL_REBUTTAL.md).
-Its loader/evaluator and results are future work; the pipeline below is the Yoo reproduction.
+Draft loader/evaluator code and synthetic checks now have an [FM runbook](docs/research/FM_RUNBOOK.md).
+Real checkpoint/Colab gates and FM results remain pending; the pipeline below is the Yoo reproduction.
 
 A reproduction of:
 

@@ -59,6 +59,12 @@ reporting. IEEE draft due 11 Nov (4–5 pages; results optional), final package 
 No new FM results or implementation are claimed. Existing replication, C1–C3
 protocols, datasets, accepted GAN pools and recorded results remain unchanged.
 
+Implementation update (9 November): `fm_core.py`, `fm_prepare.py`, `fm_extract.py`
+and `fm_evaluate.py` are drafted for the frozen protocol, with CPU synthetic tests
+and repeated code reviews. [Runbook and pending gates](FM_RUNBOOK.md). This is code
+preparation: no new encoder run, model score, real input lock or external cohort
+inference has occurred. Real checkpoint/dependency/GPU feasibility remains unverified.
+
 ## Glossary
 
 - **Common classes:** NORMAL, CNV, DME, DRUSEN (Kermany OCT2017).
