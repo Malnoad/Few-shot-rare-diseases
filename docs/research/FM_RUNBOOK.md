@@ -77,6 +77,9 @@ input root; no automatic Drive output write is made.
 
 Code reaches Colab through GitHub, so Lam must authorize a push before using the
 new scripts there. Do not use the reproduction notebook's Run All for this study.
+`colab_fm.ipynb` stages the code, separate environment, images from `octfsl/raw`,
+rosters and pinned assets, checking each by hash. It runs no encoder and creates no lock.
+Its rosters are a preview; regenerate them if the locked code later changes.
 `requirements-fm.txt` pins the proposed PyTorch stack. Its Windows CPU variant
 resolved in an isolated temporary environment and passed `pip check`; actual
 Colab dependency and encoder compatibility remains unverified. Install the study
