@@ -288,6 +288,8 @@ These are evidence slots, not assertions that the next stages have happened.
 - [x] Claude R12 rebuttal completed; original verdict and parent dispositions below.
 - [ ] Lam acknowledges the residual risks/claim limits; date/message reference recorded.
 - [ ] Lam's requested paced protocol sections 4/6 walkthrough disposition recorded.
+  Lam's decision on 9 November: do this and the risk acknowledgement after the first
+  score-free Colab checks and before final pilots/S2 lock. Both remain open.
 - [ ] Before real setup: Lam's code/source/access review, per-arm usable terms
   (source/date/decision) and any commit/push authorization recorded separately.
   Tokens and weights remain outside the public repo; source workers' exposure reviewed.
@@ -313,7 +315,8 @@ These are evidence slots, not assertions that the next stages have happened.
 - [ ] Before external inference: separate external query lock, clinical mapping
   dispositions and original S3 binding verified; required source outputs implemented.
 
-Lam acknowledgement: **pending**. Code push authorization: **pending**.
+Lam acknowledgement: **pending**. Code push authorization: **given 9 November for
+the branch and its PR only; merging to `main` waits for Lam's sections 4/6 read**.
 Real S2 lock approval/hash: **pending; no real lock exists**.
 These fields may be completed only from Lam's actual decisions and recorded evidence.
 
