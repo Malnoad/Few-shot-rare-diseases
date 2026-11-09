@@ -26,6 +26,10 @@ results/stage3_*/val_predictions.csv
 *.h5
 *.ckpt
 checkpoint
+*.pth
+*.safetensors
+pytorch_model.bin
+open_clip_pytorch_model.bin
 
 # ------------------------------------------------------------ third party ----
 # Not ours to redistribute.

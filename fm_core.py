@@ -1,6 +1,6 @@
 """Pure logic for the frozen-encoder rare-OCT study (docs/research/FM_PROTOCOL.md, v1.0).
 
-DRAFT for Lam's review; nothing imports this yet. It holds the rules the protocol fixes
+Prepared for Lam's review. It holds the rules the protocol fixes
 exactly: the image screen, grouping and folds (section 4), paired nested supports and both
 classifiers (section 6), nomination (section 7) and false-rare rate (section 8).
 
@@ -180,12 +180,14 @@ def draw_supports(groups: Sequence[Group], fold: int, class_index: int, draw: in
 def unit(features: np.ndarray) -> np.ndarray:
     """L2-normalized float64 rows; nonfinite or zero-norm input stops the arm."""
     values = np.asarray(features, dtype=np.float64)
-    if not np.isfinite(values).all():
-        raise ValueError("nonfinite features")
-    norms = np.linalg.norm(values, axis=-1, keepdims=True)
-    if (norms == 0).any():
+    if values.ndim not in (1, 2) or values.size == 0 or not np.isfinite(values).all():
+        raise ValueError("expected nonempty finite feature vectors")
+    # Scaling before the norm avoids overflow/underflow without changing directions.
+    scale = np.max(np.abs(values), axis=-1, keepdims=True)
+    if (scale == 0).any():
         raise ValueError("zero-norm features")
-    return values / norms
+    scaled = values / scale
+    return scaled / np.linalg.norm(scaled, axis=-1, keepdims=True)
 
 
 def centroids(supports_by_class: Sequence[np.ndarray]) -> np.ndarray:
@@ -195,7 +197,7 @@ def centroids(supports_by_class: Sequence[np.ndarray]) -> np.ndarray:
 
 def predict_prototype(prototypes: np.ndarray, queries: np.ndarray) -> np.ndarray:
     """Class index of the largest cosine. argmax takes the first class on exact ties."""
-    return np.argmax(unit(queries) @ prototypes.T, axis=1)
+    return np.argmax(unit(queries) @ unit(prototypes).T, axis=1)
 
 
 @dataclass(frozen=True)
@@ -223,12 +225,17 @@ def logistic_objective(theta: np.ndarray, X: np.ndarray, y: np.ndarray, n_classe
 def fit_logistic(supports: np.ndarray, y: np.ndarray, n_classes: int = len(RARE)) -> LogisticFit:
     """Fixed L-BFGS-B fit from zeros. A failed fit is reported, never retuned or redrawn."""
     X = unit(supports)
+    y = np.asarray(y)
+    if X.ndim != 2 or y.shape != (len(X),) or not np.issubdtype(y.dtype, np.integer):
+        raise ValueError("one integer class label is required per support")
+    if not np.array_equal(np.unique(y), np.arange(n_classes)):
+        raise ValueError("every classifier class must have supports")
     theta = np.zeros(n_classes * (X.shape[1] + 1), dtype=np.float64)
-    result = minimize(logistic_objective, theta, args=(X, np.asarray(y), n_classes), jac=True, method="L-BFGS-B",
+    result = minimize(logistic_objective, theta, args=(X, y, n_classes), jac=True, method="L-BFGS-B", bounds=None,
                       options=dict(maxiter=1000, maxfun=20000, maxls=20, maxcor=10, gtol=1e-6, ftol=0.0))
-    value, gradient = logistic_objective(result.x, X, np.asarray(y), n_classes)
+    value, gradient = logistic_objective(result.x, X, y, n_classes)
     worst = float(np.abs(gradient).max())
-    finite = bool(np.isfinite(result.x).all() and np.isfinite(value))
+    finite = bool(np.isfinite(result.x).all() and np.isfinite(value) and np.isfinite(gradient).all())
     d = X.shape[1]
     return LogisticFit(result.x[:n_classes * d].reshape(n_classes, d), result.x[n_classes * d:],
                        finite and worst <= 1e-6, value, worst, str(result.message))
@@ -238,7 +245,8 @@ def fit_logistic(supports: np.ndarray, y: np.ndarray, n_classes: int = len(RARE)
 def macro_recall(correct: np.ndarray, totals: np.ndarray) -> float:
     """Mean of per-class recall; every class must have queries."""
     correct, totals = np.asarray(correct), np.asarray(totals)
-    if (totals <= 0).any() or (correct > totals).any():
+    if correct.shape != totals.shape or not totals.size or not np.isfinite(correct).all() or \
+            not np.isfinite(totals).all() or (correct < 0).any() or (totals <= 0).any() or (correct > totals).any():
         raise ValueError("invalid class counts")
     return float(np.mean(correct / totals))
 
@@ -250,7 +258,9 @@ def nomination_score(hits: np.ndarray, queries: np.ndarray) -> float:
     fold class counts carry their real weight.
     """
     hits, queries = np.asarray(hits), np.asarray(queries)
-    if hits.shape[2:] != queries.shape or (queries <= 0).any() or (hits > queries).any():
+    if hits.ndim != 4 or not hits.size or hits.shape[2:] != queries.shape or \
+            not np.isfinite(hits).all() or not np.isfinite(queries).all() or \
+            (hits < 0).any() or (queries <= 0).any() or (hits > queries).any():
         raise ValueError("invalid development counts")
     return float(np.mean(hits.sum(axis=2) / queries.sum(axis=0)))
 
@@ -262,10 +272,21 @@ def nominate(scores: Mapping[str, float], seconds: Mapping[str, float]) -> str |
     This allocates engineering effort; it is not an equivalence claim.
     """
     eligible = {name: score for name, score in scores.items() if name != REFERENCE}
+    if any(name not in TIE_SLOT or not np.isfinite(score) or not 0 <= score <= 1
+           for name, score in eligible.items()):
+        raise ValueError("invalid FM name or nomination score")
+    if {"RETFound", "BioMedCLIP"} <= eligible.keys():
+        raise ValueError("RETFound and its fallback cannot both enter v1")
     if len(eligible) < 2:
         return None
     best = max(eligible.values())
-    near = [name for name, score in eligible.items() if best - score <= NEAR_BEST]
+    # Mean recalls are rounded float64 values. Admit representational roundoff at
+    # the inclusive boundary, not a scientifically meaningful extra score gap.
+    near = [name for name, score in eligible.items()
+            if best - score <= NEAR_BEST or math.isclose(best - score, NEAR_BEST,
+                                                       rel_tol=0., abs_tol=8 * math.ulp(1.))]
+    if any(name not in seconds or not np.isfinite(seconds[name]) or seconds[name] <= 0 for name in near):
+        raise ValueError("near-best candidates require finite positive warm timings")
     return min(near, key=lambda name: (seconds[name], TIE_SLOT[name]))
 
 

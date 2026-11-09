@@ -2,6 +2,8 @@
 import sys
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import numpy as np
 from PIL import Image
@@ -41,6 +43,12 @@ class Screen(unittest.TestCase):
 
 
 class Folds(unittest.TestCase):
+    def test_protocol_fold_stream_and_sorted_input_have_fixed_assignments(self):
+        # Independently realized from SeedSequence([42, 0, 5101]), PCG64.
+        order = [6, 5, 1, 7, 0, 3, 2, 9, 11, 4, 10, 8]
+        expected = {f"CSC/{rank:02d}_0.png": i % 5 for i, rank in enumerate(order)}
+        self.assertEqual(fm.assign_folds(list(reversed(groups_of("CSC", 12))), 0), expected)
+
     def test_round_robin_sizes(self):
         fold = fm.assign_folds(groups_of("CSC", 12), 0)
         self.assertEqual(sorted(np.bincount(list(fold.values())).tolist()), [2, 2, 2, 3, 3])
@@ -58,6 +66,16 @@ class Folds(unittest.TestCase):
 
 
 class Supports(unittest.TestCase):
+    def test_exact_development_and_reporting_streams(self):
+        groups = groups_of("CSC", 12, members=3)
+        expected = {
+            6101: [(7,1),(1,2),(6,0),(2,0),(10,0),(11,0),(9,1),(3,1),(0,1),(4,2),(8,0),(5,2)],
+            7101: [(4,0),(8,0),(6,2),(2,0),(5,0),(1,1),(3,0),(10,1),(0,2),(11,1),(7,0),(9,1)],
+        }
+        for ns, choices in expected.items():
+            self.assertEqual(fm.draw_supports(groups, 0, 0, 7, ns),
+                             [f"CSC/{rank:02d}_{member}.png" for rank, member in choices])
+
     def test_deterministic_one_image_per_group(self):
         groups = groups_of("CSC", 20, members=3)
         roster = fm.draw_supports(groups, 1, 0, 7, fm.DEV_NS)
@@ -84,9 +102,42 @@ class Classifiers(unittest.TestCase):
         self.assertEqual(fm.predict_prototype(np.eye(2), np.array([[1.0, 1.0]])).tolist(), [0])
 
     def test_bad_features_stop(self):
-        for bad in ([[0.0, 0.0]], [[np.nan, 1.0]]):
+        for bad in ([[0.0, 0.0]], [[np.nan, 1.0]], [[np.inf, 1.0]], []):
             with self.assertRaises(ValueError):
                 fm.unit(np.array(bad))
+
+    def test_cancelling_centroid_stops(self):
+        with self.assertRaises(ValueError):
+            fm.centroids([np.array([[1., 0.], [-1., 0.]])])
+
+    def test_unit_is_float64_and_handles_extreme_finite_magnitudes(self):
+        for scale in (1e-300, 1e300):
+            result = fm.unit(np.array([[scale, scale]]))
+            self.assertEqual(result.dtype, np.float64)
+            np.testing.assert_allclose(result, [[2 ** -0.5, 2 ** -0.5]])
+
+    def test_mean_loss_and_fixed_penalty_are_independent_of_support_count(self):
+        X, y = np.eye(2), np.arange(2)
+        theta = np.array([1., 0., 0., 1., 0., 0.])
+        value, grad = fm.logistic_objective(theta, X, y, 2)
+        self.assertAlmostEqual(value, np.log1p(np.exp(-1)) + .01)
+        repeated = fm.logistic_objective(theta, np.tile(X, (3, 1)), np.tile(y, 3), 2)
+        self.assertAlmostEqual(value, repeated[0])
+        np.testing.assert_allclose(grad, repeated[1])
+
+    def test_optimizer_settings_initialization_and_gradient_gate(self):
+        fake = SimpleNamespace(x=np.zeros(30), message="reported success", success=True)
+        with patch.object(fm, "minimize", return_value=fake) as optimizer:
+            fit = fm.fit_logistic(np.eye(5), np.arange(5))
+        call = optimizer.call_args
+        np.testing.assert_array_equal(call.args[1], np.zeros(30))
+        self.assertEqual(call.kwargs["method"], "L-BFGS-B")
+        self.assertIsNone(call.kwargs["bounds"])
+        self.assertTrue(call.kwargs["jac"])
+        self.assertEqual(call.kwargs["options"], dict(maxiter=1000, maxfun=20000, maxls=20,
+                                                     maxcor=10, gtol=1e-6, ftol=0.0))
+        self.assertFalse(fit.converged)  # optimizer.success cannot replace the gradient test
+        self.assertEqual(fit.message, "reported success")
 
     def test_gradient_matches_finite_differences(self):
         rng = np.random.default_rng(0)
@@ -120,6 +171,14 @@ class Endpoints(unittest.TestCase):
         scores = {"RETFound": 0.80, "DINOv2": 0.785, "MIRAGE": 0.70, "Inception": 0.99}
         seconds = {"RETFound": 0.9, "DINOv2": 0.1, "MIRAGE": 0.01}
         self.assertEqual(fm.nominate(scores, seconds), "DINOv2")
+
+    def test_exact_two_point_boundary(self):
+        for hundredths in range(2,101):
+            with self.subTest(best=hundredths/100):
+                scores={"RETFound":hundredths/100,"DINOv2":(hundredths-2)/100}
+                self.assertEqual(fm.nominate(scores,{"RETFound":1.,"DINOv2":.5}),"DINOv2")
+        self.assertEqual(fm.nominate({"RETFound": .8, "DINOv2": .78-1e-12},
+                                     {"RETFound":1.,"DINOv2":.5}),"RETFound")
 
     def test_tie_order_and_fallback_slot(self):
         self.assertEqual(fm.nominate({"BioMedCLIP": 0.8, "DINOv2": 0.8}, {"BioMedCLIP": 1, "DINOv2": 1}), "BioMedCLIP")

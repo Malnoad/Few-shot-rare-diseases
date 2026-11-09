@@ -1,0 +1,17 @@
+# Separate Colab PyTorch environment; do not install into the laptop/legacy venv.
+# Keras Inception uses the existing TensorFlow environment in a separate process.
+# Direct versions exist on PyPI (checked 9 Nov 2026). Pilot compatibility pending.
+# The actual full environment is recorded and compared at the pre-score gate.
+torch==2.7.1
+torchvision==0.22.1
+transformers==4.51.3
+timm==1.0.15
+open_clip_torch==2.32.0
+einops==0.8.1
+huggingface-hub==0.30.2
+safetensors==0.5.3
+pillow==11.2.1
+numpy==2.2.6
+scipy==1.15.3
+pandas==2.2.3
+scikit-learn==1.6.1

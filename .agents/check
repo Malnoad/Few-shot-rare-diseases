@@ -33,9 +33,11 @@ git diff --quiet HEAD -- data/manifest.csv
 "$PY" -m unittest discover -s tests -p test_fast_head.py
 "$PY" -m unittest discover -s tests -p test_fast_head_tf.py
 # Frozen-encoder study: protocol rules and input-preparation gates.
-"$PY" -m py_compile fm_core.py fm_prepare.py
+"$PY" -m py_compile fm_core.py fm_prepare.py fm_extract.py fm_evaluate.py
 "$PY" -m unittest discover -s tests -p test_fm_core.py
 "$PY" -m unittest discover -s tests -p test_fm_prepare.py
+"$PY" -m unittest discover -s tests -p test_fm_extract.py
+"$PY" -m unittest discover -s tests -p test_fm_evaluate.py
 # Manifest still matches the raw data and the verified counts (only where raw data exists).
 if [ -d data/raw/OCT2017 ]; then "$PY" stage0_manifest.py > /dev/null; fi
 # Guard behavior, configuration wiring and outgoing identity (never print addresses).
