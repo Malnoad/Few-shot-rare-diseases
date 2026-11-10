@@ -74,6 +74,7 @@ Loader and features (§5)
 - [ ] Isolated Colab PyTorch loader with its own requirements; stage scripts stay untouched
   - Draft `fm_extract.py`/`requirements-fm.txt` with CPU adapter/cache tests; actual Colab pilot remains required (`FM_RUNBOOK.md`).
 - [ ] Per arm, pin: terms (source/date/Lam's decision), weight revision/hash, channel handling, native transforms, normalization, pooling, dtype, inference mode; nonempty evidence text alone does not certify consent
+  - Terms decisions for all four arms: Lam, 10 Nov, verbatim in `FM_TERMS_EVIDENCE.md` section 5 and pre-filled in `colab_fm.ipynb`. The other pins remain open until the first Colab checks.
 - [ ] Fallback decision: BiomedCLIP replaces RETFound only for an access, loading or terms failure
   - Lam, 9 Nov: three FMs finalized for use: RETFound Nature OCT, DINOv2-Base, MIRAGE-Base, with the Keras Inception-v3 reference. BiomedCLIP is not a planned arm; it stays the protocol's conditional fallback if RETFound fails before labelled scores.
 - [ ] Keras Inception reference via `stage3_classifier.load_image` and its backbone; FP32; new cache directory with sidecar identity (bypass the float16 writer)

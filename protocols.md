@@ -99,4 +99,5 @@ If S2 slips, S3 starts only after a successful lock; the 27 November freeze stil
 | How to run each step | `docs/research/FM_RUNBOOK.md` |
 | Known risks and open decisions | `docs/research/FM_RISK_ACKNOWLEDGEMENT.md`, `docs/research/FM_TERMS_EVIDENCE.md` |
 | Colab notebook | `colab_fm.ipynb` |
+| Running the first Colab checks (for a teammate) | `docs/research/FM_FIRST_RUN_GUIDE.md` |
 | Code | `fm_core.py` (rules), `fm_prepare.py` (data), `fm_extract.py` (models), `fm_evaluate.py` (scores) |
