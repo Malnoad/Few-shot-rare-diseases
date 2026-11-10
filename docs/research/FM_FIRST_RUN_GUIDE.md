@@ -9,8 +9,8 @@ Who does what:
 
 | Part | Who | When |
 |---|---|---|
-| 0. Share folders and send the link | Lam | Once, before Part 1 |
-| 1. Accounts, token and Drive shortcuts | Runner | Once |
+| 0. Share the folder and send the links | Lam | Once, before Part 1 |
+| 1. Accounts, token and Drive shortcut | Runner | Once |
 | 2. Run the notebook | Runner | Each attempt |
 | 3. Check the result | Runner, then Lam | After each attempt |
 
@@ -20,10 +20,13 @@ except the first one to make a check pass.** A failed check is useful evidence; 
 ## Part 0 (Lam): before the runner starts
 
 1. In Drive, inside `octfsl`, create a folder named exactly `fm_v1` (skip if it exists).
-2. Share **`octfsl/raw`** with the runner's Google account as **Viewer**, and **`octfsl/fm_v1`** as
-   **Editor**. Share these two subfolders, not `octfsl` itself, so the earlier results stay untouched.
-3. Send the runner the Colab link below and this guide. Your four terms decisions (10 Nov) are
-   already filled in the notebook's first cell, so there is nothing to paste.
+2. Sharing: `octfsl` is shared as **"Anyone with the link: Editor"** (Lam's choice, 10 Nov, made
+   after weighing per-person Viewer/Editor sharing). Anyone holding that link can change or delete
+   the raw data, checkpoints and earlier results, so send it privately and never put it in the
+   repository, the PR or any public place.
+3. Send the runner, privately, the `octfsl` folder link, plus the Colab link below and this guide.
+   Your four terms decisions (10 Nov) are already filled in the notebook's first cell, so there is
+   nothing to paste.
 
 Colab link (pinned notebook version): <https://colab.research.google.com/github/Malnoad/Few-shot-rare-diseases/blob/9b2d6c287d53de87d1852db06c9093af67e27087/colab_fm.ipynb>
 
@@ -42,16 +45,19 @@ like a password: never paste it into a notebook cell, a chat or a screenshot.
 **1.3 Colab secret.** Open the Colab link. In the left sidebar click the key icon (Secrets) → Add new
 secret. Name: `HF_TOKEN`. Value: the token. Turn **Notebook access** on.
 
-**1.4 Drive shortcuts.** The notebook expects these two paths in *your* Drive:
-`My Drive/octfsl/raw` and `My Drive/octfsl/fm_v1`.
+**1.4 Drive shortcut.** The notebook expects these two paths in *your* Drive:
+`My Drive/octfsl/raw` and `My Drive/octfsl/fm_v1`. One shortcut to Lam's `octfsl` folder gives both.
 
-1. In your My Drive, create a folder named exactly `octfsl`.
-2. Open "Shared with me", right-click Lam's `raw` folder → Organize → Add shortcut → choose your
-   `octfsl` folder. Do the same for `fm_v1`. (Menu labels can differ slightly between Drive versions.)
-3. Check: your `octfsl` folder shows two shortcuts named exactly `raw` and `fm_v1`.
+1. Signed in with the Google account you will use in Colab, open the `octfsl` link Lam sent.
+2. Click the folder name at the top → Organize → Add shortcut → **My Drive** (the top level, not a
+   subfolder). Menu labels can differ slightly between Drive versions.
+3. Check: My Drive now shows a shortcut named exactly `octfsl`, and inside it `raw` and `fm_v1`.
+4. Make sure nothing else in My Drive is named `octfsl` (rename any folder of your own), so the
+   notebook's path can only mean Lam's folder.
 
 Step 3 of the notebook checks both paths, and that `fm_v1` is writable, within the first minutes. If
-the shortcuts don't work, you find out then, not at the end.
+the shortcut doesn't work, you find out then, not at the end. Only write inside `fm_v1`; the notebook
+never writes anywhere else, and nothing else in `octfsl` should be touched.
 
 **1.5 GPU.** The notebook needs an **A100, L4 or T4** GPU. A100 and L4 usually need Colab Pro or
 compute units; a free account usually gets a T4. Any of the three is fine for this run.
@@ -114,8 +120,8 @@ independent one. Then paste `step6_inventory.txt` and `step10_pilots.txt` into t
 | Step 1 | `… still contain a [ or < placeholder` | Replace the example text with your real name, username or date |
 | Step 1 | `No GPU` or `Blackwell GPU` | Change the runtime type (Part 2, step 2), then Run all |
 | Step 2 | Any `FAILED:` line | Stop. Send Lam the whole Step 2 output |
-| Step 3 | `… not found: add the octfsl shortcuts` | Redo Part 1.4; check the names are exactly `raw` and `fm_v1` |
-| Step 3 | `octfsl/fm_v1 is not writable` or a permission error | Ask Lam to make you Editor of `fm_v1` |
+| Step 3 | `… not found: add the octfsl shortcut` | Redo Part 1.4; ask Lam whether `octfsl/fm_v1` exists |
+| Step 3 | `octfsl/fm_v1 is not writable` or a permission error | Ask Lam to check the link gives Editor access |
 | Step 3 | `0 files` for a zip, or images missing | Stop. Send Lam the Step 3 output |
 | Step 4 | `Differs from the laptop, stop and report` | **Stop.** Send Lam the output. Do not rerun with changes |
 | Step 5 | `401` or `403` for the RETFound file | Access not approved yet, wrong token, or Notebook access off (Part 1.1–1.3) |
