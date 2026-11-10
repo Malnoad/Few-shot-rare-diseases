@@ -25,7 +25,7 @@ except the first one to make a check pass.** A failed check is useful evidence; 
 3. Send the runner the Colab link below and this guide. Your four terms decisions (10 Nov) are
    already filled in the notebook's first cell, so there is nothing to paste.
 
-Colab link (pinned notebook version): COLAB_LINK_AFTER_COMMIT
+Colab link (pinned notebook version): <https://colab.research.google.com/github/Malnoad/Few-shot-rare-diseases/blob/9b2d6c287d53de87d1852db06c9093af67e27087/colab_fm.ipynb>
 
 ## Part 1 (runner): one-time setup
 
