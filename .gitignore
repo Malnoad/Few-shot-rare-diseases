@@ -5,6 +5,7 @@ data/raw/
 data/aug_basic/
 data/gan/
 data/c0/
+data/external/
 results/c0/
 ChestXRay2017/
 *.zip
@@ -54,5 +55,12 @@ venv/
 env/
 ENV/
 .env
-.agents/reports/
-.agents/pids/
+
+# ------------------------------------------------------------ agent tooling ----
+# Kept on Lam's laptop for coding agents, not published (10 Nov 2026).
+.agents/
+.claude/
+.codex/
+AGENTS.md
+CLAUDE.md
+t3.json

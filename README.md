@@ -661,7 +661,7 @@ material are git-ignored — see [`.gitignore`](.gitignore). Large files live in
 ├── analysis.py                 training-free analyses (paired tests, kNN, QC, ROC, t-SNE, CAM)
 ├── colab_setup.ipynb           Colab: restore, rebuild, seed check, CAM, save and push
 ├── COLAB.md                    Colab and Drive guide
-├── AGENTS.md, CLAUDE.md        instructions for coding agents (.agents/, .claude/, .codex/)
+├── protocols.md                plain-language guide to the FM study protocol, for the team
 ├── docs/research/              CONTEXT.md (research context), REPLICATION.md (paper vs repo, work left)
 ├── requirements.txt
 ├── README.md
