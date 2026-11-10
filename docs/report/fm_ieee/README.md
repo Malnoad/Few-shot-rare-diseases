@@ -1,6 +1,6 @@
 # Rare-OCT IEEE proposed-methods draft
 
-Prepared 5 November 2026 for the 11 November submission. The complete English manuscript is **main.pdf**, five pages **including references**, in unmodified IEEEtran conference format (10 pt, US Letter, two columns). No course-specific template was supplied.
+Prepared 5 November 2026 for the 11 November submission. The complete English manuscript is **main.pdf**, five pages **including references**, in unmodified IEEEtran conference format (10 pt, US Letter, two columns), which matches the IEEE format the course uses.
 
 - `main.tex`, `references.bib`: editable manuscript and 21 scholarly/tooling references; full author lists retained. The IEEE bibliography uses its documented control entry to abbreviate lists longer than six authors.
 - `methods_figure.pdf` / `.svg` / `.png`: original vector workflow schematic and 300 dpi preview; no patient images, synthetic clinical images or measured outcomes. The PDF is the manuscript's figure source. Alt text and provenance: `verification/figure_provenance.json`.
@@ -46,7 +46,7 @@ D:/Few-shot/.venv/Scripts/python.exe docs/report/fm_ieee/verify_package.py
 
 ## Before submission
 
-Author names were added on 8 November (Doan Tung Lam, Ha Quang Minh, Pham Duc Anh, Ngo Hoang Phuc). Add affiliations if the course requires them, and confirm the course's template and submission hour. The methods, proposal status and literature are complete; new experimental results are not required. The source package includes an explicit AI/tooling disclosure for author review.
+Author names were added on 8 November (Doan Tung Lam, Ha Quang Minh, Pham Duc Anh, Ngo Hoang Phuc) and the shared affiliation, National Economics University, on 10 November. Lam confirmed the course uses IEEE format and the deadline is 11 November, 22:00. The methods, proposal status and literature are complete; new experimental results are not required. The source package includes an explicit AI/tooling disclosure for author review.
 
 ## Not committed
 

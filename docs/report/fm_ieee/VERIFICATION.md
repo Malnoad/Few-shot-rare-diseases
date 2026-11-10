@@ -102,3 +102,24 @@ Confirm the required full name/affiliation block, any course-specific template a
 ## Author update, 8 November 2026
 
 Only the author block and PDF author metadata in `main.tex` changed, then the PDF was rebuilt with the same Tectonic 0.17.0 engine: five pages, no overfull boxes or undefined references, title block inspected. Current `main.pdf` SHA256: `7e30690e0148c17d2db2deb6bc9404576e22d1cb17555d3be9ab7950b95978d4`, after the closing note was also changed to "The authors remain responsible for this work." (four-author group). `verification/package_checks.json` and the other records above describe the 5 November build; `verify_package.py` was not rerun.
+
+## Affiliation update, 10 November 2026
+
+Lam supplied the affiliation, National Economics University, for all four authors; a
+mentor may be added later. Lam confirmed the course template is IEEE format and the
+submission deadline is 11 November, 22:00. Only the author block in `main.tex` changed
+(`\IEEEauthorblockA{National Economics University}`); the PDF was rebuilt with the same
+Tectonic 0.17.0 engine. `verify_package.py` was rerun and passed:
+
+```text
+PDF: 5 IEEE conference pages; 21 resolved citations; 31 mapped claim anchors
+Protected files: 62 checked, 0 changed
+LaTeX: no overfull boxes, unresolved references or missing glyphs
+Package checks: PASS
+```
+
+The log keeps 9 ordinary underfull-box notices. All five rendered pages were reviewed by eye;
+the title block shows the four names above the affiliation. Format: `IEEEtran` conference
+class, 10 pt, two columns, US Letter (612×792 pt), with no geometry, font-size or spacing
+overrides. Current `main.pdf` SHA256:
+`0748d23c93251513adbd70bce75b56db46088a5e568a3d56f40685213ca85dc8`.

@@ -36,13 +36,13 @@
   },
   "pdf": {
     "pages": 5,
-    "sha256": "f5b4a61430e49b226ef1d791d46fd6846adf4665b1482f61082f8fe144906eb2",
+    "sha256": "0748d23c93251513adbd70bce75b56db46088a5e568a3d56f40685213ca85dc8",
     "details": [
       {
         "page": 1,
         "width_pt": 612.0,
         "height_pt": 792.0,
-        "words": 682,
+        "words": 677,
         "minimum_text_size_pt": 5.977583885192871,
         "outside_page_spans": 0,
         "font_names": [
@@ -61,7 +61,7 @@
         "page": 2,
         "width_pt": 612.0,
         "height_pt": 792.0,
-        "words": 842,
+        "words": 810,
         "minimum_text_size_pt": 7.970111846923828,
         "outside_page_spans": 0,
         "font_names": [
@@ -76,7 +76,7 @@
         "page": 3,
         "width_pt": 612.0,
         "height_pt": 792.0,
-        "words": 682,
+        "words": 675,
         "minimum_text_size_pt": 4.981319904327393,
         "outside_page_spans": 0,
         "font_names": [
@@ -103,7 +103,7 @@
         "page": 4,
         "width_pt": 612.0,
         "height_pt": 792.0,
-        "words": 811,
+        "words": 837,
         "minimum_text_size_pt": 4.981319904327393,
         "outside_page_spans": 0,
         "font_names": [
@@ -124,7 +124,7 @@
         "page": 5,
         "width_pt": 612.0,
         "height_pt": 792.0,
-        "words": 933,
+        "words": 955,
         "minimum_text_size_pt": 7.970111846923828,
         "outside_page_spans": 0,
         "font_names": [

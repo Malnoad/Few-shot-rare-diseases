@@ -60,10 +60,10 @@ document was written (first commit if older than 4 Nov). Paths are relative to t
 - [ ] Checkpoint and fallback access attempted by 6 Nov: RETFound terms, DINOv2, MIRAGE, BiomedCLIP (§9). Must not delay the report.
 - [x] RETFound access confirmed by Lam on 9 Nov: Colab printed `RETFound access OK`, account `Malnoad`; weights not downloaded, actual model load unverified
 - [x] Author names in `main.tex` and rebuilt `main.pdf` (8 Nov: five pages, title block checked by eye)
-- [ ] Add affiliations if the course requires them
-- [ ] Confirm the course template and submission hour
+- [x] Affiliation: National Economics University for all four authors (Lam, 10 Nov; a mentor may be added later). PDF rebuilt and `verify_package.py` PASS, SHA256 `0748d23c…5dc8` (`VERIFICATION.md`)
+- [x] Course template IEEE format, as used; submission deadline 11 Nov 22:00 (Lam, 10 Nov)
 - [ ] Full draft 8 Nov · optional-results cutoff 9 Nov 18:00 · PDF freeze 10 Nov 18:00
-- [ ] Lam submits 11 Nov
+- [ ] Lam submits by 11 Nov 22:00
 - Done when: the submitted PDF reports proposed methods only, with no new FM outcomes.
 
 ## S2: Implementation and pre-score input lock (12-14 Nov)
