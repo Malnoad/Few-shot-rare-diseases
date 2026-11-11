@@ -48,12 +48,15 @@ def main() -> None:
   CTLnames_show_etal = {1}
 }
 """
+    # Kassis2026 was cited only by the tooling note, removed on 11 November.
+    parent, dropped = re.subn(r"@article\{Kassis2026,.*?\n\}\s*", "", parent, flags=re.S)
+    assert dropped == 1
     combined = tex_unicode(control + "\n" + parent + "\n" + retinal)
     combined = re.sub(r"(?m)^(\s*title\s*=\s*)\{(?!\{)(.*)\}(,?)$",
                       r"\1{{\2}}\3", combined)
     combined = combined.replace(" pages = {},\n", "")
     (HERE / "references.bib").write_text(combined, encoding="ascii")
-    print("Assembled 21 references, full author lists retained; IEEE display abbreviates lists longer than 6.")
+    print("Assembled 20 references, full author lists retained; IEEE display abbreviates lists longer than 6.")
 
 
 if __name__ == "__main__":

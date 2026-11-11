@@ -56,7 +56,7 @@ These describe optimizer-seed variation on the same fixed legacy images, not ind
 
 The 12-source retinal batch records per-field metadata, exact primary passage locators and access failures in `verification/retinal_refs/`. The nine-source parent batch is documented in `verification/parent_refs/REFERENCE_AUDIT.md`. Full author lists are retained in BibTeX; IEEE's rendered bibliography may abbreviate long lists. Internal design decisions are attributed to protocol v1.0, not misattributed to external literature. Bibliography identity checks do not constitute a comprehensive retraction/correction audit.
 
-Only short, relevant claims from inspected passages enter the manuscript. Full-paper reading of the entire 49-PDF seed corpus is not asserted. Preprints, conference papers and journal versions are distinguished in the audits. The tooling paper is acknowledged as tooling only.
+Only short, relevant claims from inspected passages enter the manuscript. Full-paper reading of the entire 49-PDF seed corpus is not asserted. Preprints, conference papers and journal versions are distinguished in the audits. The tooling paper was cited only by the Writing and Reproducibility Note, which the authors removed on 11 November.
 
 ## Terminology and notation
 

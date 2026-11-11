@@ -176,9 +176,4 @@ M.~Kulyabin \emph{et~al.}, ``{OCTDL: Optical Coherence Tomography Dataset for
   \url{https://doi.org/10.1038/s41597-024-03182-7}
 \BIBentrySTDinterwordspacing
 
-\bibitem{Kassis2026}
-T.~Kassis, V.~Agarwal, Y.~He, D.~Patel, and A.~M. Brueckner, ``{Scientific
-  Agent Skills: A Library of Procedural Knowledge for Research Agents},''
-  \emph{arXiv preprint arXiv:2609.00065}, 2026.
-
 \end{thebibliography}

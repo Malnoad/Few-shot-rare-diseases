@@ -123,3 +123,79 @@ the title block shows the four names above the affiliation. Format: `IEEEtran` c
 class, 10 pt, two columns, US Letter (612×792 pt), with no geometry, font-size or spacing
 overrides. Current `main.pdf` SHA256:
 `0748d23c93251513adbd70bce75b56db46088a5e568a3d56f40685213ca85dc8`.
+
+## Figure and closing-note update, 11 November 2026
+
+At the authors' request, the Writing and Reproducibility Note was removed from `main.tex`.
+It was the only citation of `Kassis2026`, so that entry left `references.bib` (and
+`assemble_bibliography.py` now drops it); the bibliography has 20 references. Fig. 1 was
+redrawn by `make_figure.py` in the figures4papers house style
+(github.com/ChenLiu-1996/figures4papers, `scientific-figure-making/references/design-theory.md`:
+its blue/green/red/neutral palette, Arial, rounded pastel boxes, block arrows, 300 dpi PNG).
+The code is new; none of that CC BY-NC repository's code or images were copied. The figure
+keeps its 7.16x2.38 inch size and its content, adds the roster as four labels and draws the
+"no outcome feedback" rule as a dashed line; the caption is unchanged. Figure fonts are
+embedded TrueType Arial. Rebuilt with the same Tectonic 0.17.0 engine; `verify_package.py`:
+
+```text
+PDF: 5 IEEE conference pages; 20 resolved citations; 31 mapped claim anchors
+Protected files: 62 checked, 0 changed
+LaTeX: no overfull boxes, unresolved references or missing glyphs
+Package checks: PASS
+```
+
+9 ordinary underfull-box notices remain. Pages 3 (figure) and 5 (references) were reviewed by
+eye. That build's `main.pdf` SHA256 was
+`b9bcb9a9cfa59dbed112b0c7e2d856344c0cb1d93ec16f5b574807b5f4dfab3e`.
+
+## Plain-language rewrite, 11 November 2026
+
+At the authors' request, the prose of `main.tex` was rewritten in plainer language after the
+style of Cao and Pham, arXiv:2608.01602 (problem first; "rather than proposing ..., we
+test ..."; a numbered contribution list; bold run-in paragraph leads; an explicit
+"Limitations." paragraph). All 31 claim anchors, numbers, equations, tables, the figure and
+the 20 citations are unchanged in substance; no claim or source was added. The first draft ran
+to six pages, so the abstract and the longest paragraphs (C01-C03, C21, C25, conclusion) were
+shortened. `verify_package.py`: PASS, 5 pages, 20 citations, 31 anchors, 62 protected files
+unchanged, no overfull boxes; 7 underfull notices. All five pages were reviewed by eye.
+That build's `main.pdf` SHA256 was `99ecfcb457f3fe190c239f6abfb36e5844d2b8e18beeb463dd38a5ba7e84846a`.
+
+## First-reader review fixes, 11 November 2026
+
+A read-only clarity review (GPT-6.1-Sol, Codex, acting as a project verifier) found no count
+errors; it rechecked 124/22/146, 84,630, 73,958, 1,000 common test images and 5,146. Its
+wording fixes were applied after checking each against the protocol:
+
+- Abstract defines frozen weights, supports and queries; "logistic probe" reads "logistic
+  regression"; nomination happens "before any new test result" (also "new" in C21).
+- C03 names the AUC as rare-versus-common and says what was normalized (file format and
+  framing; `docs/research/CONTEXT.md`, decision of 29 Oct).
+- C04 defines "arm"; C11 defines "legacy queries" and replaces "no real rare validation images"
+  with the manifest-split versus development-fold distinction.
+- C13 explains components; C14 says which folds hold out and which fit.
+- C19 states the 100 reporting prototype draws (protocol section 1 table); C20 defines macro
+  recall; C21's heading and first sentence say the nominee is the fastest FM within 0.02,
+  not necessarily the top scorer.
+- C23 replaces K by each class's support count for the nine-way head and names the 1,000 common
+  test images (protocol line "4,000 common fitting +1,000 common tests +146 rare = 5,146").
+- C24 says the prediction is nine-way and that the five-way head cannot give a meaningful FRR.
+- C25 expands CSR as OCTID's "central serous retinopathy" (Borealis dataset
+  doi:10.5683/SP/FVLZIL title, read 11 Nov).
+- Table II row "RETFound fallback"; Fig. 1 reads "100 prototype draws; 25 probe draws".
+
+To stay within five pages, sentences repeating points made elsewhere were cut: the historical
+prototype/Adam-head remarks (C17, C18), the synthetic-plausibility remark (C07), the
+parameter-count remark (C10), the common-patient-overlap repeat (C26), the failures repeat
+(C28), the versioned-outputs repeat (C29) and one conclusion sentence. Not changed, author
+decision: the reviewer noted that "failed external NORMAL access" does not say whether one or
+both external sources must fail; the protocol has the same wording.
+
+`verify_package.py`: PASS, 5 pages, 20 citations, 31 anchors, 62 protected files unchanged, no
+overfull boxes; 8 underfull notices. All five pages were reviewed by eye. Current `main.pdf`
+SHA256: `bdce1e31df5c99c93e887700529614e4fa28168c98fc1ab548e218d992abadba`.
+
+## Sent to the mentor, 11 November 2026
+
+Lam sent this build to the mentor as `Draft.pdf` and chose it as the version of record (12 Nov).
+Its SHA256 equals the current `main.pdf`:
+`bdce1e31df5c99c93e887700529614e4fa28168c98fc1ab548e218d992abadba`.

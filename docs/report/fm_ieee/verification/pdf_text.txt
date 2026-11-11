@@ -8,136 +8,144 @@ PAGE 1
 
 
 
-  Abstract—Rare retinal disease recognition from optical co-                         TABLE I
-herence tomography (OCT)  is  constrained by  scarce  labels    HISTORICAL PROJECT ACCURACY (%); NINE-WAY, FIXED LEGACY TEST.
-and uncertain  transfer across  sources. This paper proposes                   NO NEW FM SCORES.
-a comparison of frozen foundation models (FMs)—RETFound
-Nature OCT, DINOv2-Base and MIRAGE-Base—with a matched         Rare training pool         Seed 42   Seeds 1–5, mean ± SD
-Keras Inception-v3 reference. Five-way classiﬁcation  will use         Real only                    90.31            90.69 ± 1.86
-identical real-image supports, primary cosine prototypes and         Basic augmentation           88.85            92.93 ± 1.85
-a secondary ﬁxed-regularization  logistic probe. Five grouped       CycleGAN augmentation      92.95            92.59 ± 1.29
-development folds and paired nested support draws will guide
+  Abstract—Rare retinal diseases have few labelled optical co-                         TABLE I
+herence tomography (OCT) images, so a classiﬁer must learn    HISTORICAL PROJECT ACCURACY (%); NINE-WAY, FIXED LEGACY TEST.
+each disease from a handful of examples. Our earlier CycleGAN-                   NO NEW FM SCORES.
+augmentation reproduction showed two problems: the best aug-
+mentation changed with the seed, and disease was confounded         Rare training pool         Seed 42   Seeds 1–5, mean ± SD
+with source dataset. We propose a test of three frozen founda-         Real only                    90.31            90.69 ± 1.86
+tion models (FMs)—RETFound Nature OCT, DINOv2-Base and         Basic augmentation           88.85            92.93 ± 1.85
+MIRAGE-Base—against a matched Keras Inception-v3 reference       CycleGAN augmentation      92.95            92.59 ± 1.29
+on ﬁve rare diseases. Encoder weights stay ﬁxed. All models share
                                                                              Sources:      archived    results/stage4/metrics.csv     and
-a prespeciﬁed nomination; legacy and external outcomes will                                                        results/seed_check.csv; SD across the ﬁve  listed training seeds.
-not revise that choice. A separate nine-way audit will measure   The same test images were reused.
-false rare  predictions on NORMAL images from Kermany,
-OCTID and OCTDL, subject to access and eligibility checks.
-The protocol distinguishes support budgets from all inspected
-                                                                            test also contains patients present in the ﬁtting split.1 Group-development labels, screens dependence and preserves historical
-artifacts. No new FM results are reported. The contribution is an   ing cannot repair that overlap while preserving this legacy
-auditable, descriptive evaluation with explicit limits on patient   benchmark. A ﬁve-way rare-only task removes the common-
-independence, pretraining exposure and clinical interpretation.    versus-rare output decision, while a separate source audit
-  Index Terms—optical coherence tomography, rare retinal dis-   asks whether normal scans are assigned rare labels; neither
-ease, few-shot learning, frozen encoders, source shift
-                                                              guarantees removal of within-rare acquisition cues.
-                                                     The contribution  is a ﬁxed-checkpoint comparison under         I. INTRODUCTION AND PROBLEM STATEMENT
-                                                       matched support-label budgets with a source-dependent error
-  Optical  coherence  tomography (OCT)  provides  cross-                                                                      audit, not a new encoder, adaptation algorithm or ﬁrst rare-
-sectional  retinal images for disease classiﬁcation. Transfer                                                          eye foundation-model application. Finalized protocol v1.0 (5
-learning has supported recognition of common OCT cate-                                                  November 2026) and a claim ledger accompany this draft.
-gories, as illustrated by Kermany et al. [1], whereas Yoo et                                                              All new extraction, grouping, selection and inference below
-al. [2] studied the more restricted image supply of ﬁve rare                                                         remain proposed.
-diseases. For this collection, the practical question is whether
-pretrained representations can distinguish those ﬁve diseases                            II. RELATED WORK
-from a small number of labelled supports, and whether a                                                             A. Rare Retinal Recognition and Pretrained Representations
-classiﬁer that also recognizes common conditions mistakes
-                                                   Yoo et al. [2] augmented rare OCT classes with per-diseasea new source of normal scans for rare pathology. These are
-                                               CycleGAN translation before nine-way classiﬁcation. Quellecrelated but distinct questions.
-                                                                         et al. [3] detected rare fundus pathologies using representa-  The historical reproduction used four common categories—
-                                                                    tions learned for frequent conditions. These establish rare-NORMAL, choroidal neovascularization (CNV), diabetic mac-
-                                                                        retinal few-shot precedents, but fundus differs from OCT, andular edema (DME)  and DRUSEN—and  ﬁve  rare  cate-
-                                                             inventory-wide augmentation differs from ﬁtting on only Kgories. Frozen  Inception-v3  features  fed a softmax head
-                                                                      real supports per class.trained  with  real-only,  basic-augmentation  or CycleGAN-
-                                                 RETFound learns representations from retinal images andaugmentation pools. Table  I reports archived outputs, not
-                                                                 evaluates downstream disease detection with label-efﬁciencydirectly comparable K-shot results. The ordering changed be-
-                                                              analyses  [4]. MIRAGE combines OCT and scanning-lasertween seed 42 and the ﬁve-seed descriptive means, motivating
-                                                        ophthalmoscopy pretraining and benchmarks multiple OCTpaired evaluation without establishing GAN superiority or
-                                                                  tasks [5]. EyeCLIP adds multimodal visual-language learn-equivalence to basic augmentation.
-                                                              ing and few-shot/zero-shot ophthalmic evaluations  [6]. DI-   Validity  concerns  also  motivate  the new  design. The
-                                           NOv2 supplies a general visual self-supervised comparatorproject’s  prior  format/framing  audit  retained  strong  rare-
-                                                                         [7];  generalist-versus-specialist ocular comparisons alreadyversus-common feature separation (area under the curve ap-
-proximately 0.995 before and 0.991 after framing normaliza-
+the same labelled real examples (supports) and are tested on held-                                                        results/seed_check.csv; SD across the ﬁve  listed training seeds.
+out images (queries); a cosine prototype is the main classiﬁer and   The same test images were reused.
+logistic regression with ﬁxed regularization  is secondary. Five
+grouped development folds and paired support draws nominate
+one FM for reporting before any new test result, and later results
+                                                           so the audit could not  tell whether this separation reﬂectscannot change that choice. A separate nine-class audit counts how
+often NORMAL scans from Kermany, OCTID and OCTDL are   disease or source. Second, the ﬁxed Kermany test set contains
+labelled as rare,  if access and eligibility checks pass. No new   patients who are also in the ﬁtting split.1 Grouping cannot
+FM results are reported. The contribution is a ﬁxed, checkable  remove this overlap without changing the legacy benchmark.
+protocol that states what it cannot show: patient independence,  We therefore split the question in two. A ﬁve-class rare-only
+freedom from pretraining exposure and clinical value.
+                                                                  task removes the common-versus-rare decision. A separate  Index Terms—optical coherence tomography, rare retinal dis-
+ease, few-shot learning, frozen encoders, source shift             source audit checks whether normal scans receive rare labels.
+                                                              Neither removes acquisition cues within the rare classes.
+         I. INTRODUCTION AND PROBLEM STATEMENT           Rather than proposing a new encoder or adaptation method,
+                                             we test ﬁxed checkpoints under matched label budgets and
+  OCT gives cross-sectional images of the retina and is widely                                                                  audit source-dependent errors. This is also not the ﬁrst use of
+used to classify retinal disease. With many labelled images,                                                           a foundation model for rare eye disease. We contribute: (1)
+transfer learning recognizes common OCT categories well [1];                                                           a frozen-encoder comparison in which every model sees the
+Yoo et  al. [2] had far fewer images for ﬁve rare diseases.                                                   same real supports; (2) a development-only rule that nominates
+We ask two questions. Can a pretrained encoder  tell these                                                       one FM before any test outcome; (3) a nine-class audit of
+ﬁve diseases apart from a few labelled examples? And does a                                                                      false rare predictions on NORMAL scans from three sources;
+classiﬁer that also knows the common classes mistake normal                                                       and (4) stop rules that end an arm (one model’s pipeline)
+scans from a new source for rare disease? Each needs its own                                                               or the selection, instead of adjusting  it, when a check fails.
+test.                                                              Protocol v1.0 (ﬁnalized 5 November 2026) and a claim ledger
+  Our earlier reproduction of Yoo et al. used four common                                                    accompany this paper. All extraction, grouping, selection and
+classes—NORMAL, choroidal neovascularization (CNV), di-                                                                inference below are planned.
+abetic macular edema (DME) and DRUSEN—and the ﬁve
+rare classes. Frozen Inception-v3 features fed a softmax head                            II. RELATED WORK
+trained on one of three rare-class pools: real images only, basic                                                             A. Rare Retinal Recognition and Pretrained Representations
+augmentation or CycleGAN images. Table  I  lists archived
+                                                   Yoo et al. [2] added per-disease CycleGAN images to rareaccuracies, which are not comparable K-shot results. The best
+                                        OCT classes before nine-class classiﬁcation. Quellec et  al.pool depended on the seed: CycleGAN was best with seed 42,
+                                                                    [3] detected rare fundus diseases with features learned fromwhile basic augmentation had the highest ﬁve-seed mean. The
+                                                               frequent ones. Both are rare-retina few-shot precedents, butreproduction therefore does not show that GAN images beat
+                                                          fundus photographs are not OCT, and augmenting from thebasic augmentation; it motivates a paired comparison.
+                                                      whole training inventory is not the same as ﬁtting on only K  The reproduction also had two validity problems. First,
+                                                                      real supports per class.frozen features separated rare from common images almost
+perfectly: the rare-versus-common area under the curve (AUC)
                                                                           1Archived  evidence:  results/c0/v1_gate_summary.csv  and
-tion). Disease and dataset source were confounded, so this   docs/research/CONTEXT.md;  exact  quantities and  provenance  are
-diagnostic did not identify a mechanism. The ﬁxed Kermany   mapped in the accompanying claim ledger.
+was about 0.995 before and 0.991 after normalizing ﬁle format   docs/research/CONTEXT.md;  exact  quantities and  provenance  are
+and image framing. Disease and source were confounded,   mapped in the accompanying claim ledger.
 
 PAGE 2
-exist  [8]. These studies motivate the selected checkpoints,   contains 27/26/25/19/27 real development images (124 total)
-but their adaptation procedures, cohorts and model capacities  and 5/5/4/4/4 legacy queries (22 total). There are no real
-do not predict a winner for the present frozen-cosine task.   rare validation rows. The full manifest has 84,630 images:
-RETFound’s documented Kermany-related pretraining expo-   74,082 training, 9,526 validation and 1,022 test. It will remain
-sure also prevents treating the matched legacy reference as an   unchanged; derived rosters reference its paths. Counts describe
-upstream-exposure-controlled experiment.                     images, not veriﬁed independent patients.
-  EyeDiff already combines synthetic ophthalmic images and   A ﬁve-way K-shot head uses 5K labelled supports. The
-foundation models for rare-disease tasks [9], precluding that   separate, unique inspected development-label budget is 124:
-novelty claim here. The project’s generators and automatic   supports are drawn from that inventory, not added to  it or
-feature-distance quality control used the broader rare training   multiplied by folds and draws. The 22 rare evaluation labels
-inventory; subsampling outputs cannot undo that exposure.   have been historically inspected, so the legacy query set is not
-Synthetics are excluded from this strict K-shot comparison. Vi-  newly blind. Common ﬁtting labels and upstream pretraining
-sual plausibility and diagnostic utility are separate endpoints.   exposure will be disclosed separately. No synthetic supports,
-                                                                   stochastic augmentation, unlabelled-target self-training, query
-B. Lessons from Few-Shot Learning Across Fields
-                                                                  adaptation, ﬁtted feature scaler or query-updated normalization
-  Prototypical Networks learn an embedding in which class   will be used.
-prototypes  support  few-shot  recognition  [10]. SimpleShot
-shows the importance of simple feature transformations and   B. Dependence Screening and Feasibility Gates
-nearest-neighbor baselines [11]. The present classiﬁer instead
-                                                            Before new-protocol scores, the 146 rare benchmark imagesuses already pretrained, frozen encoders and explicitly normal-
-                                                                    will be screened using equal ﬁle hashes and equal decodedized cosine centroids; it is neither a newly trained Prototypical
-                                       RGB pixels with dimensions. Alpha is discarded only for theNetwork nor an exact SimpleShot implementation. Cross-
-                                       RGB ﬁngerprint; original hashes are retained. A ﬁxed 64-bitdomain evaluation spanning satellite, dermatology and X-ray
-                                                                 horizontal difference hash will ﬂag pairs at Hamming distanceimagery [12] further cautions against importing rankings from
-                                    ≤4: Pillow RGB-to-L conversion, BOX resize to 9 × 8,natural-image benchmarks into OCT.
-                                                         row-major adjacent left-greater-than-right bits. Decoder/Pillow  Resource accounting is equally important. STARTUP adapts
-                                                                versions will be pinned. This  is a candidate screen, not arepresentations with unlabelled target-domain images [13];
-                                                                 validated patient  detector. Raw-image review without newthat access is additional information excluded here. In natural
-                                                          encoder scores will place conﬁrmed or unresolved possiblelanguage processing, Mosbach et  al. [14] show why adap-
-                                                                 duplicates in connected components. Conﬂicting image labelstation comparisons must control model and example bud-
-                                                           block the affected component pending resolution.gets. CLAP’s analysis of vision-language adaptation highlights
-                                                          Rare ﬁtting components linked to legacy queries will betarget-speciﬁc tuning and distribution-shift sensitivity [15]; its
-                                                           excluded before ﬁtting lock; canonical  test rows  will nottext-initialized, constrained probe is not the ﬁxed-L2 logistic
-                                                      move. Development groups will union image components withprobe speciﬁed below. These lessons support matched episodes
-                                                                veriﬁed, dataset-namespaced  patient  links where  available.and  explicit development-label  disclosure, not a  universal
-                                               Unknown patients remain unknown. A veriﬁed rare patientclaim that linear probes win.
-                                                          spanning  disease  labels  stops  the  selector  for a prescore  Prompt methods also change the computational and super-
-                                                                  fold amendment. Group IDs are minimum normalized POSIXvision contract. CoCoOp conditions learned text prompts on
-                                                member  paths;  class-speciﬁc  inventories  are  sorted  case-input images [16]; PathPT combines textual prompt tuning
-                                                                        sensitively. A ﬁxed PCG64 permutation followed by round-with spatial aggregation and tile supervision for rare-cancer
-                                                               robin assignment gives ﬁve folds. Every fold must contain allpathology [17]. Neither is a drop-in image-only OCT com-
-                                                      ﬁve query classes and eight ﬁtting groups per class, requiringparator or evidence that a small trainable parameter count
-                                                                         at least ten eligible groups per class. Any failure stops theguarantees low total cost. Retinal shift evaluation itself has
-                                                                      entire selector before scores; no favorable fold omission orprecedents, including BenchReAD’s cross-dataset anomaly-
-                                                            automatic reduction of K is allowed.detection benchmark [18]. Anomaly detection, however, dif-
-fers from naming ﬁve diseases or counting NORMAL scans
-                                                          C. Frozen Checkpoint Pipelines and Feature Identityassigned any rare label. This study isolates frozen adaptation
-and measures its own costs rather than extending the sprint to    The ﬁxed roster is RETFound Nature OCT, DINOv2-Base
-prompts, adapters or full ﬁne-tuning.                       and MIRAGE-Base (OCT-only inference), with an ImageNet
-                                                         Keras Inception-v3 reference (Table II). BioMedCLIP image
-                    III. PROPOSED METHODS
-                                                                   features replace RETFound only for predeﬁned access, loading
-A. Tasks, Data and Information Budgets                                                               or terms failure, before new labelled comparisons. Failure of
-  The primary  task  is  closed-set  classiﬁcation  of  central   another arm or the fallback reduces the roster without a check-
-serous chorioretinopathy (CSC), macular hole (MH), mac-   point search; unavailable arms are not scored as poor models.
-ular telangiectasia (MacTel), Stargardt disease and  retinitis  An arm unavailable at input lock cannot enter nomination later
-pigmentosa (RP). In that ﬁxed order, the canonical manifest   in v1.
+  RETFound learns retinal image features and reports how                        III. PROPOSED METHODS
+disease detection changes with fewer labels  [4]. MIRAGE
+                                                             A. Tasks, Data and Information Budgetspretrains on OCT and scanning-laser ophthalmoscopy and
+benchmarks several OCT tasks  [5]. EyeCLIP adds visual-    The main task is to assign each rare OCT image to one of
+language training and few- and zero-shot ophthalmic tests [6].  ﬁve classes, in this ﬁxed order: central serous chorioretinopa-
+DINOv2 is a general self-supervised visual model [7], and   thy (CSC), macular hole (MH), macular telangiectasia (Mac-
+generalist-versus-specialist comparisons on eye data already   Tel), Stargardt disease and  retinitis pigmentosa (RP). The
+exist [8]. These studies explain our choice of checkpoints.   canonical manifest holds 27/26/25/19/27 real development
+They used different adaptation methods, cohorts and model   images (124  in  total) and 5/5/4/4/4 legacy  queries, the
+sizes, so they do not  predict which model  will win our   rare images of the existing test split (22 in total). No rare
+frozen-cosine task. RETFound’s documented Kermany-related   images are in the manifest’s validation  split; development
+pretraining exposure also means the legacy comparison does   folds provide held-out validation. The full manifest has 84,630
+not control for upstream exposure.                           images: 74,082 training, 9,526 validation and 1,022 test. We
+  EyeDiff already combines synthetic eye images with foun-   will not change  it; derived rosters only reference  its paths.
+dation models  for  rare  disease  [9], so we do not claim   These counts are images, not veriﬁed independent patients.
+that combination as new. Our generators and their automatic    Two label budgets. A ﬁve-class K-shot head sees 5K
+feature-distance quality control saw the whole rare training   labelled supports. Separately, development uses 124 inspected
+inventory; using fewer of their outputs cannot undo that. We   labels in total: supports are drawn from these images, so folds
+therefore exclude synthetic images from the K-shot compari-  and draws add no new labels. We have already inspected the
+son.                                                  22 rare evaluation labels, so the legacy query set is not blind.
+                                           Common ﬁtting labels and upstream pretraining exposure will
+                                                        be reported separately. We use no synthetic supports, stochastic
+                                                            augmentation, self-training on unlabelled target images, query
+B. Lessons from Few-Shot Learning Across Fields              adaptation, ﬁtted feature scaler or normalization updated from
+                                                                   queries.
+  Prototypical Networks learn an embedding in which class
+prototypes  classify new examples  [10]. SimpleShot shows   B. Dependence Screening and Feasibility Gates
+that simple feature transforms with nearest-neighbor rules are
+                                                            Duplicate  screen. Before any  new-protocol  score, we
+strong baselines [11]. Our classiﬁer  differs:  it uses frozen
+                                                              screen the 146 rare benchmark images in three ways: equal
+pretrained encoders and normalized cosine centroids, so  it
+                                                              ﬁle hashes; equal decoded RGB pixels and dimensions, with
+is neither a newly trained Prototypical Network nor an ex-
+                                                             alpha dropped for this check only; and a ﬁxed 64-bit horizontal
+act SimpleShot implementation. A cross-domain benchmark
+                                                                  difference hash with Hamming distance ≤4. The hash uses
+covering satellite, dermatology and X-ray images [12] warns
+                                                             Pillow RGB-to-L conversion, BOX resizing to 9 × 8 and
+that rankings from natural-image benchmarks may not carry
+                                                         row-major left-greater-than-right bits, with decoder and Pillow
+over to OCT.
+                                                                versions pinned. The screen ﬁnds candidates; it does not detect
+  Comparisons must also count resources. STARTUP adapts   patients. A reviewer then inspects ﬂagged raw images with-
+features with unlabelled target-domain images [13]; we do not   out encoder scores; images linked directly or through other
+allow that extra information. In natural language processing,  conﬁrmed or unresolved duplicate pairs form one component.
+Mosbach et al. [14] show that adaptation methods must be  A component with conﬂicting image labels is blocked until
+compared at equal model and example budgets. CLAP’s study   resolved.
+of vision-language adaptation points to target-speciﬁc tuning                                                           Folds and stop rules. Rare ﬁtting components linked to
+and sensitivity to distribution shift [15];  its text-initialized,                                                             legacy queries are excluded before the ﬁtting lock; canonical
+constrained probe is not our ﬁxed-L2 logistic probe. These                                                                            test rows do not move. Development groups join image com-
+lessons support matched episodes and open reporting of de-                                                           ponents with veriﬁed, dataset-namespaced patient links where
+velopment labels, not a general claim that linear probes win.                                                                these  exist; unknown patients stay unknown.  If a veriﬁed
+  Prompt methods change both the compute and the su-   rare patient appears under two disease labels, the selector
+pervision. CoCoOp learns text prompts conditioned on each   stops for a fold amendment before any score. Each group is
+image [16]; PathPT combines text prompt tuning with spatial  named by its smallest normalized POSIX member path, and
+aggregation and  tile labels for rare-cancer pathology [17].   class inventories are sorted case-sensitively. A ﬁxed PCG64
+Neither is a drop-in image-only OCT baseline. BenchReAD   permutation and round-robin assignment then give ﬁve folds.
+already benchmarks retinal anomaly detection across datasets  Each held-out fold needs all ﬁve classes, and the other four
+[18]. Detecting anomalies, however, is not the same as naming   folds together need at least eight ﬁtting groups per class, so
+ﬁve diseases or counting NORMAL scans given a rare label.   each class needs at least ten eligible groups. If any check fails,
+We keep the encoders frozen and measure their own costs;   the whole selector stops before scoring. We will not drop an
+prompts, adapters and full ﬁne-tuning are out of scope.         unfavorable fold or lower K automatically.
 
 PAGE 3
-PROPOSED PROTOCOL  | No new model results
+                                                             × no outcome feedback into nomination or preprocessing
 
- 1 LOCK INPUTS        2 FREEZE ENCODERS    3A FIVE-WAY K-SHOT           4A REPORT
 
-  124 rare dev images         RETFound / DINOv2               Paired, nested real supports               Dev-only nominee
-  22 legacy rare queries       MIRAGE (OCT only)               5-fold dev: K = 1, 2, 4, 8                 Legacy / eligible
-                              Keras Inception reference      100 prototype draws; fixed probe           external queries
-  Hash / duplicate screen
-  Verified patient links          Native transforms; FP32
-   Eligibility + exclusions        Fresh caches + identities                                          3B NINE-WAY AUDIT            4B AUDIT
+     Locked inputs               Frozen encoders                  Five-way K-shot                     Report
 
-                                                           1,000 common supports/class          NORMAL FRR
-                                        + all eligible rare fitting images          Kermany / OCTID
-                                                  One real-only prototype head                      / OCTDL by source External inventories: terms, labels, dependence;
- freeze query IDs before inference.
- No outcome-driven changes. Similarity groups are not patient IDs. All models remain visible.
+                                     RETFound     124 rare development                                                           Paired, nested real supports                  Dev-only nominee
+      images (5 classes)                                                 5 grouped folds, K = 1, 2, 4, 8                Legacy + eligible
+     22 legacy rare queries                   DINOv2                  100 prototype draws; 25 probe draws                external queries
+
+                                MIRAGE (OCT only)     Hash / RGB / dHash
+         duplicate screen
+       Verified patient links                Inception-v3 (reference)              Nine-way source audit                    Audit
+        Eligibility + exclusions
+                                                                             1,000 common supports/class           NORMAL false-rare
+                                          Native transforms, FP32
+                                                                  + all eligible rare fitting images                      rate, by source:
+                                       Fresh caches + identities                                                              One real-only prototype head             Kermany, OCTID, OCTDL
+
+
 
 
 Fig. 1.  Proposed protocol; all boxes denote planned operations. Shared locked image identities and frozen checkpoint pipelines feed two distinct analyses.
@@ -146,160 +154,190 @@ to measure false-rare rate (FRR) on NORMAL scans. External inventories and ﬁna
 not establish patient identity. No outcome from either reporting branch feeds back into nomination or preprocessing.
 
 
-                      TABLE II                           Exact ties follow CSC/MH/MacTel/Stargardt/RP order. Nor-
- FIXED CHECKPOINT IDENTITIES; EXACT REVISIONS AND TRANSFORMS    malizing every support before averaging is essential: the his-
+                      TABLE II                           saved nine-way heads stay historical artifacts. A nonﬁnite or
+ FIXED CHECKPOINT IDENTITIES; EXACT REVISIONS AND TRANSFORMS    zero-norm feature or centroid stops the arm.
                   AWAIT THE PRESCORE GATE.
-                                                                        torical raw-feature Euclidean prototype and raw-mean cosine
- Arm               Public identity / reference implementation             helper do not implement this rule. No post-hoc centering will
-                                                        be added to improve an observed model ranking.
- RETFound       YukunZhou/RETFound_mae_natureOCT
- DINOv2        facebook/dinov2-base                    The secondary ﬁve-way probe will use the same unit fea-
- MIRAGE        j-morano/MIRAGE-Base, OCT only               tures and balanced supports, minimizing
- Conditional  fall-  microsoft/BiomedCLIP-PubMedBERT_25
- back           6-vit_base_patch16_224, image only                       1 X
- Inception-v3        Historical Keras ImageNet loading/backbone; 256 →    L(W, b) = −          log[softmax(Wum(x) + b)]y                                                 5K                 299 resize and global average pooling                                      (x,y)∈S                                 (3)
-                                         + 0.005∥W∥2F .
-
-  The gate will pin usable terms, weight revision/hash, chan-  The  intercept  is  unpenalized;  initialization  is  zero,  with
-nel handling, deterministic native transforms, normalization,  no imbalance weights. Analytic  gradients and L-BFGS-B
-pooling, dtype and inference mode. Checkpoint-native pre-   will use maxiter=1000, maxfun=20000, maxls=20,
-processing will be retained, with crop geometry and retained  maxcor=10, gtol=1e-6 and ftol=0, without bounds.
-ﬁeld-of-view fraction logged by image/source. Fresh matched   Convergence requires ﬁnite parameters/objective and maxi-
-features, including the Keras reference, will use FP32 infer-  mum absolute gradient ≤10−6; actual termination reasons
-ence and raw ﬂoat32 storage; CPU normalization and classiﬁer  and missing pairs will be reported. A ﬁxed library C or the
-arithmetic will use ﬂoat64. Cache identity will include ordered   historical Adam head is not a substitute for this mean-loss
-image IDs/content hashes, weights, transforms/pooling, envi-   objective. No regularization or draws will be replaced after
-ronment, dimension/dtype and code revision. Historical ﬂoat16   viewing query outcomes.
-Inception caches cannot recover the original precision and lack
-                                                             E. Paired Episodes, Nomination and Reportingthis identity contract; they and saved nine-way heads remain
-historical artifacts. Nonﬁnite or zero-norm features/centroids     Development will evaluate Kdev = {1, 2, 4, 8} with 100
-stop the arm.                                                 nested support draws per fold. Each draw permutes ﬁtting
-                                                              groups, selects one uniformly chosen image per group, and
-D. Primary Prototypes and Secondary Logistic Probes                                                             uses preﬁxes for increasing K. Every encoder/classiﬁer shares
-  Let fm(x) ∈Rdm be encoder m’s embedding, and Sc   those IDs and within-group choices; fold queries contain all
-contain the K supports for class c. The primary head will   eligible held-out rows. Reporting will instead draw from all
-compute                                                             eligible development groups and evaluate K ∈{1, 2, 4, 8, 16}
-            fm(x)            1 X                  on the legacy queries and eligible external subsets. If any class
-   um(x) =                ,   am,c =       um(x),         (1)   has fewer than 16 ﬁtting groups, K = 16 will be omitted
-           ∥fm(x)∥2      K
-                                   x∈Sc                       for every encoder. The secondary probe uses development
-              am,c
-     pm,c =              ,   by(x) = arg max um(x)⊤pm,c.   (2) K = 4, ﬁrst 25 matching draws per fold, and the ﬁrst 25
-            ∥am,c∥2                    c                      matching reporting draws per K. Exact PCG64/SeedSequence
+                                                      D. Primary Prototypes and Secondary Logistic Probes
+ Arm               Public identity / reference implementation
+                                                     Primary  classiﬁer. Let fm(x) ∈Rdm be encoder m’s
+ RETFound       YukunZhou/RETFound_mae_natureOCT        embedding, and Sc contain the K supports for class c. The DINOv2        facebook/dinov2-base
+ MIRAGE        j-morano/MIRAGE-Base, OCT only             primary head computes
+ RETFound                 fall-  microsoft/BiomedCLIP-PubMedBERT_25                                                                                  1 X                                                               fm(x) back               6-vit_base_patch16_224, image only           um(x) =                                                                                                                                  ,   am,c =                                                                                         um(x),         (1)
+ Inception-v3        Historical Keras ImageNet loading/backbone; 256 →              ∥fm(x)∥2      K
+                 299 resize and global average pooling                                                 x∈Sc
+                                                                       am,c
+                                                               pm,c =              ,   by(x) = arg max um(x)⊤pm,c.   (2)
+                                                                    ∥am,c∥2                    c
+                                                          Exact      ties    go     to     the     ﬁrst     class     inC. Frozen Checkpoint Pipelines and Feature Identity
+                                                       CSC/MH/MacTel/Stargardt/RP   order.  Every   support   is
+  Models. The  roster  is ﬁxed: RETFound Nature OCT,   normalized  before  averaging. We  will  not add  post-hoc
+DINOv2-Base and MIRAGE-Base (OCT-only inference), with   centering to improve an observed ranking.
+an ImageNet Keras Inception-v3 reference (Table II). BioMed-    Secondary probe. The logistic probe uses the same unit
+CLIP image features replace RETFound only  if RETFound   features and minimizes, over the 5K balanced supports S,
+fails a predeﬁned access, loading or terms check before any                 1 X
+                                                L(W, b) = −          log[softmax(Wum(x) + b)]ylabelled comparison.  If another arm or the fallback  fails,                                                 5K                                                                                        (x,y)∈S                                 (3)the roster shrinks; we do not search for a  substitute. An
+unavailable arm is reported as unavailable, not scored as a         + 0.005∥W∥2F .
+poor model, and an arm missing at input lock cannot enter                                                   The intercept  is not penalized; weights  start at zero, with
+nomination later in v1.                                                     no class weights. We use analytic gradients and L-BFGS-
+  Feature identity. The prescore gate will ﬁx usable terms,  B  with maxiter=1000, maxfun=20000, maxls=20,
+weight  revision and hash, channel handling,  deterministic  maxcor=10, gtol=1e-6 and ftol=0, without bounds.
+native transforms, normalization, pooling, dtype and inference  A ﬁt counts as converged only  if parameters and objective
+mode. Each checkpoint keeps  its own preprocessing; crop   are ﬁnite and the largest absolute gradient is ≤10−6; we
+geometry and the retained ﬁeld-of-view fraction are logged per   report actual termination reasons and missing pairs. We will
+image and source. All new features, including the Keras ref-   not change regularization or replace draws after seeing query
+erence, are computed in FP32 and stored as raw ﬂoat32; CPU   outcomes.
+normalization and classiﬁer arithmetic use ﬂoat64. A cache’s
+                                                             E. Paired Episodes, Nomination and Reportingidentity includes the ordered image IDs and content hashes,
+weights, transforms and pooling, environment, dimension and     Paired episodes. Development uses Kdev = {1, 2, 4, 8}
+dtype, and code  revision. The  historical ﬂoat16 Inception   with 100 nested support draws per fold. Each draw shufﬂes
+caches lost precision and lack this identity, so they and the   the ﬁtting groups, picks one image per group uniformly at
 
 PAGE 4
-namespaces and path-order  rules are archived  in protocol  No common-validation extraction, optimizer seeds or synthetic
-sections 4 and 6; realized support/query IDs will be saved,   images enter this audit.
-not seeds alone.                                                Class order is ﬁxed: NORMAL, CNV, DME, DRUSEN,
-  Primary performance  is macro recall; ordinary accuracy,  CSC, MH, MacTel, Stargardt and RP. For each source s, false-
-class recalls and confusion counts are secondary. Nomination   rare rate is
-uses complete prototype development results only. For model                #{x ∈Ns : by(x) ∈Crare}
-m, with  qf,c held-out class counts and hm,K,r,f,c  correct          FRRs =                                         ,          (5)                                                                                         |Ns|
+random, and takes preﬁxes for larger K. Every encoder and   the nominee is selected on development data, its development
+classiﬁer shares those IDs and within-group choices, and fold   estimate is optimistic.
+queries are all eligible held-out rows. Reporting instead uses
+                                                                         F. Separate Nine-Way Source Audit
+100 nested draws from all eligible development groups at K ∈
+                                                         Audit head. Each encoder gets exactly one deterministic{1, 2, 4, 8, 16}, evaluated on the legacy queries and eligible
+                                                                  real-only nine-way prototype head, built with (1)–(2) with Kexternal subsets. If any class has fewer than 16 ﬁtting groups,
+                                                              replaced by each class’s support count, so averaging staysK = 16 is dropped for every encoder. The secondary probe
+                                                              within classes. The common ﬁtting roster is the same seed-uses development K = 4 with the ﬁrst 25 matching draws
+                                                     42 sample of 1,000 images per common class, selected withper fold, and the ﬁrst 25 matching reporting draws per K.
+                                            major_indices from the full 73,958-row common ﬁttingProtocol sections 4 and 6 give the exact PCG64/SeedSequence
+                                                         frame and mapped back to paths in order. All eligible realnamespaces and path-order rules; we save the realized support
+                                                                    rare ﬁtting images are added. The rare exclusion rule doesand query IDs, not seeds alone.
+                                                              not remove common rows. Before exclusions and external  Nomination. The primary metric is macro recall, the recall
+                                                                   additions, each encoder extracts 4,000 common ﬁtting, 1,000averaged equally over the ﬁve rare classes; ordinary accuracy,
+                                             common test and 146 rare images: 5,146 in total. The auditclass recalls and confusion counts are secondary. Nomination
+                                                             uses no common-validation images, optimizer seeds or syn-uses complete prototype development results only. For model
+                                                                       thetic images.
+m, with  qf,c held-out class counts and hm,K,r,f,c  correct
+                                                               False-rare  rate. Class order  is ﬁxed: NORMAL, CNV,
 predictions,
-                          100      P5                   where Ns contains eligible true NORMAL queries. Kermany,
-          1 X X 1 X    f=1 hm,K,r,f,c       OCTID [19] and OCTDL [20] will be reported separately,
-                                                                                 .   (4)  Sm =                       P5                                                              alongside NORMAL recall, common confusions, rare recall        4 · 100                        5                                    f=1 qf,c                                   c∈Crare               K∈Kdev r=1
-                                                       and all denominators. Low FRR alone is insufﬁcient if rare
-Pooling correctness within each class before averaging avoids   disease recognition is poor. A ﬁve-way rare-only head has no
-equally weighting unequal fold class counts. Only FMs com-  NORMAL output and cannot supply this diagnostic.
-pleting every required fold/K/draw can enter nomination; at     External release/hash, terms, label inventory and eligibility
-least two complete FMs are required. Inception is a reference,   rules will be frozen before outcomes. External queries will
-not a candidate winner. Partial averages remain descriptive and   be screened against every locked ﬁtting row, legacy queries
-cannot select a primary model.                            and one another using the same image screen and veriﬁed
-  Among complete FMs within 0.02 of the best Sm, the   patient links. Fitting/legacy-linked external components will be
-nominee will have the lowest median warm extraction sec-   excluded without changing locked ﬁtting rosters; within-query
-onds/image. Timing uses the same ﬁxed, prescore-ordered   dependence remains recorded. Final external query IDs will
-100-image development inventory, repeating IDs only for tim-   be frozen before inference. Screening coverage will be stated:
-ing if needed, batch one, FP32, one warm pass and ﬁve timed   unused legacy images and private pretraining overlap remain
-passes on the same hardware/session. Each statistic is the me-  unknown. Rare  transfer  is  conditional on veriﬁed  labels,
-dian of the ﬁve per-pass mean times; preprocessing is included,   including clinical CSR-to-CSC equivalence. OCTDL’s broad
-download/disk I/O excluded, with GPU synchronization. Mod-   condition labels do not automatically identify MH. Partial-
-els run sequentially in RETFound/DINOv2/MIRAGE order,   class cohorts will retain  all ﬁve output classes and report
-one process each; hardware changes require retiming all can-   present-class recalls/output allocations, not a ﬁve-class macro
-didates. Final ties use that order, with BioMedCLIP occupying   recall. All nine output allocations will remain visible in the
-RETFound’s  slot. This two-percentage-point  rule  allocates   source audit. Cosine scores will not be labelled probabilities;
-engineering effort; it is not equivalence. The primary nominee   logistic outputs will include probabilities in ﬁxed order.
-will be locked before legacy/external outcomes, and every     For  deterministic nine-way  outputs, optional  descriptive
-model will remain reported. Without valid nomination,  all  95% percentile intervals will use 5,000 patient-cluster draws
-reporting is exploratory.                                       (seed  zero)  only  where  veriﬁed  IDs  exist.  Otherwise,
-  Reporting  will  show  paired  nominee-minus-Inception   image/duplicate-group conditional intervals will be explicitly
-macro-recall differences by K, plus all secondary model con-   labelled.  Intervals  condition on  the  ﬁtted head and omit
-trasts, using shared completed episodes and available/planned   development-selection uncertainty. Common-patient overlap
-counts. Support-draw mean, SD and  ﬁfth/ninety-ﬁfth  per-   remains a legacy limitation rather than being repaired by
-centiles describe example-selection variability conditional on   clustering.
-these  images. They  are  not  patient conﬁdence  intervals;
-repeated draws  create no new  patients. No conﬁrmatory        IV. DISCUSSION AND EXECUTION BOUNDARIES
-p-values,  episode  standard  errors  or  automatic  superior-      Joint rare recognition and NORMAL source auditing ad-
-ity/equivalence claims are planned. Selection also makes the   dress a practical ambiguity: accurate rare discrimination may
-nominee’s development estimate optimistic.                     coexist with false rare predictions on a new source, while
-                                                      low FRR may coexist with weak rare recall. These outcomes
-F. Separate Nine-Way Source Audit                                                           cannot isolate morphology, acquisition, preprocessing, capac-
-  Each encoder will receive exactly one deterministic real-   ity or pretraining effects. Five-way restriction and duplicate
-only nine-way prototype head using (1)–(2), with the average   screening address speciﬁc dependencies without establishing
-taken over all selected supports. The common ﬁtting roster   patient independence or clinical transportability.
-is the identical seed-42 sample of 1,000 images per common    With four or ﬁve legacy queries per rare class, one pre-
-class, selected with major_indices from the full 73,958-   diction moves recall by 0.25 or 0.20. Historically inspected
-row common ﬁtting frame and mapped back to paths in order.   labels, unknown rare patients, upstream exposure and incom-
-All eligible real rare ﬁtting images are appended. Common   plete external disease coverage limit population claims. Larger
-rows will not be removed by the rare exclusion rule. Before K creates overlapping support rosters; narrow draw spread
-exclusions and external additions, the shared extraction in-   need not mean population precision. Documented failures and
-ventory is 4,000 + 1,000 + 146 = 5,146 images per encoder.   infeasible arms will remain part of the evidence.
+                                           DME, DRUSEN, CSC, MH, MacTel, Stargardt and RP. For
+                          100      P5                    each source s, the false-rare rate is
+          1 X X 1 X    f=1 hm,K,r,f,c
+  Sm =                  P5               .   (4)                #{x ∈Ns : by(x) ∈Crare}        4 · 100                        5
+               K∈Kdev r=1                                   c∈Crare     f=1 qf,c                 FRRs =           |Ns|                 ,          (5)
+                                                      where by is the nine-way prediction and Ns contains the eligiblePooling correct predictions within each class before averaging
+                                                                    true NORMAL queries. We report Kermany, OCTID [19]
+avoids giving folds with unequal class counts equal weight.
+                                                       and OCTDL [20] separately, with NORMAL recall, common
+Only FMs that complete every required fold, K and draw can
+                                                               confusions, rare recall and all denominators. A low FRR is
+be nominated, and at least two must complete. Inception is a
+                                                              not enough if rare recognition is poor. The ﬁve-way head has
+reference, not a candidate winner. Partial averages are reported
+                                                     no NORMAL output, so it cannot give a meaningful FRR.
+but cannot select a primary model.
+                                                           External data. Before any outcome, we freeze each external
+  Selection by score and speed. The nominee, the one FM
+                                                                   release and hash, terms, label inventory and eligibility rules.
+reported as primary, is the fastest complete FM within 0.02
+                                                              External queries are screened against every locked ﬁtting
+(two percentage points) of the best Sm, so it need not have the                                                              row, the legacy queries and each other, with the same image
+highest score. Timing uses the same ﬁxed, prescore-ordered
+                                                              screen and veriﬁed patient  links.  Fitting- or legacy-linked
+100-image development inventory (IDs repeat only for timing
+                                                                  external components are excluded without changing locked
+if needed), batch size one, FP32, one warm pass and ﬁve
+                                                                  ﬁtting  rosters; within-query dependence  is recorded. Final
+timed passes on the same hardware and session. Speed  is
+                                                                  external query IDs are frozen before  inference. We  state
+the median of the ﬁve per-pass mean warm extraction times
+                                                      what the screen covers: overlap with unused legacy images
+per image; preprocessing is included, download and disk I/O
+                                                       and private pretraining data stays unknown. Rare  transfer
+excluded, with GPU synchronization. Models run sequentially
+                                                        depends on veriﬁed labels, including clinical conﬁrmation that
+in RETFound/DINOv2/MIRAGE  order, one process each;
+                                                  OCTID’s central serous retinopathy (CSR)  is equivalent to
+hardware changes require retiming all candidates. Remaining
+                                                 CSC. OCTDL’s broad condition labels do not by themselves
+ties follow  that  order, with BioMedCLIP  in RETFound’s
+                                                                    identify MH. Partial-class cohorts keep all ﬁve outputs and
+slot. The two-percentage-point margin decides where to spend
+                                                                  report  present-class  recalls and output  shares, not a ﬁve-
+engineering effort; it does not mean the models are equivalent.
+                                                                    class macro recall. All nine output shares stay visible in the
+The nominee  is locked before any new legacy or external
+                                                             source audit. Cosine scores are not called probabilities; logistic
+outcome, and every model is still reported. Without a valid
+                                                               outputs include probabilities in ﬁxed order.
+nomination, all reporting is exploratory.                                                                   Intervals. For the deterministic nine-way outputs, optional
+  What we  report. For each K, we  report  the  paired                                                                   descriptive 95% percentile intervals use 5,000 patient-cluster
+nominee-minus-Inception macro-recall difference and all sec-                                                        draws (seed  zero), only where veriﬁed  patient IDs  exist.
+ondary model contrasts, using shared completed episodes with                                                          Otherwise we label  intervals as conditional on images or
+available and planned counts. The mean, SD and 5th/95th                                                                 duplicate groups. Intervals are conditional on the ﬁtted head
+percentiles over support draws describe how much results vary                                                       and leave out development-selection uncertainty.
+with the choice of examples, for these images only. They are
+not patient conﬁdence intervals; repeated draws add no new        IV. DISCUSSION AND EXECUTION BOUNDARIES
+patients. We plan no conﬁrmatory p-values, episode standard   Why two tests. A model may tell the rare diseases apart
+errors or automatic superiority or equivalence claims. Because   well and still label normal scans from a new source as rare.
 
 PAGE 5
-  An isolated Colab PyTorch extractor/evaluator, with Keras     [5]  J. Morano et  al., “Multimodal foundation model and benchmark for
-for Inception and CPU classiﬁers, will use one Colab Pro GPU        comprehensive  retinal OCT image  analysis,” npj  Digital Medicine,
+A model with a low FRR may still recognize rare diseases     [3] G. Quellec, M. Lamard, P.-H. Conze,  P. Massin, and B. Cochener,
+poorly. Neither test can separate the effects of morphology,        “Automatic detection of rare pathologies in fundus photographs using
+                                                                                 few-shot learning,” Medical Image Analysis, vol. 61, 2020,  art. no.
+acquisition, preprocessing, model capacity or pretraining. The        101660. [Online]. Available: https://doi.org/10.1016/j.media.2020.101
+ﬁve-way restriction and duplicate screen address speciﬁc de-        660
+pendencies; they do not establish patient independence or     [4] Y. Zhou et al., “A foundation model for generalizable disease detection
+                                                                         from retinal images,” Nature, vol. 622, no. 7981, pp. 156–163, 2023.
+clinical transportability.                                                          [Online]. Available: https://doi.org/10.1038/s41586-023-06555-x
+  Limitations. With four or ﬁve legacy queries per  rare     [5]  J. Morano et  al., “Multimodal foundation model and benchmark for
+class, one prediction moves recall by 0.25 or 0.20. Already-        comprehensive  retinal OCT image  analysis,” npj  Digital Medicine,
                                                                                               vol.  8,  no.  1,  2025,   art.  no.  576.  [Online].  Available:  https:
-session at a time. Generation, augmentation sweeps, prompts,         //doi.org/10.1038/s41746-025-01852-3
-adapters and backbone ﬁne-tuning are excluded. Runtime,     [6] D. Shi et  al., “A multimodal visual–language foundation model for
-peak RAM/VRAM and download, staging, extraction, ﬁtting         computational ophthalmology,” npj Digital Medicine, vol. 8, no. 1,
+inspected labels, unknown rare patients, upstream exposure         //doi.org/10.1038/s41746-025-01852-3
+and incomplete external disease coverage  limit population     [6] D. Shi et  al., “A multimodal visual–language foundation model for
+claims. Larger K makes support  sets overlap more, so a         computational ophthalmology,” npj Digital Medicine, vol. 8, no. 1,
                                                                               2025, art. no. 381. [Online]. Available: https://doi.org/10.1038/s41746
-and  serialization  costs  will be recorded  separately; GPU-        -025-01772-2
-hour savings remain unmeasured. New versioned outputs will     [7] M. Oquab et al., “DINOv2: Learning Robust Visual Features without
-preserve canonical data, heads and historical results.                    Supervision,”  Transactions on Machine  Learning  Research,  2024.
+narrow spread across draws does not mean a precise population        -025-01772-2
+estimate.                                                                           [7] M. Oquab et al., “DINOv2: Learning Robust Visual Features without
+  Compute. One isolated Colab PyTorch extractor and eval-         Supervision,”  Transactions on Machine  Learning  Research,  2024.
                                                                                        [Online]. Available: https://openreview.net/forum?id=a68SUt6zFt
-  Before labelled comparisons, a local input lock will archive     [8] Y. Zhou et al., “Generalist versus Specialist Vision Foundation Models
-protocol,  roster, grouping,  episode,  checkpoint,  transform,          for Ocular Disease and Oculomics,” arXiv preprint arXiv:2509.03421,
-code/environment and endpoint identities. This is not public        2025, version 1, submitted September 3, 2025. [Online]. Available:
+uator, with Keras for Inception and CPU classiﬁers, will use     [8] Y. Zhou et al., “Generalist versus Specialist Vision Foundation Models
+one Colab Pro GPU session at a time. We exclude generation,          for Ocular Disease and Oculomics,” arXiv preprint arXiv:2509.03421,
+augmentation sweeps, prompts, adapters and backbone ﬁne-        2025, version 1, submitted September 3, 2025. [Online]. Available:
                                                                                       https://arxiv.org/abs/2509.03421v1
-preregistration. Predictions, counts, failures and completion     [9] R. Chen  et  al., “Boosting foundation models  for  rare eye disease
-hashes will support identity-checked resumption. Failed ex-         diagnosis via a multimodal text-to-image generative framework,” npj
-ternal NORMAL access yields a rare-only pilot; failed rare         Digital Medicine, vol. 9, no. 1, 2026, art. no. 371. [Online]. Available:
+tuning. Runtime, peak RAM and VRAM, and download,     [9] R. Chen  et  al., “Boosting foundation models  for  rare eye disease
+staging, extraction, ﬁtting and serialization costs are recorded         diagnosis via a multimodal text-to-image generative framework,” npj
+separately; GPU-hour savings remain unmeasured.                       Digital Medicine, vol. 9, no. 1, 2026, art. no. 371. [Online]. Available:
                                                                                   https://doi.org/10.1038/s41746-026-02560-2
-mapping removes that transfer claim. Numerical/identity fail-    [10]  J.  Snell, K.  Swersky, and R. Zemel,  “Prototypical Networks  for
-ure stops the arm; required-fold failure stops selection. Dated        Few-shot Learning,” in Advances in Neural Information Processing
-amendments preserve previous outputs.                                    Systems, I. Guyon et al., Eds., vol. 30.  Curran Associates, Inc., 2017.
+  Input lock and stop rules. Before any labelled comparison,    [10]  J.  Snell, K.  Swersky, and R. Zemel,  “Prototypical Networks  for
+a local input lock archives the protocol,  roster, grouping,        Few-shot Learning,” in Advances in Neural Information Processing
+episode, checkpoint, transform, code, environment and end-         Systems, I. Guyon et al., Eds., vol. 30.  Curran Associates, Inc., 2017.
                                                                                        [Online]. Available: https://proceedings.neurips.cc/paper_files/paper/2
-  The 11 November submission reports proposed methods        017/ﬁle/cb8da6767461f2812ae4290eac7cbc42-Paper.pdf
-without new FM outcomes. Planned November milestones    [11] Y. Wang, W.-L. Chao, K. Q. Weinberger, and L. van der Maaten,
-are  implementation/input checks  (12–14),  paired  develop-        “SimpleShot: Revisiting Nearest-Neighbor Classiﬁcation for Few-Shot
+point identities. This is not public preregistration. Predictions,        017/ﬁle/cb8da6767461f2812ae4290eac7cbc42-Paper.pdf
+counts, failures and completion hashes allow identity-checked    [11] Y. Wang, W.-L. Chao, K. Q. Weinberger, and L. van der Maaten,
+resumption. The stop rules are: (1) failed external NORMAL        “SimpleShot: Revisiting Nearest-Neighbor Classiﬁcation for Few-Shot
                                                                                    Learning,” arXiv preprint arXiv:1911.04623, 2019.
-ment/nomination (15–19), locked query reporting (20–23) and    [12] Y. Guo et al., “A Broader Study of Cross-Domain Few-Shot Learning,”
-evidence freeze (27). Access, loading, grouping and clinical          in Computer Vision – ECCV 2020, 2020, pp. 124–141.
-mappings remain unpassed  gates. Late delivery  will drop    [13] C.  P. Phoo and B. Hariharan, “Self-training for Few-shot Transfer
+access leaves a rare-only  pilot; (2) a failed rare mapping    [12] Y. Guo et al., “A Broader Study of Cross-Domain Few-Shot Learning,”
+removes that transfer claim; (3) a numerical or identity failure          in Computer Vision – ECCV 2020, 2020, pp. 124–141.
+stops the arm; and (4) a required-fold failure stops selection.    [13] C.  P. Phoo and B. Hariharan, “Self-training for Few-shot Transfer
                                                                             Across  Extreme  Task  Differences,”  in  International  Conference
-secondary probes ﬁrst and disclose reduced scope, without        on  Learning  Representations,  2021.  [Online].  Available:  https:
-waiting for favorable outcomes.                                              //arxiv.org/abs/2010.07734
-                                                                               [14] M. Mosbach, T. Pimentel, S. Ravfogel, D. Klakow, and Y. Elazar,
-                    V. CONCLUSION                                 “Few-shot  ﬁne-tuning  vs.  in-context  learning: A  fair  comparison
-                                                                         and  evaluation,”  in Findings  of  the Association  for Computational
-  Shared episodes, explicit label accounting and development-          Linguistics: ACL 2023, A. Rogers, J. Boyd-Graber, and N. Okazaki,
-only nomination make the proposed frozen-encoder compar-         Eds.  Toronto, Canada: Association for Computational Linguistics, Jul.
+Dated amendments keep earlier outputs.                             on  Learning  Representations,  2021.  [Online].  Available:  https:
+  Timeline. This 11 November submission reports the pro-         //arxiv.org/abs/2010.07734
+posed methods without new FM outcomes. The planned    [14] M. Mosbach, T. Pimentel, S. Ravfogel, D. Klakow, and Y. Elazar,
+                                                                             “Few-shot  ﬁne-tuning  vs.  in-context  learning: A  fair  comparison
+November milestones are implementation and input checks        and  evaluation,”  in Findings  of  the Association  for Computational
+(12–14), paired development and nomination (15–19), locked          Linguistics: ACL 2023, A. Rogers, J. Boyd-Graber, and N. Okazaki,
+query reporting (20–23) and evidence freeze (27). Access,         Eds.  Toronto, Canada: Association for Computational Linguistics, Jul.
                                                                               2023, pp. 12 284–12 314. [Online]. Available: https://aclanthology.org
-ison inspectable. The companion nine-way audit addresses         /2023.ﬁndings-acl.779/
-source-dependent errors. Historical augmentation ﬁndings mo-    [15]  J. Silva-Rodríguez, S. Hajimiri, I. Ben Ayed, and J. Dolz, “A Closer
-tivate, but do not answer, these questions. Outcomes and       Look at the Few-Shot Adaptation of Large Vision-Language Models,”
+loading, grouping and clinical mappings are  still unpassed         /2023.ﬁndings-acl.779/
+gates.  If we run  late, we drop the secondary probes ﬁrst    [15]  J. Silva-Rodríguez, S. Hajimiri, I. Ben Ayed, and J. Dolz, “A Closer
+and report the reduced scope; we will not wait for favorable       Look at the Few-Shot Adaptation of Large Vision-Language Models,”
                                                                                            in Proceedings of the IEEE/CVF Conference on Computer Vision and
-feasibility will be reported without causal pretraining, patient-         Pattern Recognition (CVPR), June 2024, pp. 23 681–23 690.
-independent validation or clinical-beneﬁt claims beyond the    [16] K. Zhou, J. Yang, C. C. Loy, and Z. Liu, “Conditional Prompt Learning
-evidence.                                                                               for Vision-Language Models,” in Proceedings of the IEEE/CVF Confer-
+outcomes.                                                                        Pattern Recognition (CVPR), June 2024, pp. 23 681–23 690.
+                                                                               [16] K. Zhou, J. Yang, C. C. Loy, and Z. Liu, “Conditional Prompt Learning
+                    V. CONCLUSION                                       for Vision-Language Models,” in Proceedings of the IEEE/CVF Confer-
                                                                              ence on Computer Vision and Pattern Recognition (CVPR), June 2022,
-                                                                                     pp. 16 816–16 825.
-       WRITING AND REPRODUCIBILITY NOTE                                                                               [17] D. He  et  al., “Boosting pathology foundation models via few-shot
-  The authors remain responsible for this work. Codex as-         prompt-tuning  for  rare cancer  subtyping,” Nature Communications,
+  Shared episodes, explicit label counts and development-only         pp. 16 816–16 825.
+nomination make the frozen-encoder comparison checkable,    [17] D. He  et  al., “Boosting pathology foundation models via few-shot
+and the nine-way audit  tests source-dependent  errors. We         prompt-tuning  for  rare cancer  subtyping,” Nature Communications,
                                                                                               vol.  17,  no.  1,  2026,  art.  no.  5058.  [Online].  Available:  https:
-sisted drafting, ﬁgures and source checking with research skills         //doi.org/10.1038/s41467-026-71715-2
-[21], acknowledged as tooling only. The source ledger and    [18] C. Lian, H.-Y. Zhou, Z. Hu, and J. Qin, “BenchReAD: A Systematic
-protocol accompany this draft for author review.                    Benchmark  for  Retinal  Anomaly  Detection,”  in  Medical  Image
+will report outcomes and failures without causal pretraining,         //doi.org/10.1038/s41467-026-71715-2
+patient-independent validation or clinical-beneﬁt claims be-    [18] C. Lian, H.-Y. Zhou, Z. Hu, and J. Qin, “BenchReAD: A Systematic
+yond the evidence.                                                  Benchmark  for  Retinal  Anomaly  Detection,”  in  Medical  Image
                                                                        Computing and Computer  Assisted  Intervention – MICCAI  2025,
                                                                                                         ser.  Lecture  Notes  in  Computer  Science,  vol.  15961.   Springer
                  REFERENCES                                                                              Nature  Switzerland,  2025,  pp.  35–45.  [Online].  Available:  https:
@@ -312,11 +350,3 @@ protocol accompany this draft for author review.                    Benchmark  f
      with few-shot  classiﬁcation,” Medical & Biological Engineering &         Dataset for Image-Based Deep Learning Methods,” Scientiﬁc Data,
      Computing, vol. 59, no. 2, pp. 401–415, 2021. [Online]. Available:          vol.  11,  no.  1,  2024,  art.  no.  365.  [Online].  Available:  https:
      https://doi.org/10.1007/s11517-021-02321-1                                  //doi.org/10.1038/s41597-024-03182-7
- [3] G. Quellec, M. Lamard, P.-H. Conze,  P. Massin, and B. Cochener,    [21]  T. Kassis, V. Agarwal, Y. He, D. Patel, and A. M. Brueckner, “Scientiﬁc
-     “Automatic detection of rare pathologies in fundus photographs using        Agent Skills: A Library of Procedural Knowledge for Research Agents,”
-     few-shot learning,” Medical Image Analysis, vol. 61, 2020,  art. no.         arXiv preprint arXiv:2609.00065, 2026.
-     101660. [Online]. Available: https://doi.org/10.1016/j.media.2020.101
-     660
- [4] Y. Zhou et al., “A foundation model for generalizable disease detection
-     from retinal images,” Nature, vol. 622, no. 7981, pp. 156–163, 2023.
-      [Online]. Available: https://doi.org/10.1038/s41586-023-06555-x

@@ -5,6 +5,10 @@ with [review resolutions and reuse boundaries](docs/research/FM_FINAL_REBUTTAL.m
 Draft loader/evaluator code and synthetic checks now have an [FM runbook](docs/research/FM_RUNBOOK.md).
 Real checkpoint/Colab gates and FM results remain pending; the pipeline below is the Yoo reproduction.
 
+This repository holds two projects: the closed Yoo replication and the frozen-encoder (FM)
+study. [Repository structure](#repository-structure) shows which files belong to each; for the
+FM study, start with [`protocols.md`](protocols.md).
+
 A reproduction of:
 
 > Yoo TK, Choi JY, Kim HK. **Feasibility study to improve deep learning in OCT diagnosis of
@@ -651,20 +655,54 @@ Only code and small result files are tracked. Data, caches, checkpoints and thir
 material are git-ignored — see [`.gitignore`](.gitignore). Large files live in Google Drive
 (`MyDrive/octfsl`, see [`COLAB.md`](COLAB.md)).
 
+All files sit in the repository root; the two groups below show which project each belongs to.
+The code is not split into folders, because the notebooks and the FM input lock refer to
+these exact paths.
+
+**Group 1. Replication of Yoo et al. 2021 (closed, 6 November)**
+
 ```
-.
 ├── stage0_manifest.py          build/verify data/manifest.csv
 ├── stage1_basic_aug.py         basic augmentation -> data/aug_basic/
+├── stage1b_normalize.py        C0 classifier-input copies
 ├── stage2_cyclegan.py          prep | train | generate | qc
-├── stage3_classifier.py        Inception-v3, variants none|basic|gan
+├── stage3_classifier.py        Inception-v3, variants none|basic|gan (also used by the FM study)
 ├── stage4_evaluate.py          metrics, knn/proto baselines, CAM
 ├── analysis.py                 training-free analyses (paired tests, kNN, QC, ROC, t-SNE, CAM)
+├── figures.py                  plots of saved analyses
+├── review_sheet.py             review sheet for looking at rare-disease images by eye
+├── c0_experiment.py            C0 source-confound control
+├── c1_experiment.py            C1 cached-head seed sweep (planned)
+├── c23_experiment.py           C2 GAN amount and C3 common-class caps
+├── c5_topup.py                 C5 generation-only top-up
+├── fast_head.py                fast cached-head trainer
+├── benchmark_head.py           T12 fast-trainer benchmark
+├── test_analysis_cluster.py    cluster-bootstrap check
 ├── colab_setup.ipynb           Colab: restore, rebuild, seed check, CAM, save and push
-├── COLAB.md                    Colab and Drive guide
-├── protocols.md                plain-language guide to the FM study protocol, for the team
-├── docs/research/              CONTEXT.md (research context), REPLICATION.md (paper vs repo, work left)
 ├── requirements.txt
-├── README.md
+├── guide.md, COLAB.md          execution recipes; Colab and Drive guide
+└── docs/research/              REPLICATION.md, CONTEXT.md, audits (L7, L8, C0, C2/C3)
+```
+
+**Group 2. Frozen-encoder (FM) study (in progress)**
+
+```
+├── protocols.md                start here: the study protocol in plain words
+├── fm_core.py                  protocol rules (screen, folds, supports, classifiers, nomination)
+├── fm_prepare.py               data preparation and the input lock
+├── fm_extract.py               frozen model loading, timing pilots, feature extraction
+├── fm_evaluate.py              development, nomination and reporting (CPU)
+├── colab_fm.ipynb              Colab: setup and first score-free checks
+├── requirements-fm.txt         pinned PyTorch environment for Colab
+├── docs/research/FM_*.md       protocol (binding), runbook, checklist, risks, terms evidence
+└── docs/report/fm_ieee/        the proposal paper (main.pdf)
+```
+
+Tests for both groups are in `tests/` (`test_fm_*.py` belong to the FM study).
+
+**Shared data and results**
+
+```
 ├── LICENSE
 ├── data/
 │   └── manifest.csv            tracked: 84,630 rows, defines every split

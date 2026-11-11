@@ -50,12 +50,15 @@ Before the first pilots:
 1. ~~**Terms for each of the four arms**, written into `DECISIONS`.~~ Decided 10 November; see
    section 5.
 
-Before the final pilots and S2 lock:
+Before the final pilots and S2 lock (Lam's answers of 11 November are in section 6; items
+2, 4, 5 and 7 and the R5 code and order are approved, 3 and 6 are still open):
 
 2. **External sources:** approve downloading OCTID and OCTDL, or record a real access or
    terms failure and the protocol's reduced scope.
 3. **Rare mappings:** CSR-to-CSC and OCTDL MH need clinical confirmation. Without it, keep
    NORMAL FRR and omit those transfer claims (protocol section 8).
+   **External code and order** (R5): review the uncommitted `fm_external.py`, and decide
+   whether external features may be extracted before S3 (runbook, "External source audit").
 4. **Numerical acceptance rule** (R3). Agent's proposal, not adopted: run each encoder twice
    in one process on five fixed synthetic images and require a largest element-wise
    difference of at most `1e-4` of the largest absolute output value. Whether to also
@@ -90,3 +93,42 @@ pre-filled in `colab_fm.ipynb` (first cell); the notebook harness checks that th
 **Inception:**
 
 > Lam, 2026-11-10. I approve the pinned Keras ImageNet no-top Inception-v3 weights as the reference arm only, never nominated, for feature extraction and timing in our non-commercial student research, run by me or a teammate. Licence: Apache-2.0 for the Keras code and, per the Keras 2.2.4 documentation, for these weights. The weights are not redistributed or committed.
+
+## 6. Lam's lock decisions (11 November 2026)
+
+Lam answered the section 4 list on 11 November. Lam's words are quoted; the agent's notes
+follow each.
+
+| Item | Lam's answer | Status and note |
+|---|---|---|
+| 2. External sources, and R5 external code and order | "Approve" | Approved: download OCTID and OCTDL; review and use the drafted `fm_external.py`; external features may be extracted before S3 (runbook, "External source audit"). The code is still uncommitted and the notebook download step still lives outside the repo. |
+| 3. Rare mappings | "How to confirm without expert? Any previous paper help that process" | **Open.** Evidence and options are below. |
+| 4. Numerical acceptance rule (R3) | "Approve but explain pros and cons" | Approved as proposed: run each encoder twice in one process on five fixed synthetic images and require a largest element-wise difference of at most `1e-4` of the largest absolute output value. Comparing against upstream's own outputs was not chosen, so it is not part of the rule. The check is not implemented yet. |
+| 5. Environment plan (R2) | "Approve" | Approved: final pilots, lock approval and full extraction run in one continuous Colab runtime; if that runtime is lost before any score, keep the attempt and redo pilots under a new approved lock. |
+| 6. Lock transport (R8) | "I only make the Drive public for my team work, the repo I will put it back to private" | **Needs one confirmation:** whether the lock may be committed once the repository is private. On 11 November the repository was still public (GitHub API `visibility: public`). |
+| 7. Protocol sections 4 and 6 walkthrough and risk acknowledgement | "Approve" | Approved; scheduled after the first score-free checks. |
+
+**Rare-mapping evidence (item 3), read 11 November.** The protocol requires "clinical
+label-equivalence confirmation" for CSR-to-CSC and says OCTDL "metadata alone is not clinical
+certification" (protocol section 8). What is available without a clinician:
+
+- Naming: MeSH descriptor D056833 "Central Serous Chorioretinopathy" lists "Central Serous
+  Retinopathy" as an entry term (NLM MeSH lookup API). OCTID's dataset is titled "Central serous
+  retinopathy retinal OCT images" (Borealis, doi:10.5683/SP/FVLZIL).
+- Earlier papers treat OCTID's CSR class as CSC: EyeDiff (Chen et al., npj Digital Medicine
+  2026, doi:10.1038/s41746-026-02560-2, Fig. 1 table) lists OCTID as "MH, CSCR, AMD DR, Normal";
+  a 2026 TVST external validation (doi:10.1167/tvst.15.1.6, PMC12786394) describes OCTID's
+  categories as "AMD, CSC, FTMH, and Healthy"; a 2025 BMC Ophthalmology review of CSC deep
+  learning (doi:10.1186/s12886-025-04372-6, PMC12502260) calls OCTID's class CSCR.
+- OCTDL labels (Kulyabin et al., Scientific Data 2024, PMC11009408): seven trained medical
+  students labelled first, two clinical specialists labelled independently with consensus, and
+  the head of the clinic confirmed every diagnosis. The paper defines macular hole as "a
+  complete defect in the inner layers of the retina that extends to the RPE" and treats the
+  lamellar tear as a separate variant, which matches the `subcategory` split 39 MH / 26 LH /
+  11 VMT.
+- Unverified: how Yoo et al.'s MH and CSC images were defined, so equivalence with the
+  benchmark's own labels rests on the disease names.
+
+These sources support the names and show the datasets were labelled by clinicians. They are
+not a clinician confirming that these external labels match the benchmark's labels, which is
+what the protocol asks for.
