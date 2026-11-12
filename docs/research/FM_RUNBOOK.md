@@ -33,9 +33,10 @@ this is access evidence, not a successful model load.
 
 External acquisition, external duplicate/patient screening, the separate final
 external query lock and external inference are **not implemented by these legacy
-commands**. They remain an S2/S4 deliverable. A legacy report is not completion of
-the required external source component. Optional cluster intervals and figures
-also remain future work. No manuscript outcome can be inferred from these tests.
+commands**. `fm_external.py` drafts everything except acquisition (see "External
+source audit" below; synthetic tests only, pending Lam's review). A legacy report is
+not completion of the required external source component. Optional cluster intervals
+and figures also remain future work. No manuscript outcome can be inferred from these tests.
 
 ## Preparation on the laptop
 
@@ -360,6 +361,46 @@ Kermany nine-way reporting uses one full-roster deterministic prototype head and
 all nine output columns. NORMAL FRR, NORMAL recall, common confusions and rare
 recall retain their actual denominators. The historical common-patient overlap
 remains a limitation. No new patient-independence or causal source claim follows.
+
+## External source audit (draft, pending Lam's review)
+
+`fm_external.py` implements the external interfaces R5 requires. It is one of the hashed
+code files, so it must be final before the real lock. It has run only on synthetic data:
+OCTID/OCTDL images have not been downloaded, because that route needs Lam's approval
+([evidence](FM_TERMS_EVIDENCE.md)). Acquisition itself is not implemented.
+
+Proposed order, each a future recipe:
+
+1. Before the lock: acquire the approved releases under `data/external/{OCTID,OCTDL}`, verify
+   the published MD5s, then record real SHA256 digests, terms and eligibility in the gate.
+2. After the lock, in the runtime that will extract the main inventory, build, screen and
+   lock the final query IDs. Add `--mapping SOURCE:LABEL=EVIDENCE` only with real clinical
+   confirmation; without it a source stays NORMAL-only.
+3. Extract the external queries beside the main inventory, before the first `develop`.
+4. After the sealed S3 nomination, report and summarize.
+
+```sh
+python fm_external.py candidates --octid-files octid_files.csv --octdl-labels OCTDL_labels.csv --out external_candidates.csv
+python fm_external.py screen --root /content/Few-shot --lock results/fm_v1/lock --candidates external_candidates.csv --out /content/fm_v1/external
+python fm_external.py freeze --root /content/Few-shot --lock results/fm_v1/lock --out /content/fm_v1/external
+python fm_extract.py extract --root /content/Few-shot --prepared results/fm_v1/lock --spec /content/fm_v1/specs/DINOv2.json --assets /content/assets/DINOv2 --out /content/fm_v1/features/DINOv2-external --external /content/fm_v1/external
+python fm_external.py report --lock results/fm_v1/lock --cache /content/fm_v1/features/DINOv2 --external-cache /content/fm_v1/features/DINOv2-external --external /content/fm_v1/external --arm DINOv2 --nomination /content/fm_v1/reports/nomination --out /content/fm_v1/runs/DINOv2/external
+python fm_external.py summarize --lock results/fm_v1/lock --external /content/fm_v1/external --runs /content/fm_v1/runs --nomination /content/fm_v1/reports/nomination --out /content/fm_v1/reports/external
+```
+
+`freeze` takes `--reviews` (`a,b,decision`) for every flagged dHash pair. Export the query
+lock with `fm_prepare.py export` and verify the copied bytes, as for other outputs.
+
+Step 3 needs Lam's decision. Extraction must run in the environment recorded at the lock,
+and a Colab runtime cannot last until S4, so this order extracts features before S3. No
+external label or score is read until `report`, which requires the sealed nomination. The
+risk record's transition list says the S3 binding precedes "external inference"; this
+order treats that as external scoring.
+
+Screening covers the locked rows and the external candidates only; unused legacy images and
+private pretraining sets remain unknown. Links between external and locked images come from
+the image screen, because no verified patient links across datasets exist. Patient IDs within
+a source group dependent queries in the ledger and do not remove them.
 
 ## Resume, export and reversal
 

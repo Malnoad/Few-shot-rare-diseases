@@ -51,7 +51,7 @@ Before the first pilots:
    section 5.
 
 Before the final pilots and S2 lock (Lam's answers of 11 November are in section 6; items
-2, 4, 5 and 7 and the R5 code and order are approved, 3 and 6 are still open):
+2, 3, 4, 5 and 7 and the R5 code and order are decided; 6 is still open):
 
 2. **External sources:** approve downloading OCTID and OCTDL, or record a real access or
    terms failure and the protocol's reduced scope.
@@ -102,7 +102,7 @@ follow each.
 | Item | Lam's answer | Status and note |
 |---|---|---|
 | 2. External sources, and R5 external code and order | "Approve" | Approved: download OCTID and OCTDL; review and use the drafted `fm_external.py`; external features may be extracted before S3 (runbook, "External source audit"). The code is still uncommitted and the notebook download step still lives outside the repo. |
-| 3. Rare mappings | "How to confirm without expert? Any previous paper help that process" | **Open.** Evidence and options are below. |
+| 3. Rare mappings | "How to confirm without expert? Any previous paper help that process"; then, 12 Nov: "We adopt published dataset labels for exploratory external evaluation only. Results measure agreement with those labels, not clinically validated disease transfer. Cohort eligibility is fixed before inference, and all planned results will be reported." | **Decided 12 Nov:** amendment A1 in `FM_AMENDMENTS.md` (cohorts, rules and wording). Options B and C are no longer needed. |
 | 4. Numerical acceptance rule (R3) | "Approve but explain pros and cons" | Approved as proposed: run each encoder twice in one process on five fixed synthetic images and require a largest element-wise difference of at most `1e-4` of the largest absolute output value. Comparing against upstream's own outputs was not chosen, so it is not part of the rule. The check is not implemented yet. |
 | 5. Environment plan (R2) | "Approve" | Approved: final pilots, lock approval and full extraction run in one continuous Colab runtime; if that runtime is lost before any score, keep the attempt and redo pilots under a new approved lock. |
 | 6. Lock transport (R8) | "I only make the Drive public for my team work, the repo I will put it back to private" | **Needs one confirmation:** whether the lock may be committed once the repository is private. On 11 November the repository was still public (GitHub API `visibility: public`). |

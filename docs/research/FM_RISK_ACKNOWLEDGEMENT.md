@@ -170,6 +170,10 @@ Protocol section 9 already permits final external query IDs to be locked later,
 before inference, under frozen source/release/eligibility rules. This is distinct
 from changing the locked code or scientific recipe.
 
+10 November: `fm_external.py` drafts the screen, query lock, external extraction and
+reporting as a hashed code file, tested on synthetic data only. It remains unapproved, and
+this blocker stays open until Lam decides. See the runbook's "External source audit".
+
 Once Lam has approved the relevant source/access route, asset staging and initial
 score-free loading checks can precede this decision. They do not become final
 pilot/lock evidence if later changes alter their recorded code identity;

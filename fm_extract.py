@@ -2,7 +2,8 @@
 
 describe prints the fixed recipes without importing a framework. spec hashes staged
 assets after terms/access approval. pilot runs the fixed, score-free timing gate;
-extract needs the archived input lock. Every process loads exactly one encoder.
+extract needs the archived input lock and, with --external, the external query lock.
+Every process loads exactly one encoder.
 See docs/research/FM_RUNBOOK.md for the spec and gate schemas and commands.
 """
 from __future__ import annotations
@@ -518,10 +519,13 @@ def verify_operation(out: Path, step: str, inventory: prep.Rows, arm: str) -> No
             raise ValueError(f"invalid operation cost: {key}")
 
 
-def run(step: str, root: Path, folder: Path, spec: dict, assets: Path, out: Path, session: str) -> None:
+def run(step: str, root: Path, folder: Path, spec: dict, assets: Path, out: Path, session: str,
+        external: Path | None = None) -> None:
     require_colab()
     if step not in ("pilot", "extract"):
         raise ValueError("unknown extraction step")
+    if external is not None and step != "extract":
+        raise ValueError("external queries are extracted only under the input and query locks")
     if step == "pilot" and not session.strip():
         raise ValueError("a shared Colab timing-session ID is required")
     operation_started = time.monotonic_ns()
@@ -532,6 +536,10 @@ def run(step: str, root: Path, folder: Path, spec: dict, assets: Path, out: Path
     lock = prep.load_lock(folder) if step == "extract" else None
     arm = spec["arm"]
     input_rows = prep.read_csv(folder / "extraction_inventory.csv")
+    if external is not None:
+        from fm_external import verify_external  # fm_external imports this module
+        verify_external(external, folder)
+        input_rows = prep.read_csv(external / "external_extraction_inventory.csv")
     if lock is not None and lock["arms"].get(arm, {}).get("status") != "available":
         raise ValueError("arm was unavailable at input lock and cannot enter v1 later")
     current = dict(spec=spec, code=prep.code_identity(), environment=environment())
@@ -553,6 +561,7 @@ def run(step: str, root: Path, folder: Path, spec: dict, assets: Path, out: Path
     identity = dict(**current, step=step, input_files=summary["files"],
                     preparation_sha256=prep.sha256(folder / "freeze_summary.json"),
                     lock_sha256=prep.sha256(folder / "input_lock.json") if lock else None,
+                    external_lock_sha256=prep.sha256(external / "external_lock.json") if external else None,
                     timing_session=session if step == "pilot" else None, hardware=hardware())
     with prep.writer_lock(out):
         prep.write_json(out / "identity.json", identity)
@@ -675,6 +684,8 @@ def main() -> None:
         for name in ("root", "prepared", "spec", "assets", "out"):
             command.add_argument("--" + name, type=Path, required=True)
         command.add_argument("--timing-session", default="", help="pilot only: shared ID for one sequential Colab session")
+        if step == "extract":
+            command.add_argument("--external", type=Path, help="external query-lock folder (fm_external.py freeze)")
     args = parser.parse_args()
     if args.step == "describe":
         print(json.dumps(recipe(args.arm), indent=2))
@@ -683,7 +694,8 @@ def main() -> None:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         prep.write_json(args.out, make_spec(args.arm, args.assets, args.revision, args.source_revision, args.terms_evidence))
     else:
-        run(args.step, args.root, args.prepared, prep.read_json(args.spec), args.assets, args.out, args.timing_session)
+        run(args.step, args.root, args.prepared, prep.read_json(args.spec), args.assets, args.out, args.timing_session,
+            getattr(args, "external", None))
 
 
 if __name__ == "__main__":

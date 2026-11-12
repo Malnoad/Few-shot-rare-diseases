@@ -52,7 +52,7 @@ Rows = list[dict[str, str]]
 SCRIPT_ROOT = Path(__file__).resolve().parent
 PROTOCOL = "docs/research/FM_PROTOCOL.md"
 PROTOCOL_SHA256 = "4e8df8d91c0021187c05b103a9b0a0e0319a055fd91108da1f4cf3045d00c5df"
-CODE_FILES = ("fm_core.py", "fm_prepare.py", "fm_extract.py", "fm_evaluate.py", "stage3_classifier.py",
+CODE_FILES = ("fm_core.py", "fm_prepare.py", "fm_extract.py", "fm_evaluate.py", "fm_external.py", "stage3_classifier.py",
               "requirements-fm.txt", "requirements.txt")
 PREPARED_FILES = ("image_inventory.csv","screen_pairs.csv","screen_summary.json","groups.csv","exclusions.csv",
                  "duplicate_decisions.csv","verified_patients.csv","components.csv","fold_counts.csv",
