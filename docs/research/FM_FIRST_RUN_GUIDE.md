@@ -33,9 +33,10 @@ except the first one to make a check pass.** A failed check is useful evidence; 
    terms decisions and your external-data decision are already filled in the first cell.
 4. Keep the repository public until Part 2 has finished: the notebooks clone it without a password.
 
-Colab links (pinned notebook versions): Lam sends these after the code is pushed. They have the form
-`https://colab.research.google.com/github/Malnoad/Few-shot-rare-diseases/blob/<commit>/colab_fm.ipynb`
-and the same with `colab_fm_evaluate.ipynb`.
+Colab links (pinned notebook versions; they work once Lam has had the branch pushed to GitHub):
+
+- Part 2: <https://colab.research.google.com/github/Malnoad/Few-shot-rare-diseases/blob/c0a53adc8070d9ed0dc0fffea99ae5421c813753/colab_fm.ipynb>
+- Part 4: <https://colab.research.google.com/github/Malnoad/Few-shot-rare-diseases/blob/c0a53adc8070d9ed0dc0fffea99ae5421c813753/colab_fm_evaluate.ipynb>
 
 ## Part 1 (runner): one-time setup
 
