@@ -3,6 +3,10 @@
 The [FM protocol v1.0](docs/research/FM_PROTOCOL.md) specifies the next study;
 its isolated loader/evaluator is not implemented by this notebook yet.
 These instructions continue to describe the existing reproduction runs.
+The separate draft scripts and their pending Colab gates are described in the
+[FM runbook](docs/research/FM_RUNBOOK.md); do not run them through these stage cells.
+`colab_fm.ipynb` sets up that study's files on Colab, then runs score-free first
+checks of each encoder once Lam has filled in the terms decisions.
 
 **Status, 6 November 2026:** Stages 0–4, C5, C2 (100 runs) and C3 (60 runs) are
 complete. C0 is closed at its gate and C4 was dropped. C1 remains the planned

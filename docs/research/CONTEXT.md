@@ -59,6 +59,14 @@ reporting. IEEE draft due 11 Nov (4–5 pages; results optional), final package 
 No new FM results or implementation are claimed. Existing replication, C1–C3
 protocols, datasets, accepted GAN pools and recorded results remain unchanged.
 
+Implementation update (9 November): `fm_core.py`, `fm_prepare.py`, `fm_extract.py`
+and `fm_evaluate.py` are drafted for the frozen protocol, with CPU synthetic tests
+and repeated code reviews. [Runbook and pending gates](FM_RUNBOOK.md). This is code
+preparation: no new encoder run, model score, real input lock or external cohort
+inference has occurred. Real checkpoint/dependency/GPU feasibility remains unverified.
+10 November: `fm_external.py` drafts the OCTID/OCTDL screen, query lock and reporting,
+on synthetic data only and pending Lam's review ([runbook](FM_RUNBOOK.md)).
+
 ## Glossary
 
 - **Common classes:** NORMAL, CNV, DME, DRUSEN (Kermany OCT2017).
@@ -107,6 +115,7 @@ protocols, datasets, accepted GAN pools and recorded results remain unchanged.
 | 2026-10-29 | C2/C3 ready for manual Colab: current inputs, v2, fixed250 FINAL, seeds1-20 (D18=A). Lam chose C3 A: common fitting caps10000/5000, nested per class/seed, common val/test fixed | Fig11 counts visually checked; fitting-only adaptation, cap5000 vs4500 rare fitting is near-balanced. C2 N=0 is basic; original non-nested-by-design sampling and pooled rare90/10 preserved | [Design and source/decision provenance](C2_C3_DESIGN.md); notebook Part4b; `c23_experiment.py` |
 | 2026-11-06 | Close completed stages with verified C2/C3 aggregate results; retain C1 as open | All 160 planned result records and 600 paired differences validate; no C1 folder was observed in the inspected project Drive root. No protocol, split or canonical result changed | [Stage closeout](REPLICATION.md) |
 | 2026-11-07 | Freeze `docs/report/Report.tex` as the 27 Oct evidence checkpoint; its gate recomputes every number, fingerprints results and cited audits only (CRLF folded to LF), and runs in `.agents/check` | Six living docs/code files changed after 29 Oct and broke the gate; Windows-CRLF hashes failed on LF checkouts. Statistics and 42 macros unchanged | `build_report_evidence.py`, `report_evidence.json` |
+| 2026-11-13 | FM study publication venue deferred until real results look promising | Lam: "Leave the publications option for when real results seems promising, can't decide now." Options discussed, background only, not a plan: MICCAI 2027 OMIA workshop or MIDL 2027 short paper, ISBI 2027 workshop paper/abstract, later MBEC or TVST after a clinician label check (deadlines unverified unless dated) | Lam, 13 Nov (relayed); [rule tracker](FM_RULE_TRACKER.md) section C |
 
 ## Known pitfalls
 - Rare test classes have 4-5 images: one image moves recall by 0.20-0.25.

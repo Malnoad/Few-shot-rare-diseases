@@ -1,6 +1,7 @@
 {
   "kind": "Vector workflow schematic; no measured data or patient images",
   "source": "verification/protocol_v1_0.md sections 3-8",
+  "style": "figures4papers house style (palette, Arial/Helvetica, block arrows); own code",
   "dimensions_inches": [
     7.16,
     2.38
@@ -12,5 +13,5 @@
   ],
   "png_dpi": 300,
   "matplotlib": "3.11.2",
-  "alt_text": "Locked rare-image inventories and frozen encoders feed paired five-way K-shot development and reporting, and a separate deterministic nine-way real-only source audit. The first branch nominates on development data only. The second reports NORMAL false-rare rates separately by source."
+  "alt_text": "Locked rare-image inventories and four frozen encoders (RETFound, DINOv2, MIRAGE and an Inception-v3 reference) feed paired five-way K-shot development and reporting, and a separate deterministic nine-way real-only source audit. The first branch nominates on development data only. The second reports NORMAL false-rare rates separately by source. A dashed line marks that no outcome feeds back into nomination or preprocessing."
 }

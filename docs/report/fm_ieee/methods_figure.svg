@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-11-05T13:35:39.039116</dc:date>
+    <dc:date>2026-11-11T02:06:06.598449</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -30,201 +30,290 @@ z
   </g>
   <g id="axes_1">
    <g id="patch_2">
-    <path d="M 4.536 137.664 
-L 104.184 137.664 
-Q 106.704 137.664 106.704 135.144 
-L 106.704 23.256 
-Q 106.704 20.736 104.184 20.736 
-L 4.536 20.736 
-Q 2.016 20.736 2.016 23.256 
-L 2.016 135.144 
-Q 2.016 137.664 4.536 137.664 
+    <path d="M 9.36 158.4 
+L 98.64 158.4 
+Q 104.4 158.4 104.4 152.64 
+L 104.4 30.24 
+Q 104.4 24.48 98.64 24.48 
+L 9.36 24.48 
+Q 3.6 24.48 3.6 30.24 
+L 3.6 152.64 
+Q 3.6 158.4 9.36 158.4 
 z
-" clip-path="url(#p49ba031e48)" style="fill: #f1f4f7; stroke: #27384a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pa5b6164af2)" style="fill: #efefef; stroke: #767676; stroke-linejoin: miter"/>
    </g>
    <g id="patch_3">
-    <path d="M 125.496 137.664 
-L 233.064 137.664 
-Q 235.584 137.664 235.584 135.144 
-L 235.584 23.256 
-Q 235.584 20.736 233.064 20.736 
-L 125.496 20.736 
-Q 122.976 20.736 122.976 23.256 
-L 122.976 135.144 
-Q 122.976 137.664 125.496 137.664 
+    <path d="M 107.28 88.29 
+Q 112.442168 88.29 117.604336 88.29 
+L 117.604336 85.14 
+Q 121.802168 88.29 126 91.44 
+Q 121.802168 94.59 117.604336 97.74 
+L 117.604336 94.59 
+Q 112.442168 94.59 107.28 94.59 
+L 107.28 88.29 
 z
-" clip-path="url(#p49ba031e48)" style="fill: #f1f4f7; stroke: #27384a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pa5b6164af2)" style="fill: #efefef; stroke: #767676; stroke-width: 0.8; stroke-linecap: round"/>
    </g>
    <g id="patch_4">
-    <path d="M 255.816 85.104 
-L 403.704 85.104 
-Q 406.224 85.104 406.224 82.584 
-L 406.224 23.256 
-Q 406.224 20.736 403.704 20.736 
-L 255.816 20.736 
-Q 253.296 20.736 253.296 23.256 
-L 253.296 82.584 
-Q 253.296 85.104 255.816 85.104 
+    <path d="M 134.64 158.4 
+L 229.68 158.4 
+Q 235.44 158.4 235.44 152.64 
+L 235.44 30.24 
+Q 235.44 24.48 229.68 24.48 
+L 134.64 24.48 
+Q 128.88 24.48 128.88 30.24 
+L 128.88 152.64 
+Q 128.88 158.4 134.64 158.4 
 z
-" clip-path="url(#p49ba031e48)" style="fill: #eaf2f7; stroke: #27384a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pa5b6164af2)" style="fill: #dce8f6; stroke: #3775ba; stroke-linejoin: miter"/>
    </g>
    <g id="patch_5">
-    <path d="M 255.816 157.824 
-L 403.704 157.824 
-Q 406.224 157.824 406.224 155.304 
-L 406.224 95.976 
-Q 406.224 93.456 403.704 93.456 
-L 255.816 93.456 
-Q 253.296 93.456 253.296 95.976 
-L 253.296 155.304 
-Q 253.296 157.824 255.816 157.824 
+    <path d="M 145.44 56.16 
+L 218.88 56.16 
+Q 225.36 56.16 225.36 49.68 
+L 225.36 48.96 
+Q 225.36 42.48 218.88 42.48 
+L 145.44 42.48 
+Q 138.96 42.48 138.96 48.96 
+L 138.96 49.68 
+Q 138.96 56.16 145.44 56.16 
 z
-" clip-path="url(#p49ba031e48)" style="fill: #f1f0e9; stroke: #27384a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pa5b6164af2)" style="fill: #ffffff; stroke: #3775ba; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_6">
-    <path d="M 426.456 85.104 
-L 509.544 85.104 
-Q 512.064 85.104 512.064 82.584 
-L 512.064 23.256 
-Q 512.064 20.736 509.544 20.736 
-L 426.456 20.736 
-Q 423.936 20.736 423.936 23.256 
-L 423.936 82.584 
-Q 423.936 85.104 426.456 85.104 
+    <path d="M 145.44 74.88 
+L 218.88 74.88 
+Q 225.36 74.88 225.36 68.4 
+L 225.36 67.68 
+Q 225.36 61.2 218.88 61.2 
+L 145.44 61.2 
+Q 138.96 61.2 138.96 67.68 
+L 138.96 68.4 
+Q 138.96 74.88 145.44 74.88 
 z
-" clip-path="url(#p49ba031e48)" style="fill: #eaf2f7; stroke: #27384a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pa5b6164af2)" style="fill: #ffffff; stroke: #3775ba; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_7">
-    <path d="M 426.456 157.824 
-L 509.544 157.824 
-Q 512.064 157.824 512.064 155.304 
-L 512.064 95.976 
-Q 512.064 93.456 509.544 93.456 
-L 426.456 93.456 
-Q 423.936 93.456 423.936 95.976 
-L 423.936 155.304 
-Q 423.936 157.824 426.456 157.824 
+    <path d="M 145.44 93.6 
+L 218.88 93.6 
+Q 225.36 93.6 225.36 87.12 
+L 225.36 86.4 
+Q 225.36 79.92 218.88 79.92 
+L 145.44 79.92 
+Q 138.96 79.92 138.96 86.4 
+L 138.96 87.12 
+Q 138.96 93.6 145.44 93.6 
 z
-" clip-path="url(#p49ba031e48)" style="fill: #f1f0e9; stroke: #27384a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pa5b6164af2)" style="fill: #ffffff; stroke: #3775ba; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_8">
-    <path d="M 109.277051 79.2 
-Q 114.837324 79.2 119.335465 79.2 
-" clip-path="url(#p49ba031e48)" style="fill: none; stroke: #27384a; stroke-width: 0.95; stroke-linecap: round"/>
-    <path d="M 115.735465 77.4 
-L 119.335465 79.2 
-L 115.735465 81 
+    <path d="M 145.44 112.32 
+L 218.88 112.32 
+Q 225.36 112.32 225.36 105.84 
+L 225.36 105.12 
+Q 225.36 98.64 218.88 98.64 
+L 145.44 98.64 
+Q 138.96 98.64 138.96 105.12 
+L 138.96 105.84 
+Q 138.96 112.32 145.44 112.32 
 z
-" clip-path="url(#p49ba031e48)" style="fill: #27384a; stroke: #27384a; stroke-width: 0.95; stroke-linecap: round"/>
+" clip-path="url(#pa5b6164af2)" style="fill: #ffffff; stroke: #767676; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_9">
-    <path d="M 237.76708 63.612158 
-Q 244.438579 58.68105 250.255937 54.381264 
-" clip-path="url(#p49ba031e48)" style="fill: none; stroke: #27384a; stroke-width: 0.95; stroke-linecap: round"/>
-    <path d="M 246.290999 55.073555 
-L 250.255937 54.381264 
-L 248.430807 57.968589 
+    <path d="M 236.352211 66.660263 
+Q 242.072792 62.083798 247.793373 57.507334 
+L 245.825583 55.047597 
+Q 251.072792 54.883798 256.32 54.72 
+Q 255.00837 59.803272 253.696741 64.886544 
+L 251.728952 62.426807 
+Q 246.00837 67.003272 240.287789 71.579737 
+L 236.352211 66.660263 
 z
-" clip-path="url(#p49ba031e48)" style="fill: #27384a; stroke: #27384a; stroke-width: 0.95; stroke-linecap: round"/>
+" clip-path="url(#pa5b6164af2)" style="fill: #ddf3de; stroke: #5fa35f; stroke-width: 0.8; stroke-linecap: round"/>
    </g>
    <g id="patch_10">
-    <path d="M 237.637705 111.509209 
-Q 244.440571 117.720522 250.459068 123.215671 
-" clip-path="url(#p49ba031e48)" style="fill: none; stroke: #27384a; stroke-width: 0.95; stroke-linecap: round"/>
-    <path d="M 249.014205 119.459027 
-L 250.459068 123.215671 
-L 246.586836 122.117575 
+    <path d="M 240.287789 111.300263 
+Q 246.00837 115.876728 251.728952 120.453193 
+L 253.696741 117.993456 
+Q 255.00837 123.076728 256.32 128.16 
+Q 251.072792 127.996202 245.825583 127.832403 
+L 247.793373 125.372666 
+Q 242.072792 120.796202 236.352211 116.219737 
+L 240.287789 111.300263 
 z
-" clip-path="url(#p49ba031e48)" style="fill: #27384a; stroke: #27384a; stroke-width: 0.95; stroke-linecap: round"/>
+" clip-path="url(#pa5b6164af2)" style="fill: #f6cfcb; stroke: #b64342; stroke-width: 0.8; stroke-linecap: round"/>
    </g>
    <g id="patch_11">
-    <path d="M 408.80127 52.56 
-Q 415.080077 52.56 420.296753 52.56 
-" clip-path="url(#p49ba031e48)" style="fill: none; stroke: #27384a; stroke-width: 0.95; stroke-linecap: round"/>
-    <path d="M 416.696753 50.76 
-L 420.296753 52.56 
-L 416.696753 54.36 
+    <path d="M 264.96 84.96 
+L 387.36 84.96 
+Q 393.12 84.96 393.12 79.2 
+L 393.12 30.24 
+Q 393.12 24.48 387.36 24.48 
+L 264.96 24.48 
+Q 259.2 24.48 259.2 30.24 
+L 259.2 79.2 
+Q 259.2 84.96 264.96 84.96 
 z
-" clip-path="url(#p49ba031e48)" style="fill: #27384a; stroke: #27384a; stroke-width: 0.95; stroke-linecap: round"/>
+" clip-path="url(#pa5b6164af2)" style="fill: #ddf3de; stroke: #5fa35f; stroke-linejoin: miter"/>
    </g>
    <g id="patch_12">
-    <path d="M 408.80127 125.28 
-Q 415.080077 125.28 420.296753 125.28 
-" clip-path="url(#p49ba031e48)" style="fill: none; stroke: #27384a; stroke-width: 0.95; stroke-linecap: round"/>
-    <path d="M 416.696753 123.48 
-L 420.296753 125.28 
-L 416.696753 127.08 
+    <path d="M 264.96 158.4 
+L 387.36 158.4 
+Q 393.12 158.4 393.12 152.64 
+L 393.12 103.68 
+Q 393.12 97.92 387.36 97.92 
+L 264.96 97.92 
+Q 259.2 97.92 259.2 103.68 
+L 259.2 152.64 
+Q 259.2 158.4 264.96 158.4 
 z
-" clip-path="url(#p49ba031e48)" style="fill: #27384a; stroke: #27384a; stroke-width: 0.95; stroke-linecap: round"/>
+" clip-path="url(#pa5b6164af2)" style="fill: #f6cfcb; stroke: #b64342; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_13">
+    <path d="M 394.56 51.57 
+Q 399.361025 51.57 404.162051 51.57 
+L 404.162051 48.42 
+Q 408.361025 51.57 412.56 54.72 
+Q 408.361025 57.87 404.162051 61.02 
+L 404.162051 57.87 
+Q 399.361025 57.87 394.56 57.87 
+L 394.56 51.57 
+z
+" clip-path="url(#pa5b6164af2)" style="fill: #ddf3de; stroke: #5fa35f; stroke-width: 0.8; stroke-linecap: round"/>
+   </g>
+   <g id="patch_14">
+    <path d="M 394.56 125.01 
+Q 399.361025 125.01 404.162051 125.01 
+L 404.162051 121.86 
+Q 408.361025 125.01 412.56 128.16 
+Q 408.361025 131.31 404.162051 134.46 
+L 404.162051 131.31 
+Q 399.361025 131.31 394.56 131.31 
+L 394.56 125.01 
+z
+" clip-path="url(#pa5b6164af2)" style="fill: #f6cfcb; stroke: #b64342; stroke-width: 0.8; stroke-linecap: round"/>
+   </g>
+   <g id="patch_15">
+    <path d="M 420.48 84.96 
+L 506.88 84.96 
+Q 512.64 84.96 512.64 79.2 
+L 512.64 30.24 
+Q 512.64 24.48 506.88 24.48 
+L 420.48 24.48 
+Q 414.72 24.48 414.72 30.24 
+L 414.72 79.2 
+Q 414.72 84.96 420.48 84.96 
+z
+" clip-path="url(#pa5b6164af2)" style="fill: #ddf3de; stroke: #5fa35f; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_16">
+    <path d="M 420.48 158.4 
+L 506.88 158.4 
+Q 512.64 158.4 512.64 152.64 
+L 512.64 103.68 
+Q 512.64 97.92 506.88 97.92 
+L 420.48 97.92 
+Q 414.72 97.92 414.72 103.68 
+L 414.72 152.64 
+Q 414.72 158.4 420.48 158.4 
+z
+" clip-path="url(#pa5b6164af2)" style="fill: #f6cfcb; stroke: #b64342; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_17">
+    <path d="M 182.16 12.24 
+Q 182.16 18 182.16 22.753769 
+" clip-path="url(#pa5b6164af2)" style="fill: none; stroke-dasharray: 2.7,1.8; stroke-dashoffset: 0; stroke: #b64342; stroke-width: 0.9; stroke-linecap: round"/>
+    <path d="M 183.76 19.553769 
+L 182.16 22.753769 
+L 180.56 19.553769 
+z
+" clip-path="url(#pa5b6164af2)" style="fill: #b64342; stroke-dasharray: 2.7,1.8; stroke-dashoffset: 0; stroke: #b64342; stroke-width: 0.9; stroke-linecap: round"/>
+   </g>
+   <g id="line2d_1">
+    <path d="M 463.68 24.48 
+L 463.68 12.24 
+L 182.16 12.24 
+" clip-path="url(#pa5b6164af2)" style="fill: none; stroke-dasharray: 2.7,1.8; stroke-dashoffset: 0; stroke: #b64342; stroke-width: 0.9"/>
    </g>
    <g id="text_1">
-    <text style="font-weight: 700; font-size: 8.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #101820" x="8.28" y="35.258008" transform="rotate(-0 8.28 35.258008)">1  LOCK INPUTS</text>
+    <text style="font-weight: 700; font-size: 8.2px; font-family: 'Arial', 'DejaVu Sans'; text-anchor: middle; fill: #4d4d4d" x="54" y="36.929824" transform="rotate(-0 54 36.929824)">Locked inputs</text>
    </g>
    <g id="text_2">
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(8.28 53.286719)">124 rare dev images</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(8.28 63.450719)">22 legacy rare queries</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(8.28 71.49)"/>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(8.28 83.778719)">Hash / duplicate screen</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(8.28 93.942719)">Verified patient links</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(8.28 104.106719)">Eligibility + exclusions</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(18.980437 54.672996)">124 rare development</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(23.992312 63.785988)">images (5 classes)</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(18.3825 72.874793)">22 legacy rare queries</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(54 80.166973)"/>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(21.3885 91.865777)">Hash / RGB / dHash</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(27.785812 100.27227)">duplicate screen</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(21.983062 109.438137)">Verified patient links</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(19.085062 118.474066)">Eligibility + exclusions</text>
    </g>
    <g id="text_3">
-    <text style="font-weight: 700; font-size: 8.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #101820" x="129.24" y="35.258008" transform="rotate(-0 129.24 35.258008)">2  FREEZE ENCODERS</text>
+    <text style="font-weight: 700; font-size: 8.2px; font-family: 'Arial', 'DejaVu Sans'; text-anchor: middle; fill: #0f4d92" x="182.16" y="36.929824" transform="rotate(-0 182.16 36.929824)">Frozen encoders</text>
    </g>
    <g id="text_4">
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(129.24 53.73007)">RETFound / DINOv2</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(129.24 63.450719)">MIRAGE (OCT only)</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(129.24 73.614719)">Keras Inception reference</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(129.24 81.654)"/>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(129.24 94.295836)">Native transforms; FP32</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(129.24 104.852656)">Fresh caches + identities</text>
+    <text style="font-weight: 700; font-size: 7px; font-family: 'Arial', 'DejaVu Sans'; text-anchor: middle; fill: #0f4d92" x="182.16" y="51.131523" transform="rotate(-0 182.16 51.131523)">RETFound</text>
    </g>
    <g id="text_5">
-    <text style="font-weight: 700; font-size: 8.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #101820" x="259.56" y="35.258008" transform="rotate(-0 259.56 35.258008)">3A  FIVE-WAY K-SHOT</text>
+    <text style="font-weight: 700; font-size: 7px; font-family: 'Arial', 'DejaVu Sans'; text-anchor: middle; fill: #0f4d92" x="182.16" y="69.851523" transform="rotate(-0 182.16 69.851523)">DINOv2</text>
    </g>
    <g id="text_6">
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(259.56 53.286719)">Paired, nested real supports</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(259.56 63.803836)">5-fold dev: K = 1, 2, 4, 8</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(259.56 73.614719)">100 prototype draws; fixed probe</text>
+    <text style="font-weight: 700; font-size: 7px; font-family: 'Arial', 'DejaVu Sans'; text-anchor: middle; fill: #0f4d92" x="182.16" y="88.571455" transform="rotate(-0 182.16 88.571455)">MIRAGE (OCT only)</text>
    </g>
    <g id="text_7">
-    <text style="font-weight: 700; font-size: 8.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #101820" x="259.56" y="107.978008" transform="rotate(-0 259.56 107.978008)">3B  NINE-WAY AUDIT</text>
+    <text style="font-weight: 700; font-size: 7px; font-family: 'Arial', 'DejaVu Sans'; text-anchor: middle; fill: #4d4d4d" x="182.16" y="107.291455" transform="rotate(-0 182.16 107.291455)">Inception-v3 (reference)</text>
    </g>
    <g id="text_8">
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(259.56 126.006719)">1,000 common supports/class</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(259.56 136.170719)">+ all eligible rare fitting images</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(259.56 146.334719)">One real-only prototype head</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(143.34975 132.910066)">Native transforms, FP32</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(142.242188 142.455621)">Fresh caches + identities</text>
    </g>
    <g id="text_9">
-    <text style="font-weight: 700; font-size: 8.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #101820" x="430.2" y="35.258008" transform="rotate(-0 430.2 35.258008)">4A  REPORT</text>
+    <text style="font-weight: 700; font-size: 8.2px; font-family: 'Arial', 'DejaVu Sans'; text-anchor: middle; fill: #2d6a2e" x="326.16" y="36.929824" transform="rotate(-0 326.16 36.929824)">Five-way K-shot</text>
    </g>
    <g id="text_10">
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(430.2 53.286719)">Dev-only nominee</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(430.2 63.450719)">Legacy / eligible</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(430.2 73.614719)">external queries</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(281.136938 54.662309)">Paired, nested real supports</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(278.830688 63.785988)">5 grouped folds, K = 1, 2, 4, 8</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(266.729625 72.874793)">100 prototype draws; 25 probe draws</text>
    </g>
    <g id="text_11">
-    <text style="font-weight: 700; font-size: 8.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #101820" x="430.2" y="107.978008" transform="rotate(-0 430.2 107.978008)">4B  AUDIT</text>
+    <text style="font-weight: 700; font-size: 8.2px; font-family: 'Arial', 'DejaVu Sans'; text-anchor: middle; fill: #b64342" x="326.16" y="110.369824" transform="rotate(-0 326.16 110.369824)">Nine-way source audit</text>
    </g>
    <g id="text_12">
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(430.2 126.68468)">NORMAL FRR</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(430.2 136.102742)">Kermany / OCTID</text>
-    <text style="font-size: 7.7px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(430.2 146.334719)">/ OCTDL by source</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(278.340188 128.146184)">1,000 common supports/class</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(277.638188 137.225988)">+ all eligible rare fitting images</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(279.534375 146.35023)">One real-only prototype head</text>
    </g>
    <g id="text_13">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #101820" x="2.88" y="10.8" transform="rotate(-0 2.88 10.8)">PROPOSED PROTOCOL  |  No new model results</text>
+    <text style="font-weight: 700; font-size: 8.2px; font-family: 'Arial', 'DejaVu Sans'; text-anchor: middle; fill: #2d6a2e" x="463.68" y="36.929824" transform="rotate(-0 463.68 36.929824)">Report</text>
    </g>
    <g id="text_14">
-    <text style="font-size: 7.2px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(2.88 149.58675)">External inventories: terms, labels, dependence;</text>
-    <text style="font-size: 7.2px; font-family: 'DejaVu Sans'; fill: #101820" transform="translate(2.88 158.22675)">freeze query IDs before inference.</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(434.667375 54.620121)">Dev-only nominee</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(436.762125 63.742113)">Legacy + eligible</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(438.067125 72.906293)">external queries</text>
    </g>
    <g id="text_15">
-    <text style="font-size: 7.2px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #101820" x="2.88" y="168.48" transform="rotate(-0 2.88 168.48)">No outcome-driven changes. Similarity groups are not patient IDs. All models remain visible.</text>
+    <text style="font-weight: 700; font-size: 8.2px; font-family: 'Arial', 'DejaVu Sans'; text-anchor: middle; fill: #b64342" x="463.68" y="110.369824" transform="rotate(-0 463.68 110.369824)">Audit</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(432.207562 128.820059)">NORMAL false-rare</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(438.870375 137.182113)">rate, by source:</text>
+    <text style="font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; fill: #272727" transform="translate(422.14275 146.35023)">Kermany, OCTID, OCTDL</text>
+   </g>
+   <g id="text_17">
+    <g id="patch_18">
+     <path d="M 253.418625 17.119969 
+L 439.941375 17.119969 
+L 439.941375 7.360031 
+L 253.418625 7.360031 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-style: italic; font-size: 7.2px; font-family: 'Arial', 'DejaVu Sans'; text-anchor: middle; fill: #b64342" x="346.68" y="14.113828" transform="rotate(-0 346.68 14.113828)">×  no outcome feedback into nomination or preprocessing</text>
    </g>
   </g>
  </g>
  <defs>
-  <clipPath id="p49ba031e48">
+  <clipPath id="pa5b6164af2">
    <rect x="0" y="0" width="515.52" height="171.36"/>
   </clipPath>
  </defs>

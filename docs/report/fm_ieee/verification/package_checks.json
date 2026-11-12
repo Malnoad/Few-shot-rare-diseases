@@ -10,8 +10,8 @@
     "all_mapped": true
   },
   "citations": {
-    "entries": 21,
-    "cited": 21,
+    "entries": 20,
+    "cited": 20,
     "unresolved": []
   },
   "historical_table": {
@@ -36,13 +36,13 @@
   },
   "pdf": {
     "pages": 5,
-    "sha256": "f5b4a61430e49b226ef1d791d46fd6846adf4665b1482f61082f8fe144906eb2",
+    "sha256": "bdce1e31df5c99c93e887700529614e4fa28168c98fc1ab548e218d992abadba",
     "details": [
       {
         "page": 1,
         "width_pt": 612.0,
         "height_pt": 792.0,
-        "words": 682,
+        "words": 783,
         "minimum_text_size_pt": 5.977583885192871,
         "outside_page_spans": 0,
         "font_names": [
@@ -61,7 +61,7 @@
         "page": 2,
         "width_pt": 612.0,
         "height_pt": 792.0,
-        "words": 842,
+        "words": 867,
         "minimum_text_size_pt": 7.970111846923828,
         "outside_page_spans": 0,
         "font_names": [
@@ -69,6 +69,7 @@
           "DDIEWW+CMMI10",
           "FKPJSN+CMR10",
           "IHAIZV+NimbusRomNo9L-Regu",
+          "IXFAWU+NimbusRomNo9L-Medi",
           "PVTTLK+CMSY10"
         ]
       },
@@ -76,21 +77,22 @@
         "page": 3,
         "width_pt": 612.0,
         "height_pt": 792.0,
-        "words": 682,
+        "words": 656,
         "minimum_text_size_pt": 4.981319904327393,
         "outside_page_spans": 0,
         "font_names": [
           "CAFSZL+NimbusRomNo9L-ReguItal",
-          "CAXBTJ+DejaVuSans-Bold",
-          "CPUQYB+DejaVuSans",
           "DDIEWW+CMMI10",
-          "DTKWVE+DejaVuSans",
           "DZGKAF+CMSY7",
+          "ERWRCG+Arial-ItalicMT",
           "FKPJSN+CMR10",
           "FZDNHS+CMEX10",
+          "GSISJX+ArialMT",
           "IHAIZV+NimbusRomNo9L-Regu",
+          "IXFAWU+NimbusRomNo9L-Medi",
           "JAGKKY+CMMI7",
           "KPXLOM+CMMI5",
+          "MCPAEQ+Arial-BoldMT",
           "NOMARO+MSBM10",
           "PVTTLK+CMSY10",
           "TQTHRL+CMSY8",
@@ -103,7 +105,7 @@
         "page": 4,
         "width_pt": 612.0,
         "height_pt": 792.0,
-        "words": 811,
+        "words": 914,
         "minimum_text_size_pt": 4.981319904327393,
         "outside_page_spans": 0,
         "font_names": [
@@ -114,6 +116,7 @@
           "FZDNHS+CMEX10",
           "GJMHKB+CMR5",
           "IHAIZV+NimbusRomNo9L-Regu",
+          "IXFAWU+NimbusRomNo9L-Medi",
           "JAGKKY+CMMI7",
           "PVTTLK+CMSY10",
           "UTACNV+CMR7",
@@ -124,19 +127,21 @@
         "page": 5,
         "width_pt": 612.0,
         "height_pt": 792.0,
-        "words": 933,
+        "words": 1001,
         "minimum_text_size_pt": 7.970111846923828,
         "outside_page_spans": 0,
         "font_names": [
           "CAFSZL+NimbusRomNo9L-ReguItal",
-          "IHAIZV+NimbusRomNo9L-Regu"
+          "DDIEWW+CMMI10",
+          "IHAIZV+NimbusRomNo9L-Regu",
+          "IXFAWU+NimbusRomNo9L-Medi"
         ]
       }
     ]
   },
   "latex_log": {
     "overfull_or_unresolved_or_missing_glyphs": [],
-    "underfull_warnings": 9,
+    "underfull_warnings": 8,
     "early_font_shape_fallback_warnings": 5
   },
   "manual_review": "See VERIFICATION.md for visual and semantic review; automated bounds are not a layout certification."

@@ -16,7 +16,7 @@ def run(command: list[str], label: str) -> None:
     output = HERE / "verification" / (label + ".log")
     output.parent.mkdir(exist_ok=True)
     pid_path = ROOT / ".agents/pids" / (label + ".pid")
-    pid_path.parent.mkdir(exist_ok=True)
+    pid_path.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w", encoding="utf-8") as handle:
         process = subprocess.Popen(command, cwd=HERE, stdout=handle,
                                    stderr=subprocess.STDOUT)
