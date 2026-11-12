@@ -1,5 +1,7 @@
 # Rule tracker: open rules and stricter options for publication
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`. Every rule here was decided in amendments A1 to A3; the write-up items (C-1 to C-5) moved to section 11 of that page.
+
 Started 12 November 2026. Covers protocol v1.0 (`FM_PROTOCOL.md`), amendment A1
 (`FM_AMENDMENTS.md`) and Lam's decisions (`FM_TERMS_EVIDENCE.md` section 6). Each row says what
 is weak, the stricter publication-grade option, the agent's recommendation, and the deadline.

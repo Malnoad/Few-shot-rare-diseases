@@ -1,5 +1,7 @@
 # Foundation-model few-shot plan (tracks the October 2026 đề cương)
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`.
+
 Status: **Reviewed planning proposal, two GPT/Gemini rounds, 2026-11-03.** This is a planning
 deliverable, not authorization to implement or train. Lam remains the author and
 chooses the open decisions in §7. Inputs: `D:/Few-shot/de-cuong-nghien-cuu.pdf`

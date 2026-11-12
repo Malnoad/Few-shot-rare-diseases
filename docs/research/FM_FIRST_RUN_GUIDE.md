@@ -206,6 +206,5 @@ notebook finds the saved nomination on Drive and reuses it; it never selects a m
 - Don't connect Drive by hand; the notebooks connect and disconnect it themselves, and keep it off
   while model code runs.
 
-The rules behind these checks are in `docs/research/FM_RUNBOOK.md` and
-`docs/research/FM_RISK_ACKNOWLEDGEMENT.md`; the evidence for the terms decisions is in
-`docs/research/FM_TERMS_EVIDENCE.md`.
+The study in plain words is in `protocols.md` at the top of the repository; every command and
+guard is described in `docs/research/FM_RUNBOOK.md`.

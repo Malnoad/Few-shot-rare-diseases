@@ -3,7 +3,10 @@
 What every agent should know about this research. Keep it short (one or two
 screens). Agents read this before any research or analysis task.
 
-For the proposed frozen-encoder study and IEEE drafting, start with the
+**Frozen-encoder (FM) study: read [`protocols.md`](../../protocols.md) first.** It is the one page kept
+current and it lists the few files we control and the ten sources we track.
+
+For IEEE drafting and the wider literature, see the
 [literature knowledge base](LITERATURE_KB.md), its [source index](LITERATURE_SOURCES.json)
 and the [Task 1 drafting prompt](TASK1_DRAFT_PROMPT.md). They cover the 49 supplied
 PDFs plus 17 targeted additions, distinguish reading depth and claim limits, and
@@ -118,6 +121,7 @@ on synthetic data only; Lam approved the R5 code on 11 November ([runbook](FM_RU
 | 2026-11-07 | Freeze `docs/report/Report.tex` as the 27 Oct evidence checkpoint; its gate recomputes every number, fingerprints results and cited audits only (CRLF folded to LF), and runs in `.agents/check` | Six living docs/code files changed after 29 Oct and broke the gate; Windows-CRLF hashes failed on LF checkouts. Statistics and 42 macros unchanged | `build_report_evidence.py`, `report_evidence.json` |
 | 2026-11-13 | FM amendment A2 adopted and implemented: MIRAGE per-image min-max input; size-only reference beside every arm (image size alone gives rare-class macro recall 0.66); no primary K (K-mean single number); OCTID two-way test from five-way cosines; Kermany FRR headline on 169 patient-disjoint images; nine-way intervals; A1 cohorts fixed in code; amendments hashed in the lock; R3 plus first-vs-last pilot repeat check | Lam: "Follow every Fable recommendations" after an independent review of every open rule. No score exists; the six pinned preparation hashes are unchanged | [A2](FM_AMENDMENTS.md), [review](fm_independent_review/FM_INDEPENDENT_REVIEW.md), [tracker](FM_RULE_TRACKER.md) |
 | 2026-11-13 | FM amendment A3 written as the final text (scope, metrics and baselines, simplifications): reporting levels fixed; external near-duplicate flags link automatically with no manual review (`fm_external.py`); tie-break on locked timings; one retry of a failed repeat check; BioMedCLIP fallback withdrawn; email fallback for the timestamp. Lam reviews it; it binds from the input lock | Lam: "what we do should be as big as what we solve". Two independent reviews (GPT-6.1-Sol execution path, Opus 5.5 scope) checked against the code. The notebooks were then extended the same day: `colab_fm.ipynb` (GPU: final pilots, lock, extraction) and `colab_fm_evaluate.ipynb` (CPU: scores), built by `fm_notebook.py`; they still pin the first-check commit until the code is pushed | [A3](FM_AMENDMENTS.md), [runbook](FM_RUNBOOK.md) |
+| 2026-11-13 | `protocols.md` is the one page kept current for the FM study: it lists the seven files we control, marks twelve FM documents as closed records, and names the ten sources we track | Lam: "minimize the number of files we have to control, and restricted the number of sources to track"; build on existing files instead of adding new ones | [protocols.md](../../protocols.md), sections 9 and 10 |
 | 2026-11-13 | FM study publication venue deferred until real results look promising | Lam: "Leave the publications option for when real results seems promising, can't decide now." Options discussed, background only, not a plan: MICCAI 2027 OMIA workshop or MIDL 2027 short paper, ISBI 2027 workshop paper/abstract, later MBEC or TVST after a clinician label check (deadlines unverified unless dated) | Lam, 13 Nov (relayed); [rule tracker](FM_RULE_TRACKER.md) section C |
 
 ## Known pitfalls

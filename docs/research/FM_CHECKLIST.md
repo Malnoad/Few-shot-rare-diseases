@@ -1,5 +1,7 @@
 # Frozen-encoder FM study: checklist
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`. Progress is now the status column in section 8 of that page.
+
 Step-by-step tracker for the proposal in `main.pdf` ("Frozen Encoders for Few-Shot
 Rare Retinal OCT Classification: A Proposed Evaluation Protocol"). Steps follow the
 stepping stones S0-S6 of protocol v1.0 §9; `§n` points to that protocol. The

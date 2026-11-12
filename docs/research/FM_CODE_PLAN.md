@@ -1,5 +1,7 @@
 # FM study: coding plan (8 November 2026)
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`.
+
 How we turn [protocol v1.0](FM_PROTOCOL.md) into code for stone S2 of the
 [checklist](FM_CHECKLIST.md). The protocol stays the authority; `§n` points to it.
 Nothing here is an input lock. No pretrained weights have been downloaded and no

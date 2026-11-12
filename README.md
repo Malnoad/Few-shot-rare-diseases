@@ -697,7 +697,9 @@ these exact paths.
 ├── colab_fm_evaluate.ipynb     Colab, CPU: development, nomination and reports
 ├── fm_notebook.py              builds both notebooks (tested by tests/test_fm_notebook.py)
 ├── requirements-fm.txt         pinned PyTorch environment for Colab
-├── docs/research/FM_*.md       protocol (binding), amendments (hashed), runbook, risks, terms evidence
+├── docs/research/FM_PROTOCOL.md, FM_AMENDMENTS.md   the binding texts (never edited; hashed into the lock)
+├── docs/research/FM_FIRST_RUN_GUIDE.md, FM_RUNBOOK.md   how to run; every command in detail
+├── docs/research/FM_*.md (others)   closed records, kept as evidence (listed in protocols.md, section 9)
 └── docs/report/fm_ieee/        the proposal paper (main.pdf)
 ```
 

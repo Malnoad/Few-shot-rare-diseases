@@ -1,5 +1,7 @@
 # FM pre-run risks and acknowledgement
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`. Its open acknowledgement slots are replaced by section 7 of that page and by the stops built into the two notebooks.
+
 9 November 2026. Scope: the transition from code preparation to real checkpoint
 staging/loading, score-free Colab pilots, the S2 input lock and external queries.
 Lam remains the research author and decision maker.

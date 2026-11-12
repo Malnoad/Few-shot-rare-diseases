@@ -1,5 +1,7 @@
 # FM terms, source and external-cohort evidence
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`. The decisions recorded here stand and are copied into the notebooks.
+
 Checked by the agent on 10 November 2026 from public pages and metadata. Sections 1–4 collect
 evidence and open decisions. **Lam's terms decisions for the four arms are recorded in section 5**
 (10 November); the other decisions in section 4 remain pending.

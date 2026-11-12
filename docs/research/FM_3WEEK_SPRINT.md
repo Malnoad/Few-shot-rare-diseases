@@ -1,5 +1,7 @@
 # Research calendar: 5 November–3 December 2026
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`.
+
 **Active plan, updated 2026-11-05.** Two deliverables govern this calendar:
 **an IEEE-style draft report, 4–5 pages, due 11 November**, followed by the
 **revised report and reproducible experiment package by 3 December**.

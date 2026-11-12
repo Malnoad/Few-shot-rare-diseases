@@ -1,5 +1,7 @@
 # Proposal for rebuttal: adopt prior studies' label practice instead of an expert check
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`.
+
 Draft by the agent, 12 November 2026, for adversarial review. **Adopted in revised form as amendment A1 (`FM_AMENDMENTS.md`), 12 November 2026.** Lam's position:
 "either stick to specific details that need expert or use a reliable study that help that
 simplified our work"; focus on the technical side; no clinician is available before the lock.

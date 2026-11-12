@@ -1,5 +1,7 @@
 # Final FM protocol rebuttal and resolution record
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`.
+
 Date: 5 November 2026. Owner: Lam. Parent/consolidator: GPT-6.1-Sol / Codex.
 Status: design finalized; all required R3 design findings resolved in protocol v1.0.
 Execution remains gated; no new experimental or clinical validation is claimed.

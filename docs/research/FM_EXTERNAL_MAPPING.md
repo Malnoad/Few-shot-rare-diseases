@@ -1,5 +1,7 @@
 # External rare-class mapping: data balance, MH/CSC evidence and working definitions
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`.
+
 Prepared 12 November 2026 for Lam, pending the mentor's feedback. The label decision is now
 amendment A1 (`FM_AMENDMENTS.md`, 12 Nov); this note is its evidence. Otherwise nothing here changes
 protocol v1.0; options B (documented-label amendment) and C (clinician check) are deferred

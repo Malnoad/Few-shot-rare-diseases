@@ -1,5 +1,7 @@
 # Independent review of the open FM rules: decisions for Lam
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`.
+
 Written 13 November 2026 by an independent advisor agent (Claude Code, model claude-fable-5-2).
 Read-only: nothing in the repository or in `data/` was changed. Lam decides every item.
 Scripts and outputs for every number below are in this folder (`a5_roster.py`, `geom.py`,
