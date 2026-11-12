@@ -50,7 +50,7 @@ Keep preview outputs in a separate folder from the eventual author-approved lock
 & D:/Few-shot/.venv/Scripts/python.exe fm_prepare.py pack --root D:/Few-shot --out PREVIEW --archive selected-images.zip
 ```
 
-For flagged dHash pairs, supply `--reviews decisions.csv` to `freeze`: columns
+For flagged dHash pairs among the 146 benchmark images, supply `--reviews decisions.csv` to `fm_prepare.py freeze`: columns
 `a,b,decision`, with `confirmed`, `unresolved` or `rejected`. Exact file/RGB links
 are automatic. Every flagged dHash pair requires exactly one decision. Review
 raw images without new encoder scores; the fixed Hamming limit stays **4**.
@@ -79,10 +79,11 @@ input root; no automatic Drive output write is made.
 Code reaches Colab through GitHub, so Lam must authorize a push before using the
 new scripts there. Do not use the reproduction notebook's Run All for this study.
 `colab_fm.ipynb` stages the code, separate environment, images from `octfsl/raw`,
-rosters and pinned assets, checking each by hash. Steps 7-10 then run score-free first
-checks of each encoder, after Lam fills in the terms decisions ([evidence](FM_TERMS_EVIDENCE.md)).
-It creates no lock, and these are not the final pilots: its rosters and pilots are a
-preview to regenerate if the locked code later changes.
+rosters and pinned assets, checking each by hash. Until 13 November it stopped after
+score-free first checks (passed 11 November). It now continues to the final pilots, the
+input lock and extraction, and `colab_fm_evaluate.ipynb` computes the scores; see
+"Amendment A3 and the one-session route" below. Lam's terms decisions are pre-filled
+([evidence](FM_TERMS_EVIDENCE.md)).
 `requirements-fm.txt` pins the proposed PyTorch stack. Its Windows CPU variant
 resolved in an isolated temporary environment and passed `pip check`; actual
 Colab dependency and encoder compatibility remains unverified. Install the study
@@ -389,8 +390,11 @@ python fm_external.py report --lock results/fm_v1/lock --cache /content/fm_v1/fe
 python fm_external.py summarize --lock results/fm_v1/lock --external /content/fm_v1/external --runs /content/fm_v1/runs --nomination /content/fm_v1/reports/nomination --out /content/fm_v1/reports/external
 ```
 
-`freeze` takes `--reviews` (`a,b,decision`) for every flagged dHash pair. Export the query
-lock with `fm_prepare.py export` and verify the copied bytes, as for other outputs.
+`freeze` takes no review file (amendment A3 S-1): every flagged dHash pair is written to
+`external_review_decisions.csv` as `unresolved` and links. Linked queries are removed or grouped,
+and a linked group with more than one label is removed as `conflicting_labels`; read
+`external_exclusions.csv` afterwards. Export the query lock with `fm_prepare.py export` and
+verify the copied bytes, as for other outputs.
 
 Step 3 needs Lam's decision. Extraction must run in the environment recorded at the lock,
 and a Colab runtime cannot last until S4, so this order extracts features before S3. No
@@ -431,6 +435,43 @@ amendment text, like the code, must be final before the final pilots. What it ad
 
 Rebuilding `screen`/`freeze` with the 13 November code reproduces all six hashes pinned in
 `colab_fm.ipynb` byte for byte (checked on the laptop the same day).
+
+## Amendment A3 and the one-session route (13 November)
+
+A3 (`FM_AMENDMENTS.md`) fixes the reporting levels and removes steps that could stall the run:
+no manual review of external flags (S-1), no retiming after the lock (S-2; `nominate` already
+reads the locked pilot timings), one retry of a failed repeat check (S-3), no BioMedCLIP
+fallback (S-4), and an email fallback for the public timestamp (S-5).
+
+The environment guards decide the route. `extract` needs the pilot's exact Python, platform
+and package list, and the CPU commands need the locking environment's exact Python, NumPy and
+SciPy. The laptop's environment differs from Colab's pinned one (checked 13 November: NumPy
+2.5.4 and SciPy 1.18.1 on the laptop, 2.2.6 and 1.15.3 in `requirements-fm.txt`), so the lock
+and every score are made on Colab, in the study environment. Two notebooks, both built by
+`fm_notebook.py` and tested by `tests/test_fm_notebook.py`:
+
+1. **`colab_fm.ipynb`, one GPU session.** Setup as in the first checks; download OCTID and
+   OCTDL and check the published MD5s; final pilots; write the gate and run `lock`; save the
+   lock ZIP to Drive; external `screen` and `freeze`; `extract` every available arm, study
+   images then external images; `export` every folder and save it to
+   `octfsl/fm_v1/final/<attempt>/` with a receipt. No label is read.
+2. **Lam, outside Colab.** Approve the printed lock SHA256 and record the timestamp (A2 A-8,
+   or A3 S-5).
+3. **`colab_fm_evaluate.ipynb`, CPU.** The first cell takes the attempt name, Lam's approved
+   SHA256 and the timestamp record. It restores the lock and the features from Drive, checks
+   Python, NumPy and SciPy against the lock, runs `develop` for every arm and `nominate` once,
+   saves the nomination binding to Drive and stops. After Lam sets `REPORT_AFTER_NOMINATION`,
+   it runs `report`, the external `report`, both `summarize` and `geometry`, and saves the
+   results. A later runtime restores the saved binding, so the nominee is never recomputed.
+
+The pilot cell allows one retry (A3 S-3) and refuses a third sequence; only Lam can list an
+arm in `UNAVAILABLE`. If Colab's Python changes between the two notebooks, the second stops at
+its environment check; the fix is a runtime with the locked Python version, never a relaxed
+check.
+
+Before a push: commit the code, run `fm_notebook.py --commit <that commit>`, then
+`fm_notebook.py --check-pin`, which fails unless the pinned commit holds the hashed files of
+the checkout. Until then the notebooks pin the first-check commit and must not be run.
 
 ## Resume, export and reversal
 

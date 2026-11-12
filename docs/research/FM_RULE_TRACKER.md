@@ -27,6 +27,12 @@ adding them after scores would be outcome-driven. Lam decides every row.
 | N-4 | Lock scope | The lock hashes the code, so every endpoint needing code is lock-blocking, and pilots must match the final code | Finish amendments and code before the final pilots | Adopt | Recorded in A2 A-9 and the runbook |
 | N-5 | Field of view | Crop arms keep 0.74-0.77 of 512-wide scans but 0.25 of 1536-wide ones; the wide-scan share differs by Kermany class and split | One geometry table by source, class and role | Adopt | Implemented (`fm_evaluate.py geometry`) |
 
+| S-1 | External duplicate review (found 13 Nov by the execution audit) | Every flagged external pair needed a person's decision during the live Colab session; the count is unknown until download | Record every flag as unresolved, so it links; remove mixed-label groups | Adopt | Adopted in A3 (13 Nov); implemented in `fm_external.py` |
+| S-2 | Retiming | v1.0 section 7 asks for retiming if hardware changes | Tie-break on the locked pilot timings only | Adopt (the code already does this) | Adopted in A3 (13 Nov) |
+| S-3 | Repeat check as a hard gate | One failed check removes an arm for good | One retry of the pilot sequence, both attempts kept | Adopt | Adopted in A3 (13 Nov) |
+| S-4 | BioMedCLIP fallback | An unused branch after RETFound loaded on 11 Nov | Withdraw it | Adopt | Adopted in A3 (13 Nov) |
+| S-5 | Timestamp as a blocking step | The deposit needs Lam's account between lock and scores | Email fallback, deposit later, report which | Adopt | Adopted in A3 (13 Nov) |
+
 ## B. Statistics and claims: decide before reporting, ideally before the lock
 
 | ID | Rule | What is weak | Stricter option | Recommendation | Status |

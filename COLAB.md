@@ -5,8 +5,9 @@ its isolated loader/evaluator is not implemented by this notebook yet.
 These instructions continue to describe the existing reproduction runs.
 The separate draft scripts and their pending Colab gates are described in the
 [FM runbook](docs/research/FM_RUNBOOK.md); do not run them through these stage cells.
-`colab_fm.ipynb` sets up that study's files on Colab, then runs score-free first
-checks of each encoder once Lam has filled in the terms decisions.
+That study has its own two notebooks: `colab_fm.ipynb` (one GPU session: final pilots, input
+lock and feature extraction, no scores) and `colab_fm_evaluate.ipynb` (CPU: development,
+nomination and reports). The runner's guide is `docs/research/FM_FIRST_RUN_GUIDE.md`.
 
 **Status, 6 November 2026:** Stages 0–4, C5, C2 (100 runs) and C3 (60 runs) are
 complete. C0 is closed at its gate and C4 was dropped. C1 remains the planned

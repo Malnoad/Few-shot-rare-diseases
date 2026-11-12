@@ -108,11 +108,6 @@ class ExternalInputs(unittest.TestCase):
         prep.write_csv(csv_path, ext.CANDIDATE_HEADER, self.rows)
         return ext.screen(self.root, self.lock_folder, csv_path, self.out)
 
-    def reviews(self, rows):
-        path = self.base / "reviews.csv"
-        prep.write_csv(path, ["a", "b", "decision"], rows)
-        return path
-
     def queries(self):
         return prep.read_csv(self.out / "external_queries.csv")
 
@@ -158,21 +153,14 @@ class Screening(ExternalInputs):
         ext.freeze(self.root, self.lock_folder, self.out)
         self.assertEqual({e["path"] for e in self.exclusions()}, {one, two})
 
-    def test_near_duplicate_needs_exactly_one_decision(self):
+    def test_flagged_near_duplicate_is_removed_without_review(self):  # A3
         self.both_sources()
         near = self.add("OCTID", "near", pixels=self.near_copy_of("data/raw/fit2.png"))
         self.screen()
-        with self.assertRaisesRegex(ValueError, "no review decision"):
-            ext.freeze(self.root, self.lock_folder, self.out)
-        ext.freeze(self.root, self.lock_folder, self.out, self.reviews([[near, "data/raw/fit2.png", "rejected"]]))
-        self.assertIn(near, [q["path"] for q in self.queries()])
-
-    def test_unresolved_near_duplicate_is_removed_conservatively(self):
-        self.both_sources()
-        near = self.add("OCTID", "near", pixels=self.near_copy_of("data/raw/fit2.png"))
-        self.screen()
-        ext.freeze(self.root, self.lock_folder, self.out, self.reviews([[near, "data/raw/fit2.png", "unresolved"]]))
+        ext.freeze(self.root, self.lock_folder, self.out)
         self.assertEqual([e["path"] for e in self.exclusions()], [near])
+        self.assertEqual([r["decision"] for r in prep.read_csv(self.out / "external_review_decisions.csv")], ["unresolved"])
+        ext.verify_external(self.out, self.lock_folder)
 
     def test_within_query_duplicates_stay_visible_in_one_dependence_group(self):
         a, _ = self.both_sources()
@@ -196,12 +184,14 @@ class Screening(ExternalInputs):
         self.assertEqual(groups[normal], groups[rare])
         self.assertNotEqual(groups[normal], groups[other])
 
-    def test_duplicates_with_conflicting_labels_stop_before_inference(self):
+    def test_duplicates_with_conflicting_labels_are_excluded(self):  # A3
         a, _ = self.both_sources()
-        self.add("OCTID", "twin", label="MH", evidence=ext.A1_COHORTS["OCTID", "MH"], copy_of=a)
+        self.add("OCTID", "spare")  # OCTID keeps a NORMAL query after the exclusion
+        twin = self.add("OCTID", "twin", label="MH", evidence=ext.A1_COHORTS["OCTID", "MH"], copy_of=a)
         self.screen()
-        with self.assertRaisesRegex(ValueError, "conflicting labels"):
-            ext.freeze(self.root, self.lock_folder, self.out)
+        ext.freeze(self.root, self.lock_folder, self.out)
+        self.assertEqual({(e["path"], e["reason"]) for e in self.exclusions()},
+                         {(a, "conflicting_labels"), (twin, "conflicting_labels")})
 
     def test_rows_outside_the_frozen_decisions_stop_before_reading_images(self):
         cases = {

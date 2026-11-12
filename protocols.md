@@ -28,8 +28,8 @@ normal scans from other hospitals "rare disease"?
 | MIRAGE-Base (OCT only) | FM candidate |
 | Inception-v3 (Keras, ImageNet) | Reference only, never the winner |
 
-BioMedCLIP replaces RETFound **only** if RETFound fails on access, loading or terms before any
-labelled score. All encoders stay frozen: no fine-tuning, no adapters, no augmentation, no GAN images.
+BioMedCLIP was the fallback if RETFound failed on access, loading or terms; RETFound passed on
+11 November, so A3 withdraws the fallback. All encoders stay frozen: no fine-tuning, no adapters, no augmentation, no GAN images.
 
 ## 3. Data
 
@@ -48,6 +48,43 @@ classes surprisingly well, so every five-way result sits beside a "size-only" re
 MIRAGE inputs are stretched per image as in MIRAGE's own paper; the Kermany false-rare rate is
 headlined on the 169 test images whose patients are not in the fitting set; no single K is
 primary.
+
+**Final scope (A3, 13 November).** Nothing is added. Main text:
+the five-way development curves with the size-only reference and the nomination; the
+false-rare rate by source; the legacy 22 with exact counts; the OCTID two-way test last, as
+exploratory. Supplement only: the logistic probe, output shares on external rare images,
+per-class nine-way intervals, full confusion counts. Removed steps: nobody reviews external
+near-duplicate flags (every flag counts as a link), no retiming after the lock, no BioMedCLIP
+fallback; a failed repeat check gets one retry.
+
+## 3a. Metrics and baselines
+
+**Main metric: macro recall** on the five-way task. For each disease, the share of its test
+images classified correctly; then the plain average of the five shares. Every disease counts
+equally, however many images it has. Guessing gives 0.20. MIRAGE calls the same number
+"balanced accuracy", and it is the average of the per-class rates in Yoo et al.'s Table 4.
+We report it for K = 1, 2, 4, 8 and as their mean.
+
+**Main comparison:** each model's macro recall minus Inception-v3's, on exactly the same
+support images and test images.
+
+**Other metrics.** Five-way: accuracy, per-class recall, confusion counts. Nine-way audit:
+false-rare rate (share of NORMAL scans called a rare disease), NORMAL recall, per-class recall.
+OCTID test: two-class macro recall (guessing gives 0.50). Cost: seconds per image.
+
+**Baselines**, from weakest to strongest:
+
+| Baseline | What it tells us |
+|---|---|
+| Chance (0.20, or 0.50 two-way) | Below this, the model is worse than guessing |
+| Size-only reference | What image width and height alone achieve. A model at or below it has not shown that it reads the retina |
+| Inception-v3 (ImageNet) | The backbone of Yoo et al. and of our replication: the previous study's model, given the same K images |
+| DINOv2 | A general-purpose model, beside the two retina-specific ones (RETFound, MIRAGE) |
+
+Yoo et al.'s published accuracy is not a baseline here: their classifier saw every rare
+training image plus generated ones, ours sees K per class.
+
+We do not report AUROC, kappa, MCC or RCI; the reasons are in amendment A3.
 
 ## 4. How one run works
 
@@ -107,6 +144,6 @@ If S2 slips, S3 starts only after a successful lock; the 27 November freeze stil
 | Progress checklist | `docs/research/FM_CHECKLIST.md` |
 | How to run each step | `docs/research/FM_RUNBOOK.md` |
 | Known risks and open decisions | `docs/research/FM_RISK_ACKNOWLEDGEMENT.md`, `docs/research/FM_TERMS_EVIDENCE.md` |
-| Colab notebook | `colab_fm.ipynb` |
+| Colab notebooks | `colab_fm.ipynb` (pilots, lock, extraction), `colab_fm_evaluate.ipynb` (scores); built by `fm_notebook.py` |
 | Running the first Colab checks (for a teammate) | `docs/research/FM_FIRST_RUN_GUIDE.md` |
 | Code | `fm_core.py` (rules), `fm_prepare.py` (data), `fm_extract.py` (models), `fm_evaluate.py` (scores) |

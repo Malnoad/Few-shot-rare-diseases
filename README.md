@@ -693,7 +693,9 @@ these exact paths.
 ├── fm_extract.py               frozen model loading, timing pilots, feature extraction
 ├── fm_evaluate.py              development, nomination, reporting and geometry tables (CPU)
 ├── fm_external.py              OCTID/OCTDL screen, query lock and external reporting
-├── colab_fm.ipynb              Colab: setup and first score-free checks
+├── colab_fm.ipynb              Colab, GPU: final pilots, input lock, feature extraction (no scores)
+├── colab_fm_evaluate.ipynb     Colab, CPU: development, nomination and reports
+├── fm_notebook.py              builds both notebooks (tested by tests/test_fm_notebook.py)
 ├── requirements-fm.txt         pinned PyTorch environment for Colab
 ├── docs/research/FM_*.md       protocol (binding), amendments (hashed), runbook, risks, terms evidence
 └── docs/report/fm_ieee/        the proposal paper (main.pdf)

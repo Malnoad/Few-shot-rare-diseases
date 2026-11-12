@@ -164,3 +164,157 @@ publicly (OSF or Zenodo; Lam chooses and holds the account).
 the laptop with its hash deposited (A-8). The repository stays public until the last Colab
 extraction, including the external one, has finished, because the notebook clones without
 credentials.
+
+## A3. Final scope and simplifications (13 November 2026, before the input lock)
+
+**Decision.** Lam's instructions, 13 November, verbatim: "finalize the protocols what we do
+should be as big as what we solve so we don't reach bottleneck or unnecessarily things then I
+would verify the final or bring up things that I find may not clear, follow precedents, previous
+study, simplified ideas", and later the same day: "finalize the protocols, do the best as you
+can to bridge the gap between fields gap, previous study and our project, I will review again
+and re-ask if I can't clearly understand". This is that final text. It was written by the agent
+(Claude Fable 5.2) from two independent reviews made the same day (GPT-6.1-Sol, execution path;
+Claude Opus 5.5, scope against claims and precedent), each checked against the code. It binds
+from the input lock, like A1 and A2. Until the lock Lam can change any rule here by a dated
+edit; pushing the code to GitHub for the lock session needs Lam's word, and that word covers
+this text. No score exists. A3 adds no experiment, arm, endpoint or dataset.
+
+### What the study reports
+
+| Level | Result | Where |
+|---|---|---|
+| Primary | Five-way development macro recall per K = 1, 2, 4, 8 and their mean, all four arms, paired, beside the size-only reference; the nomination | Main text |
+| Secondary | Nine-way false-rare rate by source with intervals (Kermany patient-disjoint, Kermany all, OCTID, OCTDL); legacy 22 with exact counts per class and arm | Main text |
+| Exploratory | OCTID two-way CSC-versus-MH test (A1, A2 A-1) | Main text, last |
+| Diagnostics | Geometry table, exclusion ledgers, pilot timing and repeat checks, one compute table | Main text or supplement |
+| Supplement only | Logistic probe results; five-way output shares on external rare images (prototype and logistic); nine-way per-class recall with intervals; full confusion counts | Supplement files |
+
+Everything in the table is still computed and released, favourable or not (A1 rule 6). "Supplement
+only" fixes where a result is shown, not whether it exists.
+
+**Not done in v1:** fine-tuning, adapters, augmentation, GAN images or further checkpoints
+(v1.0 section 1); a source probe, an OCTID icon mask, a LayerNorm sensitivity run (A2); a
+primary K, p-values, intervals on K-shot results (v1.0 section 7, A2); external claims for
+MacTel, Stargardt or RP, or any claim of clinical label equivalence (A1).
+
+### Metrics and baselines
+
+This section names what v1.0 sections 6-8 and A2 already define; it adds no metric.
+
+**Main metric.** Five-way macro recall: for each class, correct queries divided by that class's
+queries, then the unweighted mean over the five classes (v1.0 section 7). It is the same
+quantity MIRAGE reports as balanced accuracy, and the mean of the per-class true positive
+rates Yoo et al. tabulate. Chance is 0.20. It is reported per K and as the mean over
+K = 1, 2, 4, 8 (A2 B-1), from cosine prototypes on the development folds.
+
+**Main comparison.** The paired difference in macro recall between an FM and the Inception
+reference on identical support draws and queries: mean, SD and 5th-95th percentiles over the
+draws (v1.0 section 7). The nominee's difference is the headline; every other pair is shown.
+
+**Metric set.**
+
+| Task | Metrics | Unit of spread |
+|---|---|---|
+| Five-way K-shot (development, legacy 22) | Macro recall (main); accuracy; per-class recall; confusion counts; exact counts on the legacy 22 | Support draws |
+| Nine-way source audit | False-rare rate (main); NORMAL recall; nine-way per-class recall; common-class confusions | 95% intervals (A2 B-3) |
+| OCTID two-way test | Two-class macro recall (chance 0.50); per-class recall; confusion counts | Support draws |
+| Cost | Median warm seconds per image from the locked pilot | None |
+
+**Baselines.** Every arm result is read against these, all on the same episodes:
+
+1. **Reference model: frozen ImageNet Inception-v3.** It is the backbone of Yoo et al. and of
+   our replication, so it stands for the previous study. Same supports, same classifier, never
+   nominated.
+2. **Chance:** 0.20 five-way, 0.50 two-way.
+3. **Size-only reference (A2 N-1):** the score reachable from image width and height alone. An
+   arm at or below it has not shown that it reads the retina.
+4. **Generalist against specialist, inside the roster:** DINOv2 (natural images) beside
+   RETFound and MIRAGE (retinal images). This is the comparison set of the MIRAGE study
+   itself ("we compared MIRAGE to three other selected SOTA models, all based on ViT:
+   supervised ImageNet pretraining (SL-IN), DINOv2, and RETFound"), with our Inception-v3 in
+   the supervised-ImageNet place. It is a description, not a causal test (v1.0 section 1).
+
+The published numbers of Yoo et al. and of our replication are context only: they come from a
+nine-way classifier trained on every rare image, with augmentation, not from K supports.
+
+**Not used, and why.** AUROC and average precision (RETFound, MIRAGE): a prototype gives a
+class decision, and with four or five legacy images per class a ranking metric is unstable;
+the cosine scores are saved, so it can be computed later as a labelled post-hoc analysis.
+Cohen's kappa, MCC and RCI (Yoo et al.): defined for the nine-way task, and the paper's RCI
+values could not be reproduced (`L8_RCI_AUDIT.md`). p-values: v1.0 section 7.
+
+### Simplifications
+
+**S-1, external duplicate screen without manual review (replaces, for external images only, the
+review in v1.0 section 4 step 3).** Every external pair the dHash rule flags is recorded as
+unresolved and therefore linked, as section 4 step 3 already treats unresolved pairs. An
+external image linked to a fitting row or a legacy query is removed; linked external images
+share a dependence group. A linked group of external images carrying more than one label is
+removed entirely and listed in the exclusion ledger with the reason `conflicting_labels`.
+Nobody inspects pairs, so no judgement is made after the lock. Cost: a false flag removes or
+groups a few queries; the ledger shows every one. The review of the 146 benchmark images is
+unchanged (it flagged no pair).
+
+**S-2, tie-break timing (replaces "If runtime/hardware changes, retime all candidates" in
+v1.0 section 7).** The nomination tie-break uses the pilot timings stored in the input lock and
+nothing else. There is no retiming after the lock.
+
+**S-3, one retry of a failed repeat check (adds to A2 A-6).** If a pilot's repeat check fails,
+the whole pilot sequence is run once more in a fresh timing session under unchanged code,
+assets and environment, and both attempts are kept. An arm that fails again is reported
+unavailable with the measured values.
+
+**S-4, fallback closed.** RETFound passed access, terms and loading in the first checks (11
+November, `first-check-20261111T175615Z`). BioMedCLIP is withdrawn as a fallback. If RETFound
+fails a final pilot it is reported unavailable (v1.0 section 5); nomination still needs two
+complete FMs.
+
+**S-5, timestamp fallback (adds to A2 A-8).** If the public deposit cannot be made before the
+first `develop`, Lam emails the same hashes to the mentor and the team before the first
+`develop` and makes the deposit afterwards. The report states which was done and when.
+
+**S-6, logistic probe.** It stays as in v1.0 and A2. Measured on 13 November on synthetic
+features of the real dimensions, one fit takes 0.01-0.04 s on the laptop, so the roughly 2,000
+planned fits are minutes of CPU (convergence on real features is unverified). It is omitted,
+with the dated reason v1.0 section 9 requires, only if it is unfinished at the 27 November
+freeze.
+
+### Clarifications of A1 and A2
+
+- **A2 B-3 replaces A1 rule 5**, it does not only complete it: intervals are given for the
+  nine-way outputs alone. External rare results (the OCTID two-way test, output shares) carry
+  counts, denominators and the support-draw spread, without intervals.
+- **A2 B-1 replaces the "at each K" headline of v1.0 section 7.** The nominee-minus-Inception
+  paired difference is shown at every locked K; where one number is needed it is the K mean.
+- **A2 A-4** concerns a source that fails access or its audit before the lock: it is declared
+  unavailable in the gate and is absent from the external candidates.
+- **Size-only reference in the OCTID two-way test.** If every OCTID CSC and MH query has the
+  same width and height, the reference assigns all of them to one class and scores 0.50 by
+  construction. The report then says so instead of presenting it as a finding.
+
+### Precedent
+
+Sources are those opened for `FM_RULE_TRACKER.md` ("Why earlier studies did not fix these");
+the metric statements were reread on 13 November in the Europe PMC full texts: MIRAGE
+(PMC12462498) "including the AUROC, average precision (AP), and balanced accuracy (BAcc)
+values" under linear probing with "all the parameters of the model are frozen except for a
+final linear layer"; RETFound (PMC10550819) "Model performance was reported using the area
+under the receiver operating curve (AUROC)", compared "against three pretrained comparison
+models"; Yoo et al. (PMC7829497) "The main focus of this study was the accuracy of the
+classification model", with per-class true positive rates and a 22-image rare test set.
+
+What each side contributes, in one table:
+
+| Question | Earlier studies | Gap, in the studies read | This study |
+|---|---|---|---|
+| Which encoders | MIRAGE compares SL-ImageNet, DINOv2, RETFound and MIRAGE with linear probes tuned on each dataset; its benchmark includes Kermany, OCTID and OCTDL | No comparison at 1-16 labelled images per class | The same four kinds of encoder at K = 1-16, frozen, with identical supports |
+| Rare OCT diseases | Yoo et al. train a nine-way Inception-v3 head with CycleGAN augmentation and test on 22 rare images; they also try a prototypical network, a Siamese network and KNN | Every rare training image is used; no K-shot budget; one test of 22 images | Strict K-shot supports, grouped folds on 124 images, and the same 22 images as a secondary, disclosed-as-inspected test |
+| Metric | MIRAGE: AUROC, AP, balanced accuracy; RETFound: AUROC, AUPR; Yoo et al.: accuracy and per-class true positive rate | No shared few-shot metric for these classes | Macro recall, which equals balanced accuracy and averages Yoo's per-class rates |
+| Other sources | RETFound and a TVST 2026 study test trained models on external sets | No test of how often NORMAL scans from another source are called rare; acquisition cues are not measured | False-rare rate per source; size-only reference and geometry table; the OCTID two-way test where size is constant |
+| Pre-specification | None of the four papers registers a plan | Choices can follow results | Hashed lock and nomination before any legacy or external score |
+
+Few-shot studies report prototype results at several K with no primary K (SimpleShot). RETFound
+and MIRAGE evaluate frozen encoders with a linear probe, which is why the logistic probe stays.
+None of the studies read reviews duplicates by hand, retimes models, or registers its plan; the
+steps kept here beyond that precedent (image screen, nomination, hashed lock, timestamp) are
+the ones the pre-specification claim rests on.

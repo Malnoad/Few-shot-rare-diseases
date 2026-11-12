@@ -98,7 +98,7 @@ Episodes and classifiers (§6)
 Nine-way roster and external data (§8)
 - [ ] `stage3_classifier.major_indices(common_train_labels, 1000, 42)` on the 73,958-row common frame, mapped back to paths in order, plus eligible rare fitting rows (5,146 images before exclusions)
 - [ ] OCTID/OCTDL: release/hash, terms, label inventory and eligibility frozen
-- [ ] Rare mappings: CSR→CSC needs clinical confirmation; OCTDL MH uses the subcategory, not the condition label alone
+- [x] Rare mappings: decided by amendment A1 (12 Nov): published labels, agreement only, no clinical equivalence claimed; OCTDL MH uses the subcategory. Cohorts are code constants (A2 N-3)
 
 Lock (§7, §9)
 - [ ] R5 external implementation/versioning plan resolved, or genuine access failure and reduced scope documented; planned releases have actual digests

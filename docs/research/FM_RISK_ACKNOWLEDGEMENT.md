@@ -111,6 +111,10 @@ embeddings. A timing pilot validates these outputs but discards them; it does no
 perform or save a repeat-output comparison. A pilot pass establishes loadability
 and valid output, not equivalence to the intended upstream embedding.
 
+**Update 13 November:** the repeat checks are now coded in `pilot` (A2 A-6: R3 synthetic repeat
+and first-versus-last timed pass; one retry under A3 S-3), so the two paragraphs around this
+note describe the state before A2.
+
 The proposed repeat-numerics check is manual: write its acceptance rule before
 execution, use synthetic inputs with each actual encoder in a separate process,
 and wait for that process to exit before the fixed timing sequence. Preserve

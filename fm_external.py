@@ -2,7 +2,7 @@
 
 candidates  builds the fixed candidate roster from the published OCTID file list and OCTDL labels.
 screen      fingerprints candidates against every locked row and each other (section 4, step 5).
-freeze      applies review decisions, removes linked queries and locks final query IDs.
+freeze      links every flagged pair, removes linked queries and locks final query IDs (A3: no manual review).
 report      scores the locked external queries for one encoder, after the S3 nomination is sealed.
 summarize   writes source-separated FRR, present-class recall, output counts and paired contrasts.
 
@@ -172,7 +172,8 @@ def derive(external: prep.Rows, locked: prep.Rows, pairs: prep.Rows, decisions: 
             reason = "linked_to_" + "_and_".join("legacy_query" if role == "query" else role for role in touched)
             removed.update({m: [reason, members[0]] for m in inside})
         elif inside and len({by_path[m]["label"] for m in inside}) != 1:
-            raise ValueError(f"possible duplicates carry conflicting labels; resolve before inference: {inside}")
+            # A3: possible duplicates with different labels are excluded, never adjudicated.
+            removed.update({m: ["conflicting_labels", members[0]] for m in inside})
     keep = [r for r in external if r["path"] not in removed]
     retained = {r["path"] for r in keep}
     dependent = [(a, b) for a, b in links if a in retained and b in retained]
@@ -189,8 +190,9 @@ def derive(external: prep.Rows, locked: prep.Rows, pairs: prep.Rows, decisions: 
     return queries, exclusions
 
 
-def freeze(root: Path, lock_folder: Path, out: Path, reviews: Path | None = None) -> dict:
-    """Lock the final external query IDs. Locked fitting rosters are never changed."""
+def freeze(root: Path, lock_folder: Path, out: Path) -> dict:
+    """Lock the final external query IDs. Locked fitting rosters are never changed.
+    A3: every flagged dHash pair is recorded as unresolved, so it links; nobody reviews pairs."""
     out = prep.out_dir(root, out)
     prep.load_lock(lock_folder)
     screened = prep.read_json(out / "external_screen_summary.json")
@@ -199,10 +201,10 @@ def freeze(root: Path, lock_folder: Path, out: Path, reviews: Path | None = None
         raise ValueError("input lock or code changed since the external screen")
     if screened["versions"] != prep.versions():
         raise ValueError("external screen decoder/environment changed; use the pinned environment")
-    decisions = prep.read_csv(reviews) if reviews else []
     external = prep.read_csv(out / "external_inventory.csv")
-    queries, exclusions = derive(external, prep.read_csv(out / "external_locked_inventory.csv"),
-                                 prep.read_csv(out / "external_screen_pairs.csv"), decisions)
+    pairs = prep.read_csv(out / "external_screen_pairs.csv")
+    decisions = [dict(a=p["a"], b=p["b"], decision="unresolved") for p in pairs if p["kind"] == "dhash"]
+    queries, exclusions = derive(external, prep.read_csv(out / "external_locked_inventory.csv"), pairs, decisions)
     prep.write_csv(out / "external_review_decisions.csv", ["a", "b", "decision"], [[r[k] for k in ("a", "b", "decision")] for r in decisions])
     prep.write_csv(out / "external_queries.csv", ["source", "path", "label", "sha256", "dependence_group"], queries)
     prep.write_csv(out / "external_exclusions.csv", ["source", "path", "label", "reason", "component"], exclusions)
@@ -560,7 +562,6 @@ def main() -> None:
         for name in ("root", "lock", "out"):
             command.add_argument("--" + name, type=Path, required=True)
     first.add_argument("--candidates", type=Path, required=True)
-    second.add_argument("--reviews", type=Path, help="a,b,decision for every flagged dHash pair")
     report = sub.add_parser("report")
     for name in ("lock", "cache", "external-cache", "external", "nomination", "out"):
         report.add_argument("--" + name, type=Path, required=True)
@@ -577,7 +578,7 @@ def main() -> None:
     elif args.step in ("screen", "freeze"):
         out = prep.out_dir(args.root, args.out)
         with prep.writer_lock(out):
-            result = screen(args.root, args.lock, args.candidates, out) if args.step == "screen" else freeze(args.root, args.lock, out, args.reviews)
+            result = screen(args.root, args.lock, args.candidates, out) if args.step == "screen" else freeze(args.root, args.lock, out)
         print(json.dumps({k: v for k, v in result.items() if k not in ("files", "code")}, indent=2, sort_keys=True))
     elif args.step == "report":
         run_report(args.lock, args.cache, args.external_cache, args.external, args.arm, args.nomination, args.out, args.omit_logistic_reason)
