@@ -52,8 +52,9 @@ Rows = list[dict[str, str]]
 SCRIPT_ROOT = Path(__file__).resolve().parent
 PROTOCOL = "docs/research/FM_PROTOCOL.md"
 PROTOCOL_SHA256 = "4e8df8d91c0021187c05b103a9b0a0e0319a055fd91108da1f4cf3045d00c5df"
+# A2 A-9: the dated amendments are hashed with the code, so any later edit invalidates the lock.
 CODE_FILES = ("fm_core.py", "fm_prepare.py", "fm_extract.py", "fm_evaluate.py", "fm_external.py", "stage3_classifier.py",
-              "requirements-fm.txt", "requirements.txt")
+              "requirements-fm.txt", "requirements.txt", "docs/research/FM_AMENDMENTS.md")
 PREPARED_FILES = ("image_inventory.csv","screen_pairs.csv","screen_summary.json","groups.csv","exclusions.csv",
                  "duplicate_decisions.csv","verified_patients.csv","components.csv","fold_counts.csv",
                  "queries_development.csv","episodes_development.csv","episodes_reporting.csv",

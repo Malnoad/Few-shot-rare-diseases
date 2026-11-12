@@ -8,7 +8,8 @@ summarize   writes source-separated FRR, present-class recall, output counts and
 
 Features come from `fm_extract.py extract --external FOLDER`, in the same runtime as the main
 extraction: it reads no labels, and the environment must still equal the input lock.
-Rare rows enter only with recorded mapping evidence; without it a source stays NORMAL-only.
+The rare cohorts are the constants of amendment A1 (A2 N-3); no option adds or removes one.
+summarize also writes the OCTID two-way CSC-versus-MH test with its size-only reference (A2 A-1).
 """
 from __future__ import annotations
 
@@ -35,6 +36,14 @@ EXTERNAL_LABELS = ("NORMAL", "CSC", "MH")  # the only external classes the proto
 # Borealis dataset: folder written by acquisition, canonical label. CSR maps to CSC only with evidence.
 OCTID_DATASETS = {"doi:10.5683/SP/WLW4ZT": ("NORMAL", "NORMAL"), "doi:10.5683/SP/MBMQGD": ("MH", "MH"),
                   "doi:10.5683/SP/FVLZIL": ("CSR", "CSC")}
+# Amendment A1 (12 Nov 2026), fixed in code by A2 N-3. Evidence: FM_EXTERNAL_MAPPING.md.
+A1_COHORTS = {
+    ("OCTID", "CSC"): "A1: OCTID CSR published label; OCTID paper class Central Serous Chorioretinopathy (CSC); "
+                      "MeSH D056833 entry term Central Serous Retinopathy",
+    ("OCTID", "MH"): "A1: OCTID MH published label, OCTID's broad definition; separate cohort, never called full-thickness",
+    ("OCTDL", "MH"): "A1: OCTDL disease=VID with subcategory=MH; OCTDL full-thickness MH definition",
+}
+TWO_WAY = ("CSC", "MH")  # A2 A-1: the OCTID two-way test, ties to CSC (fixed class order)
 CANDIDATE_HEADER = ["source", "path", "label", "patient_id", "mapping_evidence", "md5"]
 INVENTORY_HEADER = [*CANDIDATE_HEADER[:5], "file_sha256", "rgb_sha256", "dhash", "width", "height", "mode"]
 LOCKED_HEADER = ["path", "role", "file_sha256", "rgb_sha256", "dhash"]
@@ -44,8 +53,10 @@ FREEZE_FILES = ("external_review_decisions.csv", "external_queries.csv", "extern
                 "external_extraction_inventory.csv")
 
 
-def candidates(octid: prep.Rows, octdl: prep.Rows, mappings: Mapping[tuple[str, str], str]) -> list[list[str]]:
-    """Fixed eligibility from published metadata. OCTDL MH uses subcategory, never condition alone."""
+def candidates(octid: prep.Rows, octdl: prep.Rows) -> list[list[str]]:
+    """Fixed eligibility from published metadata and the A1 cohorts. OCTDL MH uses subcategory,
+    never condition alone (LH and VMT also read "MH" there)."""
+    mappings = A1_COHORTS
     rows = []
     for row in octid:
         if row["doi"] in OCTID_DATASETS and row["filename"].lower().endswith(".jpeg"):
@@ -74,8 +85,8 @@ def check_candidates(rows: prep.Rows, lock: Mapping, locked: set[str]) -> None:
             raise ValueError(f"source was not planned at the input lock: {row['source']}")
         if row["label"] not in EXTERNAL_LABELS:
             raise ValueError(f"label is not an eligible external class: {row['label']}")
-        if row["label"] != "NORMAL" and not row["mapping_evidence"].strip():
-            raise ValueError(f"rare external rows need recorded mapping evidence: {path}")
+        if row["label"] != "NORMAL" and row["mapping_evidence"] != A1_COHORTS.get((row["source"], row["label"])):
+            raise ValueError(f"rare external rows must be an A1 cohort with its fixed evidence: {path}")
     if missing := planned - {r["source"] for r in rows if r["label"] == "NORMAL"}:
         raise ValueError(f"planned sources have no NORMAL rows: {sorted(missing)}")
 
@@ -278,9 +289,12 @@ def source_audit(lock_folder: Path, features: ev.Features, source: str, rows: pr
     metrics = ev.write_predictions(out, paths, labels, scores, fm.NINE, "cosine")
     false_rare, normals = fm.false_rare_rate(labels, [fm.NINE[i] for i in scores.argmax(axis=1)])
     counts = {c: dict(correct=metrics["correct"][i], total=metrics["totals"][i]) for i, c in enumerate(fm.NINE) if metrics["totals"][i]}
+    # A2 B-3: OCTID has no patient IDs (exact, image-level); OCTDL clusters by dependence group.
+    clusters = None if source == "OCTID" else [r["dependence_group"] for r in rows]
     prep.write_json(out / "source_audit.json", dict(
         source=source, false_rare_n=false_rare, normal_n=normals, false_rare_rate=false_rare / normals if normals else None,
         class_counts=counts, dependence_groups=len({r["dependence_group"] for r in rows}),
+        intervals=ev.nine_way_intervals(labels, [fm.NINE[i] for i in scores.argmax(axis=1)], clusters),
         limitation="descriptive source comparison; no causal source-shift, pretraining or patient-independence claim"))
     if not (out / "costs.json").exists():
         prep.write_json(out / "costs.json", dict(classifier_seconds=classifier_seconds, serialization_seconds=time.perf_counter() - start,
@@ -381,9 +395,63 @@ def kermany_rows(run: Path, arm: str, expected: Mapping[str, str]) -> list[list]
         raise ValueError(f"legacy run belongs to a different lock/nomination/code: {arm}")
     result = prep.read_json(run / "nine_way" / "source_audit.json")
     metric = prep.read_json(run / "nine_way" / "metrics.json")
-    return [[arm, "Kermany", "false_rare_rate", result["false_rare_n"], result["normal_n"], result["false_rare_rate"]],
-            *([arm, "Kermany", f"recall_{c}", metric["correct"][i], metric["totals"][i], metric["correct"][i] / metric["totals"][i]]
-              for i, c in enumerate(metric["classes"]) if metric["totals"][i])]
+    disjoint, method = result["patient_disjoint"], result["intervals"]["method"]
+    return [[arm, "Kermany", "false_rare_rate_patient_disjoint", disjoint["false_rare_n"], disjoint["normal_n"],
+             disjoint["false_rare_rate"], *(disjoint["interval"] or [None, None]), method],
+            *audit_rows(arm, "Kermany", result, metric, "false_rare_rate_all")]
+
+
+def audit_rows(arm: str, source: str, result: dict, metric: dict, frr_name: str = "false_rare_rate") -> list[list]:
+    """Nine-way FRR and per-class recall rows with their A2 B-3 intervals and method."""
+    intervals = result["intervals"]
+    rows = [[arm, source, frr_name, result["false_rare_n"], result["normal_n"], result["false_rare_rate"],
+             *(intervals["false_rare"] or [None, None]), intervals["method"]]]
+    for i, c in enumerate(metric["classes"]):
+        if metric["totals"][i]:
+            rows.append([arm, source, f"recall_{c}", metric["correct"][i], metric["totals"][i],
+                         metric["correct"][i] / metric["totals"][i], *intervals["recall"][c], intervals["method"]])
+    return rows
+
+
+def two_way_counts(path: Path) -> np.ndarray:
+    """A2 A-1: CSC/MH confusion from the five-way CSC and MH cosines of one episode (ties to CSC).
+
+    Each centroid uses only its own supports, so this equals refitting with CSC and MH only.
+    """
+    matrix = np.zeros((2, 2), dtype=np.int64)
+    for row in prep.read_csv(path / "predictions.csv"):
+        if row["true_label"] in TWO_WAY:
+            chosen = 0 if float(row["cosine_CSC"]) >= float(row["cosine_MH"]) else 1
+            matrix[TWO_WAY.index(row["true_label"]), chosen] += 1
+    return matrix
+
+
+def size_two_way_counts(episode: ev.Episode, sizes: Mapping[str, tuple[int, int]]) -> np.ndarray:
+    """The size-only reference (A2 N-1) on the same CSC/MH supports and OCTID queries."""
+    hits = ev.size_hits(episode, dict(sizes), TWO_WAY)
+    totals = np.array([episode.labels.count(c) for c in TWO_WAY])
+    return np.array([[hits[0], totals[0] - hits[0]], [totals[1] - hits[1], hits[1]]], dtype=np.int64)
+
+
+def two_way_rows(arm: str, role: str, matrices: Mapping[tuple[int, int], np.ndarray], ks: Sequence[int]) -> list[list]:
+    """Per K: draws, denominators, macro recall summary, mean per-class recall and confusion, collapses."""
+    macro = {key: float(np.mean(m.diagonal() / m.sum(axis=1))) for key, m in matrices.items()}
+    rows = []
+    for k in (*ks, ev.K_MEAN_LABEL):
+        if k == ev.K_MEAN_LABEL:
+            values, cells = list(ev.k_mean(macro, fm.N_DRAWS).values()), []
+        else:
+            cells = [matrices[k, r] for r in range(fm.N_DRAWS) if (k, r) in matrices]
+            values = [macro[k, r] for r in range(fm.N_DRAWS) if (k, r) in matrices]
+        if cells:
+            mean = np.mean(cells, axis=0)
+            extra = [int(cells[0][0].sum()), int(cells[0][1].sum()), *ev.draw_summary(values),
+                     float(np.mean([m[0, 0] / m[0].sum() for m in cells])), float(np.mean([m[1, 1] / m[1].sum() for m in cells])),
+                     *mean.ravel().tolist(), sum(int(m[:, 0].sum() == 0 or m[:, 1].sum() == 0) for m in cells)]
+        else:
+            extra = [None, None, *ev.draw_summary(values), *[None] * 7]
+        rows.append([arm, role, k, len(values), fm.N_DRAWS, *extra])
+    return rows
 
 
 def summarize(lock_folder: Path, external: Path, runs: Path, nomination: Path, out: Path) -> None:
@@ -415,9 +483,7 @@ def summarize(lock_folder: Path, external: Path, runs: Path, nomination: Path, o
         root_hash = prep.sha256(run / "identity.json")
         for source in sources:
             result = prep.read_json(run / source / "nine_way" / "source_audit.json")
-            audit.append([arm, source, "false_rare_rate", result["false_rare_n"], result["normal_n"], result["false_rare_rate"]])
-            for label, count in result["class_counts"].items():
-                audit.append([arm, source, f"recall_{label}", count["correct"], count["total"], count["correct"] / count["total"]])
+            audit.extend(audit_rows(arm, source, result, prep.read_json(run / source / "nine_way" / "metrics.json")))
             transfers = transfer_episodes(planned, [r for r in queries if r["source"] == source])
             for classifier, n in (("prototype", fm.N_DRAWS), ("logistic", 25)):
                 cells = read_transfer(run, source, classifier, transfers, root_hash)
@@ -440,8 +506,26 @@ def summarize(lock_folder: Path, external: Path, runs: Path, nomination: Path, o
                         primary = classifier == "prototype" and arm_a == decision["nominee"] and arm_b == fm.REFERENCE
                         contrasts.append([arm_a, arm_b, "primary" if primary else "secondary", source, classifier, k, label,
                                           len(differences), n, *ev.draw_summary(differences)])
+    two_way = []
+    octid = [r for r in queries if r["source"] == "OCTID"]
+    if set(TWO_WAY) <= {r["label"] for r in octid}:
+        transfers = transfer_episodes(planned, octid)
+        for arm in order:
+            done = values[arm, "OCTID", "prototype"]
+            matrices = {(e.k, e.draw): two_way_counts(runs / arm / "external" / "OCTID" / "prototype" / e.name)
+                        for e in transfers if (e.k, e.draw) in done}
+            two_way.extend(two_way_rows(arm, "headline" if arm == decision["nominee"] else "secondary", matrices, ks))
+        sizes = {**ev.image_sizes(lock_folder), **{r["path"]: (int(r["width"]), int(r["height"]))
+                                                   for r in prep.read_csv(external / "external_inventory.csv")}}
+        two_way.extend(two_way_rows("size_only_reference", "size_only_reference",
+                                    {(e.k, e.draw): size_two_way_counts(e, sizes) for e in transfers}, ks))
     with prep.writer_lock(out):
-        prep.write_csv(out / "external_source_audit.csv", ["arm", "source", "endpoint", "numerator", "denominator", "value"], audit)
+        prep.write_csv(out / "external_source_audit.csv", ["arm", "source", "endpoint", "numerator", "denominator", "value",
+                                                           "interval_low", "interval_high", "interval_method"], audit)
+        prep.write_csv(out / "external_two_way.csv", ["arm", "role", "k", "available", "planned", "n_CSC", "n_MH",
+                                                      "macro_mean", "macro_sd", "macro_p05", "macro_p95", "recall_CSC_mean",
+                                                      "recall_MH_mean", "CSC_as_CSC", "CSC_as_MH", "MH_as_CSC", "MH_as_MH",
+                                                      "collapsed_draws"], two_way)
         prep.write_csv(out / "external_transfer_summary.csv", ["arm", "source", "classifier", "k", "class", "available", "planned",
                                                                "mean", "sd", "p05", "p95"], draws)
         prep.write_csv(out / "external_transfer_outputs.csv", ["arm", "source", "classifier", "k", "true_class", "predicted_class",
@@ -454,10 +538,13 @@ def summarize(lock_folder: Path, external: Path, runs: Path, nomination: Path, o
             incomplete_arms=sorted(a for a, s in lock["arms"].items() if s["status"] == "available" and a not in order),
             screened="locked rows and external candidates only; unused legacy images and private pretraining sets remain unknown",
             partial_classes="present-class recall and all five output counts only; no five-class aggregate",
+            two_way="OCTID CSC vs MH from the five-way CSC/MH cosines, prototypes only; chance 0.50; the nominee row is "
+                    "the headline, none if no nominee; size_only_reference is a diagnostic, never an arm (A2 A-1, N-1)",
+            kermany="false_rare_rate_patient_disjoint is the headline Kermany FRR; false_rare_rate_all is secondary (A2 A-5)",
             variability="conditional on these images and support draws; not new-patient confidence intervals",
             limitation="descriptive source comparison; no causal source-shift, pretraining or patient-independence claim"))
         prep.complete(out, ["external_source_audit.csv", "external_transfer_summary.csv", "external_transfer_outputs.csv",
-                            "external_paired_differences.csv", "interpretation.json"])
+                            "external_paired_differences.csv", "external_two_way.csv", "interpretation.json"])
 
 
 def main() -> None:
@@ -467,8 +554,6 @@ def main() -> None:
     build.add_argument("--octid-files", type=Path, required=True)
     build.add_argument("--octdl-labels", type=Path, required=True)
     build.add_argument("--out", type=Path, required=True)
-    build.add_argument("--mapping", action="append", default=[], metavar="SOURCE:LABEL=EVIDENCE",
-                       help="clinical mapping evidence for a rare class, for example OCTID:MH=...; absent means NORMAL only")
     first = sub.add_parser("screen")
     second = sub.add_parser("freeze")
     for command in (first, second):
@@ -486,14 +571,7 @@ def main() -> None:
         tables.add_argument("--" + name, type=Path, required=True)
     args = parser.parse_args()
     if args.step == "candidates":
-        mappings = {}
-        for text in args.mapping:
-            key, _, evidence = text.partition("=")
-            source, _, label = key.partition(":")
-            if label not in fm.RARE or not evidence.strip():
-                parser.error(f"invalid --mapping: {text}")
-            mappings[source, label] = evidence
-        rows = candidates(prep.read_csv(args.octid_files), prep.read_csv(args.octdl_labels), mappings)
+        rows = candidates(prep.read_csv(args.octid_files), prep.read_csv(args.octdl_labels))
         prep.write_csv(args.out, CANDIDATE_HEADER, rows)
         print(json.dumps(dict(Counter(f"{r[0]}/{r[2]}" for r in rows)), indent=2, sort_keys=True))
     elif args.step in ("screen", "freeze"):

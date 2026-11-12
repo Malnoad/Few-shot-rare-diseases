@@ -264,9 +264,16 @@ new dimensions/modes against native processors without outcome-driven tuning:
 DINO's one-pixel-height rejection was outside the current selected image domain,
 but that says nothing about future external images. **Manual stop:** absent
 implemented query-lock/inference support, unsupported input
-handling or unresolved mappings. CSR-to-CSC and OCTDL MH subcategories require
-clinical evidence; omit unsupported rare-transfer claims. If NORMAL access fails,
-report the required source component as not run, not a completed shift study.
+handling or unresolved mappings. Amendment A1 (12 Nov) replaced the clinical-evidence
+requirement: the OCTID CSR/MH and OCTDL VID/MH cohorts are evaluated against their
+published labels only, are fixed in code (A2 N-3), and support an agreement claim, not a
+clinically validated transfer claim. If NORMAL access fails for one source, report that
+source as not run; the study is rare-only only if both fail (A2 A-4).
+
+**Size shortcut (A2 N-1, 13 Nov).** File width and height alone separate the five rare
+benchmark classes (leave-one-out macro recall 0.66 on the 124 development images). Every
+five-way result is reported beside the size-only reference; the OCTID two-way test is the
+only test with constant image size.
 
 ### R10. Successful software does not establish clinical validity — claim limit
 

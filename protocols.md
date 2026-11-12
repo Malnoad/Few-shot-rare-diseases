@@ -37,8 +37,17 @@ labelled score. All encoders stay frozen: no fine-tuning, no adapters, no augmen
 - Rare development images: 27/26/25/19/27 = **124** (CSC/MH/MacTel/Stargardt/RP).
 - Legacy rare test images: 5/5/4/4/4 = **22**. These were inspected in earlier work, so the test is
   not "blind"; we say so in the paper.
-- External sources: OCTID and OCTDL NORMAL scans for the false-rare rate. Their MH/CSR images are
-  used only if a clinician confirms the label mapping (for example CSR → CSC).
+- External sources: OCTID and OCTDL NORMAL scans for the false-rare rate. Their CSR (as CSC) and
+  MH images are scored against the datasets' published labels only (amendment A1, 12 November):
+  this measures agreement with those labels, not clinically confirmed transfer.
+
+**Amendments.** Dated changes made before any score live in
+[`docs/research/FM_AMENDMENTS.md`](docs/research/FM_AMENDMENTS.md) (A1 external labels, A2 the
+13 November pre-lock rules). The most visible A2 changes: image size alone sorts the rare
+classes surprisingly well, so every five-way result sits beside a "size-only" reference;
+MIRAGE inputs are stretched per image as in MIRAGE's own paper; the Kermany false-rare rate is
+headlined on the 169 test images whose patients are not in the fitting set; no single K is
+primary.
 
 ## 4. How one run works
 

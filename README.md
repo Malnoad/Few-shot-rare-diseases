@@ -691,10 +691,11 @@ these exact paths.
 ├── fm_core.py                  protocol rules (screen, folds, supports, classifiers, nomination)
 ├── fm_prepare.py               data preparation and the input lock
 ├── fm_extract.py               frozen model loading, timing pilots, feature extraction
-├── fm_evaluate.py              development, nomination and reporting (CPU)
+├── fm_evaluate.py              development, nomination, reporting and geometry tables (CPU)
+├── fm_external.py              OCTID/OCTDL screen, query lock and external reporting
 ├── colab_fm.ipynb              Colab: setup and first score-free checks
 ├── requirements-fm.txt         pinned PyTorch environment for Colab
-├── docs/research/FM_*.md       protocol (binding), runbook, checklist, risks, terms evidence
+├── docs/research/FM_*.md       protocol (binding), amendments (hashed), runbook, risks, terms evidence
 └── docs/report/fm_ieee/        the proposal paper (main.pdf)
 ```
 

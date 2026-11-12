@@ -3,6 +3,7 @@ from contextlib import ExitStack
 from dataclasses import replace
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -30,18 +31,27 @@ class Candidates(unittest.TestCase):
              dict(file_name="vid_3_1", disease="VID", subcategory="LH", patient_id="3"),
              dict(file_name="amd_4_1", disease="AMD", subcategory="late", patient_id="4")]
 
-    def test_without_mapping_evidence_only_normal_rows_enter(self):
-        rows = ext.candidates(self.octid, self.octdl, {})
-        self.assertEqual([r[:4] for r in rows], [["OCTDL", "data/external/OCTDL/NO/no_1_1.jpg", "NORMAL", "1"],
-                                                  ["OCTID", "data/external/OCTID/NORMAL/NORMAL1.jpeg", "NORMAL", ""]])
+    def test_the_a1_cohorts_are_fixed_in_code_and_octdl_mh_uses_subcategory(self):
+        rows = ext.candidates(self.octid, self.octdl)
+        self.assertEqual([r[:3] for r in rows], [
+            ["OCTDL", "data/external/OCTDL/NO/no_1_1.jpg", "NORMAL"], ["OCTDL", "data/external/OCTDL/VID/vid_2_1.jpg", "MH"],
+            ["OCTID", "data/external/OCTID/CSR/CSR1.jpeg", "CSC"], ["OCTID", "data/external/OCTID/MH/MH1.jpeg", "MH"],
+            ["OCTID", "data/external/OCTID/NORMAL/NORMAL1.jpeg", "NORMAL"]])  # LH, AMD and non-images never enter
+        self.assertEqual({(r[0], r[2]): r[4] for r in rows if r[2] != "NORMAL"}, ext.A1_COHORTS)
 
-    def test_rare_rows_need_source_specific_evidence_and_octdl_mh_uses_subcategory(self):
-        rows = ext.candidates(self.octid, self.octdl, {("OCTID", "CSC"): "clinician note", ("OCTDL", "MH"): "clinician note"})
-        by_path = {r[1]: r for r in rows}
-        self.assertEqual(by_path["data/external/OCTID/CSR/CSR1.jpeg"][2], "CSC")
-        self.assertEqual(by_path["data/external/OCTDL/VID/vid_2_1.jpg"][2], "MH")
-        self.assertNotIn("data/external/OCTDL/VID/vid_3_1.jpg", by_path, "LH must never become MH")
-        self.assertNotIn("data/external/OCTID/MH/MH1.jpeg", by_path, "evidence for one source does not cover another")
+    def test_no_command_line_option_can_add_or_drop_a_cohort(self):
+        result = subprocess.run([sys.executable, "fm_external.py", "candidates", "--help"], cwd=Path(ext.__file__).parent,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("--mapping", result.stdout)
+        lock = dict(external_sources=dict(OCTID=dict(status="planned")))
+        normal = dict(source="OCTID", path="data/external/n.png", label="NORMAL", patient_id="", mapping_evidence="", md5="")
+        for evidence in ("clinician note", ""):
+            rare = dict(normal, path="data/external/r.png", label="CSC", mapping_evidence=evidence)
+            with self.subTest(evidence=evidence), self.assertRaisesRegex(ValueError, "A1 cohort"):
+                ext.check_candidates([normal, rare], lock, set())
+        ext.check_candidates([normal, dict(normal, path="data/external/r.png", label="CSC",
+                                           mapping_evidence=ext.A1_COHORTS["OCTID", "CSC"])], lock, set())
 
 
 class ExternalInputs(unittest.TestCase):
@@ -178,7 +188,7 @@ class Screening(ExternalInputs):
     def test_shared_patient_groups_rows_without_a_label_conflict(self):
         self.add("OCTID", "a")
         normal = self.add("OCTDL", "b", patient="7")
-        rare = self.add("OCTDL", "c", label="MH", patient="7", evidence="clinician note")
+        rare = self.add("OCTDL", "c", label="MH", patient="7", evidence=ext.A1_COHORTS["OCTDL", "MH"])
         other = self.add("OCTID", "d", patient="7")  # IDs are namespaced by dataset
         self.screen()
         ext.freeze(self.root, self.lock_folder, self.out)
@@ -188,7 +198,7 @@ class Screening(ExternalInputs):
 
     def test_duplicates_with_conflicting_labels_stop_before_inference(self):
         a, _ = self.both_sources()
-        self.add("OCTID", "twin", label="MH", evidence="clinician note", copy_of=a)
+        self.add("OCTID", "twin", label="MH", evidence=ext.A1_COHORTS["OCTID", "MH"], copy_of=a)
         self.screen()
         with self.assertRaisesRegex(ValueError, "conflicting labels"):
             ext.freeze(self.root, self.lock_folder, self.out)
@@ -197,7 +207,7 @@ class Screening(ExternalInputs):
         cases = {
             "not planned": ["Other", "data/external/x.png", "NORMAL", "", "", ""],
             "eligible external class": ["OCTID", "data/external/x.png", "CNV", "", "", ""],
-            "mapping evidence": ["OCTID", "data/external/x.png", "MH", "", " ", ""],
+            "A1 cohort": ["OCTID", "data/external/x.png", "MH", "", " ", ""],
             "outside the locked roster": ["OCTID", "data/raw/fit0.png", "NORMAL", "", "", ""],
         }
         for message, row in cases.items():
@@ -281,7 +291,7 @@ class RealQueryLock(ExternalInputs):
     def test_a_real_query_lock_drives_a_complete_report(self):
         self.add("OCTID", "a")
         self.add("OCTDL", "b")
-        rare = self.add("OCTID", "c", label="CSC", evidence="clinician note")
+        rare = self.add("OCTID", "c", label="CSC", evidence=ext.A1_COHORTS["OCTID", "CSC"])
         removed = self.add("OCTDL", "copy", copy_of="data/raw/fit0.png")
         self.screen()
         ext.freeze(self.root, self.lock_folder, self.out)
@@ -407,6 +417,11 @@ class Reporting(unittest.TestCase):
         self.targets = {path: target for _, path, _, target in queries}
         prep.write_csv(self.external / "external_queries.csv", ["source", "path", "label", "sha256", "dependence_group"],
                        [[s, p, c, "0" * 64, p] for s, p, c, _ in queries])
+        # Original sizes for the size-only reference: OCTID's CSC/MH queries match their class's supports.
+        prep.write_csv(self.folder / "image_inventory.csv", ["path", "width", "height"],
+                       [[f"fit/{c}", 300 + 50 * i, 300] for i, c in enumerate(fm.RARE)])
+        prep.write_csv(self.external / "external_inventory.csv", ["path", "width", "height"],
+                       [[p, {"q/csc": 310, "q/mh_wrong": 345}.get(p, 512), 300] for _, p, _, _ in queries])
         eye = np.eye(9, dtype=np.float32)
         supports = [f"fit/{c}" for c in fm.RARE]
         self.main = ev.Features(eye, {f"fit/{c}": i for i, c in enumerate(fm.NINE)})
@@ -524,9 +539,26 @@ class Reporting(unittest.TestCase):
         self.assertEqual([r["predicted_class"] for r in outputs], list(fm.RARE))
         self.assertEqual(float(next(r for r in outputs if r["predicted_class"] == "MH")["mean_count"]), 1.)
         self.assertEqual(prep.read_json(out / "interpretation.json")["incomplete_arms"], ["MIRAGE"])
-        text = "".join(p.read_text(encoding="utf-8") for p in out.iterdir() if p.suffix == ".csv")
+        # Only the two-class OCTID test has a macro; partial five-class cohorts never do.
+        text = "".join(p.read_text(encoding="utf-8") for p in out.iterdir() if p.suffix == ".csv" and p.name != "external_two_way.csv")
         self.assertNotIn("macro", text)
         prep.verify_complete(out)
+
+    def test_octid_two_way_uses_the_csc_and_mh_cosines_with_a_size_only_row(self):
+        self.report("DINOv2")
+        self.targets["q/csc"] = "MH"
+        self.report("Inception")
+        rows = {(r["arm"], r["k"]): r for r in prep.read_csv(self.summarize() / "external_two_way.csv")}
+        # DINOv2: CSC right; the MH query's RP output ties CSC and MH at 0 -> CSC. Every query called CSC.
+        dino = rows["DINOv2", "1"]
+        self.assertEqual((dino["role"], dino["available"], dino["planned"], dino["n_CSC"], dino["n_MH"]),
+                         ("headline", "30", "100", "1", "1"))
+        self.assertEqual((float(dino["macro_mean"]), float(dino["MH_as_CSC"]), dino["collapsed_draws"]), (.5, 1., "30"))
+        reference = rows["Inception", "1"]
+        self.assertEqual((reference["role"], float(reference["macro_mean"]), reference["collapsed_draws"]), ("secondary", 0., "0"))
+        size = rows["size_only_reference", "1"]
+        self.assertEqual((size["role"], size["available"], float(size["macro_mean"])), ("size_only_reference", "30", 1.))
+        self.assertEqual(rows["DINOv2", ev.K_MEAN_LABEL]["available"], "0")  # only K=1 was planned here
 
     def test_summary_rejects_cells_built_on_other_supports(self):
         self.report()
@@ -554,7 +586,10 @@ class Reporting(unittest.TestCase):
         identity = dict(arm=arm, phase="reporting", lock_sha256=prep.sha256(self.folder / "input_lock.json"),
                         nomination_sha256=prep.sha256(self.nomination / "nomination.json"), code=prep.code_identity())
         prep.write_json(run / "identity.json", identity)
-        prep.write_json(run / "nine_way" / "source_audit.json", dict(false_rare_n=2, normal_n=250, false_rare_rate=.008))
+        prep.write_json(run / "nine_way" / "source_audit.json", dict(
+            false_rare_n=2, normal_n=250, false_rare_rate=.008,
+            intervals=dict(method=ev.CLUSTER_METHOD, false_rare=[.0, .02], recall=dict(NORMAL=[.93, .98], CSC=[.2, 1.])),
+            patient_disjoint=dict(false_rare_n=1, normal_n=169, false_rare_rate=1 / 169, interval=[0., .02])))
         prep.write_json(run / "nine_way" / "metrics.json", dict(classes=list(fm.NINE), correct=[240, 0, 0, 0, 3, 0, 0, 0, 0], totals=[250, 0, 0, 0, 5, 0, 0, 0, 0]))
         prep.complete(run, ["identity.json", "nine_way/source_audit.json", "nine_way/metrics.json"])
 
@@ -564,7 +599,13 @@ class Reporting(unittest.TestCase):
         audit = prep.read_csv(self.summarize() / "external_source_audit.csv")
         kermany = [r for r in audit if r["source"] == "Kermany"]
         self.assertEqual([(r["endpoint"], r["numerator"], r["denominator"]) for r in kermany],
-                         [("false_rare_rate", "2", "250"), ("recall_NORMAL", "240", "250"), ("recall_CSC", "3", "5")])
+                         [("false_rare_rate_patient_disjoint", "1", "169"), ("false_rare_rate_all", "2", "250"),
+                          ("recall_NORMAL", "240", "250"), ("recall_CSC", "3", "5")])
+        self.assertEqual((kermany[0]["interval_high"], kermany[2]["interval_low"]), ("0.02", "0.93"))
+        octid = next(r for r in audit if (r["source"], r["endpoint"]) == ("OCTID", "false_rare_rate"))
+        self.assertEqual(octid["interval_method"], ev.EXACT_METHOD)  # A2 B-3: no patient IDs in OCTID
+        octdl = next(r for r in audit if (r["source"], r["endpoint"]) == ("OCTDL", "false_rare_rate"))
+        self.assertEqual(octdl["interval_method"], ev.CLUSTER_METHOD)
         self.assertEqual(prep.read_json(self.base / "tables" / "interpretation.json")["reporting_scope"], "primary nominee plus all secondary arms")
 
     def test_legacy_run_from_another_lock_cannot_enter_the_source_table(self):

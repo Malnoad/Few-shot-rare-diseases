@@ -2,7 +2,8 @@
 
 Prepared for Lam's review. It holds the rules the protocol fixes
 exactly: the image screen, grouping and folds (section 4), paired nested supports and both
-classifiers (section 6), nomination (section 7) and false-rare rate (section 8).
+classifiers (section 6), nomination (section 7) and false-rare rate (section 8), plus the
+amendment A2 diagnostics (padding shares, size-only reference) and nine-way intervals.
 
 No file, network, GPU or framework access: callers pass paths, arrays and link lists in, and
 own all I/O, identities and persistence. Random streams are a function of NumPy's version, so
@@ -294,3 +295,87 @@ def false_rare_rate(true_labels: Sequence[str], predicted: Sequence[str]) -> tup
     """Numerator and denominator of FRR: true NORMAL scans predicted as any rare class."""
     normals = [p for t, p in zip(true_labels, predicted, strict=True) if t == "NORMAL"]
     return sum(p in RARE for p in normals), len(normals)
+
+
+# ------------------------------------------------- A2 diagnostics and intervals (A2, 13 Nov) ---
+PAD_RANGE = 8  # A2: a border row/column is padding if its grey range is at most 8
+NEAR_WHITE = 250
+INTERVAL_DRAWS, INTERVAL_SEED = 5000, 0  # v1.0 section 7 and analysis.py (L9) convention
+
+
+def border_share(gray: np.ndarray) -> float:
+    """Share of area in complete edge rows/columns whose grey range is at most 8 (A2).
+
+    gray is the decoded 8-bit grayscale original. Flat full-length rows are peeled from the top,
+    then the bottom; flat full-length columns from the left, then the right (the review's
+    `geom.py` rule). Descriptive only.
+    """
+    a = np.asarray(gray)
+    if a.ndim != 2 or not a.size:
+        raise ValueError("expected a nonempty two-dimensional grayscale image")
+    h, w = a.shape
+    top = bottom = left = right = 0
+    while top < h and np.ptp(a[top]) <= PAD_RANGE:
+        top += 1
+    while bottom < h - top and np.ptp(a[h - 1 - bottom]) <= PAD_RANGE:
+        bottom += 1
+    while left < w and np.ptp(a[:, left]) <= PAD_RANGE:
+        left += 1
+    while right < w - left and np.ptp(a[:, w - 1 - right]) <= PAD_RANGE:
+        right += 1
+    return 1 - max(h - top - bottom, 0) * max(w - left - right, 0) / (h * w)
+
+
+def near_white_share(gray: np.ndarray) -> float:
+    """Share of pixels at 250 or above in the decoded 8-bit grayscale original (A2)."""
+    values = np.asarray(gray)
+    if values.ndim != 2 or not values.size:
+        raise ValueError("expected a nonempty two-dimensional grayscale image")
+    return float(np.mean(values >= NEAR_WHITE))
+
+
+def size_predict(support_sizes: Sequence[np.ndarray], query_sizes: np.ndarray) -> np.ndarray:
+    """Size-only reference (A2, N-1): class of the nearest mean support (width, height).
+
+    support_sizes holds one [K, 2] array per class in fixed order; squared Euclidean distance;
+    argmin takes the first class on exact ties. Uses no pixel and no encoder; never nominated.
+    """
+    means = np.stack([np.asarray(s, dtype=np.float64).reshape(-1, 2).mean(axis=0) for s in support_sizes])
+    queries = np.asarray(query_sizes, dtype=np.float64).reshape(-1, 2)
+    if not np.isfinite(means).all() or not np.isfinite(queries).all() or any(len(s) == 0 for s in support_sizes):
+        raise ValueError("size reference needs finite sizes and supports for every class")
+    return np.argmin(((queries[:, None, :] - means[None, :, :]) ** 2).sum(axis=2), axis=1)
+
+
+def cluster_interval(successes: Sequence[int], clusters: Sequence[str],
+                     draws: int = INTERVAL_DRAWS, seed: int = INTERVAL_SEED) -> tuple[float, float]:
+    """95% percentile interval of a pooled proportion from whole-cluster resamples.
+
+    Each draw samples G of the G clusters with replacement (one integers() call per draw, as in
+    analysis.py) and pools every image of each chosen cluster. Conditional on the fitted head.
+    """
+    hits, groups = np.asarray(successes), np.asarray(clusters)
+    if hits.ndim != 1 or not len(hits) or groups.shape != hits.shape or not np.isin(hits, (0, 1)).all():
+        raise ValueError("expected aligned nonempty 0/1 successes and cluster IDs")
+    _, index = np.unique(groups, return_inverse=True)
+    g = int(index.max()) + 1
+    totals = np.zeros((g, 2), dtype=np.int64)
+    np.add.at(totals[:, 0], index, hits.astype(np.int64))
+    np.add.at(totals[:, 1], index, 1)
+    rng = np.random.default_rng(seed)
+    values = np.empty(draws)
+    for i in range(draws):
+        pooled = totals[rng.integers(0, g, g)].sum(axis=0)
+        values[i] = pooled[0] / pooled[1]
+    low, high = np.percentile(values, [2.5, 97.5])
+    return float(low), float(high)
+
+
+def clopper_pearson(k: int, n: int) -> tuple[float, float]:
+    """Exact two-sided 95% binomial interval; image-level and conditional (A2, OCTID)."""
+    from scipy.stats import beta
+    if not 0 <= k <= n or n < 1:
+        raise ValueError("invalid binomial counts")
+    low = 0.0 if k == 0 else float(beta.ppf(0.025, k, n - k + 1))
+    high = 1.0 if k == n else float(beta.ppf(0.975, k + 1, n - k))
+    return low, high

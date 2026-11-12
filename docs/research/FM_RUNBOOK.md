@@ -196,8 +196,8 @@ exit before starting the timing sequence.
 ## Score-free timing pilot, then final lock
 
 Resolve the external implementation/versioning plan before final pilots and S2.
-The four FM scripts, stage 3 and both requirements files are hashed in the lock;
-later edits invalidate it. Core/preparation/stage-3 changes also require fresh
+The FM scripts, stage 3, both requirements files and `FM_AMENDMENTS.md` are hashed in the
+lock; later edits invalidate it. Core/preparation/stage-3 changes also require fresh
 screen/freeze artifacts. Follow R5 in the risk record: implement/test the intended
 external workflow, or document genuine access/terms failure and the protocol's
 reduced scope. Unfinished code is not external-data unavailability. Planned
@@ -253,7 +253,8 @@ directory. Account for every fixed slot. A fallback roster replaces RETFound's
 entry with BioMedCLIP and includes `retfound_failure`. A planned external source
 needs `status: planned`, `release`, `release_sha256`, `terms_evidence`, `eligibility`
 and `label_inventory`. These definitions do not authorize unimplemented external
-inference. Do not infer CSR↔CSC or MH subcategories without clinical confirmation.
+inference. The external rare cohorts are amendment A1's, fixed as constants in
+`fm_external.py` (A2 N-3); no other mapping may be added.
 
 After Lam reviews the code, pilots and decisions, and **before any labelled
 scores**, assemble the final prepared folder and pilot files on the locking
@@ -362,7 +363,7 @@ all nine output columns. NORMAL FRR, NORMAL recall, common confusions and rare
 recall retain their actual denominators. The historical common-patient overlap
 remains a limitation. No new patient-independence or causal source claim follows.
 
-## External source audit (draft, pending Lam's review)
+## External source audit (R5 approved 11 November; cohorts fixed by A1/A2)
 
 `fm_external.py` implements the external interfaces R5 requires. It is one of the hashed
 code files, so it must be final before the real lock. It has run only on synthetic data:
@@ -374,8 +375,8 @@ Proposed order, each a future recipe:
 1. Before the lock: acquire the approved releases under `data/external/{OCTID,OCTDL}`, verify
    the published MD5s, then record real SHA256 digests, terms and eligibility in the gate.
 2. After the lock, in the runtime that will extract the main inventory, build, screen and
-   lock the final query IDs. Add `--mapping SOURCE:LABEL=EVIDENCE` only with real clinical
-   confirmation; without it a source stays NORMAL-only.
+   lock the final query IDs. `candidates` always admits exactly A1's cohorts (OCTID CSR as
+   CSC, OCTID MH, OCTDL VID/MH); there is no option to add or drop one (A2 N-3).
 3. Extract the external queries beside the main inventory, before the first `develop`.
 4. After the sealed S3 nomination, report and summarize.
 
@@ -401,6 +402,35 @@ Screening covers the locked rows and the external candidates only; unused legacy
 private pretraining sets remain unknown. Links between external and locked images come from
 the image screen, because no verified patient links across datasets exist. Patient IDs within
 a source group dependent queries in the ledger and do not remove them.
+
+## Amendment A2 checks and tables (13 November)
+
+A2 (`FM_AMENDMENTS.md`) is hashed with the code (`fm_prepare.py` `CODE_FILES`), so the
+amendment text, like the code, must be final before the final pilots. What it adds:
+
+- **Pilot repeat checks.** `pilot` compares the first and last timed passes on all 100
+  timing images (cosine at least 0.9999, largest difference at most 1e-4 of the largest
+  output) and encodes five fixed synthetic images twice (R3, 1e-4). Results are in
+  `timing.json` under `numerical`; a failure stops the pilot with the measured values, and the
+  gate then records the arm unavailable with that message as its reason.
+- **MIRAGE input.** /255, then per-image min-max (A-11). Specs record the new recipe, so specs
+  made before 13 November fail `check_spec` and must be rebuilt.
+- **Geometry table.** After extraction, per arm, with no score:
+  `python fm_evaluate.py geometry --lock results/fm_v1/lock --cache /content/fm_v1/features/DINOv2 --arm DINOv2 --out /content/fm_v1/reports/geometry/DINOv2`
+  (add `--external /content/fm_v1/external --external-cache /content/fm_v1/features/DINOv2-external`).
+  `geometry.csv` now also holds `border_share` and `near_white_share`.
+- **Legacy summary.** `summarize` adds `size_only_reference.csv` (development and reporting,
+  per K and the K mean) and a `mean_k1_2_4_8` row per arm and contrast (B-1).
+- **Nine-way audit.** `source_audit.json` adds intervals (Kermany and OCTDL cluster resamples,
+  OCTID exact) and, for Kermany, the patient-disjoint headline FRR (169 images on the pinned
+  roster; A-5). The external summary lists it as `false_rare_rate_patient_disjoint`, with
+  `false_rare_rate_all` as secondary.
+- **OCTID two-way test.** The external `summarize` writes `external_two_way.csv`: every arm
+  and K from the five-way CSC/MH cosines, the nominee's row as headline, and a
+  `size_only_reference` row (A-1).
+
+Rebuilding `screen`/`freeze` with the 13 November code reproduces all six hashes pinned in
+`colab_fm.ipynb` byte for byte (checked on the laptop the same day).
 
 ## Resume, export and reversal
 

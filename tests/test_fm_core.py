@@ -190,5 +190,41 @@ class Endpoints(unittest.TestCase):
         self.assertEqual(fm.false_rare_rate(["NORMAL", "NORMAL", "NORMAL", "CNV"], ["RP", "CNV", "NORMAL", "CSC"]), (1, 3))
 
 
+class AmendmentA2(unittest.TestCase):
+    def test_size_reference_uses_mean_support_size_and_first_class_on_ties(self):
+        supports = [np.array([[400, 400], [420, 400]]), np.array([[300, 300]]), np.array([[300, 300]])]
+        # (305, 300) is nearest the 300x300 classes, which tie: the first wins.
+        self.assertEqual(fm.size_predict(supports, np.array([[410, 401], [305, 300]])).tolist(), [0, 1])
+        with self.assertRaises(ValueError):
+            fm.size_predict([np.empty((0, 2)), supports[1]], np.array([[1, 1]]))
+
+    def test_exact_interval_matches_known_clopper_pearson_values(self):
+        low, high = fm.clopper_pearson(0, 10)
+        self.assertEqual(low, 0)
+        self.assertAlmostEqual(high, 1 - .025 ** (1 / 10))
+        low, high = fm.clopper_pearson(5, 10)
+        self.assertAlmostEqual(low, .187086, places=5)
+        self.assertAlmostEqual(high, .812914, places=5)
+        self.assertEqual(fm.clopper_pearson(10, 10)[1], 1)
+
+    def test_cluster_interval_resamples_whole_clusters_with_a_fixed_seed(self):
+        hits, clusters = [1, 1, 0, 0, 1, 0], ["a", "a", "b", "b", "c", "d"]
+        first = fm.cluster_interval(hits, clusters)
+        self.assertEqual(first, fm.cluster_interval(hits, clusters))
+        self.assertTrue(0 <= first[0] <= .5 <= first[1] <= 1)
+        # One cluster with every image correct cannot vary.
+        self.assertEqual(fm.cluster_interval([1, 1], ["a", "a"]), (1., 1.))
+        # Same draws as analysis.py: one integers(0, G, G) call per draw from default_rng(0).
+        rng, totals = np.random.default_rng(0), np.array([[2, 2], [0, 2], [1, 1], [0, 1]])
+        values = [totals[rng.integers(0, 4, 4)].sum(axis=0) for _ in range(5000)]
+        expected = np.percentile([v[0] / v[1] for v in values], [2.5, 97.5])
+        np.testing.assert_allclose(first, expected)
+
+    def test_padding_shares_need_a_grayscale_image(self):
+        with self.assertRaises(ValueError):
+            fm.border_share(np.zeros((2, 2, 3), dtype=np.uint8))
+        self.assertEqual(fm.near_white_share(np.array([[250, 249], [255, 0]], dtype=np.uint8)), .5)
+
+
 if __name__ == "__main__":
     unittest.main()
