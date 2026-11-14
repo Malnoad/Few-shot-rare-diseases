@@ -36,7 +36,7 @@ except the first one to make a check pass.** A failed check is useful evidence; 
 Colab links (pinned notebook versions; they work once Lam has had the branch pushed to GitHub):
 
 - Part 2: <https://colab.research.google.com/github/Malnoad/Few-shot-rare-diseases/blob/c0a53adc8070d9ed0dc0fffea99ae5421c813753/colab_fm.ipynb>
-- Part 4: <https://colab.research.google.com/github/Malnoad/Few-shot-rare-diseases/blob/c0a53adc8070d9ed0dc0fffea99ae5421c813753/colab_fm_evaluate.ipynb>
+- Part 4: <https://colab.research.google.com/github/Malnoad/Few-shot-rare-diseases/blob/56fcb52177a0f0e999e6fd2b0a7889fd073a17e2/colab_fm_evaluate.ipynb>
 
 ## Part 1 (runner): one-time setup
 
