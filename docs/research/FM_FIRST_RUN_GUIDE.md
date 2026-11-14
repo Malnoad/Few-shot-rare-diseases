@@ -157,7 +157,7 @@ notebook finds the saved nomination on Drive and reuses it; it never selects a m
 | Step | What it does | Healthy output ends with |
 |---|---|---|
 | 1 | Checks the first cell | `First cell complete.` |
-| 2 | Downloads the exact code and builds the same Python | A `python … numpy … scipy …` line |
+| 2 | Downloads the exact code, installs the locked Python 3.13.16 and builds the environment with it | A `python 3.13.16 numpy 2.2.6 scipy 1.15.3` line |
 | 3 | Copies the lock and features from Drive and checks them | `… archives match the receipt; the lock is the one Lam approved.` |
 | 4 | Restores the lock, unpacks the features | `Lock restored. Available models: …` |
 | 5 | Development episodes for every model | `development complete:` once per model |
@@ -190,7 +190,7 @@ notebook finds the saved nomination on Drive and reuses it; it never selects a m
 | Step 15 | `Extraction failed for …` | Run Step 15 again once, changing nothing. If it fails again, run Step 16 and tell Lam |
 | Part 2, any | The runtime disconnects before Step 16 has finished | Everything in `/content` is gone. Tell Lam; the session starts again from Part 2 and makes a new lock |
 | Part 4, Step 3 | `… is not the lock of this attempt` or `differs from the saved receipt` | **Stop.** Check `ATTEMPT` and `LOCK_SHA256` with Lam |
-| Part 4, Step 4 | `This runtime has … the lock has …` | **Stop.** Colab's Python changed since the lock. Tell Lam |
+| Part 4, Step 4 | `This runtime has … the lock has …` | **Stop.** The environment differs from the lock (Step 2 installs the locked Python, so this should not happen). Tell Lam |
 | Part 4, any | The runtime disconnects | Start Part 4 again; nothing on Drive is lost |
 
 ## Rules

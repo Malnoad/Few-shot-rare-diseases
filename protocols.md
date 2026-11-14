@@ -153,10 +153,10 @@ Steps 1 to 5 run in `colab_fm.ipynb` (one GPU session, no labels read). Steps 6 
 
 ## 8. Timeline (Bangkok time)
 
-| Stage | Dates | Output | Status on 13 Nov |
+| Stage | Dates | Output | Status on 14 Nov |
 |---|---|---|---|
 | S1 | 5–11 Nov | Proposal paper | Done |
-| S2 | 12–14 Nov | Final pilots, input lock, extraction (`colab_fm.ipynb`) | Rules and notebooks ready; waiting for the push |
+| S2 | 12–14 Nov | Final pilots, input lock, extraction (`colab_fm.ipynb`) | Done 13 Nov: attempt `final-20261113T170804Z`, run by Lam on an L4, code `2f48654`; input-lock SHA256 `239838279b77bb37211398a016c1c766273a35f5a06649b31f5cd97f562c001c`; four arms available, every repeat check exact on the first sequence; OCTID 410 and OCTDL 371 external queries, none excluded. Checked on the laptop 14 Nov. Waiting for Lam's approval and the public timestamp |
 | S3 | 15–19 Nov | Development runs; **nominee sealed by 19 Nov** | Not started |
 | S4 | 20–23 Nov | Legacy and external reporting | Not started |
 | S5 | 24–27 Nov | Summaries and plots; everything frozen 27 Nov | Not started |

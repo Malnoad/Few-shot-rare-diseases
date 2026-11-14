@@ -796,14 +796,40 @@ print("First cell complete. Attempt:", ATTEMPT)
 '''
 
 E_STEP2 = r'''# Step 2. Get the exact code and build the same Python environment as at the lock
+# Colab's own Python can change between sessions (3.13.16 at the lock, 3.13.18 on 14 Nov). The lock fixed
+# Python 3.13.16 (input_lock.json, evaluation_environment), so this step installs that exact build,
+# checked by SHA256 (python-build-standalone release 20261020), and builds the environment with it.
+PYTHON_VERSION = "3.13.16"
+PYTHON_URL = ("https://github.com/astral-sh/python-build-standalone/releases/download/20261020/"
+              "cpython-3.13.16%2B20261020-x86_64-unknown-linux-gnu-install_only.tar.gz")
+PYTHON_SHA256 = "0ad293ecda8ea93a28e4a6b5e9cc20ae74be15aafed75be04418b8f82bd0d0da"
+BASE = f"/content/python-{PYTHON_VERSION}"
 if not os.path.isdir(ROOT):
     sh(f"git clone -q {REPO} {ROOT}")
 sh(f"git -C {ROOT} checkout -q {COMMIT}")
 head = subprocess.check_output(["git", "-C", ROOT, "rev-parse", "HEAD"], text=True).strip()
 assert head == COMMIT, head
 print("code:", head)
+
+
+def python_version(python):
+    return subprocess.check_output([python, "-c", "import platform; print(platform.python_version())"], text=True).strip()
+
+
+if not os.path.exists(f"{BASE}/bin/python3"):
+    tarball = f"{BASE}.tar.gz"
+    sh(f"curl -sSfL -o {tarball} {PYTHON_URL}")
+    assert sha256(tarball) == PYTHON_SHA256, "The Python download differs from the pinned build: run this step again; if it fails again, tell Lam."
+    shutil.rmtree(f"{BASE}.part", ignore_errors=True)
+    os.makedirs(f"{BASE}.part")
+    sh(f"tar -xzf {tarball} -C {BASE}.part")
+    os.replace(f"{BASE}.part/python", BASE)  # complete or absent, so a rerun never sees half a Python
+    shutil.rmtree(f"{BASE}.part", ignore_errors=True)
+assert python_version(f"{BASE}/bin/python3") == PYTHON_VERSION, "The installed Python is not the locked version: tell Lam."
+if os.path.exists(PY) and python_version(PY) != PYTHON_VERSION:
+    shutil.rmtree(ENV)  # an environment built earlier with Colab's own Python
 if not os.path.exists(PY):
-    sh(f"python3 -m venv --without-pip {ENV}")
+    sh(f"{BASE}/bin/python3 -m venv --without-pip {ENV}")
 sh(f"python3 -m pip --python {PY} install -q -r {ROOT}/requirements-fm.txt")
 sh(f"python3 -m pip --python {PY} check")
 sh(f"""{PY} -c 'import sys, numpy, scipy; print("python", sys.version.split()[0], "numpy", numpy.__version__, "scipy", scipy.__version__)'""")
