@@ -7,6 +7,7 @@ folder or know the code.
 |---|---|---|---|
 | `colab_fm.ipynb` | Loads four image models, times them, locks the study's inputs, saves every model's features | GPU, Hugging Face token, about 1 to 1.5 hours (estimate) | **No** |
 | `colab_fm_evaluate.ipynb` | Development, nomination and reports, from the saved features | No GPU, no token | **Yes: the first ones** |
+| `colab_fm_pad.ipynb` | Post hoc check G1: MIRAGE and Inception-v3 re-extracted with pad-to-square (Part G1) | GPU, no token, about 1 hour (estimate) | **No** |
 
 Everything is saved to Lam's Drive folder `octfsl/fm_v1/final/<attempt>/`.
 
@@ -165,6 +166,34 @@ notebook finds the saved nomination on Drive and reuses it; it never selects a m
 | 7 | Legacy, nine-way and external reports | `reports complete:` once per model |
 | 8 | Summary tables | A list of CSV files |
 | 9 | Saves everything to Drive | `All done. Tell Lam: …` |
+
+## Part G1: run `colab_fm_pad.ipynb` (post hoc check, only after Lam says "push")
+
+A labelled post hoc check (`protocols.md` section 8, G1). It re-extracts MIRAGE and Inception-v3 with
+every image padded with black to a square before each model's own locked input transform. It needs a
+GPU (A100, L4 or T4) and **no Hugging Face token**. It produces **no scores**.
+
+1. Open the `colab_fm_pad.ipynb` link Lam sends (it is pinned to the commit Lam pushed). GPU runtime.
+2. Write your name in `RUN_BY` in the first cell. Change nothing else.
+3. Runtime → **Run all**. Allow Drive access when asked (Steps 3, 4 and 9). Keep the runtime alive.
+4. Step 9 ends with `All done. Tell Lam: G1 saved in octfsl/fm_v1/final/<attempt>/g1/ …`. Send Lam
+   that line and the Step 2b line (it shows Colab's Python and TensorFlow versions).
+
+| Step | Healthy output ends with |
+|---|---|
+| 2, 2b | `pip check` passes; a `torch … cuda …` line and a `Colab python … tensorflow …` line |
+| 4 | `Locks restored: 239838279b77 3414889b53ee` |
+| 5b, 6 | Every file verified; the external counts of amendment A1 |
+| 8 | `exit code 0` for MIRAGE, then for Inception |
+| 9 | `All done. …` |
+
+A failed hash check means **stop and tell Lam**, as everywhere in this guide. If Step 8 fails, run it
+once more, changing nothing; if it fails again, run Step 9 to save the logs and tell Lam.
+
+Lam then scores it on the laptop, with the locked episodes:
+`D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py g1 --attempt D:/Few-shot/drive/fm_v1/final/final-20261113T170804Z --padded <folder holding the unzipped MIRAGE/ and Inception/>`.
+The first rows compare 20 unpadded control images with the locked features. A large difference means
+the Colab environment changed, and the G1 numbers then mix padding with that change.
 
 ## When something goes wrong
 

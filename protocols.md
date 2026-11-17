@@ -219,6 +219,7 @@ computed whatever the mentor says; "if time" items follow the drop order below.
 | P6 | Prototypes against the logistic probe | A table from the locked run; no new computation. Supplement, as A3 fixes for the logistic probe | Q3 | Always |
 | P7 | MIRAGE + DINOv2 ensemble | Per model and query, z-score the class cosines, add with equal weight, take the largest (rule fixed 15 Nov, before computing, but chosen after P0 showed the MH weakness). Computed 15 Nov: development 0.695 against 0.650; hold-out 0.718 against 0.722. Three-model version beside it. One supplement line, never called a result: the protocol forbids a classifier added to improve a model | — | Always |
 | P8 | CSC against MH on development images | Locked development episodes, K = 1, 2, 4, 8, 100 draws, all four models; CSC and MH queries only; the two-way prediction is the larger of the CSC and MH cosines, ties to CSC (the rule of A2 A-1). Two-class macro recall per K and mean; MIRAGE minus Inception-v3 paired over draws; the size-only rule restricted the same way beside it. Purpose: the fair comparator for the OCTID two-way test, where MIRAGE leads Inception-v3 by only +0.03 | Q2 | Always (added 16 Nov) |
+| P9 | Rare against normal, with no cut-off | Locked nine-way prototype scores, all four models. Score of a scan = its largest cosine to the five rare classes minus its largest cosine to the four common classes. AUROC (Mann–Whitney, ties count one half) of rare against normal scans in three sets: OCTID CSC and MH (each, and together) against OCTID NORMAL, same clinic, image units (no patient IDs); OCTDL MH against OCTDL NORMAL, same clinic, patient units; the legacy 22 against the 169 patient-disjoint Kermany normals, labelled "different sources: source and disease are mixed". 95% interval: 2,000 bootstrap resamples, seed 42 with stream namespace 9101, units resampled within rare and within normal; MIRAGE minus each other model paired on the same resamples. Beside each AUROC: the locked argmax point (share of rare scans called any rare, share of normals called rare, as in R1) and the rare share above the score that only 5% of that set's normals exceed (a threshold read from the test set itself, so an upper bound, never a result). If G1 runs, the same table on its padded MIRAGE and Inception-v3 features. Supplement | Q6 | Always (added 18 Nov) |
 | G1 | Pad-to-square input check | One GPU session, MIRAGE and Inception-v3 only (the two models that squash images to a square). Each image is padded with black (0) to a square around its centre, then given to the model's own locked transform; nothing else changes. Re-extract every image those two arms used (rare 146, Kermany fitting and test, OCTID, OCTDL); score with the locked episodes and the locked nine-way roster. Report development macro recall, hold-out counts, the size-only comparison and OCTDL normal destinations, beside the locked numbers. A labelled sensitivity check outside A2 A-11; it never replaces a locked result. New code only: no hashed `fm_*.py` file is edited | Q2, Q4, Q6 | Lam approved 16 Nov; runs after rule 1 |
 
 **Reporting change R1 (16 Nov).** Wherever a false-rare rate is shown, the share of external rare images the same nine-way head calls any rare class sits beside it (OCTID CSC and MH, OCTDL MH), labelled post hoc. A low false-rare rate alone can mean the head rarely says "rare".
@@ -291,6 +292,25 @@ results.
   exists.
 - 16 Nov, evening: Lam asked for P8, P3, G1, R1, P5, P1, P4 and P2. Added P8, G1 and R1; P3
   raised to always; drop order changed. Rule 1 still applies before any P1–P8 or G1 number.
+- 16 Nov, 17:56 (Bangkok): rule 1 met. Lam chose "commit and push"; this file (SHA256
+  `2cd37c8b…6e08`) was committed alone as `1eb3964` and pushed to PR #24 before any P1–P8 or G1
+  number.
+- 16 Nov, after rule 1: W2 done. `fm_posthoc.py` (with `tests/test_fm_posthoc.py`) computed P0–P8 and
+  R1 from the locked archives, each checked against its receipt SHA256, into
+  `results/fm_v1/posthoc/` (one CSV per table, every row labelled post hoc with its date). P0 and P7
+  reproduce their 15 Nov numbers. P2: both gates passed (17/18/19 of 22; same Inception recipe).
+  Choices the rules left open, fixed in the code before computing: P1 bounds cover, per set and
+  true class, the correct class, NORMAL, a common disease and any rare class; P3 draws use seed 42 with
+  stream namespace 8101, class order NORMAL then MH; P3 per-patient recall weights each OCTDL
+  patient equally; P4 episodes are the locked fold-level episodes; P5 cut-off is the 9th-smallest gap of
+  the 169 (8 lie below it). G1 code and notebook (`fm_pad_extract.py`, `fm_pad_notebook.py`,
+  `colab_fm_pad.ipynb`) prepared, not run; they reach Colab only after Lam says "push".
+- 18 Nov: the mentor answered (17 Nov). "Rare" is now judged by labels available: about 30 or
+  fewer labelled images; Lam proposed adding a share of the dataset (3–5%). OCTID CSC and MH (102
+  each, 17.8% of 572) and OCTDL MH (39, 1.9% of 2,064) are therefore uncommon-class labels, used
+  only as queries; their results stay (A1 rule 6) and are worded as agreement with uncommon-class
+  labels. Lam added P9 (rule above) and said "commit" for G1; this commit timestamps P9 before any P9
+  number. P3's placement and a hold-out leakage check are open (Opus draft, Fable rebuttal, then Lam).
 
 ## 9. The files we control
 

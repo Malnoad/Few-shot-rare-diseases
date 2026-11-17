@@ -1,0 +1,13 @@
+posthoc,variant,check,expected,observed,pass
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16; outside the locked study (rule 4): trained with augmented and GAN images",none,class order,NORMAL..RP as fm_core.NINE,match,True
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16; outside the locked study (rule 4): trained with augmented and GAN images",none,gate 1: legacy 22 named,17,17,True
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16; outside the locked study (rule 4): trained with augmented and GAN images",none,"agreement with October test predictions (1,022)",1022,1022,
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16; outside the locked study (rule 4): trained with augmented and GAN images",none,gate 2: external Inception recipe = locked arm,same spec and loader,True,True
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16; outside the locked study (rule 4): trained with augmented and GAN images",basic,class order,NORMAL..RP as fm_core.NINE,match,True
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16; outside the locked study (rule 4): trained with augmented and GAN images",basic,gate 1: legacy 22 named,18,18,True
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16; outside the locked study (rule 4): trained with augmented and GAN images",basic,"agreement with October test predictions (1,022)",1022,1022,
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16; outside the locked study (rule 4): trained with augmented and GAN images",basic,gate 2: external Inception recipe = locked arm,same spec and loader,True,True
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16; outside the locked study (rule 4): trained with augmented and GAN images",gan,class order,NORMAL..RP as fm_core.NINE,match,True
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16; outside the locked study (rule 4): trained with augmented and GAN images",gan,gate 1: legacy 22 named,19,19,True
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16; outside the locked study (rule 4): trained with augmented and GAN images",gan,"agreement with October test predictions (1,022)",1022,1022,
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16; outside the locked study (rule 4): trained with augmented and GAN images",gan,gate 2: external Inception recipe = locked arm,same spec and loader,True,True

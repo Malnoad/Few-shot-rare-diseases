@@ -1,0 +1,13 @@
+posthoc,arm,set,cutoff_gap,kermany_below_cutoff,normals,not_sure,false_rare,false_rare_sure,called_normal,called_normal_sure,called_common,called_common_sure,role
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16",RETFound,Kermany patient-disjoint (calibration),0.00016127104679986015,8,169,8,1,0,149,145,19,16,"calibration only, not a result"
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16",RETFound,OCTID,0.00016127104679986015,,206,21,0,0,189,179,17,6,result
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16",RETFound,OCTDL,0.00016127104679986015,,332,10,18,17,137,132,177,173,result
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16",DINOv2,Kermany patient-disjoint (calibration),0.002243610844370525,8,169,8,6,5,146,143,17,13,"calibration only, not a result"
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16",DINOv2,OCTID,0.002243610844370525,,206,18,17,10,188,177,1,1,result
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16",DINOv2,OCTDL,0.002243610844370525,,332,63,141,113,145,123,46,33,result
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16",MIRAGE,Kermany patient-disjoint (calibration),0.006335557518696189,8,169,8,0,0,169,161,0,0,"calibration only, not a result"
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16",MIRAGE,OCTID,0.006335557518696189,,206,46,4,0,202,160,0,0,result
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16",MIRAGE,OCTDL,0.006335557518696189,,332,295,30,14,26,4,276,19,result
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16",Inception,Kermany patient-disjoint (calibration),0.0032794254310488657,8,169,8,4,4,150,145,15,12,"calibration only, not a result"
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16",Inception,OCTID,0.0032794254310488657,,206,12,15,13,182,175,9,6,result
+"post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16",Inception,OCTDL,0.0032794254310488657,,332,95,11,9,66,42,255,186,result
