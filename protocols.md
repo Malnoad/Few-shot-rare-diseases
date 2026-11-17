@@ -368,13 +368,25 @@ Keep this list short. New material goes into one of these files, not into a new 
 | `fm_core.py`, `fm_prepare.py`, `fm_extract.py`, `fm_evaluate.py`, `fm_external.py` | The rules as code; hashed into the lock | Only before the lock, with tests |
 | `fm_notebook.py` | Builds `colab_fm.ipynb` and `colab_fm_evaluate.ipynb`; never edit the notebooks by hand | When a notebook step changes |
 
+**Colab notebooks: what has run and what is left.** Code reaches Colab only through GitHub; each
+notebook checks out the commit it is pinned to. Steps for a runner: `FM_FIRST_RUN_GUIDE.md`.
+
+| Notebook | What it does | Needs | Status (18 Nov) | Next action |
+|---|---|---|---|---|
+| `colab_setup.ipynb` | October reproduction of Yoo et al. (stages 0–4) and experiments C0–C5 | GPU for stage 2; Drive | Finished: stage 4 is the run of record (`results/stage4/`); C2/C3 closed 6 Nov; C1 left open | None for the FM study |
+| `colab_fm.ipynb` | Loads the four models, times them, locks the inputs, stages OCTID and OCTDL, saves all features | GPU, Hugging Face token, about 1–1.5 h | Done: attempt `final-20261113T170804Z` (13 Nov); input lock `23983827…`, external lock `3414889b…` | None; a rerun would make a new attempt |
+| `colab_fm_evaluate.ipynb` | Development, nomination, legacy, nine-way and external reports from the saved features | No GPU, no token | Done: `results-20261114T093033Z.zip` (14 Nov); nominee MIRAGE | None |
+| `colab_fm_pad.ipynb` | G1: MIRAGE and Inception-v3 re-extracted with every image padded to a square | GPU, no token, about 1 h (estimate) | Ready: reviewed and dry-run on the laptop 18 Nov, no bug; pinned at `90fd4fe` | Lam runs it by 21 Nov, then `fm_posthoc.py g1` on the laptop |
+
+Laptop only, no Colab: P0–P9 (done), P10 (after its rule is pushed), G1 scoring (after the run).
+
 **Reference, opened only when needed:** `docs/research/FM_RUNBOOK.md` (every command and guard in
 detail).
 
 **Closed records.** These explain how a decision was reached. They are kept as evidence and are
 no longer updated; nothing in them overrides the files above: `FM_RULE_TRACKER.md`,
 `FM_TERMS_EVIDENCE.md`, `FM_EXTERNAL_MAPPING.md`, `FM_LABEL_RULE_PROPOSAL.md`,
-`fm_independent_review/`, `FM_RISK_ACKNOWLEDGEMENT.md`, `FM_CHECKLIST.md`, `FM_CODE_PLAN.md`,
+`fm_independent_review/`, `FM_RISK_ACKNOWLEDGEMENT.md`, `FM_CODE_PLAN.md`,
 `FM_CODE_REVIEW.md`, `FM_FINAL_REBUTTAL.md`, `FM_FEWSHOT_PLAN.md`, `FM_3WEEK_SPRINT.md` and the
 literature digest `LITERATURE_KB.md` (all in `docs/research/`).
 
