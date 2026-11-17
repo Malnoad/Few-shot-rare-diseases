@@ -125,6 +125,133 @@ class PadToSquare(unittest.TestCase):
                 pad.encode_padded(encoder, root, rows, [])
 
 
+    def test_odd_sizes_centre_with_the_extra_pixel_right_and_bottom(self):
+        from PIL import Image
+        import fm_pad_extract as pad
+        self.assertEqual(pad.pad_box(3, 6), (6, 1, 0))  # 3 columns to add: 1 left, 2 right
+        self.assertEqual(pad.pad_box(6, 3), (6, 0, 1))  # 3 rows to add: 1 top, 2 bottom
+        self.assertEqual(pad.pad_box(882, 321), (882, 0, 280))  # an OCTDL scan: 280 rows above, 281 below
+        wide, (side, left, top) = pad.pad_to_square(Image.new("RGB", (5, 2), (7, 8, 9)))
+        self.assertEqual((side, left, top), (5, 0, 1))
+        self.assertEqual([wide.getpixel((0, y)) for y in range(5)], [(0, 0, 0), (7, 8, 9), (7, 8, 9), (0, 0, 0), (0, 0, 0)])
+        tall, _ = pad.pad_to_square(Image.new("L", (2, 5), 9))
+        self.assertEqual([tall.getpixel((x, 0)) for x in range(5)], [0, 9, 9, 0, 0])
+
+    def test_pixels_are_pasted_unchanged_and_squares_are_untouched(self):
+        from PIL import Image
+        import fm_pad_extract as pad
+        rng = np.random.default_rng(0)
+        image = Image.fromarray(rng.integers(0, 256, (7, 12, 4), dtype=np.uint8), "RGBA")
+        padded, (side, left, top) = pad.pad_to_square(image)
+        self.assertEqual(padded.crop((left, top, left + 12, top + 7)).tobytes(), image.tobytes())
+        square = Image.fromarray(rng.integers(0, 256, (6, 6), dtype=np.uint8), "L")
+        same, box = pad.pad_to_square(square)
+        self.assertEqual((box, same.tobytes(), pad.pixel_hash(same)), ((6, 0, 0), square.tobytes(), pad.pixel_hash(square)))
+
+    def test_padding_reaches_the_mirage_transform_before_its_resize(self):
+        from PIL import Image
+        import fm_extract
+        import fm_pad_extract as pad
+        scan = Image.fromarray(np.random.default_rng(1).integers(50, 250, (100, 400), dtype=np.uint8), "L")
+        padded = fm_extract.mirage_input(pad.pad_to_square(scan)[0])  # the locked 512x512 transform, unchanged
+        stretched = fm_extract.mirage_input(scan)
+        band = np.flatnonzero(padded.max(axis=1) > 0)
+        self.assertEqual(padded.shape, (512, 512))
+        self.assertAlmostEqual(len(band), 512 * 100 / 400, delta=2)  # the scan keeps its 4:1 shape
+        self.assertAlmostEqual((band[0] + band[-1]) / 2, 255.5, delta=1.5)  # centred
+        self.assertTrue((stretched.max(axis=1) > 0).all())  # the locked input fills every row instead
+
+    def test_padded_images_use_the_decoder_and_the_control_the_locked_path(self):
+        import hashlib
+        import tempfile
+        from PIL import Image
+        import fm_extract
+        import fm_pad_extract as pad
+        dim = fm_extract.DIMENSIONS["Inception"]
+        calls = []
+        encoder = fm_extract.Encoder(
+            "Inception", lambda images: calls.append(("encode", images[0].size)) or np.ones((1, dim), np.float32),
+            lambda: None, {}, dict,
+            stage_path=lambda path: (calls.append(("stage", path.name)), lambda: np.full((1, dim), 2.0, np.float32))[1],
+            decode_path=lambda path: calls.append(("decode", path.name)) or Image.new("RGB", (4, 2), (9, 9, 9)))
+        with tempfile.TemporaryDirectory() as tmp:
+            Image.new("RGB", (4, 2), (9, 9, 9)).save(Path(tmp) / "a.png")
+            rows = [dict(path="a.png", sha256=hashlib.sha256((Path(tmp) / "a.png").read_bytes()).hexdigest())]
+            pad.encode_padded(encoder, Path(tmp), rows, [])
+            self.assertEqual(calls, [("decode", "a.png"), ("encode", (4, 4))])  # Keras' decoder, then the square
+            calls.clear()
+            self.assertEqual(pad.control(encoder, Path(tmp), rows)[0, 0], 2.0)
+            self.assertEqual(calls, [("stage", "a.png")])  # the control is the locked stage3 path, unpadded
+
+    def test_only_the_two_squashing_arms(self):
+        import fm_pad_extract as pad
+        with self.assertRaises(ValueError):
+            pad.run(Path("x"), Path("x"), Path("x"), "DINOv2", Path("x"), Path("x"))
+
+
+class G1Laptop(unittest.TestCase):
+    """The laptop half of G1: reading Colab's archives and the comparison page (no locked file is read)."""
+
+    def test_square_paths(self):
+        rows = [dict(path="a", width="5", height="5", side="5", left="0", top="0"),
+                dict(path="b", width="5", height="4", side="5", left="0", top="0")]
+        self.assertEqual(ph.square_paths(rows), ["a"])
+
+    def test_padded_root_checks_each_archive_against_its_receipt(self):
+        import json
+        import tempfile
+        import zipfile
+        import fm_prepare as prep
+        with tempfile.TemporaryDirectory() as tmp:
+            drive, work = Path(tmp, "g1"), Path(tmp, "work")
+            drive.mkdir()
+            for arm in ph.G1_ARMS:
+                archive = drive / f"g1-{arm}-20261119T000000Z.zip"
+                with zipfile.ZipFile(archive, "w") as z:
+                    z.writestr("complete.json", "{}")
+                Path(str(archive) + ".json").write_text(json.dumps(dict(sha256=prep.sha256(archive))))
+            root = ph.padded_root(drive, work)
+            self.assertTrue(all((root / arm / "complete.json").exists() for arm in ph.G1_ARMS))
+            self.assertEqual(ph.padded_root(root, Path(tmp, "unused")), root)  # unzipped folders are used as given
+            receipt = drive / "g1-MIRAGE-20261119T000000Z.zip.json"
+            receipt.write_text(json.dumps(dict(sha256="0" * 64)))
+            with self.assertRaises(ValueError):
+                ph.padded_root(drive, Path(tmp, "work2"))
+            (drive / "g1-MIRAGE-20261120T000000Z.zip").write_bytes(b"")
+            with self.assertRaisesRegex(ValueError, "expected one"):
+                ph.padded_root(drive, Path(tmp, "work3"))
+
+    def test_report_only_rearranges_the_tables(self):
+        label = "post hoc, G1 test label"
+        g1_rows = []
+        for arm, shift in (("MIRAGE", 0.1), ("Inception", -0.05)):
+            row = lambda table, k, q, a, b, size="": dict(posthoc=label, arm=arm, table=table, k=k, quantity=q, locked=a,  # noqa: E731
+                                                          padded_label="padded", padded=b, size_only_label="", size_only=size)
+            g1_rows += [dict(posthoc=label, arm=arm, table="control: unpadded", k="", quantity="max_difference_ratio",
+                             locked="2e-06", padded_label="min_cosine", padded="0.99999", size_only_label="", size_only=""),
+                        row("development", "1", "macro_recall_mean", "0.5", str(0.5 + shift), "0.578"),
+                        row("hold-out", "1", "macro_recall_mean", "0.6", "0.6", "0.645"),
+                        row("hold-out", "1", "mean_correct_of_22", "12.0", "13.5"),
+                        *[row("nine-way OCTDL NORMAL (n=332)", "", q, "26", "40") for q in
+                          ("correct_class", "called_NORMAL", "called_CNV_DME_DRUSEN", "called_any_rare")]]
+        p9 = lambda arm, value: dict(arm=arm, set="OCTDL MH against OCTDL NORMAL", auroc=value, boot95_low="0.2",  # noqa: E731
+                                     boot95_high="0.9", argmax_rare_called_any_rare="0.1", argmax_normals_called_rare="0.05")
+        diff = lambda value: [dict(comparison="MIRAGE minus Inception", set="OCTDL MH against OCTDL NORMAL",  # noqa: E731
+                                   auroc_difference=value, boot95_low="-0.3", boot95_high="0.1")]
+        page = ph.g1_report(g1_rows, [p9("MIRAGE", "0.357"), p9("Inception", "0.634"), p9("DINOv2", "0.978")],
+                            diff("-0.277"), [p9("MIRAGE", "0.700"), p9("Inception", "0.650")], diff("0.05"))
+        self.assertIn("never replaces a locked number", page)
+        self.assertIn(label, page)
+        self.assertIn("| 1 | 0.500 | 0.600 | +0.100 | 0.500 | 0.450 | -0.050 | 0.578 |", page)
+        self.assertIn("| 1 | 12.00 | 13.50 | +1.50 | 12.00 | 13.50 | +1.50 |", page)
+        self.assertIn("| OCTDL NORMAL (n=332) | MIRAGE | 26 → 40 | 26 → 40 | 26 → 40 | 26 → 40 |", page)
+        self.assertIn("| OCTDL MH against OCTDL NORMAL | 0.357 (0.200 to 0.900) | 0.700 (0.200 to 0.900) | "
+                      "0.634 (0.200 to 0.900) | 0.650 (0.200 to 0.900) |", page)
+        self.assertIn("| OCTDL MH against OCTDL NORMAL | -0.277 (-0.300 to 0.100) | 0.050 (-0.300 to 0.100) |", page)
+        self.assertNotIn("DINOv2", page)  # G1 covers MIRAGE and Inception-v3 only
+        self.assertIn("max_difference_ratio 2.00e-06", page)
+
+
 class PadNotebook(unittest.TestCase):
     def test_committed_notebook_is_the_builder_output(self):
         import fm_pad_notebook as builder

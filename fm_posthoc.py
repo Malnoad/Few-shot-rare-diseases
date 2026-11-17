@@ -15,6 +15,10 @@ writes only to results/fm_v1/posthoc/ (write-once: a rerun never replaces differ
 
     D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py run --attempt <attempt folder>
     D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py g1 --attempt <attempt folder> --padded <G1 folder>
+    D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py g1-report     # rewrite G1_comparison.md only
+
+`g1 --padded` takes the Drive g1/ folder as Colab saved it (each zip checked against its receipt)
+or a folder holding the unzipped MIRAGE/ and Inception/. It needs the locked P9 tables in --out.
 """
 from __future__ import annotations
 
@@ -974,6 +978,32 @@ def score_features(study: Study, features: ev.Features, external: ev.Features) -
     return out
 
 
+def square_paths(padding: Sequence[Mapping[str, str]]) -> list[str]:
+    """G1 images that were square already: padding changes none of their pixels (padding.csv rows)."""
+    return [r["path"] for r in padding if r["width"] == r["height"] == r["side"] and r["left"] == r["top"] == "0"]
+
+
+def padded_root(padded: Path, work: Path) -> Path:
+    """The folder holding MIRAGE/ and Inception/: given as such, or the Drive g1/ folder as Colab saved it.
+
+    In the second case each arm must have exactly one g1-<arm>-<stamp>.zip, whose SHA256 must equal
+    its .zip.json receipt (fm_prepare.export); it is then unpacked into `work`.
+    """
+    if all((padded / arm / "complete.json").exists() for arm in G1_ARMS):
+        return padded
+    out = work / "g1_padded"
+    for arm in G1_ARMS:
+        found = sorted(padded.glob(f"g1-{arm}-*.zip"))
+        if len(found) != 1:
+            raise ValueError(f"{padded}: expected one g1-{arm}-<stamp>.zip, found {[p.name for p in found]}; "
+                             "pass a folder holding the unzipped MIRAGE/ and Inception/ instead")
+        receipt = prep.read_json(found[0].with_name(found[0].name + ".json"))
+        if prep.sha256(found[0]) != receipt["sha256"]:
+            raise ValueError(f"{found[0].name} differs from the SHA256 in its .json receipt")
+        safe_unzip(found[0], out / arm)
+    return out
+
+
 def g1(study: Study, padded: Path) -> list[list]:
     """G1 on the laptop: padded features beside the locked ones, scored the same way."""
     rows = []
@@ -992,8 +1022,23 @@ def g1(study: Study, padded: Path) -> list[list]:
         locked_main, locked_ext = study.features(arm), study.external_features(arm)
         with np.load(folder / "control.npz", allow_pickle=False) as control:
             check = extract.repeat_check([locked_main.select(control["paths"].tolist())], [control["feats"]])
-        rows.append([arm, "control: unpadded re-extraction against locked features", "", "", "max_difference_ratio",
-                     check["max_difference_ratio"], "min_cosine", check["min_cosine"], ""])
+        # Check rows: quantity/locked hold the first measure and its value, padded_label/padded the second.
+        rows.append([arm, "control: unpadded re-extraction against locked features", "", "max_difference_ratio",
+                     check["max_difference_ratio"], "min_cosine", check["min_cosine"], "", ""])
+        # Square images reach the model exactly as at the lock, so padded minus locked is environment noise only.
+        squares = square_paths(prep.read_csv(folder / "padding.csv"))
+        pairs = [(ref.select(p), got.select(p)) for ref, got, p in (
+            (locked_main, pad_main, [q for q in squares if q in pad_main.index]),
+            (locked_ext, pad_ext, [q for q in squares if q in pad_ext.index])) if p]
+        if pairs:
+            same = extract.repeat_check([a for a, _ in pairs], [b for _, b in pairs])
+            rows.append([arm, f"check: {same['images']} square images (padding changes no pixel) against locked features",
+                         "", "max_difference_ratio", same["max_difference_ratio"], "min_cosine", same["min_cosine"], "", ""])
+        repeat = identity["repeat_check"]
+        rows.append([arm, f"check: repeat on Colab ({repeat['images']} padded images encoded twice)", "",
+                     "max_difference_ratio", repeat["max_difference_ratio"], "min_cosine", repeat["min_cosine"], "", ""])
+        rows.append([arm, "check: Colab run against the input lock", "", "code_matches_lock", identity["code_matches_lock"],
+                     "environment_matches_lock", identity["environment_matches_lock"], "", ""])
         locked, new = score_features(study, locked_main, locked_ext), score_features(study, pad_main, pad_ext)
         for table in ("development", "hold-out"):
             phase = "development" if table == "development" else "reporting"
@@ -1038,6 +1083,116 @@ def p9_padded(study: Study, padded: Path) -> tuple[list[str], list[list], list[s
         cells[arm] = nine_way_cells(study, feats, ext)
     rows, diffs = p9_table(p9_sets(cells, study.kermany_normals()[1], study.patient), list(G1_ARMS))
     return P9_HEADER, rows, P9_DIFF_HEADER, diffs
+
+
+G1_FILES = ("G1_pad_to_square.csv", "P9_rare_vs_normal_auroc.csv", "P9_rare_vs_normal_differences.csv",
+            "P9_G1_padded_auroc.csv", "P9_G1_padded_differences.csv")
+
+
+def _num(text: str, digits: int = 3) -> str:
+    return "" if text in ("", None) else f"{float(text):.{digits}f}"
+
+
+def _change(locked: str, padded: str, digits: int = 3) -> str:
+    return f"{float(padded) - float(locked):+.{digits}f}"
+
+
+def _ci(row: Mapping[str, str], value: str, low: str, high: str) -> str:
+    return f"{float(row[value]):.3f} ({float(row[low]):.3f} to {float(row[high]):.3f})"
+
+
+def g1_report(g1_rows: Sequence[Mapping[str, str]], p9_locked: Sequence[Mapping[str, str]],
+              p9_locked_diffs: Sequence[Mapping[str, str]], p9_padded: Sequence[Mapping[str, str]],
+              p9_padded_diffs: Sequence[Mapping[str, str]]) -> str:
+    """G1 locked against padded, as one Markdown page, from the five CSVs (rows as read by csv.DictReader).
+
+    Only rearranges numbers already in those files; nothing is computed except padded minus locked.
+    """
+    arms = list(G1_ARMS)
+    by = {(r["arm"], r["table"], r["k"], r["quantity"]): r for r in g1_rows}
+    label = g1_rows[0]["posthoc"]
+    out = ["# G1 pad-to-square check: locked against padded (post hoc)", "",
+           "Post hoc sensitivity check (protocols.md section 8, G1), outside amendment A2 A-11. **It never replaces "
+           "a locked number.** MIRAGE and Inception-v3 only; every image padded with black to a square around its "
+           "centre, then each model's own locked transform; scored with the locked episodes and nine-way roster.", "",
+           f"Label of every row: {label}.", "",
+           f"Sources: {', '.join(f'`{n}`' for n in G1_FILES)} (results/fm_v1/posthoc/). \"Locked\" P9 rows come from "
+           "the locked nine-way scores; \"padded\" rows from G1's features.", "",
+           "## 1. Checks (read first)", "",
+           "If the control or the square images differ from the locked features by more than 1e-4 (the A2 A-6 "
+           "repeat tolerance), the Colab environment changed and the padded numbers mix padding with that change.", "",
+           "| Arm | Check | Value | Value |", "|---|---|---|---|"]
+    for r in g1_rows:
+        if r["table"].startswith(("control", "check")):
+            values = []
+            for name, value in ((r["quantity"], r["locked"]), (r["padded_label"], r["padded"])):
+                try:
+                    values.append(f"{name} {float(value):.2e}" if "ratio" in name else f"{name} {float(value):.6f}")
+                except ValueError:
+                    values.append(f"{name} {value}")
+            out.append(f"| {r['arm']} | {r['table']} | {values[0]} | {values[1]} |")
+
+    def k_table(table: str, quantity: str, digits: int, size_only: bool) -> list[str]:
+        ks = [k for (a, t, k, q) in by if a == arms[0] and t == table and q == quantity]
+        head = "| K | " + " | ".join(f"{a} locked | {a} padded | change" for a in arms) + (" | Size only |" if size_only else " |")
+        lines = [head, "|---" * (1 + 3 * len(arms) + size_only) + "|"]
+        for k in ks:
+            cells = []
+            for a in arms:
+                r = by[a, table, k, quantity]
+                cells += [_num(r["locked"], digits), _num(r["padded"], digits), _change(r["locked"], r["padded"], digits)]
+            extra = [_num(by[arms[0], table, k, quantity]["size_only"], digits)] if size_only else []
+            lines.append(f"| {k} | " + " | ".join(cells + extra) + " |")
+        return lines
+
+    out += ["", "## 2. Development: macro recall over the five rare classes (124 queries, folds pooled; mean of 100 draws)", "",
+            *k_table("development", "macro_recall_mean", 3, True),
+            "", "## 3. Hold-out (legacy 22)", "", "Macro recall (mean of 100 draws):", "",
+            *k_table("hold-out", "macro_recall_mean", 3, True),
+            "", "Images named correctly, of 22 (mean of 100 draws):", "",
+            *k_table("hold-out", "mean_correct_of_22", 2, False),
+            "", "## 4. Nine-way audit: where each set goes (locked → padded)", "",
+            "Prototypes from the locked fitting roster. Counts of images, locked → padded.", "",
+            "| Set | Arm | Correct class | NORMAL | CNV, DME or DRUSEN | Any rare |", "|---|---|---|---|---|---|"]
+    sets = list(dict.fromkeys(t for (a, t, k, q) in by if t.startswith("nine-way")))
+    for s in sets:
+        for a in arms:
+            cells = [f"{int(float(by[a, s, '', q]['locked']))} → {int(float(by[a, s, '', q]['padded']))}"
+                     for q in ("correct_class", "called_NORMAL", "called_CNV_DME_DRUSEN", "called_any_rare")]
+            out.append(f"| {s[len('nine-way '):]} | {a} | " + " | ".join(cells) + " |")
+    locked = {(r["arm"], r["set"]): r for r in p9_locked if r["arm"] in arms}
+    padded = {(r["arm"], r["set"]): r for r in p9_padded}
+    out += ["", "## 5. P9: rare against normal AUROC, no cut-off (95% unit bootstrap, 2,000 resamples)", "",
+            "| Set | " + " | ".join(f"{a} locked | {a} padded" for a in arms) + " |", "|---" * (1 + 2 * len(arms)) + "|"]
+    for s in dict.fromkeys(r["set"] for r in p9_padded):
+        cells = [_ci(src[a, s], "auroc", "boot95_low", "boot95_high") for a in arms for src in (locked, padded)]
+        out.append(f"| {s} | " + " | ".join(cells) + " |")
+    out += ["", "Rare scans called any rare, and normals called rare, at the locked argmax (locked → padded):", "",
+            "| Set | " + " | ".join(f"{a} rare called rare | {a} normals called rare" for a in arms) + " |",
+            "|---" * (1 + 2 * len(arms)) + "|"]
+    for s in dict.fromkeys(r["set"] for r in p9_padded):
+        cells = [f"{float(locked[a, s][c]):.3f} → {float(padded[a, s][c]):.3f}" for a in arms
+                 for c in ("argmax_rare_called_any_rare", "argmax_normals_called_rare")]
+        out.append(f"| {s} | " + " | ".join(cells) + " |")
+    comparison = f"{NOMINEE} minus {[a for a in arms if a != NOMINEE][0]}"
+    ld = {r["set"]: r for r in p9_locked_diffs if r["comparison"] == comparison}
+    pd_ = {r["set"]: r for r in p9_padded_diffs if r["comparison"] == comparison}
+    out += ["", f"{comparison}, AUROC difference paired on the same resamples:", "",
+            "| Set | Locked | Padded |", "|---|---|---|"]
+    for s in pd_:
+        out.append(f"| {s} | {_ci(ld[s], 'auroc_difference', 'boot95_low', 'boot95_high')} | "
+                   f"{_ci(pd_[s], 'auroc_difference', 'boot95_low', 'boot95_high')} |")
+    return "\n".join(out) + "\n"
+
+
+def write_g1_report(out: Path) -> Path:
+    tables = []
+    for name in G1_FILES:
+        with open(out / name, newline="", encoding="utf-8") as stream:
+            tables.append(list(csv.DictReader(stream)))
+    path = out / "G1_comparison.md"
+    prep.write_once(path, g1_report(tables[0], tables[1], tables[2], tables[3], tables[4]).encode("utf-8"))
+    return path
 
 
 def write(out: Path, name: str, label: str, header: list[str], rows: list[list]) -> Path:
@@ -1105,31 +1260,42 @@ def p9_label(today: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="step", required=True)
-    for step in ("run", "g1"):
+    for step in ("run", "g1", "g1-report"):
         command = sub.add_parser(step)
-        command.add_argument("--attempt", type=Path, required=True, help=f"the locked attempt folder ({ATTEMPT})")
         command.add_argument("--out", type=Path, default=OUT)
+        if step == "g1-report":
+            command.description = "Rewrite G1_comparison.md from the five CSVs already in --out (no score is computed)."
+            continue
+        command.add_argument("--attempt", type=Path, required=True, help=f"the locked attempt folder ({ATTEMPT})")
         command.add_argument("--date", default=datetime.date.today().isoformat(), help="date in the posthoc label")
         if step == "run":
             command.add_argument("--only", help="comma-separated subset, e.g. P8,P3")
         else:
-            command.add_argument("--padded", type=Path, required=True, help="folder holding MIRAGE/ and Inception/ from G1")
+            command.add_argument("--padded", type=Path, required=True,
+                                 help="folder holding MIRAGE/ and Inception/ from G1, or the Drive g1/ folder with the "
+                                      "g1-<arm>-<stamp>.zip archives and their .json receipts")
     args = parser.parse_args()
     out = prep.writable_path(Path(__file__).resolve().parent, args.out)
     if args.step == "run":
         for path in run(args.attempt, out, set(args.only.split(",")) if args.only else None, args.date):
             print("wrote", path)
+    elif args.step == "g1-report":
+        print("wrote", write_g1_report(out))
     else:
+        if not (out / "P9_rare_vs_normal_auroc.csv").exists():
+            raise SystemExit(f"{out} lacks the locked P9 tables: run `fm_posthoc.py run --only P9 --out {out}` first")
         with tempfile.TemporaryDirectory() as tmp:
             study = Study(args.attempt, Path(tmp))
+            padded = padded_root(args.padded, Path(tmp))
             path = write(out, "G1_pad_to_square.csv", labels_for(args.date)["G1"],
                          ["arm", "table", "k", "quantity", "locked", "padded_label", "padded", "size_only_label", "size_only"],
-                         g1(study, args.padded))
+                         g1(study, padded))
             print("wrote", path)
             label = f"{p9_label(args.date)}; on G1's padded features, {labels_for(args.date)['G1']}"
-            h1, rows, h2, diffs = p9_padded(study, args.padded)
+            h1, rows, h2, diffs = p9_padded(study, padded)
             for name, h, r in (("P9_G1_padded_auroc.csv", h1, rows), ("P9_G1_padded_differences.csv", h2, diffs)):
                 print("wrote", write(out, name, label, h, r))
+        print("wrote", write_g1_report(out))
 
 
 if __name__ == "__main__":

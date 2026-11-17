@@ -311,6 +311,15 @@ results.
   only as queries; their results stay (A1 rule 6) and are worded as agreement with uncommon-class
   labels. Lam added P9 (rule above) and said "commit" for G1; this commit timestamps P9 before any P9
   number. P3's placement and a hold-out leakage check are open (Opus draft, Fable rebuttal, then Lam).
+- 18 Nov, evening: G1 reviewed before its Colab run; no G1 number exists. No bug was found in the code
+  the notebook checks out (`39c3d73`), so the notebook link pinned at `90fd4fe` stays valid. Laptop dry
+  run on real rare, Kermany, OCTID and OCTDL images, each checked against its locked SHA256: Inception-v3
+  through the locked loader on CPU (unpadded control within 3e-6 of the locked features, and a square
+  image, which padding leaves unchanged, equally close), MIRAGE up to its locked input transform (no
+  PyTorch on the laptop). On a stand-in G1 output equal to the locked features, the scoring reproduced
+  the locked numbers and P9 exactly. Added, laptop only: `fm_posthoc.py g1` reads the Drive `g1/`
+  archives (each checked against its receipt), adds square-image, repeat and identity checks, and
+  writes `G1_comparison.md` (locked beside padded); more padding tests.
 
 ## 9. The files we control
 

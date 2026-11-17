@@ -190,10 +190,15 @@ GPU (A100, L4 or T4) and **no Hugging Face token**. It produces **no scores**.
 A failed hash check means **stop and tell Lam**, as everywhere in this guide. If Step 8 fails, run it
 once more, changing nothing; if it fails again, run Step 9 to save the logs and tell Lam.
 
-Lam then scores it on the laptop, with the locked episodes:
-`D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py g1 --attempt D:/Few-shot/drive/fm_v1/final/final-20261113T170804Z --padded <folder holding the unzipped MIRAGE/ and Inception/>`.
-The first rows compare 20 unpadded control images with the locked features. A large difference means
-the Colab environment changed, and the G1 numbers then mix padding with that change.
+Lam then scores it on the laptop, with the locked episodes, after copying the Drive folder
+`octfsl/fm_v1/final/<attempt>/g1/` (the two `g1-<arm>-<stamp>.zip` files and their `.zip.json` receipts) into
+`D:/Few-shot/drive/fm_v1/final/final-20261113T170804Z/g1/`:
+`D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py g1 --attempt D:/Few-shot/drive/fm_v1/final/final-20261113T170804Z --padded D:/Few-shot/drive/fm_v1/final/final-20261113T170804Z/g1`.
+It checks each zip against its receipt, needs the locked P9 tables already in `results/fm_v1/posthoc/`,
+and writes `G1_pad_to_square.csv`, `P9_G1_padded_*.csv` and `G1_comparison.md` (locked beside padded, post hoc).
+Read section 1 of `G1_comparison.md` first: 20 unpadded control images and the 1,032 square images (which
+padding leaves unchanged) are compared with the locked features. A difference above 1e-4 means the Colab
+environment changed, and the G1 numbers then mix padding with that change.
 
 ## When something goes wrong
 
