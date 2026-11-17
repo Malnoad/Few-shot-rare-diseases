@@ -220,6 +220,7 @@ computed whatever the mentor says; "if time" items follow the drop order below.
 | P7 | MIRAGE + DINOv2 ensemble | Per model and query, z-score the class cosines, add with equal weight, take the largest (rule fixed 15 Nov, before computing, but chosen after P0 showed the MH weakness). Computed 15 Nov: development 0.695 against 0.650; hold-out 0.718 against 0.722. Three-model version beside it. One supplement line, never called a result: the protocol forbids a classifier added to improve a model | — | Always |
 | P8 | CSC against MH on development images | Locked development episodes, K = 1, 2, 4, 8, 100 draws, all four models; CSC and MH queries only; the two-way prediction is the larger of the CSC and MH cosines, ties to CSC (the rule of A2 A-1). Two-class macro recall per K and mean; MIRAGE minus Inception-v3 paired over draws; the size-only rule restricted the same way beside it. Purpose: the fair comparator for the OCTID two-way test, where MIRAGE leads Inception-v3 by only +0.03 | Q2 | Always (added 16 Nov) |
 | P9 | Rare against normal, with no cut-off | Locked nine-way prototype scores, all four models. Score of a scan = its largest cosine to the five rare classes minus its largest cosine to the four common classes. AUROC (Mann–Whitney, ties count one half) of rare against normal scans in three sets: OCTID CSC and MH (each, and together) against OCTID NORMAL, same clinic, image units (no patient IDs); OCTDL MH against OCTDL NORMAL, same clinic, patient units; the legacy 22 against the 169 patient-disjoint Kermany normals, labelled "different sources: source and disease are mixed". 95% interval: 2,000 bootstrap resamples, seed 42 with stream namespace 9101, units resampled within rare and within normal; MIRAGE minus each other model paired on the same resamples. Beside each AUROC: the locked argmax point (share of rare scans called any rare, share of normals called rare, as in R1) and the rare share above the score that only 5% of that set's normals exceed (a threshold read from the test set itself, so an upper bound, never a result). If G1 runs, the same table on its padded MIRAGE and Inception-v3 features. Supplement | Q6 | Always (added 18 Nov) |
+| P10 | Same-picture audit of the 146 rare images | Yoo et al. took the rare images from web searches (section 2.1 of their paper), so the risk is one published picture, or slices of one case report, on both sides of a split. Three steps, laptop only, raw data read-only. (1) Provenance: map each released file to the source links in Yoo's supplementary material where possible; record per file whether a link names an image, a figure, a case or only a publication; a shared publication alone never counts as a shared patient. (2) Screen: every pair of the 146 images, across labels, scored by crop-robust keypoint matching (OpenCV SIFT, Lowe ratio 0.75, RANSAC homography; score = inlier count) on greyscale images. The cut-off is the largest inlier count seen in 2,000 random rare–Kermany pairs (different sources, certain negatives); its recall is measured on synthetic positives (each rare image re-cropped to 70–90% of each side, rescaled by 0.5–1.5 and saved as JPEG quality 70; seed 42, stream namespace 10101) and reported. (3) Review: Lam sees, in random order and blind to label, split and score, every pair at or above the cut-off (if more than 60, the 60 highest, and the total is reported), the 30 highest-scoring pairs, every pair sharing a source link, 10 synthetic positives and 10 random low-score pairs as decoys; each pair is marked "same picture", "same case, other slice", "different" or "unsure". Sensitivity, beside the locked numbers and never replacing them: development macro recall (prototype, locked episodes, all four models, mean over K = 1–8) recomputed without each query that shares a "same picture" or "same case" mark with a support of its episode, and again counting "unsure" as a match; hold-out recall recomputed without each hold-out image so marked against any development image. Wording if nothing is found: "no same picture found by this screen", never "no shared patients" | Q1 | Always (added 18 Nov) |
 | G1 | Pad-to-square input check | One GPU session, MIRAGE and Inception-v3 only (the two models that squash images to a square). Each image is padded with black (0) to a square around its centre, then given to the model's own locked transform; nothing else changes. Re-extract every image those two arms used (rare 146, Kermany fitting and test, OCTID, OCTDL); score with the locked episodes and the locked nine-way roster. Report development macro recall, hold-out counts, the size-only comparison and OCTDL normal destinations, beside the locked numbers. A labelled sensitivity check outside A2 A-11; it never replaces a locked result. New code only: no hashed `fm_*.py` file is edited | Q2, Q4, Q6 | Lam approved 16 Nov; runs after rule 1 |
 
 **Reporting change R1 (16 Nov).** Wherever a false-rare rate is shown, the share of external rare images the same nine-way head calls any rare class sits beside it (OCTID CSC and MH, OCTDL MH), labelled post hoc. A low false-rare rate alone can mean the head rarely says "rare".
@@ -311,6 +312,16 @@ results.
   only as queries; their results stay (A1 rule 6) and are worded as agreement with uncommon-class
   labels. Lam added P9 (rule above) and said "commit" for G1; this commit timestamps P9 before any P9
   number. P3's placement and a hold-out leakage check are open (Opus draft, Fable rebuttal, then Lam).
+- 18 Nov, later: Lam and the mentor confirmed the definition of "rare" for the project (B1). A class
+  is rare when it is at most 5% of its dataset's labelled images (also say whether at most 3%), and
+  few-shot when the pool its examples are drawn from holds at most 30 labelled images; both numbers
+  are reported for every class. Tiers: A rare and few-shot (primary test classes); B rare, more than
+  30 (examples from a fixed pool capped at 30, labelled "capped pool"); C few-shot, more than 5%
+  (small datasets, never pooled with A); D common. Under it the five Yoo classes are tier A
+  (development pools 19–27 images; class totals 23–32 are 0.55–0.77% of the 4,146 images the
+  study used, our own subsample of Kermany plus the 146 rare images), OCTID CSC and MH are D and OCTDL
+  MH is B. Problems B2–B13 of the 18 Nov ledger go to a four-model discussion (Opus 5.5, Fable 5.2,
+  Astra 6.2, Sol 6.2) before Lam decides.
 - 18 Nov, evening: G1 reviewed before its Colab run; no G1 number exists. No bug was found in the code
   the notebook checks out (`39c3d73`), so the notebook link pinned at `90fd4fe` stays valid. Laptop dry
   run on real rare, Kermany, OCTID and OCTDL images, each checked against its locked SHA256: Inception-v3
@@ -320,6 +331,28 @@ results.
   the locked numbers and P9 exactly. Added, laptop only: `fm_posthoc.py g1` reads the Drive `g1/`
   archives (each checked against its receipt), adds square-image, repeat and identity checks, and
   writes `G1_comparison.md` (locked beside padded); more padding tests.
+- 18 Nov, night: four-model discussion of B2–B13 (Opus 5.5, Fable 5.2, Astra 6.2, Sol 6.2; two
+  rounds). Lam's decisions: audit and preparation first, Colab later (G1 still has to run by 21 Nov
+  to enter the draft). Wording adopted for the draft: external sets are named by their B1 tier in
+  their own dataset (OCTID CSC and MH: D; OCTDL MH: B, 1.9% by images, 28 of 821 patients = 3.4%),
+  under "agreement with published labels", with A1 rule 7's sentence kept; "rare" here means label
+  scarcity within a dataset, not prevalence. P3 goes to the supplement, both directions; the main
+  text cites only the locked count (MIRAGE called 26 of 332 OCTDL normals NORMAL) and points to P3,
+  with no claim about the cause; no padded P3. The draft states that Yoo's rare images came from web
+  searches and were labelled with knowledge of their source pages, that the release (146 images) is
+  not the paper's set (119), and that web availability gives no right to redistribute; W1 adds that
+  web-trained models (DINOv2) may have seen these pictures, which cannot be checked. P9 is worded
+  as a per-scan AUROC of this prototype score (for OCTDL the interval resamples patients; the
+  CSV's "patient units" note refers to the interval only); the 5% cut-off is retrospective;
+  MIRAGE's OCTDL value (0.357) says this score ranks OCTDL scans the wrong way, not what MIRAGE's
+  features contain. The hold-out shows direction only. P10 added (rule above) for B5. Next phase,
+  not v2: fine-tuning (LoRA), on data where image size does not predict the class. DINOv3: Lam
+  requests gated access to ViT-B/16 now; v2 or next phase decided after 3 Dec.
+- 18 Nov, night: numbers computed on rare images outside any committed rule are released, as A10
+  was, in `results/fm_v1/posthoc/pre_rule/` with a README: the 15 Nov per-class and ensemble
+  scripts (P0 and P7 first looks), the 16 Nov probe-versus-prototype and confusion checks (before
+  rule 1), and the 18 Nov reviewer scripts (power, false-rare and K-mean estimates for the v2
+  design; Kermany-only checks for P10). None is a result.
 
 ## 9. The files we control
 

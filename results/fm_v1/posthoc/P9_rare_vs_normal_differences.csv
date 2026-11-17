@@ -1,0 +1,16 @@
+posthoc,comparison,set,auroc_difference,boot95_low,boot95_high,boot_share_above_zero
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus RETFound,OCTID CSC against OCTID NORMAL,0.12107367218732146,0.04216281172663243,0.20865100894726823,0.999
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus DINOv2,OCTID CSC against OCTID NORMAL,0.021463925375975634,-0.03684085284599273,0.08690391205025699,0.7615
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus Inception,OCTID CSC against OCTID NORMAL,0.07248239101465825,0.013921806586712328,0.13144988577955458,0.9945
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus RETFound,OCTID MH against OCTID NORMAL,0.13359032933561776,0.03487649914334669,0.227208261945555,0.995
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus DINOv2,OCTID MH against OCTID NORMAL,-0.23429468874928616,-0.307395773843518,-0.16794688749286124,0.0
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus Inception,OCTID MH against OCTID NORMAL,-0.10003807348181992,-0.17091185988958685,-0.03221492480487343,0.001
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus RETFound,OCTID CSC+MH against OCTID NORMAL,0.12733200076146967,0.0593940367409099,0.19420747667999236,1.0
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus DINOv2,OCTID CSC+MH against OCTID NORMAL,-0.10641538168665521,-0.16071768513230533,-0.05398879211878929,0.0
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus Inception,OCTID CSC+MH against OCTID NORMAL,-0.013777841233580834,-0.06801173139158571,0.03864993813059195,0.295
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus RETFound,OCTDL MH against OCTDL NORMAL,-0.09839357429718876,-0.22434303307668127,0.04373848445474541,0.076
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus DINOv2,OCTDL MH against OCTDL NORMAL,-0.6200957676861292,-0.7221934601586206,-0.5092746060978106,0.0
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus Inception,OCTDL MH against OCTDL NORMAL,-0.27695396972505404,-0.37853693793317483,-0.15781078641653004,0.0
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus RETFound,Legacy 22 against 169 patient-disjoint Kermany normals,0.042495965572888594,0.0,0.12777251532542067,0.9395
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus DINOv2,Legacy 22 against 169 patient-disjoint Kermany normals,0.00484131253362019,0.0,0.013987603305785088,0.933
+"post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18",MIRAGE minus Inception,Legacy 22 against 169 patient-disjoint Kermany normals,0.011296395911780555,0.0,0.03274183537051181,0.929
