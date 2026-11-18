@@ -64,8 +64,9 @@ no fallback model (A3): a model that fails its pilot twice is reported as unavai
   and RP 12+4, the folders RP 19 and Stargardt 16 (as does Sun et al. 2024): per-class names for
   these two carry a footnote; macro recall is unaffected.
 - Layout: the locked geometry summary (`reports/geometry/MIRAGE/geometry_summary.csv` in the
-  results archive; A2 border rule: flat edge rows, grey range ≤ 8) gives a median border share of
-  0.34–0.56 per rare class and 0 for Kermany, OCTID and OCTDL. Counted per image on 18 Nov (pre
+  results archive; A2 border rule: flat edge rows, grey range ≤ 8) gives a median border share per
+  rare class of 0.34–0.50 among development images and 0.22–0.56 among hold-out images, and 0 (at
+  most 0.002) per class for Kermany, OCTID and OCTDL (corrected 19 Nov; first written 0.34–0.56). Counted per image on 18 Nov (pre
   rule, `rare_layout.csv` in the same folder): 126 of the 146 rare images have a dark flat border
   covering at least 25% of the image, mostly bands above and below the scan. Image geometry,
   no model involved.

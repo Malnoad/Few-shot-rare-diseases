@@ -1,0 +1,56 @@
+posthoc,item,kind,reasons,left,right,inliers
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",1,pair,at or above cut-off; top 30,data/raw/rare/RP/26.PNG,data/raw/rare/CSC/30.PNG,18
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",2,synthetic,synthetic positive,synthetic:data/raw/rare/RP/15.PNG,data/raw/rare/RP/15.PNG,
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",3,synthetic,synthetic positive,synthetic:data/raw/rare/CSC/23.PNG,data/raw/rare/CSC/23.PNG,
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",4,pair,at or above cut-off; top 30,data/raw/rare/RP/17.PNG,data/raw/rare/CSC/28.PNG,19
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",5,synthetic,synthetic positive,data/raw/rare/MacTel/05.PNG,synthetic:data/raw/rare/MacTel/05.PNG,
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",6,pair,at or above cut-off,data/raw/rare/MacTel/28.PNG,data/raw/rare/MacTel/13.PNG,18
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",7,pair,at or above cut-off; top 30,data/raw/rare/MacTel/11.PNG,data/raw/rare/MacTel/26.PNG,24
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",8,decoy,random low score,data/raw/rare/CSC/24.PNG,data/raw/rare/MH/17.PNG,0
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",9,synthetic,synthetic positive,data/raw/rare/MH/15.PNG,synthetic:data/raw/rare/MH/15.PNG,
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",10,pair,at or above cut-off,data/raw/rare/Stargardt/09.PNG,data/raw/rare/MacTel/18.PNG,18
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",11,pair,at or above cut-off; top 30,data/raw/rare/CSC/26.PNG,data/raw/rare/CSC/27.PNG,18
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",12,decoy,random low score,data/raw/rare/RP/03.PNG,data/raw/rare/RP/13.PNG,4
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",13,pair,at or above cut-off; top 30,data/raw/rare/MacTel/18.PNG,data/raw/rare/RP/09.PNG,19
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",14,synthetic,synthetic positive,data/raw/rare/MH/04.PNG,synthetic:data/raw/rare/MH/04.PNG,
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",15,pair,at or above cut-off; top 30,data/raw/rare/MacTel/14.PNG,data/raw/rare/Stargardt/05.PNG,21
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",16,synthetic,synthetic positive,synthetic:data/raw/rare/MacTel/18.PNG,data/raw/rare/MacTel/18.PNG,
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",17,decoy,random low score,data/raw/rare/Stargardt/15.PNG,data/raw/rare/CSC/26.PNG,4
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",18,decoy,random low score,data/raw/rare/CSC/13.PNG,data/raw/rare/Stargardt/08.PNG,4
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",19,pair,at or above cut-off; top 30,data/raw/rare/MacTel/18.PNG,data/raw/rare/RP/17.PNG,26
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",20,pair,at or above cut-off; top 30,data/raw/rare/CSC/09.PNG,data/raw/rare/CSC/08.PNG,26
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",21,pair,at or above cut-off; top 30,data/raw/rare/MacTel/19.PNG,data/raw/rare/MacTel/01.PNG,265
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",22,pair,at or above cut-off; top 30,data/raw/rare/RP/26.PNG,data/raw/rare/CSC/01.PNG,18
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",23,pair,at or above cut-off; top 30,data/raw/rare/RP/03.PNG,data/raw/rare/RP/20.PNG,203
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",24,decoy,random low score,data/raw/rare/RP/14.PNG,data/raw/rare/MacTel/21.PNG,2
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",25,decoy,random low score,data/raw/rare/Stargardt/16.PNG,data/raw/rare/RP/04.PNG,4
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",26,pair,at or above cut-off,data/raw/rare/MacTel/23.PNG,data/raw/rare/MacTel/09.PNG,18
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",27,pair,at or above cut-off; top 30,data/raw/rare/Stargardt/18.PNG,data/raw/rare/Stargardt/09.PNG,342
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",28,decoy,random low score,data/raw/rare/RP/21.PNG,data/raw/rare/MH/30.PNG,4
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",29,synthetic,synthetic positive,synthetic:data/raw/rare/RP/24.PNG,data/raw/rare/RP/24.PNG,
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",30,pair,at or above cut-off; top 30,data/raw/rare/RP/12.PNG,data/raw/rare/MacTel/11.PNG,19
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",31,pair,at or above cut-off; top 30,data/raw/rare/MacTel/11.PNG,data/raw/rare/MacTel/28.PNG,29
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",32,pair,at or above cut-off; top 30,data/raw/rare/Stargardt/08.PNG,data/raw/rare/Stargardt/03.PNG,208
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",33,pair,at or above cut-off; top 30,data/raw/rare/RP/17.PNG,data/raw/rare/MacTel/17.PNG,25
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",34,pair,at or above cut-off; top 30,data/raw/rare/MacTel/07.PNG,data/raw/rare/MacTel/22.PNG,369
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",35,pair,at or above cut-off; top 30,data/raw/rare/MH/01.PNG,data/raw/rare/MH/14.PNG,193
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",36,pair,at or above cut-off; top 30,data/raw/rare/MacTel/11.PNG,data/raw/rare/MacTel/18.PNG,23
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",37,pair,at or above cut-off; top 30,data/raw/rare/MacTel/04.PNG,data/raw/rare/MacTel/06.PNG,869
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",38,decoy,random low score,data/raw/rare/CSC/21.PNG,data/raw/rare/Stargardt/16.PNG,4
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",39,pair,at or above cut-off; top 30,data/raw/rare/RP/11.PNG,data/raw/rare/RP/17.PNG,104
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",40,pair,at or above cut-off; top 30,data/raw/rare/MH/01.PNG,data/raw/rare/MH/08.PNG,182
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",41,decoy,random low score,data/raw/rare/CSC/01.PNG,data/raw/rare/CSC/13.PNG,4
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",42,pair,at or above cut-off; top 30,data/raw/rare/Stargardt/08.PNG,data/raw/rare/Stargardt/14.PNG,276
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",43,pair,at or above cut-off; top 30,data/raw/rare/RP/30.PNG,data/raw/rare/RP/06.PNG,202
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",44,synthetic,synthetic positive,data/raw/rare/RP/23.PNG,synthetic:data/raw/rare/RP/23.PNG,
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",45,pair,at or above cut-off,data/raw/rare/MacTel/17.PNG,data/raw/rare/RP/11.PNG,18
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",46,pair,at or above cut-off; top 30,data/raw/rare/MacTel/18.PNG,data/raw/rare/RP/11.PNG,35
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",47,pair,at or above cut-off; top 30,data/raw/rare/MH/14.PNG,data/raw/rare/MH/08.PNG,196
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",48,decoy,random low score,data/raw/rare/Stargardt/07.PNG,data/raw/rare/MH/14.PNG,0
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",49,pair,at or above cut-off; top 30,data/raw/rare/RP/17.PNG,data/raw/rare/CSC/04.PNG,26
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",50,pair,at or above cut-off; top 30,data/raw/rare/RP/17.PNG,data/raw/rare/CSC/21.PNG,19
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",51,pair,at or above cut-off; top 30,data/raw/rare/MH/25.PNG,data/raw/rare/MH/12.PNG,288
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",52,pair,at or above cut-off; top 30,data/raw/rare/Stargardt/14.PNG,data/raw/rare/Stargardt/03.PNG,234
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",53,pair,at or above cut-off,data/raw/rare/MacTel/14.PNG,data/raw/rare/Stargardt/02.PNG,18
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",54,synthetic,synthetic positive,data/raw/rare/CSC/09.PNG,synthetic:data/raw/rare/CSC/09.PNG,
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",55,synthetic,synthetic positive,synthetic:data/raw/rare/CSC/14.PNG,data/raw/rare/CSC/14.PNG,
