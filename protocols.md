@@ -187,10 +187,13 @@ Lam brought delivery forward to 30 November on 19 November (no GPU run is left i
 the work is writing and the mentor's review). The calendar below is the binding one.
 
 **Pull-forward rule (Lam, 19 Nov).** Dates in the calendar are the latest dates. When a stage
-finishes early, the next one starts at once. The gates never move with it: a rule is committed and
-pushed before its numbers; no analysis starts once the draft has started; numbers are frozen only
-after the mentor's review; v2 work starts as soon as v1's numbers are frozen, and its results stay
-out of the v1 paper except the labelled next-phase paragraph.
+finishes early, the next one starts at once. **Work runs in parallel (Lam, 19 Nov):** Lam does the
+slow steps (Colab runs, blind reviews) at once; the agents verify, analyse and draft at the same
+time; the mentor gives feedback whenever it comes and is not a gate. The gates that stay: a rule
+is committed and pushed before its numbers; no new analysis rule is added after 20 Nov; mentor
+feedback that arrives after the freeze changes wording only, never a number; v2 work starts as
+soon as v1's numbers are frozen, and its results stay out of the v1 paper except the labelled
+next-phase paragraph.
 
 ### Plan for S5 and S6 (version 2, 16 November; revised after the mentor's answers)
 
@@ -269,7 +272,7 @@ any GPU check.
 | 19 Nov | Records and push; P10 steps 1–2 (links, SIFT screen, blind review sheet) | Push before any P10 number |
 | 20 Nov | P10 step 3 (Lam's blind review) and sensitivity; W3 | **No new analysis starts after 20 Nov** |
 | 21–22 Nov | Methods and results draft; final figures and tables; weekly report from the draft | 21 Nov: spare day only |
-| 23–24 Nov | Mentor's review (one round); v2 protocol drafted meanwhile, laptop only | Mentor agrees to the dates |
+| 23–24 Nov | Draft sent to the mentor for feedback (any time, not a gate); v2 protocol drafted meanwhile, laptop only | — |
 | 25 Nov | Corrections; all numbers, tables and figures frozen | — |
 | 25–26 Nov | Discussion, limitations, one paragraph on the next phase; W4 | — |
 | 27–30 Nov | Evidence audit (27), PDF freeze (28), spare day (29), delivery (30) | — |
