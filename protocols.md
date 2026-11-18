@@ -7,11 +7,12 @@ SHA256 `4e8df8d9…c5df`) and its dated amendments in
 [`docs/research/FM_AMENDMENTS.md`](docs/research/FM_AMENDMENTS.md) (A1, A2, A3). If this page and
 those two files ever disagree, **they win** and this page gets fixed.
 
-Status on 16 November 2026: the input lock was made on 13 November and its hashes deposited on
+Status on 19 November 2026: the input lock was made on 13 November and its hashes deposited on
 Zenodo (doi:10.5281/zenodo.24206472) before any score. **All pre-specified scores were computed
 on 14 November**; the nominee is MIRAGE. The results are summarised in
-`docs/report/2026-11-14_weekly_report.tex`. Next: the post hoc analyses P0–P7 and the write-up,
-following version 2 of the plan (16 November; section 8). Fine-tuning is not part of this study.
+`docs/report/2026-11-14_weekly_report.tex`. P0–P9 and G1 are done; P10 and the write-up remain,
+on the calendar of 19 November (section 8): last analysis 20 Nov, freeze 25 Nov, **delivery
+30 Nov**. Fine-tuning is not part of this study.
 
 ## 1. The question
 
@@ -27,10 +28,13 @@ normal scans from other hospitals "rare disease"?
 
 **Where it sits.** Yoo et al. (2021) trained a nine-way classifier on every rare image plus
 generated ones and tested it on 22 rare images. MIRAGE (2025) compared the same kinds of encoder
-we use, but with classifiers trained on each full dataset. Nobody in the studies we read compares
-them with 1 to 16 labelled images per disease, measures how often normal scans from another
-source are called rare, or checks whether image size alone gives the answer. Those three things
-are what this study adds. The full table is at the end of amendment A3.
+we use, but with classifiers trained on each full dataset. Sun et al. (2024) already drew
+five-way K-shot tasks (K = 1, 3, 5) from the same rare images, with a trained network. What this
+study adds (narrowed 19 Nov; A3's table is kept as written): a **pre-registered,
+shortcut-audited evaluation of frozen foundation models** on this public rare-OCT benchmark.
+Frozen encoders at 1 to 16 images per disease on identical supports, how often normal scans
+from other sources are called rare, and what image size and source alone explain. Lam's
+positioning, to be confirmed by the mentor at the 23 Nov review.
 
 ## 2. What we compare
 
@@ -52,6 +56,19 @@ no fallback model (A3): a model that fails its pilot twice is reported as unavai
   not "blind"; we say so in the paper. They are a seed-42 random draw (`stage0_manifest.py`) that
   matches Yoo et al.'s test counts only; which 22 images Yoo et al. used is not known, so the paper
   says "a hold-out matching their class counts", never "their test set".
+- Provenance (found 18 Nov, file identity only): Mendeley btv6yrdbmv version 1 (27 Mar 2020)
+  holds 119 images, the paper's total; version 2 (29 Oct 2020), which we use, holds 146: 118
+  version 1 files, 28 additions and one replaced picture (MacTel/20.PNG). 21 of the 22 hold-out
+  images are in version 1; RP/20.PNG is an addition. Mapping:
+  `results/fm_v1/posthoc/pre_rule/2026-11-18/v1_to_ours.csv`. The paper text gives Stargardt 15+4
+  and RP 12+4, the folders RP 19 and Stargardt 16 (as does Sun et al. 2024): per-class names for
+  these two carry a footnote; macro recall is unaffected.
+- Layout: the locked geometry summary (`reports/geometry/MIRAGE/geometry_summary.csv` in the
+  results archive; A2 border rule: flat edge rows, grey range ≤ 8) gives a median border share of
+  0.34–0.56 per rare class and 0 for Kermany, OCTID and OCTDL. Counted per image on 18 Nov (pre
+  rule, `rare_layout.csv` in the same folder): 126 of the 146 rare images have a dark flat border
+  covering at least 25% of the image, mostly bands above and below the scan. Image geometry,
+  no model involved.
 - External images, used only as test queries (A1):
 
 | Source | Images | Used for |
@@ -163,10 +180,11 @@ Steps 1 to 5 run in `colab_fm.ipynb` (one GPU session, no labels read). Steps 6 
 | S2 | 12–14 Nov | Final pilots, input lock, extraction (`colab_fm.ipynb`) | Done 13 Nov: attempt `final-20261113T170804Z`, run by Lam on an L4, code `2f48654`; input-lock SHA256 `239838279b77bb37211398a016c1c766273a35f5a06649b31f5cd97f562c001c`; four arms available, every repeat check exact on the first sequence; OCTID 410 and OCTDL 371 external queries, none excluded. Checked on the laptop 14 Nov. Hashes deposited on Zenodo (doi:10.5281/zenodo.24206472, created 13 Nov 19:53 UTC); Lam's approval recorded 14 Nov 09:11 UTC, before the first score |
 | S3 | 15–19 Nov | Development runs; **nominee sealed by 19 Nov** | Done 14 Nov: nominee **MIRAGE** (binding SHA256 `1738f7dec61526651511221a6d6723cd37e76e8accd0f05e09bba45569b1d82e`). Evaluate notebook needed the locked Python 3.13.16 (commit `56fcb52`) |
 | S4 | 20–23 Nov | Legacy and external reporting | Done 14 Nov: `evaluation/results-20261114T093033Z.zip` on Drive (SHA256 `c963b1d7298c28f8151769d8d29cf98538ce0897582f57ff2ee867c76351b25f`). Summary in the 14 Nov weekly report |
-| S5 | 15–27 Nov | Figures, tables, agreed post-hoc analyses (labelled); everything frozen 27 Nov | Started 15 Nov: first report written; plan below |
-| S6 | 28 Nov–3 Dec | Final write-up; evidence audit 1 Dec, PDF freeze 2 Dec, delivery 3 Dec | Not started |
+| S5 | 15–25 Nov (was 27) | Figures, tables, agreed post-hoc analyses (labelled); everything frozen 25 Nov | Started 15 Nov: first report written; P0–P9 and G1 done 18 Nov; plan below |
+| S6 | 25–30 Nov (was 28 Nov–3 Dec) | Final write-up; evidence audit 27 Nov, PDF freeze 28 Nov, delivery 30 Nov | Not started |
 
-If S2 slips, S3 starts only after a successful lock; the 27 November freeze still holds.
+Lam brought delivery forward to 30 November on 19 November (no GPU run is left in this study;
+the work is writing and the mentor's review). The calendar below is the binding one.
 
 ### Plan for S5 and S6 (version 2, 16 November; revised after the mentor's answers)
 
@@ -241,12 +259,17 @@ any GPU check.
 | 16 Nov | Report and email to the mentor; rule 1 (commit or hash) | Before any P1–P6 number |
 | 16–17 Nov | W2 with P0, P1, P6, P8; W1 done 16 Nov; G1 code and notebook prepared | — |
 | 18 Nov | Mentor's answers due; P5 (always part), P4, P3; R1 | Lam decides placement |
-| 19–21 Nov | G1 on Colab (after Lam's "push"); P2, P5 cut-off; W3 | **No new analysis starts after 21 Nov** |
-| 22–24 Nov | Methods and results draft; final figures and tables | — |
-| 25–26 Nov | Mentor's review; corrections | — |
-| 27 Nov | All numbers, tables and figures frozen | — |
-| 28–30 Nov | Discussion, limitations, one paragraph on the next phase; W4 | — |
-| 1–3 Dec | Evidence audit (1 Dec), PDF freeze (2 Dec), delivery (3 Dec) | — |
+| 18 Nov | G1 ran on Colab (07:02 UTC) and was scored on the laptop | — |
+| 19 Nov | Records and push; P10 steps 1–2 (links, SIFT screen, blind review sheet) | Push before any P10 number |
+| 20 Nov | P10 step 3 (Lam's blind review) and sensitivity; W3 | **No new analysis starts after 20 Nov** |
+| 21–22 Nov | Methods and results draft; final figures and tables; weekly report from the draft | 21 Nov: spare day only |
+| 23–24 Nov | Mentor's review (one round); v2 protocol drafted meanwhile, laptop only | Mentor agrees to the dates |
+| 25 Nov | Corrections; all numbers, tables and figures frozen | — |
+| 25–26 Nov | Discussion, limitations, one paragraph on the next phase; W4 | — |
+| 27–30 Nov | Evidence audit (27), PDF freeze (28), spare day (29), delivery (30) | — |
+
+Calendar changed 19 Nov at Lam's request (was: analysis to 21 Nov, review 25–26, freeze 27,
+audit 1 Dec, PDF 2 Dec, delivery 3 Dec).
 
 **If time runs short,** drop in this order: P2, the P5 cut-off, P4, G1. P0, P1, P3, P5 (destinations),
 P6, P7, P8 and R1 always stay. **If the mentor has not answered by 18 Nov,** Lam sends a reminder on 19 Nov;
@@ -264,7 +287,12 @@ results.
 | Q6: normal recall matters most | Normal recall shown beside the false-rare rate in the main text, labelled post hoc |
 | Q7: add Yoo's metrics | Accuracy and kappa in the supplement table only |
 
-**Not in this study** (Lam decides after 3 December):
+**Not in this study** (Lam decides after 30 November; v2 can run on Colab from 1 December):
+
+- *Letterbox removal* (decided 19 Nov): crop the flat bands from the rare images, re-extract
+  MIRAGE and Inception-v3, rescore. The first v2 experiment, under its own rule.
+- *Planted-cue test* (research thread, 18 Nov; Lam's choice pending): a domain's own artefact
+  added to the K rare examples only, measured as false-rare calls on clean common images.
 
 - *Fine-tuning the encoders.* Section 2 and A3 exclude it. Of the gaps above it answers only the
   open half of the recipe gap; it does not help with the hold-out, image size, external labels or
@@ -353,6 +381,50 @@ results.
   scripts (P0 and P7 first looks), the 16 Nov probe-versus-prototype and confusion checks (before
   rule 1), and the 18 Nov reviewer scripts (power, false-rare and K-mean estimates for the v2
   design; Kermany-only checks for P10). None is a result.
+- 18 Nov, mentor: our protocol and the existing results are acceptable because they are
+  transparent; on comparability with Yoo et al., "even the reviewer cannot identify clearly what
+  it is because no one can compare" (nobody has their test split).
+- 18 Nov, G1 ran: Lam ran `colab_fm_pad.ipynb` (pinned `90fd4fe`, G1 code `39c3d73`, both pushed)
+  at 07:02 UTC, before the evening review entry above was written and earlier than the calendar's
+  19–21 Nov. `fm_posthoc.py g1` scored it the same day; that scoring code (`36dad48`) was committed
+  but not yet pushed. Checks: both archives match their receipts; unpadded controls and 1,032
+  square images within 1.43e-6 of the locked features; repeats exact; GPU L4 → A100, MIRAGE
+  environment differs only in `filelock` and `regex` patch versions. Outputs committed as generated
+  (`d25e152`), then two sentences of the page corrected and the page regenerated (`79f51d8`; CSV
+  hashes unchanged).
+- 19 Nov, Lam's decisions on G1 (Fable's package, after Opus and Fable reviews and a Fable
+  rebuttal): G1 goes to the supplement under the post hoc heading; the main text keeps the locked
+  26 of 332 with no claim about its cause. Allowed: development and hold-out moved by at most 0.023
+  at K = 1–8 (mean of 100 draws), a near-null test because the rare inputs are already near square;
+  with black padding, external normals go almost entirely to rare classes for both models
+  (MIRAGE OCTID 202 → 0 and OCTDL 26 → 1 called NORMAL); the rare images are letterboxed (section 3)
+  and padding gives wide external scans that layout; external nine-way results depend on input
+  geometry. Not allowed: that squashing did or did not cause the OCTDL result; robustness to aspect
+  ratio; padded external rare "gains" as recognition; "rare is a not-Kermany bin"; "bars caused
+  it"; any reading of K = 16; any MIRAGE-versus-Inception ranking from padded scores; anything
+  about what the features contain. P9 caveat: the locked OCTID AUROCs hold "under the published
+  input path; with black bars added, the same score ranks OCTID the other way"; the main-text
+  false-rare rate holds for frame-filling inputs. G1b dropped; letterbox removal moves to v2. One
+  optional main-text sentence pointing to G1, labelled post hoc: Lam and the mentor decide.
+- 19 Nov, hold-out and comparability (Lam: "wording + records"): both locked sets stay; no new
+  split and no new number. Adopted for the draft: the hold-out, comparability and limitation
+  wording D(1)–D(3) of `pre_rule/2026-11-18/fable_holdout_plan.md`; Inception-v3 is "the backbone
+  family of Yoo et al."; Yoo's 92.1 and 93.9 are context only; the RP/Stargardt footnote and the
+  provenance paragraph (section 3). Sun et al. 2024 and Tai et al. 2025 added to section 10; the
+  13 Nov positioning ("nobody … compares them with 1 to 16 labelled images", A3's table, which
+  cannot be edited) is narrowed in section 1. Emailing Yoo et al. is optional, Lam's choice.
+- 19 Nov, positioning: Lam chose "a pre-registered, shortcut-audited evaluation of frozen
+  foundation models on a public rare-OCT benchmark", wording only, confirmed with the mentor at
+  the 23 Nov review. The novelty of v2 is discussed in the research thread; Lam's choice is pending.
+- 19 Nov, calendar: Lam brought delivery forward to 30 Nov (section 8 tables). P10 keeps its rule
+  and runs 19–20 Nov after this push. Letterbox removal is not added to this study.
+- 19 Nov, released in `results/fm_v1/posthoc/pre_rule/2026-11-18/` (no rule covered them): the
+  Mendeley version mapping (`map_v1.py`, `v1_to_ours.csv`, `md_versions.json`), the geometry
+  scripts and per-image layout (`geom.py`, `geom_a.py`, `geom_b.py`, `geom_c.py`,
+  `rare_layout.csv`), the G1 reviews (`g1_review_opus.md`, `g1_review_fable.md`,
+  `g1_verdict_opus_main.md`, `g1_rebuttal_fable.md`) and `fable_holdout_plan.md`. A figure of
+  "128 of 146" letterboxed images quoted in the 18 Nov discussion could not be reproduced and is
+  withdrawn; the rule-based count is 126.
 
 ## 9. The files we control
 
@@ -376,9 +448,9 @@ notebook checks out the commit it is pinned to. Steps for a runner: `FM_FIRST_RU
 | `colab_setup.ipynb` | October reproduction of Yoo et al. (stages 0–4) and experiments C0–C5 | GPU for stage 2; Drive | Finished: stage 4 is the run of record (`results/stage4/`); C2/C3 closed 6 Nov; C1 left open | None for the FM study |
 | `colab_fm.ipynb` | Loads the four models, times them, locks the inputs, stages OCTID and OCTDL, saves all features | GPU, Hugging Face token, about 1–1.5 h | Done: attempt `final-20261113T170804Z` (13 Nov); input lock `23983827…`, external lock `3414889b…` | None; a rerun would make a new attempt |
 | `colab_fm_evaluate.ipynb` | Development, nomination, legacy, nine-way and external reports from the saved features | No GPU, no token | Done: `results-20261114T093033Z.zip` (14 Nov); nominee MIRAGE | None |
-| `colab_fm_pad.ipynb` | G1: MIRAGE and Inception-v3 re-extracted with every image padded to a square | GPU, no token, about 1 h (estimate) | Ready: reviewed and dry-run on the laptop 18 Nov, no bug; pinned at `90fd4fe` | Lam runs it by 21 Nov, then `fm_posthoc.py g1` on the laptop |
+| `colab_fm_pad.ipynb` | G1: MIRAGE and Inception-v3 re-extracted with every image padded to a square | GPU, no token, about 1 h (estimate) | Done 18 Nov 07:02 UTC (A100), pinned at `90fd4fe`; archives in Drive `g1/`, receipts match | None |
 
-Laptop only, no Colab: P0–P9 (done), P10 (after its rule is pushed), G1 scoring (after the run).
+Laptop only, no Colab: P0–P9 and G1 scoring (done), P10 (19–20 Nov, after its rule is pushed).
 
 **Reference, opened only when needed:** `docs/research/FM_RUNBOOK.md` (every command and guard in
 detail).
@@ -396,8 +468,8 @@ Zenodo; the proposal paper in `docs/report/fm_ieee/main.pdf`.
 
 ## 10. The sources we track
 
-The study rests on these ten sources. A claim in the paper cites one of them or our own files;
-any other paper needs a reason before it is added here.
+The study rests on these twelve sources (the last two added 19 Nov). A claim in the paper cites
+one of them or our own files; any other paper needs a reason before it is added here.
 
 | Source | What we use it for |
 |---|---|
@@ -411,6 +483,8 @@ any other paper needs a reason before it is added here.
 | Kulyabin et al. 2024, Scientific Data (OCTDL; PMC11009408, Zenodo 10839556) | External images, with patient IDs |
 | TVST 2026 external validation on OCTID (doi:10.1167/tvst.15.1.6, PMC12786394) | Precedent for scoring against OCTID's published labels |
 | Chen et al. 2026, npj Digital Medicine (EyeDiff; doi:10.1038/s41746-026-02560-2) | Same precedent: OCTID's CSR class treated as CSC |
+| Sun, Wei, Wang, Zheng 2024, Medical Image Analysis 93:103102 | Prior K-shot work on Yoo's rare images (five-way, K = 1, 3, 5, trained network, three tasks); narrows our novelty claim; not a numeric comparator (other pool and training) |
+| Tai et al. 2025, arXiv:2505.20149 | Reuses Yoo's data and compares with Yoo's 93.9 without defining its test set: the loose comparison we avoid |
 
 ## 11. Open items for the write-up
 

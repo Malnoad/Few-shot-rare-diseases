@@ -337,7 +337,8 @@ Run everything from the project root, in order.
 **What and why.** Builds `data/manifest.csv` with columns `path, label, pid, split`. It uses
 the Kermany official train/test split (250 test images per common class; the split is
 **not** patient-disjoint, see the note below) and, for the rare classes, a **fixed seed-42
-hold-out of 5/5/4/4/4 images** matching the paper's Fig. 2. A 10% validation set is carved from train **grouped by patient**
+hold-out of 5/5/4/4/4 images** matching the class counts of the paper's test (which images
+Yoo et al. tested on was never published). A 10% validation set is carved from train **grouped by patient**
 (`GroupShuffleSplit`, seed 42) so no patient spans train and val. Rare-class validation
 images are then moved back into train, so that every real rare image is available to
 Stage 1 and the CycleGAN — as in the paper, rare-class validation comes from *augmented*
