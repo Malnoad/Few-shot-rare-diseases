@@ -56,7 +56,7 @@ Images named correctly, of 22 (mean of 100 draws):
 
 ## 4. Nine-way audit: where each set goes (locked → padded)
 
-Prototypes from the locked fitting roster. Counts of images, locked → padded.
+Same fitting roster as the locked run; in the padded column both prototypes and queries come from padded features. Counts of images, locked → padded.
 
 | Set | Arm | Correct class | NORMAL | CNV, DME or DRUSEN | Any rare |
 |---|---|---|---|---|---|
@@ -85,7 +85,7 @@ Prototypes from the locked fitting roster. Counts of images, locked → padded.
 | OCTDL MH against OCTDL NORMAL | 0.357 (0.261 to 0.468) | 0.320 (0.241 to 0.406) | 0.634 (0.543 to 0.717) | 0.656 (0.550 to 0.746) |
 | Legacy 22 against 169 patient-disjoint Kermany normals | 1.000 (1.000 to 1.000) | 1.000 (0.998 to 1.000) | 0.989 (0.967 to 1.000) | 0.989 (0.973 to 0.999) |
 
-Rare scans called any rare, and normals called rare, at the locked argmax (locked → padded):
+Rare scans called any rare, and normals called rare, at the argmax of each column's own features (locked → padded):
 
 | Set | MIRAGE rare called rare | MIRAGE normals called rare | Inception rare called rare | Inception normals called rare |
 |---|---|---|---|---|

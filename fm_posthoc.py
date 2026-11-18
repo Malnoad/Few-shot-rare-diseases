@@ -1152,7 +1152,8 @@ def g1_report(g1_rows: Sequence[Mapping[str, str]], p9_locked: Sequence[Mapping[
             "", "Images named correctly, of 22 (mean of 100 draws):", "",
             *k_table("hold-out", "mean_correct_of_22", 2, False),
             "", "## 4. Nine-way audit: where each set goes (locked → padded)", "",
-            "Prototypes from the locked fitting roster. Counts of images, locked → padded.", "",
+            "Same fitting roster as the locked run; in the padded column both prototypes and queries come from "
+            "padded features. Counts of images, locked → padded.", "",
             "| Set | Arm | Correct class | NORMAL | CNV, DME or DRUSEN | Any rare |", "|---|---|---|---|---|---|"]
     sets = list(dict.fromkeys(t for (a, t, k, q) in by if t.startswith("nine-way")))
     for s in sets:
@@ -1167,7 +1168,8 @@ def g1_report(g1_rows: Sequence[Mapping[str, str]], p9_locked: Sequence[Mapping[
     for s in dict.fromkeys(r["set"] for r in p9_padded):
         cells = [_ci(src[a, s], "auroc", "boot95_low", "boot95_high") for a in arms for src in (locked, padded)]
         out.append(f"| {s} | " + " | ".join(cells) + " |")
-    out += ["", "Rare scans called any rare, and normals called rare, at the locked argmax (locked → padded):", "",
+    out += ["", "Rare scans called any rare, and normals called rare, at the argmax of each column's own features "
+            "(locked → padded):", "",
             "| Set | " + " | ".join(f"{a} rare called rare | {a} normals called rare" for a in arms) + " |",
             "|---" * (1 + 2 * len(arms)) + "|"]
     for s in dict.fromkeys(r["set"] for r in p9_padded):
