@@ -317,5 +317,78 @@ class P9Rules(unittest.TestCase):
         self.assertEqual(rows, again)  # fixed seed and namespace: identical draws
 
 
+def textured(seed: int, h: int = 240, w: int = 320) -> np.ndarray:
+    """A greyscale picture with corners and blobs that SIFT can match."""
+    import cv2
+    rng = np.random.default_rng(seed)
+    img = np.full((h, w), 30, np.uint8)
+    for _ in range(40):
+        x, y = int(rng.integers(0, w - 30)), int(rng.integers(0, h - 30))
+        cv2.rectangle(img, (x, y), (x + int(rng.integers(8, 30)), y + int(rng.integers(8, 30))),
+                      int(rng.integers(80, 255)), -1)
+        cv2.circle(img, (int(rng.integers(0, w)), int(rng.integers(0, h))), int(rng.integers(3, 12)),
+                   int(rng.integers(0, 255)), -1)
+    return cv2.GaussianBlur(img, (3, 3), 0)
+
+
+class P10Rules(unittest.TestCase):
+    def test_s1_links_follow_headings_and_join_cut_lines(self):
+        text = ["S1. Detailed links (contents)", "S1. Detailed links of collected", "https://data.example/set",
+                "CSC", "https://a.example/one", "Macular hole", "https://b.example/very-long-", "path-continues",
+                "https://a.example/one", "S2. Detailed CycleGAN", "https://ignored.example"]
+        urls = ["https://data.example/set", "https://a.example/one", "https://b.example/very-long-path-continues",
+                "https://b.example/very-long-path-continues", "https://a.example/one", "https://ignored.example"]
+        got = ph.s1_links(text, urls)
+        self.assertEqual(got, [("major", "https://data.example/set"), ("CSC", "https://a.example/one"),
+                               ("MH", "https://b.example/very-long-path-continues"), ("MH", "https://a.example/one")])
+        header, rows = ph.p10_links(got)
+        self.assertEqual([r[3] for r in rows], [1, 2, 1, 2])  # the same link under two diseases counts twice
+
+    def test_link_kind(self):
+        self.assertEqual(ph.link_kind("https://x.org/viewimage.asp?img=a_f1.jpg"), "image")
+        self.assertEqual(ph.link_kind("https://x.com/articles/10.1186/s1/figures/2"), "figure")
+        self.assertEqual(ph.link_kind("https://webeye.org/eyeforum/cases/261-FTMH.htm"), "case")
+        self.assertEqual(ph.link_kind("https://www.sciencedirect.com/science/article/pii/S1"), "publication")
+        self.assertEqual(ph.link_kind("https://www.clinic.com/central-serous-retinopathy"), "web page")
+
+    def test_sift_finds_a_recropped_copy_and_not_another_picture(self):
+        a, other = textured(1), textured(2)
+        copy, params = ph.synthetic_positive(a, np.random.default_rng([42, ph.P10_SYNTH_NS]))
+        self.assertTrue(0.5 * 0.7 * a.shape[1] - 1 <= copy.shape[1] <= 1.5 * 0.9 * a.shape[1] + 1)
+        self.assertTrue(0.70 <= params["keep_w"] <= 0.90 and 0.5 <= params["scale"] <= 1.5)
+        same = ph.sift_inliers(ph.sift_keys(a), ph.sift_keys(copy))
+        diff = ph.sift_inliers(ph.sift_keys(a), ph.sift_keys(other))
+        self.assertGreater(same, 3 * max(diff, 4))
+        self.assertEqual(same, ph.sift_inliers(ph.sift_keys(a), ph.sift_keys(copy)))  # seeded RANSAC: repeatable
+        self.assertEqual(ph.sift_inliers(ph.sift_keys(np.zeros((50, 50), np.uint8)), ph.sift_keys(a)), 0)
+
+    def test_review_list(self):
+        paths = [f"p{i:02d}" for i in range(20)]
+        pairs = [(a, b, (i * 7 + j * 3) % 50) for i, a in enumerate(paths) for j, b in enumerate(paths) if i < j]
+        review, n_above = ph.p10_review(pairs, 45, paths, np.random.default_rng([42, ph.P10_REVIEW_NS]))
+        self.assertEqual(n_above, sum(s >= 45 for _, _, s in pairs))
+        kinds = [r[1] for r in review]
+        self.assertEqual((kinds.count("synthetic"), kinds.count("decoy")), (ph.P10_SYNTH, ph.P10_DECOYS))
+        shown = {frozenset(r[3:5]) for r in review if r[1] == "pair"}
+        top = sorted(pairs, key=lambda p: (-p[2], p[0], p[1]))[:ph.P10_TOP]
+        self.assertTrue({frozenset(p[:2]) for p in top} <= shown)
+        self.assertEqual(len(shown), len({frozenset(p[:2]) for p in pairs if p[2] >= 45} | {frozenset(p[:2]) for p in top}))
+        median = np.median([p[2] for p in pairs])
+        self.assertTrue(all(r[5] < 45 and r[5] <= median for r in review if r[1] == "decoy"))
+        self.assertEqual([r[0] for r in review], list(range(1, len(review) + 1)))
+        again, _ = ph.p10_review(pairs, 45, paths, np.random.default_rng([42, ph.P10_REVIEW_NS]))
+        self.assertEqual(review, again)
+
+    def test_sheet_shows_no_label_or_score(self):
+        review = [[1, "pair", "top 30", "data/raw/rare/CSC/01.PNG", "data/raw/rare/MH/02.PNG", 99]]
+        img = textured(3, 40, 60)
+        html = ph.p10_sheet(review, {review[0][3]: img, review[0][4]: img})
+        import re
+        self.assertEqual(html.count("<img"), 2)
+        visible = re.sub(r"data:image/png;base64,[A-Za-z0-9+/=]+", "", html)
+        for secret in ("CSC", "MH/02", "top 30", "99", "synthetic", "decoy", "rare"):
+            self.assertNotIn(secret, visible)
+
+
 if __name__ == "__main__":
     unittest.main()

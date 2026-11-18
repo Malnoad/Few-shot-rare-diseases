@@ -16,6 +16,9 @@ writes only to results/fm_v1/posthoc/ (write-once: a rerun never replaces differ
     D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py run --attempt <attempt folder>
     D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py g1 --attempt <attempt folder> --padded <G1 folder>
     D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py g1-report     # rewrite G1_comparison.md only
+    D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py p10-links --s1-text <text> --s1-links <links>
+    D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py p10-screen --attempt <attempt> --data-root D:/Few-shot \
+        --sheet <outside the repo>/P10_review_sheet.html
 
 `g1 --padded` takes the Drive g1/ folder as Colab saved it (each zip checked against its receipt)
 or a folder holding the unzipped MIRAGE/ and Inception/. It needs the locked P9 tables in --out.
@@ -1197,6 +1200,283 @@ def write_g1_report(out: Path) -> Path:
     return path
 
 
+# ===================================================================== P10 ===
+# Same-picture audit of the 146 rare images (protocols.md section 8, P10, committed in dcbb323 and pushed).
+# Choices the rule leaves open, fixed here before any P10 number:
+# - S1 of Yoo et al.'s supplement lists links per disease, never per file, so step 1 records each link, its
+#   disease and the kind of page its URL names; no file can be tied to a link, and the review has no
+#   "shared source link" pairs.
+# - Greyscale = PIL convert("RGB").convert("L") of the raw file (as the A2 border rule), after its SHA256 is
+#   checked against the input lock. OpenCV SIFT with default settings; brute-force L2, two nearest neighbours,
+#   Lowe ratio 0.75; fewer than 4 good matches scores 0; RANSAC homography with OpenCV's default 5-pixel
+#   threshold and cv2.setRNGSeed(42) before every pair; score = inlier count, matched from the image whose
+#   locked path sorts first.
+# - Negatives: 2,000 (rare, Kermany) pairs drawn with replacement, uniform over the 146 rare images and the
+#   Kermany images of the locked nine-way roster; stream [42, 10102]. Cut-off = their largest score.
+# - Synthetic positives: stream [42, 10101] in sorted path order: keep 70-90% of each side at a random
+#   offset, rescale by 0.5-1.5, JPEG quality 70; recall = share scoring at or above the cut-off.
+# - Review: stream [42, 10103]. Decoys come from pairs below the cut-off whose score is at most the median of
+#   all 10,585 pairs and that are not otherwise selected. Item order and left/right side are random.
+P10_ROW = "| P10 | Same-picture audit of the 146 rare images |"
+P10_SYNTH_NS, P10_NEG_NS, P10_REVIEW_NS = 10101, 10102, 10103
+P10_RATIO, P10_RANSAC_PX, P10_NEGATIVES = 0.75, 5.0, 2000
+P10_CAP, P10_TOP, P10_SYNTH, P10_DECOYS = 60, 30, 10, 10
+P10_MARKS = ("same picture", "same case, other slice", "different", "unsure")
+S1_HEADINGS = {"CSC": "CSC", "Macular hole": "MH", "MacTel": "MacTel", "Retinitis pigmentosa": "RP",
+               "Stargardt disease": "Stargardt"}
+IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".gif", ".tif", ".tiff", ".bmp")
+
+
+def s1_links(text_lines: Sequence[str], urls: Sequence[str]) -> list[tuple[str, str]]:
+    """(disease, url) for every link printed in S1, in print order.
+
+    `text_lines` is the supplement's text; a printed link may be cut by a line break, so each printed line is
+    matched to the full URL of a link annotation (`urls`) that starts with it. Links before the first disease
+    heading are the two dataset links ("major").
+    """
+    start = [i for i, line in enumerate(text_lines) if line.strip().startswith("S1. Detailed")]
+    if len(start) < 2:
+        raise ValueError("S1 heading not found twice (contents line and section)")
+    out, heading, pending = [], "major", list(urls)
+    for line in text_lines[start[1]:]:
+        s = line.strip()
+        if s.startswith("S2. Detailed"):
+            break
+        if s in S1_HEADINGS:
+            heading = S1_HEADINGS[s]
+        elif s.startswith("http"):
+            hit = next((u for u in pending if u.startswith(s) or s.startswith(u)), None)
+            if hit is None:
+                raise ValueError(f"no link annotation for printed line {s[:60]}")
+            pending.remove(hit)
+            out.append((heading, hit))
+    return out
+
+
+def link_kind(url: str) -> str:
+    """What a URL names, from the URL alone (pages were not opened): image, figure, case, publication or web page."""
+    u = url.lower().split("?")[0]
+    last = u.rstrip("/").rsplit("/", 1)[-1]
+    if u.endswith(IMAGE_SUFFIXES) or "viewimage" in u or "imagebank" in u or "/images/" in u or "photo" in last:
+        return "image"
+    if "/figure" in u or "figure" in url.lower():
+        return "figure"
+    if "case" in u:
+        return "case"
+    if any(t in u for t in ("doi", "/article", "journal", "pmc", "pubmed", "sciencedirect", "/books/", "/chapter/",
+                            "biomedcentral", "springer", "dovepress", "hindawi", "liebertpub", "jkos", "/issues/",
+                            "/abstract/", "/pdf")):
+        return "publication"
+    return "web page"
+
+
+def p10_links(pairs: Sequence[tuple[str, str]]) -> tuple[list[str], list[list]]:
+    seen: dict[str, int] = {}
+    rows = []
+    for disease, url in pairs:
+        seen[url] = seen.get(url, 0) + 1
+    for disease, url in pairs:
+        rows.append([disease, url, link_kind(url), seen[url],
+                     "dataset link" if disease == "major" else "no file named: S1 lists links per disease"])
+    return ["disease", "url", "kind_from_url", "times_listed", "files"], rows
+
+
+@dataclass
+class Keys:
+    """SIFT keypoint coordinates and descriptors of one image."""
+    points: np.ndarray
+    descriptors: np.ndarray | None
+
+
+def sift_keys(gray: np.ndarray) -> Keys:
+    import cv2
+    kps, desc = cv2.SIFT_create().detectAndCompute(gray, None)
+    return Keys(np.float32([k.pt for k in kps]).reshape(-1, 2), desc)
+
+
+def sift_inliers(a: Keys, b: Keys, ratio: float = P10_RATIO) -> int:
+    """RANSAC homography inliers among Lowe-ratio matches from a to b (0 if fewer than 4 good matches)."""
+    import cv2
+    if a.descriptors is None or b.descriptors is None or len(a.descriptors) < 2 or len(b.descriptors) < 2:
+        return 0
+    pairs = cv2.BFMatcher(cv2.NORM_L2).knnMatch(a.descriptors, b.descriptors, k=2)
+    good = [p[0] for p in pairs if len(p) == 2 and p[0].distance < ratio * p[1].distance]
+    if len(good) < 4:
+        return 0
+    src = a.points[[m.queryIdx for m in good]]
+    dst = b.points[[m.trainIdx for m in good]]
+    cv2.setRNGSeed(42)
+    _, mask = cv2.findHomography(src, dst, cv2.RANSAC, P10_RANSAC_PX)
+    return 0 if mask is None else int(mask.sum())
+
+
+def synthetic_positive(gray: np.ndarray, rng: np.random.Generator) -> tuple[np.ndarray, dict]:
+    """A re-cropped (70-90% of each side), rescaled (0.5-1.5) JPEG-70 copy of `gray`."""
+    import cv2
+    h, w = gray.shape
+    fw, fh = rng.uniform(0.70, 0.90, 2)
+    cw, ch = max(8, round(w * fw)), max(8, round(h * fh))
+    x0, y0 = int(rng.integers(0, w - cw + 1)), int(rng.integers(0, h - ch + 1))
+    scale = float(rng.uniform(0.5, 1.5))
+    crop = gray[y0:y0 + ch, x0:x0 + cw]
+    size = (max(8, round(cw * scale)), max(8, round(ch * scale)))
+    resized = cv2.resize(crop, size, interpolation=cv2.INTER_AREA if scale < 1 else cv2.INTER_LINEAR)
+    ok, buf = cv2.imencode(".jpg", resized, [cv2.IMWRITE_JPEG_QUALITY, 70])
+    if not ok:
+        raise ValueError("JPEG encoding failed")
+    return cv2.imdecode(buf, cv2.IMREAD_GRAYSCALE), dict(keep_w=float(fw), keep_h=float(fh), x0=x0, y0=y0, scale=scale)
+
+
+def p10_review(pairs: Sequence[tuple[str, str, int]], cutoff: int, synthetic: Sequence[str],
+               rng: np.random.Generator) -> tuple[list[list], int]:
+    """Blind review items: (item, kind, reasons, left, right, score); and how many pairs reach the cut-off.
+
+    kind is "pair", "synthetic" (an image against its own synthetic copy, right = "synthetic:<path>") or "decoy".
+    """
+    ranked = sorted(pairs, key=lambda p: (-p[2], p[0], p[1]))
+    reasons: dict[tuple[str, str], list[str]] = {}
+    above = [p for p in ranked if p[2] >= cutoff]
+    for p in above[:P10_CAP]:
+        reasons.setdefault((p[0], p[1]), []).append("at or above cut-off")
+    for p in ranked[:P10_TOP]:
+        reasons.setdefault((p[0], p[1]), []).append(f"top {P10_TOP}")
+    score = {(p[0], p[1]): p[2] for p in ranked}
+    median = float(np.median([p[2] for p in ranked]))
+    pool = [p for p in ranked if p[2] < cutoff and p[2] <= median and (p[0], p[1]) not in reasons]
+    items = [["pair", "; ".join(r), a, b, score[a, b]] for (a, b), r in reasons.items()]
+    items += [["decoy", "random low score", pool[i][0], pool[i][1], pool[i][2]]
+              for i in sorted(rng.choice(len(pool), size=min(P10_DECOYS, len(pool)), replace=False))]
+    items += [["synthetic", "synthetic positive", synthetic[i], f"synthetic:{synthetic[i]}", ""]
+              for i in sorted(rng.choice(len(synthetic), size=min(P10_SYNTH, len(synthetic)), replace=False))]
+    order = rng.permutation(len(items))
+    flip = rng.random(len(items)) < 0.5
+    out = []
+    for n, i in enumerate(order, start=1):
+        kind, why, a, b, s = items[i]
+        left, right = (b, a) if flip[n - 1] else (a, b)
+        out.append([n, kind, why, left, right, s])
+    return out, len(above)
+
+
+def p10_gray(root: Path, path: str, digest: str) -> np.ndarray:
+    from PIL import Image
+    if prep.sha256(root / path) != digest:
+        raise ValueError(f"{path} differs from the input lock")
+    with Image.open(root / path) as im:
+        return np.asarray(im.convert("RGB").convert("L"))
+
+
+P10_SCREEN_FILES = ("P10_screen_pairs.csv", "P10_screen_negatives.csv", "P10_screen_synthetic.csv",
+                    "P10_screen_summary.csv", "P10_review_key.csv")
+
+
+def p10_screen(study: Study, root: Path) -> tuple[dict[str, tuple[list[str], list[list]]], dict[str, np.ndarray]]:
+    """Steps 2 and 3 of P10: every rare pair, the negative cut-off, synthetic recall and the review list.
+
+    Returns the tables by file name and the images the review sheet needs (synthetic copies included).
+    """
+    digest = {r["path"]: r["sha256"] for r in prep.read_csv(study.lock / "extraction_inventory.csv")}
+    rare = sorted(r["path"] for r in study.roster if r["label"] in fm.RARE)
+    role = {r["path"]: ("development" if r["role"] == "fitting" else "hold-out") for r in study.roster}
+    label = {r["path"]: r["label"] for r in study.roster}
+    if len(rare) != 146:
+        raise ValueError(f"expected 146 rare images, found {len(rare)}")
+    kermany = sorted(r["path"] for r in study.roster if r["label"] in COMMON)
+    gray = {p: p10_gray(root, p, digest[p]) for p in rare}
+    keys = {p: sift_keys(gray[p]) for p in rare}
+    pairs = [(a, b, sift_inliers(keys[a], keys[b])) for i, a in enumerate(rare) for b in rare[i + 1:]]
+    pair_rows = [[a, label[a], role[a], b, label[b], role[b], s] for a, b, s in pairs]
+
+    rng = np.random.default_rng([42, P10_NEG_NS])
+    draws = [(rare[int(i)], kermany[int(j)]) for i, j in zip(rng.integers(0, len(rare), P10_NEGATIVES),
+                                                            rng.integers(0, len(kermany), P10_NEGATIVES))]
+    kkeys: dict[str, Keys] = {}
+    neg_rows = []
+    for a, b in draws:
+        if b not in kkeys:
+            kkeys[b] = sift_keys(p10_gray(root, b, digest[b]))
+        neg_rows.append([a, b, sift_inliers(keys[a], kkeys[b])])
+    cutoff = max(r[2] for r in neg_rows)
+
+    rng = np.random.default_rng([42, P10_SYNTH_NS])
+    synth_rows, images = [], {}
+    for p in rare:
+        copy, params = synthetic_positive(gray[p], rng)
+        images[f"synthetic:{p}"] = copy
+        s = sift_inliers(keys[p], sift_keys(copy))
+        synth_rows.append([p, label[p], *params.values(), s, int(s >= cutoff)])
+    recall = float(np.mean([r[-1] for r in synth_rows]))
+
+    review, n_above = p10_review(pairs, cutoff, rare, np.random.default_rng([42, P10_REVIEW_NS]))
+    for row in review:
+        for p in row[3:5]:
+            images.setdefault(p, gray.get(p))
+    scores = [s for _, _, s in pairs]
+    summary_rows = [["rare pairs scored", len(pairs)], ["negative pairs (rare, Kermany)", len(neg_rows)],
+                    ["Kermany images in negatives", len(kkeys)], ["cut-off (largest negative score)", cutoff],
+                    ["rare pairs at or above cut-off", n_above], ["rare pairs shown for that reason", min(n_above, P10_CAP)],
+                    ["synthetic positives", len(synth_rows)], ["synthetic recall at cut-off", f"{recall:.3f}"],
+                    ["rare pair score median", float(np.median(scores))], ["rare pair score max", max(scores)],
+                    ["pairs sharing a source link", "0 (S1 names no file)"], ["review items", len(review)]]
+    tables = {
+        "P10_screen_pairs.csv": (["image_a", "label_a", "set_a", "image_b", "label_b", "set_b", "inliers"], pair_rows),
+        "P10_screen_negatives.csv": (["rare_image", "kermany_image", "inliers"], neg_rows),
+        "P10_screen_synthetic.csv": (["image", "label", "keep_w", "keep_h", "x0", "y0", "scale", "inliers",
+                                      "at_or_above_cutoff"], synth_rows),
+        "P10_screen_summary.csv": (["quantity", "value"], summary_rows),
+        "P10_review_key.csv": (["item", "kind", "reasons", "left", "right", "inliers"], review)}
+    return tables, {p: images[p] for row in review for p in row[3:5]}
+
+
+def p10_sheet(review: Sequence[Sequence], images: Mapping[str, np.ndarray], width: int = 640) -> str:
+    """Self-contained HTML review sheet: no label, set, score or kind is shown; marks download as CSV."""
+    import base64
+    from PIL import Image
+
+    def tag(array: np.ndarray) -> str:
+        im = Image.fromarray(array)
+        if im.width > width:
+            im = im.resize((width, max(1, round(im.height * width / im.width))))
+        buf = io.BytesIO()
+        im.save(buf, format="PNG")
+        return f'<img src="data:image/png;base64,{base64.b64encode(buf.getvalue()).decode()}">'
+
+    marks = "".join(f'<label><input type="radio" name="m{{n}}" value="{m}"> {m}</label>' for m in P10_MARKS)
+    blocks = []
+    for row in review:
+        n = row[0]
+        blocks.append(f'<section id="i{n}"><h2>Pair {n} of {len(review)}</h2><div class="pair">{tag(images[row[3]])}'
+                      f'{tag(images[row[4]])}</div><div class="marks">{marks.format(n=n)}'
+                      f'<input class="note" name="n{n}" placeholder="note (optional)"></div></section>')
+    return ("<!DOCTYPE html><html><head><meta charset='utf-8'><title>P10 blind review</title><style>"
+            "body{font-family:sans-serif;max-width:1400px;margin:auto;padding:12px}"
+            ".pair{display:flex;gap:12px;align-items:flex-start}.pair img{max-width:49%;border:1px solid #888}"
+            "section{border-bottom:2px solid #ccc;padding:10px 0}.marks label{margin-right:18px}"
+            ".note{width:30em}#bar{position:sticky;top:0;background:#fff;padding:8px;border-bottom:1px solid #888}"
+            "</style></head><body><div id='bar'><b>P10 blind review.</b> For each pair: same picture, same case "
+            "(other slice), different, or unsure. Marks are saved in this browser as you go. "
+            "<button onclick='save()'>Download marks (P10_review_marks.csv)</button> <span id='count'></span></div>"
+            + "".join(blocks) +
+            "<script>const N=" + str(len(review)) + ";const K='p10marks';"
+            "function state(){const s={};for(let n=1;n<=N;n++){const c=document.querySelector(`input[name=m${n}]:checked`);"
+            "s[n]={m:c?c.value:'',t:document.querySelector(`input[name=n${n}]`).value}};return s}"
+            "function upd(){const s=state();localStorage.setItem(K,JSON.stringify(s));"
+            "document.getElementById('count').textContent=Object.values(s).filter(v=>v.m).length+' of '+N+' marked'}"
+            "function load(){const s=JSON.parse(localStorage.getItem(K)||'{}');for(const n in s){if(s[n].m){"
+            "const r=document.querySelector(`input[name=m${n}][value=\"${s[n].m}\"]`);if(r)r.checked=true}"
+            "const t=document.querySelector(`input[name=n${n}]`);if(t)t.value=s[n].t||''}upd()}"
+            "function save(){const s=state();const q=v=>'\"'+String(v).replace(/\"/g,'\"\"')+'\"';"
+            "let c='item,mark,note\\n';for(let n=1;n<=N;n++)c+=n+','+q(s[n].m)+','+q(s[n].t)+'\\n';"
+            "const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));"
+            "a.download='P10_review_marks.csv';a.click()}"
+            "document.addEventListener('change',upd);document.addEventListener('input',upd);load()</script>"
+            "</body></html>")
+
+
+def p10_label(today: str) -> str:
+    return f"post hoc, rule timestamped by commit {rule_commit(P10_ROW)[:7]} (18 Nov 2026), computed {today}"
+
+
 def write(out: Path, name: str, label: str, header: list[str], rows: list[list]) -> Path:
     out.mkdir(parents=True, exist_ok=True)
     path = out / name
@@ -1262,16 +1542,28 @@ def p9_label(today: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="step", required=True)
-    for step in ("run", "g1", "g1-report"):
+    for step in ("run", "g1", "g1-report", "p10-links", "p10-screen"):
         command = sub.add_parser(step)
         command.add_argument("--out", type=Path, default=OUT)
         if step == "g1-report":
             command.description = "Rewrite G1_comparison.md from the five CSVs already in --out (no score is computed)."
             continue
+        if step == "p10-links":
+            command.description = "P10 step 1: the links of S1 in Yoo et al.'s supplement, by disease and kind."
+            command.add_argument("--s1-text", type=Path, required=True, help="text of the supplement PDF, one line per line")
+            command.add_argument("--s1-links", type=Path, required=True,
+                                 help="link annotations of the PDF, one per line as <page><TAB><url>")
+            command.add_argument("--date", default=datetime.date.today().isoformat())
+            continue
         command.add_argument("--attempt", type=Path, required=True, help=f"the locked attempt folder ({ATTEMPT})")
         command.add_argument("--date", default=datetime.date.today().isoformat(), help="date in the posthoc label")
         if step == "run":
             command.add_argument("--only", help="comma-separated subset, e.g. P8,P3")
+        elif step == "p10-screen":
+            command.add_argument("--data-root", type=Path, required=True,
+                                 help="checkout whose data/raw holds the locked images (read-only)")
+            command.add_argument("--sheet", type=Path, required=True,
+                                 help="where to write the blind review sheet (HTML with images); never inside the repo")
         else:
             command.add_argument("--padded", type=Path, required=True,
                                  help="folder holding MIRAGE/ and Inception/ from G1, or the Drive g1/ folder with the "
@@ -1283,6 +1575,24 @@ def main() -> None:
             print("wrote", path)
     elif args.step == "g1-report":
         print("wrote", write_g1_report(out))
+    elif args.step == "p10-links":
+        lines = args.s1_text.read_text(encoding="utf-8").splitlines()
+        urls = [line.split("\t", 1)[1].strip() for line in args.s1_links.read_text(encoding="utf-8").splitlines()
+                if "\t" in line]
+        print("wrote", write(out, "P10_source_links.csv", p10_label(args.date), *p10_links(s1_links(lines, urls))))
+    elif args.step == "p10-screen":
+        repo = Path(__file__).resolve().parent
+        sheet = args.sheet.resolve()
+        if repo in sheet.parents:
+            raise SystemExit("the review sheet holds third-party images: write it outside the repository")
+        label = p10_label(args.date)
+        with tempfile.TemporaryDirectory() as tmp:
+            tables, images = p10_screen(Study(args.attempt, Path(tmp)), args.data_root)
+        for name in P10_SCREEN_FILES:
+            print("wrote", write(out, name, label, *tables[name]))
+        sheet.parent.mkdir(parents=True, exist_ok=True)
+        sheet.write_text(p10_sheet(tables["P10_review_key.csv"][1], images), encoding="utf-8")
+        print("wrote", sheet)
     else:
         if not (out / "P9_rare_vs_normal_auroc.csv").exists():
             raise SystemExit(f"{out} lacks the locked P9 tables: run `fm_posthoc.py run --only P9 --out {out}` first")
