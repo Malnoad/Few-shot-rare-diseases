@@ -57,8 +57,9 @@ no fallback model (A3): a model that fails its pilot twice is reported as unavai
   matches Yoo et al.'s test counts only; which 22 images Yoo et al. used is not known, so the paper
   says "a hold-out matching their class counts", never "their test set".
 - Provenance (found 18 Nov, file identity only): Mendeley btv6yrdbmv version 1 (27 Mar 2020)
-  holds 119 images, the paper's total; version 2 (29 Oct 2020), which we use, holds 146: 118
-  version 1 files, 28 additions and one replaced picture (MacTel/20.PNG). 21 of the 22 hold-out
+  holds 119 images, the paper's total; version 2 (29 Oct 2020), which we use, holds 146: the 118
+  version 1 files kept unchanged plus 28 files new to version 2 (27 new file names and a different
+  picture under the old name MacTel/20.PNG; count corrected 19 Nov). 21 of the 22 hold-out
   images are in version 1; RP/20.PNG is an addition. Mapping:
   `results/fm_v1/posthoc/pre_rule/2026-11-18/v1_to_ours.csv`. The paper text gives Stargardt 15+4
   and RP 12+4, the folders RP 19 and Stargardt 16 (as does Sun et al. 2024): per-class names for
@@ -179,7 +180,7 @@ Steps 1 to 5 run in `colab_fm.ipynb` (one GPU session, no labels read). Steps 6 
 |---|---|---|---|
 | S1 | 5–11 Nov | Proposal paper | Done |
 | S2 | 12–14 Nov | Final pilots, input lock, extraction (`colab_fm.ipynb`) | Done 13 Nov: attempt `final-20261113T170804Z`, run by Lam on an L4, code `2f48654`; input-lock SHA256 `239838279b77bb37211398a016c1c766273a35f5a06649b31f5cd97f562c001c`; four arms available, every repeat check exact on the first sequence; OCTID 410 and OCTDL 371 external queries, none excluded. Checked on the laptop 14 Nov. Hashes deposited on Zenodo (doi:10.5281/zenodo.24206472, created 13 Nov 19:53 UTC); Lam's approval recorded 14 Nov 09:11 UTC, before the first score |
-| S3 | 15–19 Nov | Development runs; **nominee sealed by 19 Nov** | Done 14 Nov: nominee **MIRAGE** (binding SHA256 `1738f7dec61526651511221a6d6723cd37e76e8accd0f05e09bba45569b1d82e`). Evaluate notebook needed the locked Python 3.13.16 (commit `56fcb52`) |
+| S3 | 15–19 Nov | Development runs; **nominee sealed by 19 Nov** | Done 14 Nov: nominee **MIRAGE** (SHA256 of the file `nomination_binding.json`: `1738f7dec61526651511221a6d6723cd37e76e8accd0f05e09bba45569b1d82e`; the `binding_sha256` written inside it: `00891271d84e44dfd807ccd540742d046b27483337b50e83cab4dbd8a18406f7`). Evaluate notebook needed the locked Python 3.13.16 (commit `56fcb52`) |
 | S4 | 20–23 Nov | Legacy and external reporting | Done 14 Nov: `evaluation/results-20261114T093033Z.zip` on Drive (SHA256 `c963b1d7298c28f8151769d8d29cf98538ce0897582f57ff2ee867c76351b25f`). Summary in the 14 Nov weekly report |
 | S5 | 15–25 Nov (was 27) | Figures, tables, agreed post-hoc analyses (labelled); everything frozen 25 Nov | Started 15 Nov: first report written; P0–P9 and G1 done 18 Nov; plan below |
 | S6 | 25–30 Nov (was 28 Nov–3 Dec) | Final write-up; evidence audit 27 Nov, PDF freeze 28 Nov, delivery 30 Nov | Not started |
