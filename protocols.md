@@ -62,7 +62,8 @@ no fallback model (A3): a model that fails its pilot twice is reported as unavai
   picture under the old name MacTel/20.PNG; count corrected 19 Nov). 21 of the 22 hold-out
   images are in version 1; RP/20.PNG is an addition. Mapping:
   `results/fm_v1/posthoc/pre_rule/2026-11-18/v1_to_ours.csv`. The paper text gives Stargardt 15+4
-  and RP 12+4, the folders RP 19 and Stargardt 16 (as does Sun et al. 2024): per-class names for
+  and RP 12+4, the version 1 folders RP 19 and Stargardt 16 (as does Sun et al. 2024; version 2
+  holds RP 31 and Stargardt 23): per-class names for
   these two carry a footnote; macro recall is unaffected.
 - Layout: the locked geometry summary (`reports/geometry/MIRAGE/geometry_summary.csv` in the
   results archive; A2 border rule: flat edge rows, grey range ≤ 8) gives a median border share per
