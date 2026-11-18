@@ -186,6 +186,12 @@ Steps 1 to 5 run in `colab_fm.ipynb` (one GPU session, no labels read). Steps 6 
 Lam brought delivery forward to 30 November on 19 November (no GPU run is left in this study;
 the work is writing and the mentor's review). The calendar below is the binding one.
 
+**Pull-forward rule (Lam, 19 Nov).** Dates in the calendar are the latest dates. When a stage
+finishes early, the next one starts at once. The gates never move with it: a rule is committed and
+pushed before its numbers; no analysis starts once the draft has started; numbers are frozen only
+after the mentor's review; v2 work starts as soon as v1's numbers are frozen, and its results stay
+out of the v1 paper except the labelled next-phase paragraph.
+
 ### Plan for S5 and S6 (version 2, 16 November; revised after the mentor's answers)
 
 Version 1 (15 Nov) followed three checks: recall per disease, a two-model ensemble, and a review of
