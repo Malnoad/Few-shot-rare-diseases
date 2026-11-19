@@ -253,6 +253,8 @@ computed whatever the mentor says; "if time" items follow the drop order below.
 | P10 | Same-picture audit of the 146 rare images | Yoo et al. took the rare images from web searches (section 2.1 of their paper), so the risk is one published picture, or slices of one case report, on both sides of a split. Three steps, laptop only, raw data read-only. (1) Provenance: map each released file to the source links in Yoo's supplementary material where possible; record per file whether a link names an image, a figure, a case or only a publication; a shared publication alone never counts as a shared patient. (2) Screen: every pair of the 146 images, across labels, scored by crop-robust keypoint matching (OpenCV SIFT, Lowe ratio 0.75, RANSAC homography; score = inlier count) on greyscale images. The cut-off is the largest inlier count seen in 2,000 random rare–Kermany pairs (different sources, certain negatives); its recall is measured on synthetic positives (each rare image re-cropped to 70–90% of each side, rescaled by 0.5–1.5 and saved as JPEG quality 70; seed 42, stream namespace 10101) and reported. (3) Review: Lam sees, in random order and blind to label, split and score, every pair at or above the cut-off (if more than 60, the 60 highest, and the total is reported), the 30 highest-scoring pairs, every pair sharing a source link, 10 synthetic positives and 10 random low-score pairs as decoys; each pair is marked "same picture", "same case, other slice", "different" or "unsure". Sensitivity, beside the locked numbers and never replacing them: development macro recall (prototype, locked episodes, all four models, mean over K = 1–8) recomputed without each query that shares a "same picture" or "same case" mark with a support of its episode, and again counting "unsure" as a match; hold-out recall recomputed without each hold-out image so marked against any development image. Wording if nothing is found: "no same picture found by this screen", never "no shared patients" | Q1 | Always (added 18 Nov) |
 | G1 | Pad-to-square input check | One GPU session, MIRAGE and Inception-v3 only (the two models that squash images to a square). Each image is padded with black (0) to a square around its centre, then given to the model's own locked transform; nothing else changes. Re-extract every image those two arms used (rare 146, Kermany fitting and test, OCTID, OCTDL); score with the locked episodes and the locked nine-way roster. Report development macro recall, hold-out counts, the size-only comparison and OCTDL normal destinations, beside the locked numbers. A labelled sensitivity check outside A2 A-11; it never replaces a locked result. New code only: no hashed `fm_*.py` file is edited | Q2, Q4, Q6 | Lam approved 16 Nov; runs after rule 1 |
 
+| R2 | Development spread over draws | Section 5 promises mean, SD and 5th–95th percentiles over support draws; the locked evaluate notebook wrote development means only. From the locked development prototype cells of all four arms: per (K, draw), macro recall over the 124 queries with the five folds pooled (the nomination's unit); per K = 1, 2, 4, 8 and the K mean (A2 B-1): n, mean, SD, 5th and 95th percentile over the 100 draws (`fm_evaluate.draw_summary`); each FM minus Inception-v3 paired on the same draw, same summaries. Gate: every arm's per-K mean equals its `nomination.json` k_score within 1e-9, otherwise nothing is reported. Label: "pre-specified quantity (section 5), computed 19 Nov after the results were known". Table 1 of the main text | Q7 | Always (added 19 Nov) |
+
 **Reporting change R1 (16 Nov).** Wherever a false-rare rate is shown, the share of external rare images the same nine-way head calls any rare class sits beside it (OCTID CSC and MH, OCTDL MH), labelled post hoc. A low false-rare rate alone can mean the head rarely says "rare".
 
 **Housekeeping.** W1: read the data list in the MIRAGE paper and record any overlap with our test
@@ -437,6 +439,20 @@ results.
   `g1_verdict_opus_main.md`, `g1_rebuttal_fable.md`) and `fable_holdout_plan.md`. A figure of
   "128 of 146" letterboxed images quoted in the 18 Nov discussion could not be reproduced and is
   withdrawn; the rule-based count is 126.
+- 19 Nov, after the draft review (Opus drafts, Fable rebuttals, Gemini 4 Carbon review, GPT 6.2
+  Sol numbers check; drafts in Drive `fm_v1/draft/2026-11-19/`), Lam's decisions: (1) R2 added
+  (rule above), computed only after this entry is pushed. (2) Placement: P4 and P8 go to the main
+  text in one subsection headed as post hoc, beside and never replacing the locked size-only
+  reference; P0, P1, P2 and P5 go to the supplement (P3, P6, P7, P9 and G1 were already there).
+  (3) Hold-out table: the locked nine-way counts of 22 per class and arm, with five-way macro
+  recall per K beside them. (4) The paper is a new file, `docs/report/fm_v1_paper/main.tex`, on the
+  proposal's IEEE template; the proposal commit is tagged first. Agent defaults, open to Lam's
+  objection: numbers are rounded half up from their shortest decimal form; the paper quotes the
+  locked geometry summary for the letterbox layout, and the pre-rule count of 126 appears only in
+  the supplement with its label; "resembles" (not "follows") for Sun et al.; "every rare training
+  image" for Yoo et al.'s classifier; MIRAGE's pretraining on unlabelled CSC, MacTel, MH and
+  Stargardt scans is stated in Methods and Limitations; "RETFound has no published frozen result"
+  is dropped (A3 records frozen linear-probe results in the MIRAGE paper).
 
 ## 9. The files we control
 
