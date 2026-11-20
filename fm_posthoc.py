@@ -1527,6 +1527,91 @@ def r2_label(today: str) -> str:
             f"computed {today} after the results were known")
 
 
+P10_MATCH = ("same picture", "same case, other slice")
+P10_SETS = (("marked same picture or same case", False), ("also counting unsure", True))
+
+
+def p10_matched_pairs(key_rows: Sequence[Mapping[str, str]], mark_rows: Sequence[Mapping[str, str]],
+                      with_unsure: bool) -> set[frozenset]:
+    """Image pairs Lam marked as a match. Synthetic copies never count; decoys count like any real pair."""
+    marks = {r["item"]: r["mark"] for r in mark_rows}
+    if set(marks) != {r["item"] for r in key_rows}:
+        raise ValueError("P10 marks and review key name different items")
+    wanted = P10_MATCH + (("unsure",) if with_unsure else ())
+    return {frozenset((r["left"], r["right"])) for r in key_rows
+            if r["kind"] != "synthetic" and marks[r["item"]] in wanted}
+
+
+def p10_development(episodes: Sequence[ev.Episode], cells: Mapping[tuple[int, int, int], Cell],
+                    order: Sequence[str], labels: Sequence[str], matched: set[frozenset]
+                    ) -> tuple[dict[tuple[int, int], float], int]:
+    """Per (K, draw): pooled macro recall without each query that shares a match with a support of its episode
+    (classes left with no query drop out, as in P4); and the number of (query, episode) exclusions."""
+    position = {q: i for i, q in enumerate(order)}
+    rows: dict[tuple[int, int], tuple[np.ndarray, np.ndarray]] = {}
+    dropped = 0
+    for e in episodes:
+        cell = cells[e.fold, e.k, e.draw]
+        supports = {s for group in e.supports for s in group}
+        correct, keep = rows.setdefault((e.k, e.draw), (np.zeros(len(order), bool), np.ones(len(order), bool)))
+        for q, ok in zip(cell.queries, cell.correct):
+            correct[position[q]] = ok
+            if any(frozenset((q, s)) in matched for s in supports):
+                keep[position[q]] = False
+                dropped += 1
+    lab = np.asarray(labels)
+    values = {key: present_macro(c[k], lab[k], fm.RARE)[0] for key, (c, k) in rows.items()}
+    return values, dropped
+
+
+def p10_holdout(cells: Mapping[tuple[int, int, int], Cell], excluded: set[str]) -> dict[tuple[int, int], float]:
+    """Per (K, draw): hold-out macro recall without the excluded hold-out images."""
+    out = {}
+    for (fold, k, draw), cell in cells.items():
+        keep = np.array([q not in excluded for q in cell.queries])
+        out[k, draw] = present_macro(cell.correct[keep], np.asarray(cell.labels)[keep], fm.RARE)[0]
+    return out
+
+
+def p10_sensitivity(study: Study, key_rows: Sequence[Mapping[str, str]], mark_rows: Sequence[Mapping[str, str]]
+                    ) -> tuple[list[str], list[list], list[str], list[list]]:
+    """P10 step 3 sensitivity (rule dcbb323): development and hold-out recall without marked matches, beside
+    the locked values, all four arms; each FM minus Inception-v3 paired on the draw."""
+    order, labels = dev_order(study)
+    dev_episodes = study.episodes("development")
+    development = {r["path"] for r in study.roster if r["label"] in fm.RARE and r["role"] == "fitting"}
+    rows, pairs_out = [], []
+    for name, with_unsure in (("locked (no exclusion)", None), *P10_SETS):
+        matched = set() if with_unsure is None else p10_matched_pairs(key_rows, mark_rows, with_unsure)
+        held = {p for pair in matched for p in pair if p not in development
+                and any(o in development for o in pair - {p})}
+        dev_vals, hold_vals, dropped = {}, {}, 0
+        for arm in ARMS:
+            dev_vals[arm], dropped = p10_development(dev_episodes, study.matched(arm, "development"), order, labels,
+                                                     matched)
+            hold_vals[arm] = p10_holdout(study.matched(arm, "reporting"), held)
+        for phase, vals, excluded in (("development", dev_vals, f"{dropped} query-episode exclusions per arm"),
+                                      ("hold-out", hold_vals, f"{len(held)} hold-out images excluded")):
+            ks = KS if phase == "development" else sorted({k for k, _ in vals["MIRAGE"]})
+            for arm in ARMS:
+                present = {key: v for key, v in vals[arm].items() if v is not None}
+                for k, v in by_k(present, ks):
+                    rows.append([phase, name, excluded, arm, k, *summary(v)])
+            for arm in ARMS:
+                if arm == "Inception":
+                    continue
+                diff = {key: vals[arm][key] - vals["Inception"][key] for key in vals[arm]
+                        if key[0] in KS and vals[arm][key] is not None and vals["Inception"][key] is not None}
+                for k, v in by_k(diff, KS):
+                    rows.append([phase, name, excluded, f"{arm} minus Inception", k, *summary(v)])
+        if with_unsure is not None:
+            for pair in sorted(tuple(sorted(p)) for p in matched):
+                sets = ["development" if p in development else "hold-out" for p in pair]
+                pairs_out.append([name, pair[0], sets[0], pair[1], sets[1]])
+    return (["phase", "exclusion", "excluded", "arm", "k", *SUMMARY], rows,
+            ["exclusion", "image_a", "set_a", "image_b", "set_b"], pairs_out)
+
+
 def p10_label(today: str) -> str:
     return f"post hoc, rule timestamped by commit {rule_commit(P10_ROW)[:7]} (18 Nov 2026), computed {today}"
 
@@ -3446,7 +3531,7 @@ def add_phase1_commands(sub) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="step", required=True)
-    for step in ("run", "g1", "g1-report", "p10-links", "p10-screen"):
+    for step in ("run", "g1", "g1-report", "p10-links", "p10-screen", "p10-sensitivity"):
         command = sub.add_parser(step)
         command.add_argument("--out", type=Path, default=OUT)
         if step == "g1-report":
@@ -3468,6 +3553,8 @@ def main() -> None:
                                  help="checkout whose data/raw holds the locked images (read-only)")
             command.add_argument("--sheet", type=Path, required=True,
                                  help="where to write the blind review sheet (HTML with images); never inside the repo")
+        elif step == "p10-sensitivity":
+            command.description = "P10 step 3 sensitivity from P10_review_key.csv and Lam's P10_review_marks.csv in --out."
         else:
             command.add_argument("--padded", type=Path, required=True,
                                  help="folder holding MIRAGE/ and Inception/ from G1, or the Drive g1/ folder with the "
@@ -3511,6 +3598,13 @@ def main() -> None:
         sheet.parent.mkdir(parents=True, exist_ok=True)
         sheet.write_text(p10_sheet(tables["P10_review_key.csv"][1], images), encoding="utf-8")
         print("wrote", sheet)
+    elif args.step == "p10-sensitivity":
+        key_rows, mark_rows = _read(out, "P10_review_key.csv"), _read(out, "P10_review_marks.csv")
+        label = f"{p10_label(args.date)}; marks SHA256 {prep.sha256(out / 'P10_review_marks.csv')[:12]}"
+        with tempfile.TemporaryDirectory() as tmp:
+            h1, rows, h2, pairs = p10_sensitivity(Study(args.attempt, Path(tmp)), key_rows, mark_rows)
+        print("wrote", write(out, "P10_sensitivity.csv", label, h1, rows))
+        print("wrote", write(out, "P10_matched_pairs.csv", label, h2, pairs))
     else:
         if not (out / "P9_rare_vs_normal_auroc.csv").exists():
             raise SystemExit(f"{out} lacks the locked P9 tables: run `fm_posthoc.py run --only P9 --out {out}` first")

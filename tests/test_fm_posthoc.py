@@ -350,6 +350,45 @@ class R2Rules(unittest.TestCase):
             ph.r2_rows(values, k_scores)
 
 
+class P10SensitivityRules(unittest.TestCase):
+    def test_matched_pairs_skip_synthetic_and_follow_unsure(self):
+        key = [{"item": "1", "kind": "pair", "left": "a", "right": "b"},
+               {"item": "2", "kind": "synthetic", "left": "c", "right": "synthetic:c"},
+               {"item": "3", "kind": "decoy", "left": "d", "right": "e"},
+               {"item": "4", "kind": "pair", "left": "f", "right": "g"}]
+        marks = [{"item": "1", "mark": "same picture"}, {"item": "2", "mark": "same picture"},
+                 {"item": "3", "mark": "same case, other slice"}, {"item": "4", "mark": "unsure"}]
+        self.assertEqual(ph.p10_matched_pairs(key, marks, False), {frozenset("ab"), frozenset("de")})
+        self.assertEqual(ph.p10_matched_pairs(key, marks, True), {frozenset("ab"), frozenset("de"), frozenset("fg")})
+        with self.assertRaises(ValueError):
+            ph.p10_matched_pairs(key, marks[:3], False)
+
+    def test_development_drops_only_queries_matched_to_their_own_supports(self):
+        import fm_evaluate as ev
+        rare = fm.RARE
+        queries = tuple(f"q{i}" for i in range(5))
+        supports = tuple((f"s{i}",) for i in range(5))
+        episode = ev.Episode(fold=0, k=1, draw=0, supports=supports, queries=queries, labels=rare)
+        cell = ph.Cell(queries=queries, labels=rare, predicted=("CSC",) * 5, classes=rare, scores=np.zeros((5, 5)))
+        cells = {(0, 1, 0): cell}
+        values, dropped = ph.p10_development([episode], cells, list(queries), list(rare), set())
+        self.assertAlmostEqual(values[1, 0], 0.2)  # only CSC correct
+        values, dropped = ph.p10_development([episode], cells, list(queries), list(rare), {frozenset(("q0", "s3"))})
+        self.assertEqual(dropped, 1)
+        self.assertAlmostEqual(values[1, 0], 0.0)  # CSC query removed; four classes left, none correct
+        values, dropped = ph.p10_development([episode], cells, list(queries), list(rare), {frozenset(("q0", "zz"))})
+        self.assertEqual(dropped, 0)  # a match with an image outside the episode's supports does not count
+
+    def test_holdout_excludes_named_images(self):
+        rare = fm.RARE
+        cell = ph.Cell(queries=("h0", "h1", "h2", "h3", "h4"), labels=rare, predicted=rare[:4] + ("CSC",),
+                       classes=rare, scores=np.zeros((5, 5)))
+        out = ph.p10_holdout({(0, 1, 0): cell}, set())
+        self.assertAlmostEqual(out[1, 0], 0.8)
+        out = ph.p10_holdout({(0, 1, 0): cell}, {"h4"})
+        self.assertAlmostEqual(out[1, 0], 1.0)
+
+
 class P10Rules(unittest.TestCase):
     def test_s1_links_follow_headings_and_join_cut_lines(self):
         text = ["S1. Detailed links (contents)", "S1. Detailed links of collected", "https://data.example/set",
