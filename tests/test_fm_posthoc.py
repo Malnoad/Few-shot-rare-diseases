@@ -1,7 +1,10 @@
 """Post hoc rules of protocols.md section 8 on small synthetic inputs (no locked file is read)."""
 from pathlib import Path
 import sys
+import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import Mock, patch
 
 import numpy as np
 
@@ -404,6 +407,407 @@ class P10Rules(unittest.TestCase):
         visible = re.sub(r"data:image/png;base64,[A-Za-z0-9+/=]+", "", html)
         for secret in ("CSC", "MH/02", "top 30", "99", "synthetic", "decoy", "rare"):
             self.assertNotIn(secret, visible)
+
+
+class Phase1Rules(unittest.TestCase):
+    def test_success_boundaries_and_pairing(self):
+        five = ph.success_rule([0] * 5 + [1] * 95)
+        self.assertEqual((five["n_positive"], five["verdict"]), (95, "pass"))
+        self.assertAlmostEqual(five["p05"], .95)
+        self.assertEqual(ph.success_rule([0] * 6 + [1] * 94)["verdict"], "fail")
+        self.assertEqual(ph.success_rule([1] * 99)["verdict"], "not evaluable")
+        self.assertEqual(ph.success_rule([1] * 99 + [np.nan])["verdict"], "not evaluable")
+        self.assertEqual(ph.success_rule([-100] * 5 + [1] * 95)["verdict"], "fail")  # linear p05 governs
+        self.assertEqual(ph.paired({(1, 1): .9, (1, 2): .1}, {(1, 1): .4, (2, 1): .5}), {(1, 1): .5})
+
+    def test_fixed_sentences_use_the_registered_inputs(self):
+        yes = ph.success_rule([.125] * 100)
+        no = ph.success_rule([-.25] * 100)
+        thumb = ph.success_rule([.25] * 100)
+        self.assertEqual(
+            ph.e1_sentences(yes, .116, thumb),
+            "Under the size and framing control, MIRAGE keeps a positive development advantage over Inception-v3 "
+            "(mean 0.125, locked 0.116; p05 0.125); it is above the pixel-only reference (mean 0.250).",
+        )
+        mixed = ph.success_rule([0.] * 6 + [.25] * 94)
+        self.assertIn("it is not above the pixel-only reference (mean 0.235)", ph.e1_sentences(yes, .116, mixed))
+        for main in (yes, no):
+            for other in (yes, no):
+                lead = "and also" if main == other else "but not"
+                text = ph.e1_sentences(main, .116, thumb, e1l=other, e1c=other, res256_shift=-.031)
+                self.assertIn(f", {lead} when effective resolution is evened out (E1-L p05 = {other['p05']:.3f})", text)
+                self.assertIn(f", {lead} when the image is only cropped to its content box (E1-C p05 = {other['p05']:.3f})", text)
+                if main == no:
+                    self.assertIn("K mean by -0.031 (E3 M-res256)", text)
+        self.assertEqual(ph.e1_sentences(yes, .116, None), "")
+        self.assertEqual(ph.e1_sentences(no, .116, thumb), "")
+        self.assertEqual(ph.e1_sentences({"verdict": "not evaluable"}, .116, None), "not evaluable")
+
+    def test_rule_hash_and_changed_label(self):
+        section = f"{ph.PHASE1_HEADING}\n\nRule before numbers.\n\n"
+        self.assertEqual(ph.section_text("# Start\n" + section + "## Next\n"), section.rstrip() + "\n")
+        self.assertEqual(ph.section_sha256(section), ph.section_sha256(section.replace("\n", "\r\n")))
+        edited = ph.section_sha256(section.replace("numbers", "outputs"))
+        self.assertNotEqual(ph.section_sha256(section), edited)
+        commit = "4b4e883fb491b4402738fe47717ceae3b800161d"
+        hashes = {"same": False, "commit_sha256": ph.section_sha256(section), "working_sha256": edited}
+        self.assertEqual(ph.long_date("2026-11-20"), "20 Nov 2026")
+        self.assertIn("commit 4b4e883 (20 Nov 2026), computed 2026-11-21", ph.e_label(1, commit, "20 Nov 2026", "2026-11-21", hashes))
+        self.assertIn("WARNING", ph.e_label(4, commit, "20 Nov 2026", "2026-11-21", hashes))
+
+    def test_references_and_matched_queries(self):
+        supports = [np.array([[0., 0.], [2., 2.]]), np.array([[3., 3.]])]
+        q = np.array([[1., 1.], [2., 2.], [4., 4.]])
+        np.testing.assert_array_equal(ph.nearest_mean_predict(supports, q), fm.size_predict(supports, q))
+        np.testing.assert_array_equal(ph.nearest_mean_scores(supports, q)[1], [-2, -2])
+        cosine = ph.prototype_scores([np.array([[1., 0.]]), np.array([[0., 1.]])], np.array([[3., 4.]]))
+        np.testing.assert_allclose(cosine, [[.6, .8]])
+        sides = {"a": 1, "b": 2, "c": 4, "d": 2, "e": 4, "f": 8}
+        labels = {k: "X" if k < "d" else "Y" for k in sides}
+        self.assertEqual(ph.matched_subset(sides, labels), (2, 4, ["b", "c", "d", "e"]))
+        self.assertEqual(ph.matched_subset({"a": 1, "b": 3}, {"a": "X", "b": "Y"}), (3, 1, []))
+
+    def test_e2_overlap_and_linear_tertiles(self):
+        self.assertIsNone(ph.jaccard(set(), set()))
+        self.assertEqual(ph.jaccard({"a"}, set()), 0)
+        self.assertEqual(ph.jaccard({"a", "b"}, {"b", "c"}), 1 / 3)
+        self.assertEqual(ph.failure_overlap({"A": {"x"}, "B": {"y", "x"}}, ["x", "y", "z"]), [1, 1, 1])
+        self.assertEqual(ph.same_class_share(["NORMAL", "CNV"], ["NORMAL", "MH"]), .5)
+        self.assertEqual(ph.tertile_shares([1, 1, 1, 4], [1, 0, 1, 0]), ([1., 1.], [3, 0, 1], [2 / 3, None, 0]))
+        np.testing.assert_allclose(ph.tertile_shares([1, 2, 3, 4, 5], [0] * 5)[0], [7 / 3, 11 / 3])
+
+    def test_e2d_small_groups_and_cluster_bootstrap(self):
+        small = ph.e2d_row(range(6), [False] * 5 + [True], list("abcdef"), None)
+        self.assertEqual(len(small), len(ph.E2D_HEADER))
+        self.assertEqual(small[:8], [1, 5, 5., None, None, 2., None, None])
+        self.assertTrue(all(x is None for x in small[8:]))
+        large = ph.e2d_row(range(10), [False] * 5 + [True] * 5, ["a"] * 5 + ["b"] * 5,
+                           np.random.default_rng([42, ph.E2_BOOT_NS]), n_boot=8)
+        self.assertEqual(large[-4:], [1., 1., 1., True])
+        self.assertEqual(ph.quartiles([]), [None, None, None])
+        self.assertEqual(ph.quartiles([0, 1, 2]), [1., .5, 1.5])
+
+    def test_e2f_sampling_and_marks(self):
+        groups = {("OCTID", "consensus failure"): [f"x{i}" for i in range(24)], ("OCTDL", "consensus normal"): ["y"]}
+        anchors = [f"a{i}" for i in range(12)]
+        got = ph.contact_sheet_sample(groups, anchors)
+        self.assertEqual(got, ph.contact_sheet_sample(dict(reversed(list(groups.items()))), anchors[::-1]))
+        self.assertEqual(len(got), 25)
+        self.assertEqual(sum(row[3] == "anchor" for row in got), 8)
+        self.assertEqual([row[0] for row in got], [f"S{i:03d}" for i in range(1, 26)])
+        key = [{"id": "S001", "source": "OCTDL", "group": "consensus normal"}]
+        rows = [dict.fromkeys(ph.E2F_MARKS, "yes") | {"id": "S001", "scan_width": "wide"}]
+        ph.validate_marks(rows, ["S001"])
+        self.assertEqual(len(ph.mark_counts(rows, key)), len(ph.E2F_MARKS))
+        self.assertTrue(all(r[-1] == "shown in full, no comparison" for r in ph.mark_counts(rows, key)))
+        with self.assertRaises(ValueError):
+            ph.validate_marks(rows + rows, ["S001"])
+
+    def test_e3_criteria_and_strict_percentiles(self):
+        mirage = {v: [.1] * 100 for v in ph.E3_VARIANTS["MIRAGE"]}
+        retfound = {v: [-.1] * 100 for v in ph.E3_VARIANTS["RETFound"]}
+        gap = {v: [.2] * 100 for v in retfound}
+        result = [r[-1] for r in ph.e3_criteria(mirage | {"M-pad": [-1] * 100}, retfound, gap)]
+        self.assertIn("kept within this grid", result)
+        self.assertIn("position unchanged within this grid", result)
+        mirage["M-res256"] = [0.] * 100
+        retfound["R-pad"] = [0.] * 100
+        gap["R-squash"] = []
+        result = [r[-1] for r in ph.e3_criteria(mirage, retfound, gap)]
+        self.assertIn("sensitive to M-res256", result)
+        self.assertIn("not evaluable", result)
+        self.assertNotIn("position unchanged within this grid", result)
+        self.assertTrue(ph.e3_interval_check(5, 10, (.5, .6)))
+        self.assertFalse(ph.e3_interval_check(7, 10, (.5, .6)))
+        self.assertEqual(ph.ranks_with_ties({"a": 1, "b": 1, "c": 2}), {"a": 1, "b": 1, "c": 3})
+
+    def test_e4_reading_thresholds_and_ceiling(self):
+        self.assertEqual([ph.e4_reading(v) for v in (.599, .60, .80, .95)],
+                         ["hardly separable", "partly separable", "strongly separable", "near-perfectly separable"])
+        self.assertEqual(ph.e4_pair_reading(1., .99, -.02, -.01), "at ceiling; the difference is not read")
+        self.assertEqual(ph.e4_pair_reading(.999, .989, -.02, -.01), "the control reduced separability")
+        self.assertEqual(ph.e4_pair_reading(.99, .98, -.02, 0.), "no reduction shown")
+        self.assertEqual(ph.e4_pair_reading(.95, .90, -.06, -.04, control=False), "descriptive comparison")
+
+    def test_e4_namespaces_folds_draws_and_probes(self):
+        self.assertEqual((ph.E2_BOOT_NS, ph.E2_SAMPLE_NS, ph.E2_ORDER_NS), (12101, 12102, 12103))
+        self.assertEqual((ph.E4_FOLD_NS, ph.E4_BOOT_NS, ph.E4_FEWSHOT_NS), (14101, 14102, 14103))
+        self.assertEqual(len(ph.e4_pairs()), 9)
+        self.assertEqual(ph.e4_pairs()[-3:], list(ph.E4_NORMAL_PAIRS))
+        y = np.repeat([0, 1], 24)
+        units = np.repeat([f"unit-{i}" for i in range(24)], 2)
+        X = np.column_stack((1 - y, y, np.ones(len(y))))
+        folds = ph.grouped_folds(y, units, 6)
+        self.assertEqual(len(folds), 5)
+        np.testing.assert_array_equal(np.sort(np.concatenate(folds)), np.arange(len(y)))
+        for first, again in zip(folds, ph.grouped_folds(y, units, 6)):
+            np.testing.assert_array_equal(first, again)
+            self.assertTrue(all(np.count_nonzero(units[first] == u) == 2 for u in units[first]))
+        fit, keep, _, _ = ph.fit_logistic_raw(X, y)
+        self.assertTrue(fit.converged)
+        self.assertEqual(keep.tolist(), [0, 1])
+        for normalize in (False, True):
+            scores, failed = ph.probe_scores(X, y, folds, normalize)
+            self.assertEqual(failed, 0)
+            self.assertEqual(ph.auroc(scores[y == 1], scores[y == 0]), 1)
+        draws = ph.source_fewshot(X, y, units, 6, ph.prototype_predict, draws=3)
+        self.assertEqual(draws, {(k, r): 1. for k in ph.KS for r in range(3)})
+        member_ids = [sorted(set(units[y == s])) for s in (0, 1)]
+        indices = [{u: np.flatnonzero(units == u).tolist() for u in ids} for ids in member_ids]
+        plan = ph.source_draw(member_ids, indices, 6, 1)
+        self.assertEqual(plan, ph.source_draw(member_ids, indices, 6, 1))
+        self.assertNotEqual(plan, ph.source_draw(member_ids, indices, 6, 2))
+        for order, picked in plan:
+            self.assertEqual([units[p] for p in picked], order[:8])
+
+    def test_render_layout_and_residuals(self):
+        row = {"path": "data/raw/rare/MH/example.png", "sha256": "stub", "box_left": "1", "box_right": "65",
+               "box_top": "2", "box_bottom": "34"}
+        self.assertEqual(ph.content_sizes(SimpleNamespace(render_rows=lambda: [row])), {row["path"]: (64, 32)})
+        self.assertEqual(ph.render_png(Path("render"), "E1-M", row["path"]).as_posix(),
+                         "render/E1-M/data/raw/rare/MH/example.png.png")
+        edge = {f"{s}_{k}": v for s in ("original", *ph.E_SETS)
+                for k, v in (("border_share", ".1"), ("edge_run", ".10"), ("near_white_share", ".12"))}
+        values = ph.framing_residual([row | edge], {})
+        self.assertEqual(len(values), 20)
+        self.assertTrue(all(r[1] == "MH" for r in values))
+        self.assertTrue(all(r[4] == 1 for r in values if "> 5%" in r[3]))
+        self.assertTrue(all(r[4] == 0 for r in values if "> 10%" in r[3]))
+        self.assertEqual(ph.rerender_agreement([(np.array([0, 255]), np.array([255, 0]))]), (1, 1, 255))
+
+    def test_phase1_render_cache_and_receipt(self):
+        import zipfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            producer = root / "producer"
+            producer.mkdir()
+            inventory = [{"path": "original.png", "sha256": "digest"}]
+            header = list(ph.RENDER_COLUMNS)
+            row = dict.fromkeys(header, "0") | inventory[0]
+            ph.prep.write_csv(producer / "render.csv", header, [[row[c] for c in header]])
+            ph.prep.write_csv(producer / "pixel_stats.csv",
+                              ["path", *[f"{s}_{k}" for s in ("original", "E1-M") for k in ph.PIXEL_STATS]],
+                              [["original.png", *range(16)]])
+            np.savez(producer / "thumbs16.npz", paths=["original.png"], sha256=["digest"],
+                     raw=np.ones((1, 256)) * .5, **{"E1-M": np.ones((1, 256))})
+            files = ["render.csv", "pixel_stats.csv", "thumbs16.npz"]
+            ph.prep.complete(producer, files)
+            archive = root / "phase1-render.zip"
+            with zipfile.ZipFile(archive, "w") as stream:
+                for name in [*files, "complete.json"]:
+                    stream.write(producer / name, name)
+            receipt = archive.with_suffix(".zip.json")
+            digest = ph.prep.sha256(archive)
+            ph.prep.write_json(receipt, {"sha256": digest})
+            with patch.object(ph, "safe_unzip", wraps=ph.safe_unzip) as unpack:
+                cache = root / "cache"
+                _, rows, rendered = ph.phase1_root(root, root / "e1", cache)
+                _, other_rows, other_render = ph.phase1_root(root, root / "e2", cache)
+                self.assertEqual((other_rows, other_render), (rows, rendered))
+                self.assertEqual(rendered, cache / digest)
+                self.assertEqual(unpack.call_count, 1)
+            self.assertEqual(rows, [[archive.name, digest]])
+            phase = ph.Phase1.__new__(ph.Phase1)
+            phase.render = ph.render_folder(rendered)
+            phase.main_inv, phase.ext_inv = inventory, []
+            self.assertEqual(phase.render_rows(), [row])
+            np.testing.assert_array_equal(phase.pixel_stats("raw")["original.png"], np.arange(8))
+            np.testing.assert_array_equal(phase.pixel_stats("E1-M")["original.png"], np.arange(8, 16))
+            np.testing.assert_array_equal(phase.thumbs()["raw"]["original.png"], [.5] * 256)
+            with archive.open("ab") as stream:
+                stream.write(b"tampered")
+            with self.assertRaisesRegex(ValueError, "differs from the SHA256"):
+                ph.phase1_root(root, root / "invalid", cache)
+
+    def test_phase1_status_applies_the_right_controls(self):
+        phase = ph.Phase1.__new__(ph.Phase1)
+        phase.render, phase.dry_run = Path("render"), False
+        control, ref, variant = object(), object(), object()
+        phase.outputs = {
+            ("E1-M", ph.NOMINEE, ""): control, ("E1-M", fm.REFERENCE, ""): control,
+            ("E3", ph.NOMINEE, ph.E3_REF): ref, ("E3", ph.NOMINEE, "M-res256"): variant,
+        }
+        checks = {control: True, ref: True}
+        phase.control = lambda out: {"passed": checks[out]}
+        self.assertEqual(phase.status(ph.NOMINEE, "locked"), ph.INTERPRETED)
+        self.assertEqual(phase.status(ph.NOMINEE, "E1-L"), ph.UNAVAILABLE)
+        self.assertEqual(phase.status(ph.NOMINEE, "E1-M"), ph.INTERPRETED)
+        checks[ref] = False
+        self.assertEqual(phase.status(ph.NOMINEE, "E1-M"), ph.NOT_INTERPRETED)
+        self.assertEqual(phase.status(ph.NOMINEE, "E3", "M-res256"), ph.NOT_INTERPRETED)
+        self.assertEqual(phase.status(fm.REFERENCE, "E1-M"), ph.INTERPRETED)
+        checks[ref], checks[control] = True, False
+        self.assertEqual(phase.status(ph.NOMINEE, "E3", "M-res256"), ph.INTERPRETED)
+        self.assertEqual(phase.status(ph.NOMINEE, "E1-M"), ph.NOT_INTERPRETED)
+        phase.render, checks[control] = None, True
+        self.assertEqual(phase.status(ph.NOMINEE, "E1-M"), ph.NOT_INTERPRETED)
+
+    def test_phase1_partial_and_worker_identity(self):
+        import fm_control_extract as control
+
+        root = Path("phase1")
+        study = SimpleNamespace(lock=root, external=root)
+        with patch.object(ph, "phase1_outputs", return_value={}) as outputs, \
+             patch.object(ph, "render_folder", return_value=None), \
+             patch.object(ph.prep, "sha256", return_value="locked"), \
+             patch.object(ph.prep, "read_csv", return_value=[]):
+            with self.assertRaisesRegex(ValueError, "Partial Phase-1 delivery .*--partial"):
+                ph.Phase1(study, root, [])
+            ph.Phase1(study, root, [], partial=True)
+            with self.assertRaisesRegex(ValueError, "M-res256 archive exists"):
+                ph.Phase1(study, root, [["phase1-E3-MIRAGE-M-res256.zip", "digest"]], partial=True)
+            identity = dict(lock_sha256="locked", external_lock_sha256="locked", registry_sha256=control.registry_hash(),
+                            script_sha256=ph.prep.text_hash(Path(control.__file__)))
+            out = ph.Phase1Output(ph.NOMINEE, "E3", ph.E3_REF, root, identity)
+            outputs.return_value = {("E3", ph.NOMINEE, ph.E3_REF): out}
+            ph.Phase1(study, root, [], partial=True)
+            for key in ("registry_sha256", "script_sha256"):
+                with patch.dict(identity, {key: "wrong"}), self.assertRaisesRegex(ValueError, key):
+                    ph.Phase1(study, root, [], partial=True)
+
+    def test_e1_assembly_scores_m_res256_inside_e1_and_gates_controls(self):
+        def features(arm, feature_set, variant=""):
+            if feature_set == "locked":
+                return (.75 if arm == ph.NOMINEE else .5, None)
+            if feature_set == "E1-M" and arm in (ph.NOMINEE, fm.REFERENCE):
+                return (.25 if arm == ph.NOMINEE else .5, None)
+            return (.625, None) if variant == "M-res256" else None
+
+        def scores(_study, score):
+            return {(k, draw): score.value for k in ph.KS for draw in range(fm.N_DRAWS)}
+
+        def score_features(_study, main, _ext):
+            return SimpleNamespace(rep={(k, 0): np.array([True]) for k in ph.KS}, nine={}, value=main)
+
+        phase = SimpleNamespace(features=Mock(side_effect=features), status=Mock(return_value=ph.INTERPRETED),
+                                thumbs=lambda: {})
+        with patch.multiple(ph, locked_geometry=Mock(return_value={}),
+                            score_vectors=Mock(return_value=SimpleNamespace(nine=None, value=.25)),
+                            score_feature_set=Mock(side_effect=score_features),
+                            dev_macro=Mock(side_effect=scores), rep_macro=Mock(return_value={(k, 0): .5 for k in ph.KS}),
+                            nine_way_rows=Mock(return_value=[]), e1_checks=Mock(return_value=[]),
+                            content_sizes=Mock(return_value={}), dev_order=Mock(return_value=([], []))):
+            # No E3 report or output directory exists. The value comes from archived features.
+            drop = {"E1h"}
+            header, rows = ph.e1(None, phase, {}, drop=drop)["E1d_success.csv"]
+            records = {r["line"]: r for r in (dict(zip(header, row)) for row in rows)}
+            self.assertIn("K mean by -0.125 (E3 M-res256)", records["fixed sentence"]["text"])
+            phase.features.assert_any_call(ph.NOMINEE, "E3", "M-res256")
+            phase.features.reset_mock()
+            phase.status.return_value = ph.NOT_INTERPRETED
+            _, rows = ph.e1(None, phase, {}, drop=drop)["E1d_success.csv"]
+            sentence = next(r for r in rows if r[0] == "fixed sentence")
+            self.assertEqual(sentence[-2], "not evaluable")
+            self.assertEqual(sentence[-1], "not evaluable")
+            self.assertIn("failed its control", sentence[2])
+            self.assertFalse(any(len(call.args) == 3 for call in phase.features.call_args_list))
+
+    def test_e3_assembly_counts_m_pad_and_gates_failed_reference(self):
+        variant = SimpleNamespace(identity={}, folder=Path("M-crop"))
+        ref = SimpleNamespace(identity={}, folder=Path("E3-ref"))
+        phase = SimpleNamespace(main_inv=[], ext_inv=[], locked_all=lambda arm: None, features=lambda *args: (1, None),
+                                get=lambda name, arm, v: {ph.E3_REF: ref, "M-crop": variant}.get(v)
+                                if arm == ph.NOMINEE else None,
+                                control=lambda out: dict(passed=False, images=0, max_difference_ratio=.1))
+        study = SimpleNamespace(lock=Path("lock"), external=Path("ext"), features=lambda arm: 0,
+                                external_features=lambda arm: None)
+
+        def nine(_study, sc):
+            count = int(sc == 2)
+            return [[name, 10, 10 - count, 10 - count, 0, count, "", 0, 0, .05] for name in ph.NORMAL_SETS]
+
+        dev = {(k, draw): .5 for k in ph.KS for draw in range(fm.N_DRAWS)}
+        with patch.multiple(ph, locked_geometry=Mock(return_value={}), nine_way_rows=Mock(side_effect=nine),
+                            score_feature_set=Mock(side_effect=lambda study, main, ext:
+                                                   SimpleNamespace(nine=main if isinstance(main, int) else 2)),
+                            dev_macro=Mock(return_value=dev), rep_macro=Mock(return_value=dev),
+                            feature_difference=Mock(return_value=dict(images=1, max_difference_ratio=0,
+                                                                     worst_image_difference_ratio=.002))), \
+                patch.object(ph.fx, "merge"), patch.object(ph.prep, "verify_complete"), \
+                patch.object(ph.prep, "sha256", return_value="lock"), patch.object(ph.prep, "read_csv", return_value=[]), \
+                patch.object(ph.prep, "read_json", return_value=dict(arm=ph.NOMINEE, lock_sha256="lock",
+                                                                    external_lock_sha256="lock")), \
+                patch.object(ph.extract, "load_features"):
+            rows = ph.e3(study, phase, padded=Path("padded"))["E3_criteria.csv"][1]
+        self.assertTrue(all(ph.M_PAD_NOTE in r[-1] for r in rows if r[:3] == ["(3)", ph.NOMINEE, ph.M_PAD]))
+        self.assertTrue(all("not counted" in r[-1] for r in rows if r[:3] == ["(3)", ph.NOMINEE, "M-crop"]))
+        summary = next(r for r in rows if r[:2] == ["(3)", "all"])
+        self.assertEqual(summary[4], 1)
+        self.assertIn(f"{ph.M_PAD} OCTID NORMAL ({ph.M_PAD_NOTE})", summary[-1])
+
+    def test_e2_tables_cover_destinations_transitions_and_patient_units(self):
+        def cell(paths, labels, calls):
+            return ph.Cell(tuple(paths), tuple(labels), tuple(calls), fm.NINE, np.zeros((len(paths), 9)))
+
+        kermany = ["NORMAL-p1-1.jpeg", "NORMAL-p2-1.jpeg"]
+        octid = ["I0", "I1", "I2", "I3"]
+        octdl = [f"D{i}" for i in range(11)]
+        sources = {"OCTID": (octid, ["NORMAL", "NORMAL", "CSC", "MH"]),
+                   "OCTDL": (octdl, ["NORMAL"] * 10 + ["MH"])}
+        queries = [{"source": s, "path": p, "label": lab}
+                   for s, (paths, labels) in sources.items() for p, lab in zip(paths, labels)]
+        patient = {p: str(i // 2) for i, p in enumerate(octdl)}
+        study = SimpleNamespace(kermany_normals=lambda: (set(kermany), set(kermany)), queries=queries, patient=patient)
+        original = {"Kermany": cell(kermany, ["NORMAL"] * 2, ["CNV", "NORMAL"]),
+                    "OCTID": cell(octid, sources["OCTID"][1], ["MH", "NORMAL", "CSC", "NORMAL"]),
+                    "OCTDL": cell(octdl, sources["OCTDL"][1], ["NORMAL"] * 5 + ["CNV"] * 3 + ["MH"] * 3)}
+        controlled = original | {"OCTDL": cell(octdl, sources["OCTDL"][1], ["NORMAL"] * 11)}
+        cells = {(a, "locked"): (ph.INTERPRETED, original) for a in ph.ARMS}
+        cells[ph.NOMINEE, "E1-M"] = (ph.NOT_INTERPRETED, controlled)
+        properties = {p: {prop: i for prop in ph.E2D_PROPERTIES} for i, p in enumerate(octdl)}
+        tables = ph.e2_tables(study, cells, properties, {p: {"mode": "L"} for p in octdl}, {"E2d-intervals"})
+        def rows(filename):
+            header, records = tables[filename]
+            self.assertTrue(all(len(r) == len(header) for r in records))
+            return [dict(zip(header, r)) for r in records]
+        for name in tables:
+            rows(name)
+        property_rows = rows("E2d_properties.csv")
+        self.assertEqual(sum(row["main_text_table"] for row in property_rows), 28)
+        for row in property_rows:
+            if row["main_text_table"]:
+                self.assertEqual((row["n_failed"], row["failed_common"], row["failed_rare"]), (5, 3, 2))
+        patient_rows = rows("E2e_octdl_patients.csv")
+        self.assertEqual((patient_rows[0]["all_failed"], patient_rows[0]["some_failed"], patient_rows[0]["none_failed"]), (2, 1, 2))
+        transitions = rows("E2c_transitions.csv")
+        rows_dl = [row for row in transitions if row["query_set"] == "OCTDL NORMAL"]
+        self.assertEqual(sum(row["count"] for row in rows_dl), 10)
+        self.assertTrue(all(row["status"] == ph.NOT_INTERPRETED for row in rows_dl))
+        groups, anchors = ph.e2f_groups(study, cells)
+        self.assertEqual(groups["OCTID", "consensus failure"], ["I0"])
+        self.assertEqual(anchors, sorted(kermany))
+
+        def record_seed(values, failed, units, rng):
+            return [rng.integers(2**31), *[None] * (len(ph.E2D_HEADER) - 1)]
+
+        with patch.object(ph, "e2d_row", side_effect=record_seed):
+            all_rows = ph.e2_tables(study, cells, properties, {}, set())["E2d_properties.csv"][1]
+            fewer = {k: v for k, v in cells.items() if k[0] != ph.ARMS[0]}
+            fewer_rows = ph.e2_tables(study, fewer, properties, {}, set())["E2d_properties.csv"][1]
+        self.assertEqual([r for r in all_rows if r[0] != ph.ARMS[0]], fewer_rows)
+
+    def test_e4_tables_release_failed_control_scores_without_reading(self):
+        sources = ["Kermany test", "Yoo rare", "OCTID", "OCTDL"]
+        members, vectors = {}, {}
+        for i, source in enumerate(sources):
+            paths = [f"{source}:{j}" for j in range(12)]
+            members[source] = (paths, paths)
+            members[source + " NORMAL"] = (paths, paths)
+            vectors.update({p: np.eye(4)[i] for p in paths})
+        status = {"MIRAGE locked": ph.INTERPRETED, "MIRAGE E1-M": ph.NOT_INTERPRETED}
+        tables = ph.e4_tables(members, {"G": vectors}, {"G": list("abcd")},
+                             {name: vectors for name in status}, {"raw": vectors, "E1-M": vectors},
+                             n_boot=4, draws=2, status=status)
+        for header, rows in tables.values():
+            self.assertTrue(rows)
+            self.assertTrue(all(len(r) == len(header) for r in rows))
+        fields, rows = tables["E4a_fewshot_source_test.csv"]
+        read = [dict(zip(fields, r)) for r in rows]
+        self.assertEqual(len({r["pair"] for r in read}), 3)
+        self.assertTrue(all(r["mean"] == 1 for r in read if r["quantity"].startswith("two-way")))
+        self.assertTrue(all(r["reading"] == "" for r in read if r["status"] == ph.NOT_INTERPRETED))
+        self.assertTrue(any(row[-1] == "different sources: source and disease are mixed" for row in tables["E4c_probe_auroc.csv"][1]))
 
 
 if __name__ == "__main__":

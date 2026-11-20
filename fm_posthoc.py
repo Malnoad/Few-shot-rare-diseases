@@ -20,6 +20,19 @@ writes only to results/fm_v1/posthoc/ (write-once: a rerun never replaces differ
     D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py p10-screen --attempt <attempt> --data-root D:/Few-shot \
         --sheet <outside the repo>/P10_review_sheet.html
 
+Phase-1 controls E1-E4 (protocols.md section 8, "Phase-1 controls E1-E4"; outputs never replace a locked result):
+
+    D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py e3 --attempt <attempt> --phase1 <Drive phase1/> [--padded <G1 folder>]
+    D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py e1 --attempt <attempt> --phase1 <Drive phase1/> [--data-root D:/Few-shot]
+    D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py e2 --attempt <attempt> --phase1 <Drive phase1/> [--sheet <Drive folder>]
+    D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py e4 --attempt <attempt> --phase1 <Drive phase1/>
+    D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py e-report      # E1_comparison.md from the E1 CSVs
+    D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py e2f-marks --marks <pass1/marks.csv> [--key <key/key.csv>]
+
+Score once, after the last session. Use `--partial` to explicitly score an incomplete delivery.
+`phase1-render.zip` is cached by receipt SHA256 in the system temporary directory.
+`--drop` applies the laptop drop order.
+
 `g1 --padded` takes the Drive g1/ folder as Colab saved it (each zip checked against its receipt)
 or a folder holding the unzipped MIRAGE/ and Inception/. It needs the locked P9 tables in --out.
 """
@@ -1582,6 +1595,1854 @@ def p9_label(today: str) -> str:
     return f"post hoc, rule timestamped by commit {rule_commit(P9_ROW)[:7]} (18 Nov 2026), computed {today}"
 
 
+# ============================================================ Phase-1 E1-E4 ===
+# Rules: protocols.md section 8, subsection "Phase-1 controls E1-E4", committed and pushed in 4b4e883
+# (20 Nov 2026) before any E number. Choices the rules leave open, fixed here before any E number:
+# - Layout read from Drive phase1/ (written by fm_control_extract.py): phase1-*.zip archives, each with a
+#   .zip.json receipt {"sha256": ...}; phase1-logs-* archives are not read. Inside, every feature folder has
+#   complete.json, identity.json (keys arm, set in E1-M / E1-L / E1-C / E3, variant for E3, lock_sha256,
+#   repeat_check, code_matches_lock, environment_matches_lock, overrides), features.npz and
+#   features_external.npz. E1 has control.npz, DINOv2 also control_external.npz, and Inception E1-M
+#   also decoder_check.npz. E3 has variant_inputs.csv and the full E3-ref is its control.
+#   The render folder has complete.json, render.csv, decoder.csv, one normalized [n, 256] thumbnail
+#   array per set in thumbs16.npz, and wide pixel_stats.csv and edge_residual.csv tables.
+# - Width, height, A2 border share and near-white share of the originals come from the locked geometry.csv
+#   of the locked feature bundles (identical for every arm); grey mean and SD from pixel_stats.csv (raw).
+# - Thumbnail reference: nearest mean support, squared Euclidean, first class on ties; nine-way thumbnail
+#   prototypes are the class means of the fitting images' thumbnails. In E4 the thumbnails use the same rule.
+# - E2b "share given the same class": over all normals of the set, the share given the same class by both arms.
+# - E4 per-column AUROC: the second source of the pair is the positive class; the reading uses
+#   max(AUROC, 1 - AUROC), since a column has no fitted direction.
+# - E1 pixel-only reading (choice fixed in code before any E number): "is above" means p05 > 0
+#   across the 100 paired MIRAGE E1-M minus E1-M thumbnail K-mean differences; z is their mean.
+# - E2d bootstrap streams are keyed by arm, source, feature set and property within namespace 12101.
+PHASE1_HEADING = "### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)"
+E_SETS = ("E1-M", "E1-L", "E1-C")
+FEATURE_SETS = ("locked", *E_SETS)
+CONTROL_TOL, EFFECT_MIN = 1e-4, 1e-3  # A2 A-6 repeat tolerance; E3 "change applied" threshold
+E2_BOOT_NS, E2_SAMPLE_NS, E2_ORDER_NS = 12101, 12102, 12103
+E4_FOLD_NS, E4_BOOT_NS, E4_FEWSHOT_NS = 14101, 14102, 14103
+E_BOOT = 2000
+NOT_INTERPRETED = "environment differs from the lock; not interpreted"
+UNAVAILABLE = "unavailable"
+INTERPRETED = "interpreted"
+E3_VARIANTS = {"MIRAGE": ("M-crop", "M-bicubic", "M-nostretch", "M-res256"),
+               "RETFound": ("R-squash", "R-pad", "R-bilinear", "R-stretch", "R-norm05", "R-res128")}
+E3_REF = "E3-ref"
+E3_SQUARE = ("M-crop", "R-squash", "R-pad")
+E3_SCOPE = "input preprocessing only; pooling and token choice are not varied"
+M_PAD, M_PAD_NOTE = "M-pad", "known before this rule (G1, 18 Nov)"
+RENDER_COLUMNS = ("path", "sha256", "mode", "format", "min_alpha", "width", "height", "first_left", "first_top",
+                  "first_right", "first_bottom", "box_left", "box_top", "box_right", "box_bottom", "flagged")
+PIXEL_STATS = ("mean", "sd", "p01", "p50", "p99", "share_le8", "share_ge250", "entropy_bits")
+GEOMETRY_G = ("width", "height", "aspect_ratio", "border_share")
+E2D_PROPERTIES = ("width", "height", "aspect_ratio", "border_share", "near_white_share", "grey_mean", "grey_sd")
+E1_LIMITATIONS = ("the centre square drops lateral retina unequally by source and class; MIRAGE now gets 256 px of "
+                  "detail enlarged to 512; E1-M does not remove effective resolution (content short side 103-496 px), "
+                  "field of view, scanner appearance, compression, intensity, black-clipped background against "
+                  "speckle, or Kermany's white fill wedges")
+DROPPABLE = ("E2f", "E4-probe", "E2d-intervals", "E1e", "E1h")  # the laptop drop order (rules, GPU plan)
+NORMAL_SETS = ("Kermany patient-disjoint", "OCTID NORMAL", "OCTDL NORMAL")
+RARE_EXTERNAL = ("OCTID CSC", "OCTID MH", "OCTDL MH")
+
+
+# ------------------------------------------------------------- rule 1 of E1-E4 ---
+def section_text(text: str, heading: str = PHASE1_HEADING) -> str:
+    """The subsection under `heading`, up to the next heading of level 2 or 3 (line endings folded to LF)."""
+    lines = text.replace("\r\n", "\n").split("\n")
+    if heading not in lines:
+        raise ValueError(f"heading not found: {heading}")
+    start = lines.index(heading)
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith(("## ", "### "))), len(lines))
+    return "\n".join(lines[start:end]).strip("\n") + "\n"
+
+
+def section_sha256(text: str, heading: str = PHASE1_HEADING) -> str:
+    import hashlib
+    try:
+        return hashlib.sha256(section_text(text, heading).encode("utf-8")).hexdigest()
+    except ValueError:
+        return "missing"
+
+
+def rule_section_hash(commit: str, heading: str = PHASE1_HEADING, working: str | None = None) -> dict:
+    """Rule 1: SHA256 of the subsection at the rule commit and in the working protocols.md."""
+    here = Path(__file__).resolve().parent
+    committed = subprocess.check_output(["git", "show", f"{commit}:protocols.md"], cwd=here).decode("utf-8")
+    now = (here / "protocols.md").read_text(encoding="utf-8") if working is None else working
+    a, b = section_sha256(committed, heading), section_sha256(now, heading)
+    if a == "missing":
+        raise ValueError(f"the registered heading is missing at {commit}")
+    return dict(commit=commit, commit_sha256=a, working_sha256=b, same=a == b)
+
+
+def long_date(iso: str) -> str:
+    d = datetime.date.fromisoformat(iso)
+    return f"{d.day} {d:%b %Y}"
+
+
+def e_label(n: int, commit: str, committed: str, today: str, section: Mapping) -> str:
+    """Rule 2 label; rule 1 adds a warning whenever the working subsection differs from the rule commit."""
+    label = (f"post hoc, Phase-1 rule E{n} timestamped by commit {commit[:7]} ({committed}), computed {today}; "
+             "outside the locked protocol; never replaces a locked result")
+    if not section["same"]:
+        label += (f"; WARNING: the working Phase-1 subsection differs from commit {commit[:7]} "
+                  f"(SHA256 {section['working_sha256'][:12]} against {section['commit_sha256'][:12]})")
+    return label
+
+
+def phase1_labels(today: str) -> tuple[dict[str, str], dict]:
+    commit = rule_commit(PHASE1_HEADING)
+    section = rule_section_hash(commit)
+    date = subprocess.check_output(["git", "show", "-s", "--format=%cs", commit], cwd=Path(__file__).resolve().parent,
+                                   text=True).strip()
+    return {f"E{n}": e_label(n, commit, long_date(date), today, section) for n in range(1, 5)}, section
+
+
+# -------------------------------------------------------------- pure functions ---
+def nearest_mean_scores(supports: Sequence[np.ndarray], queries: np.ndarray) -> np.ndarray:
+    """Minus the squared Euclidean distance to each class's mean support (argmax = nearest, first on ties)."""
+    if not supports or any(len(s) == 0 for s in supports):
+        raise ValueError("nearest mean needs supports for every class")
+    means = np.stack([np.asarray(s, dtype=np.float64).reshape(len(s), -1).mean(axis=0) for s in supports])
+    q = np.asarray(queries, dtype=np.float64).reshape(len(queries), means.shape[1])
+    if not np.isfinite(means).all() or not np.isfinite(q).all():
+        raise ValueError("nearest mean needs finite values and supports for every class")
+    return -((q[:, None, :] - means[None, :, :]) ** 2).sum(axis=2)
+
+
+def nearest_mean_predict(supports: Sequence[np.ndarray], queries: np.ndarray) -> np.ndarray:
+    """fm_core.size_predict in any dimension: nearest mean support, squared Euclidean, first class on ties."""
+    return np.argmax(nearest_mean_scores(supports, queries), axis=1)
+
+
+def prototype_scores(supports: Sequence[np.ndarray], queries: np.ndarray) -> np.ndarray:
+    """Section 6 cosine prototypes, as the locked nine-way head computes them."""
+    return fm.unit(queries) @ fm.centroids(supports).T
+
+
+def success_rule(d: Sequence[float], n_required: int = fm.N_DRAWS) -> dict:
+    """E1's rule: p05 = numpy.percentile(d, 5) (linear) > 0; n must be n_required, else 'not evaluable'."""
+    values = np.asarray(list(d), dtype=np.float64)
+    out = dict(n=len(values), mean=None, sd=None, p05=None, n_positive=int((values > 0).sum()) if len(values) else 0)
+    if len(values) and np.isfinite(values).all():
+        out.update(mean=float(values.mean()), sd=float(values.std(ddof=1)) if len(values) > 1 else None,
+                   p05=float(np.percentile(values, 5)))
+    if len(values) != n_required or out["p05"] is None:
+        out["verdict"] = "not evaluable"
+    else:
+        out["verdict"] = "pass" if out["p05"] > 0 else "fail"
+    return out
+
+
+def matched_subset(sides: Mapping[str, float], labels: Mapping[str, str]) -> tuple[float, float, list[str]]:
+    """E1e: L = largest class minimum, U = smallest class maximum of the content short side; queries in [L, U]."""
+    by: dict[str, list[float]] = {}
+    for p, lab in labels.items():
+        by.setdefault(lab, []).append(float(sides[p]))
+    low, high = max(min(v) for v in by.values()), min(max(v) for v in by.values())
+    return low, high, [p for p in labels if low <= float(sides[p]) <= high]
+
+
+def _fmt(x: float | None, digits: int = 3, sign: bool = False) -> str:
+    if x is None:
+        return "not available"
+    return f"{x:+.{digits}f}" if sign else f"{x:.{digits}f}"
+
+
+def _clause(variant: str, main_pass: bool, other: Mapping | None, what: str) -> str:
+    """The fixed E1-L / E1-C clause for an evaluable secondary variant."""
+    if other is None or other["verdict"] not in ("pass", "fail"):
+        return ""
+    lead = "and also" if (other["verdict"] == "pass") == main_pass else "but not"
+    return f", {lead} when {what} ({variant} p05 = {_fmt(other['p05'])})"
+
+
+def e1_sentences(main: Mapping, locked_mean: float | None, thumb: Mapping | None,
+                 e1l: Mapping | None = None, e1c: Mapping | None = None, res256_shift: float | None = None) -> str:
+    """E1's fixed sentences, filled from numbers only (protocols.md, E1 'Fixed sentences')."""
+    if main["verdict"] == "not evaluable":
+        return "not evaluable"
+    passed = main["verdict"] == "pass"
+    clauses = _clause("E1-L", passed, e1l, "effective resolution is evened out") + \
+        _clause("E1-C", passed, e1c, "the image is only cropped to its content box")
+    if passed:
+        if thumb is None or thumb["verdict"] == "not evaluable":
+            return ""  # The verdict row is published even when the sentence's companion statistic is missing.
+        above = "is" if thumb["p05"] > 0 else "is not"
+        return ("Under the size and framing control, MIRAGE keeps a positive development advantage over Inception-v3 "
+                f"(mean {_fmt(main['mean'])}, locked {_fmt(locked_mean)}; p05 {_fmt(main['p05'])}){clauses}; "
+                f"it {above} above the pixel-only reference (mean {_fmt(thumb['mean'])}).")
+    if res256_shift is None:
+        return ""
+    return (f"MIRAGE does not keep its development advantage under this control (mean {_fmt(main['mean'])}, "
+            f"p05 {_fmt(main['p05'])}){clauses}; halving MIRAGE's input resolution alone moved its K mean by "
+            f"{_fmt(res256_shift, sign=True)} (E3 M-res256).")
+
+
+def jaccard(a: set, b: set) -> float | None:
+    """|A ∩ B| / |A ∪ B|; None ("—") when both sets are empty."""
+    union = a | b
+    return None if not union else len(a & b) / len(union)
+
+
+def failure_overlap(failed: Mapping[str, set], items: Sequence[str]) -> list[int]:
+    """Number of items failed by 0, 1, ..., len(failed) arms."""
+    counts = [0] * (len(failed) + 1)
+    for item in items:
+        counts[sum(item in f for f in failed.values())] += 1
+    return counts
+
+
+def same_class_share(a: Sequence[str], b: Sequence[str]) -> float:
+    return float(np.mean(np.asarray(a) == np.asarray(b)))
+
+
+def tertile_shares(values: Sequence[float], failed: Sequence[bool]) -> tuple[list[float], list[int], list[float | None]]:
+    """Cut points at the 1/3 and 2/3 quantiles (numpy linear) of all values; ties go to the lower tertile.
+    Returns the cuts, the count and the failure share per tertile."""
+    v, f = np.asarray(values, dtype=np.float64), np.asarray(failed, dtype=bool)
+    cuts = np.percentile(v, [100 / 3, 200 / 3]).tolist()
+    tertile = np.where(v <= cuts[0], 0, np.where(v <= cuts[1], 1, 2))
+    counts = [int((tertile == t).sum()) for t in range(3)]
+    return cuts, counts, [float(f[tertile == t].mean()) if counts[t] else None for t in range(3)]
+
+
+def quartiles(values: Sequence[float]) -> list[float | None]:
+    if not len(values):
+        return [None, None, None]
+    return np.percentile(np.asarray(values, dtype=np.float64), [50, 25, 75]).tolist()
+
+
+def e2d_row(values: Sequence[float], failed: Sequence[bool], units: Sequence[str], rng: np.random.Generator | None,
+            n_boot: int = E_BOOT) -> list:
+    """One E2d row: n, median and quartiles per group, tertile shares and the AUROC of failed against not
+    failed with a unit-bootstrap 95% interval (rng None: no interval). Under 5 scans in a group: counts and
+    medians only."""
+    v, f, u = np.asarray(values, dtype=np.float64), np.asarray(failed, dtype=bool), np.asarray(units)
+    pos, neg = v[f], v[~f]
+    small = len(pos) < 5 or len(neg) < 5
+    qp, qn = quartiles(pos), quartiles(neg)
+    if small:
+        return [len(pos), len(neg), qp[0], None, None, qn[0], None, None, *[None] * 8, None, None, None, None]
+    cuts, counts, shares = tertile_shares(v, f)
+    point = auroc(pos, neg)
+    low = high = excludes = None
+    if rng is not None:
+        pg, ng = unit_index(u[f].tolist()), unit_index(u[~f].tolist())
+        boot = [auroc(pos[resample_units(pg, rng)], neg[resample_units(ng, rng)]) for _ in range(n_boot)]
+        low, high = np.percentile(boot, [2.5, 97.5]).tolist()
+        excludes = bool(low > 0.5 or high < 0.5)
+    return [len(pos), len(neg), *qp, *qn, *cuts, *counts, *shares, point, low, high, excludes]
+
+
+E2D_HEADER = ["n_failed", "n_not_failed", "failed_median", "failed_q1", "failed_q3", "not_failed_median",
+              "not_failed_q1", "not_failed_q3", "tertile_cut_1", "tertile_cut_2", "n_tertile_1", "n_tertile_2",
+              "n_tertile_3", "failure_share_tertile_1", "failure_share_tertile_2", "failure_share_tertile_3",
+              "auroc_failed_vs_not", "boot95_low", "boot95_high", "interval_excludes_0_5"]
+
+
+def contact_sheet_sample(groups: Mapping[tuple[str, str], Sequence[str]], anchors: Sequence[str],
+                         per_group: int = 16, n_anchors: int = 8) -> list[list]:
+    """E2f: 16 per (source, group) at random (all if fewer; stream 12102), 8 Kermany anchors, one random order
+    (stream 12103), neutral IDs. Returns [id, path, source, group] in display order."""
+    pick = np.random.default_rng([fm.SEED, E2_SAMPLE_NS])
+    chosen = []
+    for (source, group) in sorted(groups):
+        members = sorted(groups[source, group])
+        take = members if len(members) <= per_group else [members[i] for i in sorted(pick.choice(len(members), per_group, replace=False))]
+        chosen += [(p, source, group) for p in take]
+    members = sorted(anchors)
+    chosen += [(members[i], "Kermany", "anchor") for i in sorted(pick.choice(len(members), min(n_anchors, len(members)), replace=False))]
+    order = np.random.default_rng([fm.SEED, E2_ORDER_NS]).permutation(len(chosen))
+    return [[f"S{i + 1:03d}", *chosen[j]] for i, j in enumerate(order)]
+
+
+E2F_MARKS = ("tilted_or_curved", "low_signal_or_heavy_speckle", "retina_cut_at_edge", "bands_or_frame",
+             "overlay_text_or_markers", "visible_abnormality", "scan_width")
+
+
+def mark_counts(marks: Sequence[Mapping[str, str]], key: Sequence[Mapping[str, str]]) -> list[list]:
+    """E2f result: counts of each mark value per group within source; groups under 8 images are flagged."""
+    where = {r["id"]: (r["source"], r["group"]) for r in key}
+    size: dict[tuple[str, str], int] = {}
+    for s, g in where.values():
+        size[s, g] = size.get((s, g), 0) + 1
+    counts: dict[tuple[str, str, str, str], int] = {}
+    for row in marks:
+        s, g = where[row["id"]]
+        for m in E2F_MARKS:
+            value = row.get(m, "").strip().lower()
+            counts[s, g, m, value] = counts.get((s, g, m, value), 0) + 1
+    return [[s, g, size[s, g], m, v, n, "shown in full, no comparison" if size[s, g] < 8 else ""]
+            for (s, g, m, v), n in sorted(counts.items())]
+
+
+def validate_marks(marks: Sequence[Mapping[str, str]], ids: Sequence[str]) -> None:
+    if sorted(r["id"] for r in marks) != sorted(ids):
+        raise ValueError("marks must contain exactly one row for every neutral ID")
+    for row in marks:
+        for name in E2F_MARKS:
+            allowed = ("narrow", "wide") if name == "scan_width" else ("yes", "no", "unsure")
+            if row.get(name, "").strip().lower() not in allowed:
+                raise ValueError(f"{row['id']}: fill {name} with one of {', '.join(allowed)}")
+
+
+def e3_interval_check(count: int, n: int, interval: Sequence[float]) -> bool:
+    """Criterion (3): the false-rare count lies inside the locked 95% interval (as a rate, bounds included)."""
+    return interval[0] <= count / n <= interval[1]
+
+
+def ranks_with_ties(values: Mapping[str, float]) -> dict[str, int]:
+    """Rank 1 = smallest; tied values share the smallest rank (description only)."""
+    return {k: 1 + sum(v2 < v for v2 in values.values()) for k, v in values.items()}
+
+
+def e3_criteria(mirage: Mapping[str, Sequence[float]], retfound_vs_inception: Mapping[str, Sequence[float]],
+                mirage_minus_retfound: Mapping[str, Sequence[float]]) -> list[list]:
+    """Criteria (1) and (2). mirage[v]: per-draw K mean of (MIRAGE v - Inception locked);
+    retfound_vs_inception[v]: (RETFound v - Inception locked); mirage_minus_retfound[v]: (MIRAGE locked - RETFound v).
+    A variant absent from the mapping is 'not available'; n other than 100 is 'not evaluable'."""
+    rows, failed, missing = [], [], []
+    for v in E3_VARIANTS["MIRAGE"]:
+        if v not in mirage:
+            rows.append(["(1)", "MIRAGE", v, "p05 of K mean (variant - Inception-v3 locked)", None, None, "not available"])
+            missing.append(v)
+            continue
+        s = success_rule(mirage[v])
+        ok = s["verdict"] == "pass"
+        rows.append(["(1)", "MIRAGE", v, "p05 of K mean (variant - Inception-v3 locked)", s["n"], s["p05"],
+                     "met" if ok else s["verdict"] if s["verdict"] == "not evaluable" else "not met"])
+        if s["verdict"] == "not evaluable":
+            missing.append(v)
+        elif not ok:
+            failed.append(v)
+    rows.append(["(1)", "MIRAGE", "all four", "result", None, None,
+                 ("sensitive to " + ", ".join(failed) if failed else "kept within this grid" if not missing else
+                  "not evaluable for the full grid") + (f"; unavailable or not evaluable: {', '.join(missing)}" if missing else "")])
+    moved = []
+    for v in E3_VARIANTS["RETFound"]:
+        if v not in retfound_vs_inception or v not in mirage_minus_retfound:
+            rows.append(["(2)", "RETFound", v, "both conditions", None, None, "not available"])
+            moved.append(v)
+            continue
+        a, b = np.asarray(retfound_vs_inception[v]), np.asarray(mirage_minus_retfound[v])
+        n_ok = len(a) == fm.N_DRAWS and len(b) == fm.N_DRAWS
+        n_ok = n_ok and np.isfinite(a).all() and np.isfinite(b).all()
+        p95 = float(np.percentile(a, 95)) if len(a) and np.isfinite(a).all() else None
+        p05 = float(np.percentile(b, 5)) if len(b) and np.isfinite(b).all() else None
+        rows.append(["(2)", "RETFound", v, "p95 of K mean (variant - Inception-v3 locked) < 0", len(a), p95,
+                     "not evaluable" if not n_ok else "met" if p95 < 0 else "not met"])
+        rows.append(["(2)", "RETFound", v, "p05 of K mean (MIRAGE locked - variant) > 0", len(b), p05,
+                     "not evaluable" if not n_ok else "met" if p05 > 0 else "not met"])
+        if not (n_ok and p95 < 0 and p05 > 0):
+            moved.append(v)
+    rows.append(["(2)", "RETFound", "all six", "result", None, None,
+                 "position unchanged within this grid" if not moved else f"position changed or not shown for {', '.join(moved)}"])
+    return rows
+
+
+def e4_reading(value: float | None) -> str:
+    if value is None:
+        return "not available"
+    return ("near-perfectly separable" if value >= 0.95 else "strongly separable" if value >= 0.80 else
+            "partly separable" if value >= 0.60 else "hardly separable")
+
+
+def e4_pair_reading(a: float, b: float, low: float, high: float, control: bool = True) -> str:
+    """Probe difference b - a: ceiling first, then 'reduced' only if the paired interval lies wholly below 0."""
+    if a >= 0.99 and b >= 0.99:
+        return "at ceiling; the difference is not read"
+    if not control:
+        return "descriptive comparison"
+    return "the control reduced separability" if high < 0 else "no reduction shown"
+
+
+def grouped_folds(y: Sequence[int], groups: Sequence[str], pair: int) -> list[np.ndarray]:
+    """E4 probe folds: StratifiedGroupKFold(5, shuffle=True) by unit; the seed comes from stream (42, 14101, pair).
+    Returns the test indices of each fold."""
+    from sklearn.model_selection import StratifiedGroupKFold
+    seed = int(np.random.default_rng([fm.SEED, E4_FOLD_NS, pair]).integers(2 ** 31 - 1))
+    splitter = StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=seed)
+    y = np.asarray(y)
+    return [test for _, test in splitter.split(np.zeros((len(y), 1)), y, np.asarray(groups))]
+
+
+def fit_logistic_raw(X: np.ndarray, y: np.ndarray, n_classes: int = 2):
+    """fm_core.fit_logistic's objective and optimiser without row normalisation; columns z-scored on the
+    training rows (population SD), columns with SD 0 dropped. Returns (fit, kept columns, mean, sd)."""
+    from scipy.optimize import minimize
+    X = np.asarray(X, dtype=np.float64)
+    mean, sd = X.mean(axis=0), X.std(axis=0)
+    keep = np.flatnonzero(np.ptp(X, axis=0) > 0)
+    Z = (X[:, keep] - mean[keep]) / sd[keep]
+    y = np.asarray(y)
+    if not np.array_equal(np.unique(y), np.arange(n_classes)):
+        raise ValueError("every class must have training rows")
+    theta = np.zeros(n_classes * (Z.shape[1] + 1), dtype=np.float64)
+    result = minimize(fm.logistic_objective, theta, args=(Z, y, n_classes), jac=True, method="L-BFGS-B", bounds=None,
+                      options=dict(maxiter=1000, maxfun=20000, maxls=20, maxcor=10, gtol=1e-6, ftol=0.0))
+    value, gradient = fm.logistic_objective(result.x, Z, y, n_classes)
+    worst = float(np.abs(gradient).max())
+    d = Z.shape[1]
+    finite = bool(np.isfinite(result.x).all() and np.isfinite(value) and np.isfinite(gradient).all())
+    fit = fm.LogisticFit(result.x[:n_classes * d].reshape(n_classes, d), result.x[n_classes * d:],
+                         finite and worst <= 1e-6, value, worst, str(result.message))
+    return fit, keep, mean, sd
+
+
+def probe_scores(X: np.ndarray, y: np.ndarray, folds: Sequence[np.ndarray], normalise_rows: bool) -> tuple[np.ndarray, int]:
+    """Out-of-fold logit differences (class 1 minus class 0), pooled; and the number of fits not converged."""
+    X, y = np.asarray(X, dtype=np.float64), np.asarray(y)
+    scores, failures = np.full(len(y), np.nan), 0
+    for test in folds:
+        train = np.setdiff1d(np.arange(len(y)), test)
+        if normalise_rows:
+            fit = fm.fit_logistic(X[train], y[train], n_classes=2)
+            logits = fm.unit(X[test]) @ fit.W.T + fit.b
+        else:
+            fit, keep, mean, sd = fit_logistic_raw(X[train], y[train])
+            logits = ((X[test][:, keep] - mean[keep]) / sd[keep]) @ fit.W.T + fit.b
+        failures += not fit.converged
+        scores[test] = logits[:, 1] - logits[:, 0]
+    return scores, failures
+
+
+def source_draw(units: Sequence[Sequence[str]], members: Sequence[Mapping[str, Sequence[int]]], pair: int, draw: int,
+                k_max: int = max(KS)) -> list[tuple[list[str], list[int]]]:
+    """E4 few-shot draw (stream 42, 14103, pair, draw): per source a random unit order and one random image of
+    each of its first k_max units. The first K units are the K-shot supports (nested over K)."""
+    rng = np.random.default_rng([fm.SEED, E4_FEWSHOT_NS, pair, draw])
+    out = []
+    for us, ms in zip(units, members):
+        order = [us[i] for i in rng.permutation(len(us))]
+        out.append((order, [int(ms[u][rng.integers(len(ms[u]))]) for u in order[:k_max]]))
+    return out
+
+
+def source_fewshot(X: np.ndarray, source: Sequence[int], unit_of: Sequence[str], pair: int,
+                   predict: Callable[[Sequence[np.ndarray], np.ndarray], np.ndarray],
+                   ks: Sequence[int] = KS, draws: int = fm.N_DRAWS) -> dict[tuple[int, int], float]:
+    """Two-way source test: K units per source as supports (one image each), every image of the other units
+    as queries; macro recall over the two sources per (K, draw). Ties go to the first source."""
+    X, source, unit_of = np.asarray(X), np.asarray(source), np.asarray(unit_of)
+    units = [sorted(set(unit_of[source == s].tolist())) for s in (0, 1)]
+    if min(map(len, units)) <= max(ks):
+        raise ValueError("each source needs at least one query unit after taking its largest support set")
+    members = [{u: np.flatnonzero((unit_of == u) & (source == s)).tolist() for u in units[s]} for s in (0, 1)]
+    out = {}
+    for r in range(draws):
+        plan = source_draw(units, members, pair, r, max(ks))
+        for k in ks:
+            used = [set(order[:k]) for order, _ in plan]
+            supports = [X[picks[:k]] for _, picks in plan]
+            query = np.array([u not in used[s] for u, s in zip(unit_of, source)])
+            pred = predict(supports, X[query])
+            truth = source[query]
+            out[k, r] = float(np.mean([np.mean(pred[truth == s] == s) for s in (0, 1)]))
+    return out
+
+
+# ------------------------------------------------------------------- reading ---
+def phase1_root(phase1: Path, work: Path, render_cache: Path) -> tuple[Path, list[list], Path | None]:
+    """The folder holding the Phase-1 outputs: given as such, or the Drive phase1/ folder as Colab saved it.
+
+    In the second case every phase1-*.zip except phase1-logs-* must match the SHA256 in its .zip.json receipt;
+    Feature archives are unpacked in `work`. The render archive is cached in scratch by receipt SHA256
+    across steps of a scoring run. Returns the worker root, verified receipts and cached render root."""
+    archives = sorted(p for p in phase1.glob("phase1-*.zip") if not p.name.startswith("phase1-logs-"))
+    if not archives:
+        return phase1, [], None
+    out, rows, rendered = work / "phase1", [], None
+    for archive in archives:
+        receipt = archive.with_name(archive.name + ".json")
+        if not receipt.exists():
+            raise ValueError(f"{archive.name} has no .json receipt")
+        digest = prep.sha256(archive)
+        if digest != prep.read_json(receipt)["sha256"]:
+            raise ValueError(f"{archive.name} differs from the SHA256 in its .json receipt")
+        if archive.name != "phase1-render.zip":
+            safe_unzip(archive, out / archive.stem)
+        else:
+            rendered = render_cache / digest
+            if not rendered.is_dir():
+                render_cache.mkdir(parents=True, exist_ok=True)
+                with tempfile.TemporaryDirectory(dir=render_cache) as tmp:
+                    pending = Path(tmp) / "unpacked"
+                    safe_unzip(archive, pending)
+                    try:
+                        pending.rename(rendered)
+                    except OSError:
+                        if not rendered.is_dir():
+                            raise
+            with zipfile.ZipFile(archive) as source:
+                if (rendered / "complete.json").read_bytes() != source.read("complete.json"):
+                    raise ValueError("cached Phase-1 render marker differs from its verified archive")
+        rows.append([archive.name, digest])
+    return out, rows, rendered
+
+
+@dataclass(frozen=True)
+class Phase1Output:
+    arm: str
+    set: str
+    variant: str
+    folder: Path
+    identity: Mapping
+
+
+def phase1_outputs(root: Path) -> dict[tuple[str, str, str], Phase1Output]:
+    """Every completed feature folder under root, keyed (set, arm, variant), from its identity.json."""
+    found: dict[tuple[str, str, str], Phase1Output] = {}
+    for marker in sorted(root.rglob("complete.json")):
+        folder = marker.parent
+        if not (folder / "features.npz").exists():
+            continue
+        prep.verify_complete(folder)
+        identity = prep.read_json(folder / "identity.json")
+        key = (identity["set"], identity["arm"], identity.get("variant") or "")
+        if key[0] not in (*E_SETS, "E3") or key[1] not in ARMS:
+            raise ValueError(f"{folder}: unknown set or arm {key}")
+        allowed = (E3_REF, *E3_VARIANTS[key[1]]) if key[0] == "E3" and key[1] in E3_VARIANTS else ()
+        if (key[0] == "E3" and key[2] not in allowed) or (key[0] in E_SETS and key[2]):
+            raise ValueError(f"{folder}: unexpected variant {key}")
+        if key in found:
+            raise ValueError(f"two Phase-1 folders for {key}")
+        found[key] = Phase1Output(key[1], key[0], key[2], folder, identity)
+    return found
+
+
+def render_folder(root: Path) -> Path | None:
+    hits = sorted({p.parent for p in root.rglob("render.csv")})
+    if len(hits) > 1:
+        raise ValueError(f"more than one render folder: {hits}")
+    if hits:
+        prep.verify_complete(hits[0])
+    return hits[0] if hits else None
+
+
+@dataclass(frozen=True)
+class Scored:
+    """One feature set (or reference) on the locked episodes and nine-way roster."""
+    dev: Mapping[tuple[int, int], np.ndarray]  # (K, draw) -> correctness over the 124 development queries
+    rep: Mapping[tuple[int, int], np.ndarray]  # (K, draw) -> correctness over the legacy 22
+    nine: Mapping[str, Cell] | None
+
+
+def score_episodes(study: Study, select: Callable[[Sequence[str]], np.ndarray],
+                   predict: Callable[[Sequence[np.ndarray], np.ndarray], np.ndarray]) -> tuple[dict, dict]:
+    """Development (folds pooled, fixed query order) and hold-out correctness on the locked episodes."""
+    order, _ = dev_order(study)
+    pos = {q: i for i, q in enumerate(order)}
+    dev: dict[tuple[int, int], np.ndarray] = {}
+    for e in study.episodes("development"):
+        pred = predict([select(p) for p in e.supports], select(e.queries))
+        row = dev.setdefault((e.k, e.draw), np.zeros(len(order), dtype=bool))
+        row[[pos[q] for q in e.queries]] = np.array(fm.RARE)[pred] == np.array(e.labels)
+    rep, first = {}, None
+    for e in study.episodes("reporting"):
+        first = first or e.queries
+        if e.queries != first:
+            raise ValueError("reporting episodes differ in query order")
+        rep[e.k, e.draw] = np.array(fm.RARE)[predict([select(p) for p in e.supports], select(e.queries))] == np.array(e.labels)
+    return dev, rep
+
+
+def nine_way_generic(study: Study, select_main: Callable, select_ext: Callable,
+                     scores_of: Callable[[Sequence[np.ndarray], np.ndarray], np.ndarray]) -> dict[str, Cell]:
+    """The locked nine-way roster with any class rule (nine_way_cells for features; the thumbnail rule)."""
+    fitting = [r for r in study.roster if r["role"] == "fitting"]
+    supports = [select_main([r["path"] for r in fitting if r["label"] == c]) for c in fm.NINE]
+    query = [r for r in study.roster if r["role"] == "query"]
+    out = {}
+    for source, rows, select in (("Kermany", query, select_main),
+                                 ("OCTID", [r for r in study.queries if r["source"] == "OCTID"], select_ext),
+                                 ("OCTDL", [r for r in study.queries if r["source"] == "OCTDL"], select_ext)):
+        paths = [r["path"] for r in rows]
+        scores = scores_of(supports, select(paths))
+        out[source] = Cell(tuple(paths), tuple(r["label"] for r in rows),
+                           tuple(np.array(fm.NINE)[np.argmax(scores, axis=1)]), tuple(fm.NINE), scores)
+    return out
+
+
+def score_feature_set(study: Study, main: ev.Features, external: ev.Features) -> Scored:
+    dev, rep = score_episodes(study, main.select, prototype_predict)
+    return Scored(dev, rep, nine_way_cells(study, main, external))
+
+
+def score_vectors(study: Study, vectors: Mapping[str, np.ndarray], nine: bool) -> Scored:
+    """A reference without a model: nearest mean support on fixed vectors per image."""
+    select = lambda paths: np.stack([np.asarray(vectors[p], dtype=np.float64).ravel() for p in paths])  # noqa: E731
+    dev, rep = score_episodes(study, select, nearest_mean_predict)
+    return Scored(dev, rep, nine_way_generic(study, select, select, nearest_mean_scores) if nine else None)
+
+
+def dev_macro(study: Study, scored: Scored) -> dict[tuple[int, int], float]:
+    _, labels = dev_order(study)
+    return {key: macro(v, labels, fm.RARE) for key, v in scored.dev.items()}
+
+
+def rep_macro(study: Study, scored: Scored) -> dict[tuple[int, int], float]:
+    labels = [e for e in study.episodes("reporting")][0].labels
+    return {key: macro(v, labels, fm.RARE) for key, v in scored.rep.items()}
+
+
+def paired(a: Mapping[tuple[int, int], float], b: Mapping[tuple[int, int], float]) -> dict[tuple[int, int], float]:
+    return {key: a[key] - b[key] for key in a if key in b}
+
+
+NINE_HEADER = ["query_set", "n", "correct_class", "called_NORMAL", "called_CNV_DME_DRUSEN", "called_any_rare",
+               "rate", "rate_value", "ci95_low", "ci95_high", "interval_method", "NORMAL_recall",
+               "NORMAL_recall_ci95_low", "NORMAL_recall_ci95_high"]
+
+
+def nine_way_rows(study: Study, cells: Mapping[str, Cell]) -> list[list]:
+    """Counts per query set; false-rare rate with the locked interval method on normals; R1 share on rare sets."""
+    _, disjoint = study.kermany_normals()
+    group = {r["path"]: r["dependence_group"] for r in study.queries}
+    ker = cells["Kermany"]
+    sets = [("Kermany patient-disjoint", ker, np.isin(ker.queries, sorted(disjoint))),
+            ("Legacy 22", ker, np.isin(ker.labels, fm.RARE))]
+    for name in ("OCTID NORMAL", "OCTID CSC", "OCTID MH", "OCTDL NORMAL", "OCTDL MH"):
+        source, label = name.split()
+        sets.append((name, cells[source], np.array(cells[source].labels) == label))
+    rows = []
+    for name, cell, mask in sets:
+        q, lab, pred = np.array(cell.queries)[mask], np.array(cell.labels)[mask], np.array(cell.predicted)[mask]
+        counts = [int((pred == lab).sum()), int((pred == "NORMAL").sum()), int(np.isin(pred, COMMON[1:]).sum()),
+                  int(np.isin(pred, fm.RARE).sum())]
+        if name in NORMAL_SETS:
+            clusters = [ev.kermany_pid(p) for p in q] if name.startswith("Kermany") else \
+                None if name.startswith("OCTID") else [group[p] for p in q]
+            iv = ev.nine_way_intervals(lab.tolist(), pred.tolist(), clusters)
+            rows.append([name, len(q), *counts, "false_rare_rate", counts[3] / len(q), *iv["false_rare"], iv["method"],
+                         counts[1] / len(q), *iv["recall"]["NORMAL"]])
+        elif name in RARE_EXTERNAL:
+            rows.append([name, len(q), *counts, "share_called_any_rare (R1)", counts[3] / len(q), None, None, "",
+                         None, None, None])
+        else:
+            rows.append([name, len(q), *counts, "", None, None, None, "", None, None, None])
+    return rows
+
+
+class Phase1:
+    """The Phase-1 outputs of one attempt, verified against the locked study before use."""
+
+    def __init__(self, study: Study, root: Path, receipts: list[list], dry_run: bool = False, partial: bool = False,
+                 cached_render: Path | None = None):
+        import fm_control_extract as control
+
+        self.study, self.root, self.receipts, self.dry_run = study, root, receipts, dry_run
+        self.outputs = phase1_outputs(root)
+        self.render = render_folder(cached_render if cached_render is not None else root)
+        if cached_render is not None and self.render is None:
+            raise ValueError("render archive has no render.csv")
+        missing = (["render"] if self.render is None else []) + [
+            f"E1-M {arm}" for arm in ARMS if self.get("E1-M", arm) is None]
+        if missing and not partial:
+            raise ValueError(f"Partial Phase-1 delivery ({', '.join(missing)}). Score after the last session or use --partial.")
+        if (any(name.startswith("phase1-E3-MIRAGE-M-res256") for name, _ in receipts)
+                and self.get("E3", NOMINEE, "M-res256") is None):
+            raise ValueError("MIRAGE M-res256 archive exists but has no complete feature output")
+        lock = prep.sha256(study.lock / "input_lock.json")
+        external = prep.sha256(study.external / "external_lock.json")
+        expected = {"script_sha256": prep.text_hash(Path(control.__file__)), "registry_sha256": control.registry_hash()}
+
+        def check_identity(identity: Mapping, folder: Path) -> None:
+            if dry_run and identity.get("dry_run") is True:
+                return
+            for key, digest in expected.items():
+                if identity.get(key) != digest:
+                    raise ValueError(f"{folder}: {key} differs from the laptop Phase-1 runner")
+
+        for key, out in self.outputs.items():
+            if (out.identity.get("lock_sha256"), out.identity.get("external_lock_sha256")) != (lock, external):
+                raise ValueError(f"{key}: Phase-1 output belongs to a different lock")
+            check_identity(out.identity, out.folder)
+        if self.render is not None:
+            path = self.render / "identity.json"
+            identity = prep.read_json(path)
+            check_identity(identity, self.render)
+            if (identity.get("lock_sha256"), identity.get("external_lock_sha256")) != (lock, external):
+                raise ValueError("render belongs to a different lock")
+            digest = prep.sha256(path)
+            for out in self.outputs.values():
+                if out.set in E_SETS and out.identity.get("render_identity_sha256") != digest:
+                    raise ValueError(f"{out.folder}: worker used a different render")
+        self.main_inv = prep.read_csv(study.lock / "extraction_inventory.csv")
+        self.ext_inv = prep.read_csv(study.external / "external_extraction_inventory.csv")
+        self._feats: dict = {}
+        self._control: dict = {}
+
+    def get(self, set_name: str, arm: str, variant: str = "") -> Phase1Output | None:
+        return self.outputs.get((set_name, arm, variant))
+
+    def features(self, arm: str, set_name: str, variant: str = "") -> tuple[ev.Features, ev.Features] | None:
+        if set_name == "locked":
+            return self.study.features(arm), self.study.external_features(arm)
+        out = self.get(set_name, arm, variant)
+        if out is None:
+            return None
+        if out.folder not in self._feats:
+            dim = extract.DIMENSIONS[arm]
+            self._feats[out.folder] = (
+                ev.Features(extract.load_features(out.folder / "features.npz", self.main_inv, dim),
+                            {r["path"]: i for i, r in enumerate(self.main_inv)}),
+                ev.Features(extract.load_features(out.folder / "features_external.npz", self.ext_inv, dim),
+                            {r["path"]: i for i, r in enumerate(self.ext_inv)}))
+        return self._feats[out.folder]
+
+    def locked_all(self, arm: str) -> ev.Features:
+        return fx.merge(self.study.features(arm), self.study.external_features(arm))
+
+    def control(self, out: Phase1Output) -> dict:
+        """Originals through the locked path, checked on the exact registered inventory rows."""
+        if out.folder not in self._control:
+            arm = out.arm
+            locked = self.study.features(arm)
+            dim = extract.DIMENSIONS[arm]
+            if out.set == "E3":
+                main, ext = self.features(arm, out.set, out.variant)
+                check = extract.repeat_check([locked.values, self.study.external_features(arm).values],
+                                             [main.values, ext.values])
+            else:
+                main = self.main_inv if arm == "DINOv2" else self.main_inv[:20]
+                before = [locked.select([r["path"] for r in main])]
+                after = [extract.load_features(out.folder / "control.npz", main, dim)]
+                if arm == "DINOv2":
+                    before.append(self.study.external_features(arm).select([r["path"] for r in self.ext_inv]))
+                    after.append(extract.load_features(out.folder / "control_external.npz", self.ext_inv, dim))
+                check = extract.repeat_check(before, after)
+            check["passed"] = check["max_difference_ratio"] <= CONTROL_TOL
+            self._control[out.folder] = check
+        return self._control[out.folder]
+
+    def status(self, arm: str, set_name: str, variant: str = "") -> str:
+        if set_name == "locked":
+            return INTERPRETED
+        out = self.get(set_name, arm, variant)
+        if out is None:
+            return UNAVAILABLE
+        ref = self.get("E3", arm, E3_REF) if arm in E3_VARIANTS else None
+        if set_name == "E3":
+            return INTERPRETED if ref and self.control(ref)["passed"] else NOT_INTERPRETED
+        if self.render is None and not self.dry_run:
+            return NOT_INTERPRETED
+        passed = self.control(out)["passed"] and (arm not in E3_VARIANTS or (ref and self.control(ref)["passed"]))
+        return INTERPRETED if passed else NOT_INTERPRETED
+
+    def render_rows(self) -> list[dict[str, str]]:
+        if self.render is None:
+            return []
+        rows = prep.read_csv(self.render / "render.csv")
+        missing = set(RENDER_COLUMNS) - set(rows[0]) if rows else set()
+        if missing:
+            raise ValueError(f"render.csv lacks columns {sorted(missing)}")
+        if [(r["path"], r["sha256"]) for r in rows] != [
+            (r["path"], r["sha256"]) for r in (*self.main_inv, *self.ext_inv)
+        ]:
+            raise ValueError("render.csv differs from the locked inventories")
+        return rows
+
+    def thumbs(self) -> dict[str, dict[str, np.ndarray]]:
+        """Per thumbnail set (raw, E1-M, E1-L, E1-C): path -> 256 values / 255."""
+        if self.render is None or not (self.render / "thumbs16.npz").exists():
+            return {}
+        with np.load(self.render / "thumbs16.npz", allow_pickle=False) as z:
+            paths = z["paths"].tolist()
+            if list(zip(paths, z["sha256"].tolist(), strict=True)) != [
+                (r["path"], r["sha256"]) for r in (*self.main_inv, *self.ext_inv)
+            ]:
+                raise ValueError("thumbs16.npz differs from the locked inventories")
+            out = {}
+            for key in ("raw", *E_SETS):
+                if key in z.files:
+                    values = z[key]
+                    if (values.shape != (len(paths), 256) or not np.isfinite(values).all()
+                            or np.any((values < 0) | (values > 1))):
+                        raise ValueError(f"thumbs16.npz {key}: expected [n, 256] values in [0, 1]")
+                    out[key] = dict(zip(paths, values))
+        return out
+
+    def pixel_stats(self, which: str) -> dict[str, np.ndarray]:
+        if self.render is None or not (self.render / "pixel_stats.csv").exists():
+            return {}
+        prefix = "original" if which == "raw" else which
+        return {r["path"]: np.array([float(r[f"{prefix}_{c}"]) for c in PIXEL_STATS])
+                for r in prep.read_csv(self.render / "pixel_stats.csv")}
+
+
+def render_png(render: Path, set_name: str, path: str) -> Path:
+    return render / set_name / prep.safe_id(path + ".png")
+
+
+def locked_geometry(study: Study) -> dict[str, dict[str, float]]:
+    """Original width, height, aspect ratio, A2 border share and near-white share (locked geometry.csv)."""
+    study.features(fm.REFERENCE), study.external_features(fm.REFERENCE)  # unpack and verify both bundles
+    out = {}
+    for folder in (study.work / "features" / fm.REFERENCE, study.work / "features" / f"{fm.REFERENCE}-external"):
+        for r in prep.read_csv(folder / "geometry.csv"):
+            w, h = float(r["width"]), float(r["height"])
+            out[r["path"]] = dict(width=w, height=h, aspect_ratio=w / h, border_share=float(r["border_share"]),
+                                  near_white_share=float(r["near_white_share"]))
+    return out
+
+
+def source_group(path: str, external_source: Mapping[str, str]) -> str:
+    if path in external_source:
+        return external_source[path]
+    if path.startswith("data/raw/rare/"):
+        return path.split("/")[3]
+    return "Kermany"
+
+
+# ======================================================================= E1 ===
+def rerender_agreement(pairs: Sequence[tuple[np.ndarray, np.ndarray]]) -> tuple[int, int, int]:
+    """Laptop re-render against the Colab render: images compared, images that differ, largest grey difference."""
+    differ, largest = 0, 0
+    for a, b in pairs:
+        if a.shape != b.shape:
+            differ, largest = differ + 1, 255
+            continue
+        d = int(np.abs(a.astype(np.int16) - b.astype(np.int16)).max()) if a.size else 0
+        differ += d > 0
+        largest = max(largest, d)
+    return len(pairs), differ, largest
+
+
+def laptop_rerender(p1: Phase1, data_root: Path | None) -> list[list]:
+    """E1a: re-render locally and compare greys with the corresponding Colab PNGs."""
+    if data_root is None or p1.render is None:
+        return [["laptop re-render agreement", "", "", "status", "not run (no --data-root or no render folder)", "", ""]]
+    try:
+        from PIL import Image
+        import fm_control_extract as control  # noqa: PLC0415  (written beside this file; not hashed)
+        render = control.render_all
+    except (ImportError, AttributeError) as error:
+        return [["laptop re-render agreement", "", "E1-M", "status", f"not run ({error})", "", ""]]
+    counts = {name: [0, 0, 0] for name in E_SETS}
+    missing = unreadable = 0
+    for row in p1.render_rows():
+        raw = data_root / prep.safe_id(row["path"])
+        if not raw.exists() or prep.sha256(raw) != row["sha256"]:
+            missing += 1
+            continue
+        try:
+            with Image.open(raw) as image:
+                _, local = render(image.convert("RGB"))
+        except (OSError, ValueError):
+            unreadable += 1
+            continue
+        for name in E_SETS:
+            mine = np.asarray(local[name].convert("L"))
+            with Image.open(render_png(p1.render, name, row["path"])) as image:
+                theirs = np.asarray(image.convert("L"))
+            n, differ, largest = rerender_agreement([(theirs, mine)])
+            counts[name][0] += n
+            counts[name][1] += differ
+            counts[name][2] = max(counts[name][2], largest)
+    metrics = ("images compared", "images differing", "largest grey difference",
+               "originals missing or differing from locked SHA256", "originals not readable on this laptop")
+    return [["laptop re-render agreement", "", name, metric, value, "", "a report, never a stop"]
+            for name, values in counts.items() for metric, value in zip(metrics, (*values, missing, unreadable))]
+
+
+def framing_residual(rows: Sequence[Mapping[str, str]], external_source: Mapping[str, str]) -> list[list]:
+    """E1a framing residual per set and source / rare class, from edge_residual.csv."""
+    groups: dict[str, list[Mapping[str, str]]] = {}
+    for r in rows:
+        groups.setdefault(source_group(r["path"], external_source), []).append(r)
+    out = []
+    for group, members in sorted(groups.items()):
+        for name in ("original", *E_SETS):
+            a2, run, white = (np.array([float(r[f"{name}_{col}"]) for r in members])
+                              for col in ("border_share", "edge_run", "near_white_share"))
+            for quantity, value in (("mean A2 border share", a2.mean()), ("share with A2 border share > 0", (a2 > 0).mean()),
+                                    ("share with near-black edge run > 5% of side", (run > 0.05).mean()),
+                                    ("share with near-black edge run > 10% of side", (run > 0.10).mean()),
+                                    ("mean near-white share", white.mean())):
+                out.append(["framing residual", group, name, quantity, float(value), "", f"n={len(members)}"])
+    return out
+
+
+def e1_checks(p1: Phase1, section: Mapping, data_root: Path | None) -> list[list]:
+    rows = [["rule 1: Phase-1 subsection SHA256", "", "", "at rule commit " + section["commit"][:7], section["commit_sha256"],
+             "same" if section["same"] else "DIFFERS", f"working {section['working_sha256']}"]]
+    rows += [["archive receipt", "", "", name, digest, "equal", ""] for name, digest in p1.receipts]
+    for (set_name, arm, variant), out in sorted(p1.outputs.items()):
+        if set_name not in E_SETS:
+            continue
+        c = p1.control(out)
+        status = "pass" if c["passed"] else NOT_INTERPRETED
+        rows.append(["control: locked path against locked features", arm, set_name + (f" {variant}" if variant else ""),
+                     "max_difference_ratio", c["max_difference_ratio"], status, f"{c['images']} images; min cosine {c['min_cosine']:.6f}"])
+        rep = out.identity.get("repeat_check") or {}
+        rows.append(["repeat (recorded, not a gate)", arm, set_name + (f" {variant}" if variant else ""), "max_difference_ratio",
+                     rep.get("max_difference_ratio"), "", f"{rep.get('images')} images"])
+        for key in ("code_matches_lock", "environment_matches_lock"):
+            rows.append(["identity", arm, set_name + (f" {variant}" if variant else ""), key, out.identity.get(key), "", ""])
+        if out.identity.get("overrides"):
+            rows.append(["identity", arm, set_name + (f" {variant}" if variant else ""), "overrides",
+                         json.dumps(out.identity["overrides"], sort_keys=True), "", ""])
+    for arm in E3_VARIANTS:
+        ref = p1.get("E3", arm, E3_REF)
+        c = p1.control(ref) if ref else None
+        rows.append(["E3-ref full control", arm, "", "max_difference_ratio",
+                     c["max_difference_ratio"] if c else None, "pass" if c and c["passed"] else NOT_INTERPRETED,
+                     f"{c['images']} images" if c else UNAVAILABLE])
+    decoder = p1.get("E1-M", fm.REFERENCE)
+    if decoder is not None and (decoder.folder / "decoder_check.npz").exists():
+        sources = {r["path"]: r["source"] for r in p1.study.queries}
+        by_source = {"Kermany": [r for r in p1.main_inv if source_group(r["path"], {}) == "Kermany"][:20],
+                     **{s: [r for r in p1.ext_inv if sources[r["path"]] == s][:10] for s in ("OCTID", "OCTDL")}}
+        inventory = [r for group in by_source.values() for r in group]
+        values = extract.load_features(decoder.folder / "decoder_check.npz", inventory, extract.DIMENSIONS[fm.REFERENCE])
+        locked = p1.locked_all(fm.REFERENCE).select([r["path"] for r in inventory])
+        start = 0
+        for source, group in by_source.items():
+            end = start + len(group)
+            check = extract.repeat_check([locked[start:end]], [values[start:end]])
+            rows.append(["Inception-v3 decoder change (PIL-decoded PNG originals)", fm.REFERENCE, "E1-M", source,
+                         check["max_difference_ratio"], "", f"{check['images']} images; min cosine {check['min_cosine']:.6f}"])
+            start = end
+        resize = decoder.identity.get("tf_resize_identity")
+        rows.append(["Inception-v3 resize identity", fm.REFERENCE, "E1-M", "tf.image.resize",
+                     json.dumps(resize), "failed check; not interpreted" if resize and not resize["unchanged"] else "", ""])
+    render = p1.render_rows()
+    if render:
+        flagged = sum(r["flagged"] in ("1", "True", "true") for r in render)
+        alpha = sum(int(float(r["min_alpha"])) < 255 for r in render if r["min_alpha"] not in ("", "None"))
+        rows += [["render", "", "", "images rendered (twice; saved PNG pixel hashes verified)", len(render), "", ""],
+                 ["render", "", "", "content box fallback to the full frame (flagged)", flagged, "", ""],
+                 ["render", "", "", "files with alpha below 255 (dropped by convert('RGB'))", alpha, "", ""]]
+        formats: dict[tuple[str, str], int] = {}
+        for r in render:
+            formats[r["mode"], r["format"]] = formats.get((r["mode"], r["format"]), 0) + 1
+        rows += [["render", "", "", f"mode {m}, format {f}", n, "", ""] for (m, f), n in sorted(formats.items())]
+        rare_under_128: dict[str, int] = {}
+        short_sides: dict[str, list[int]] = {}
+        source = {r["path"]: r["source"] for r in p1.study.queries}
+        for path, size in content_sizes(p1).items():
+            group = "Yoo rare" if path.startswith("data/raw/rare/") else source_group(path, source)
+            short_sides.setdefault(group, []).append(min(size))
+            if path.startswith("data/raw/rare/") and min(size) < 128:
+                group = source_group(path, {})
+                rare_under_128[group] = rare_under_128.get(group, 0) + 1
+        rows += [["render", group, "", "content short-side range (px)", f"{min(sides)}–{max(sides)}", "",
+                  f"{len(sides)} images"] for group, sides in sorted(short_sides.items())]
+        rows += [["render", group, "E1-L", "content short side below 128 px", n, "", ""]
+                 for group, n in sorted(rare_under_128.items())]
+        if (p1.render / "edge_residual.csv").exists():
+            rows += framing_residual(prep.read_csv(p1.render / "edge_residual.csv"), source)
+    else:
+        rows.append(["render", "", "", "render folder", "missing", "", ""])
+    rows += laptop_rerender(p1, data_root)
+    return rows
+
+
+def content_sizes(p1: Phase1) -> dict[str, tuple[int, int]]:
+    """Width and height of each image's final content box (render.csv)."""
+    return {r["path"]: (int(r["box_right"]) - int(r["box_left"]), int(r["box_bottom"]) - int(r["box_top"]))
+            for r in p1.render_rows()}
+
+
+def e1(study: Study, p1: Phase1, section: Mapping, data_root: Path | None = None,
+       drop: set[str] = frozenset()) -> dict[str, tuple[list[str], list[list]]]:
+    """All E1 tables (E1a-E1h) as {file name: (header, rows)}."""
+    tables: dict[str, tuple[list[str], list[list]]] = {}
+    scored: dict[tuple[str, str], Scored] = {}
+    status: dict[tuple[str, str], str] = {}
+    for arm in ARMS:
+        for s in FEATURE_SETS:
+            feats = p1.features(arm, s)
+            if feats is not None:
+                scored[arm, s], status[arm, s] = score_feature_set(study, *feats), p1.status(arm, s)
+    dev = {key: dev_macro(study, sc) for key, sc in scored.items()}
+    raw_sizes = {p: np.array([g["width"], g["height"]]) for p, g in locked_geometry(study).items()}
+    refs = {("size_only", "raw"): score_vectors(study, raw_sizes, True)}
+    sizes = content_sizes(p1)
+    if sizes:
+        refs["content_size", "raw content box"] = score_vectors(study, {p: np.array(v, float) for p, v in sizes.items()}, True)
+    for name, vectors in p1.thumbs().items():
+        refs["thumbnail", name] = score_vectors(study, vectors, True)
+    ref_dev = {key: dev_macro(study, sc) for key, sc in refs.items()}
+
+    tables["E1a_checks.csv"] = (["check", "arm", "feature_set", "quantity", "value", "status", "note"],
+                                e1_checks(p1, section, data_root))
+    rows = [[arm, s, status[arm, s], k, *summary(v)] for (arm, s), d in dev.items() for k, v in by_k(d, KS)]
+    rows += [[arm, s, UNAVAILABLE, "", *[None] * len(SUMMARY)] for arm in ARMS for s in E_SETS if (arm, s) not in dev]
+    rows += [[name, s, "reference without a model", k, *summary(v)] for (name, s), d in ref_dev.items() for k, v in by_k(d, KS)]
+    tables["E1b_development.csv"] = (["model", "feature_set", "status", "k", *SUMMARY], rows)
+
+    def worst(*keys) -> str:
+        values = [status.get(k, UNAVAILABLE) for k in keys]
+        return UNAVAILABLE if UNAVAILABLE in values else NOT_INTERPRETED if NOT_INTERPRETED in values else INTERPRETED
+
+    rows = []
+    for s in FEATURE_SETS:
+        for arm in ARMS[:-1]:
+            if (arm, s) in dev and (fm.REFERENCE, s) in dev:
+                rows += [[f"{arm} minus {fm.REFERENCE}", s, worst((arm, s), (fm.REFERENCE, s)), k, *summary(v)]
+                         for k, v in by_k(paired(dev[arm, s], dev[fm.REFERENCE, s]), KS)]
+    for s in E_SETS:
+        for arm in ARMS:
+            if (arm, s) in dev:
+                rows += [[f"{arm} {s} minus {arm} locked", s, worst((arm, s)), k, *summary(v)]
+                         for k, v in by_k(paired(dev[arm, s], dev[arm, "locked"]), KS)]
+    tables["E1c_paired.csv"] = (["comparison", "feature_set", "status", "k", *SUMMARY], rows)
+
+    # E1d: the success rule on E1-M; the same statistic for every set; two companion lines.
+    stats = {}
+    rows = []
+    for s in FEATURE_SETS:
+        if (NOMINEE, s) not in dev or (fm.REFERENCE, s) not in dev:
+            rows.append(["MIRAGE minus Inception-v3, K mean", s, UNAVAILABLE, 0, None, None, None, 0,
+                         "not evaluable" if s == "E1-M" else "description only", ""])
+            continue
+        st = success_rule(k_mean(paired(dev[NOMINEE, s], dev[fm.REFERENCE, s])))
+        if s != "locked" and worst((NOMINEE, s), (fm.REFERENCE, s)) != INTERPRETED:
+            st["verdict"] = "not evaluable"
+        stats[s] = st
+        rows.append(["MIRAGE minus Inception-v3, K mean", s, worst((NOMINEE, s), (fm.REFERENCE, s)), st["n"], st["mean"],
+                     st["sd"], st["p05"], st["n_positive"], st["verdict"] if s == "E1-M" else "description only", ""])
+    main = stats.get("E1-M", dict(verdict="not evaluable", n=0, mean=None, p05=None))
+    reason = "" if "E1-M" in stats else "E1-M features of MIRAGE or Inception-v3 unavailable"
+    if "E1-M" in stats and worst((NOMINEE, "E1-M"), (fm.REFERENCE, "E1-M")) != INTERPRETED:
+        reason = "MIRAGE or Inception-v3 failed its control"
+    thumb = None
+    for name, s in (("content_size", "raw content box"), ("thumbnail", "E1-M")):
+        if (NOMINEE, "E1-M") in dev and (name, s) in ref_dev:
+            st = success_rule(k_mean(paired(dev[NOMINEE, "E1-M"], ref_dev[name, s])))
+            rows.append([f"MIRAGE E1-M minus {name} reference ({s}), K mean", "E1-M", worst((NOMINEE, "E1-M")), st["n"], st["mean"],
+                         None, st["p05"], st["n_positive"], "companion line", ""])
+            if name == "thumbnail":
+                thumb = st
+    e3_res256_shift = None
+    if main["verdict"] == "fail":
+        feats = p1.features(NOMINEE, "E3", "M-res256")
+        if feats is not None:
+            resized = dev_macro(study, score_feature_set(study, *feats))
+            shift = success_rule(k_mean(paired(resized, dev[NOMINEE, "locked"])))
+            if shift["verdict"] == "not evaluable":
+                raise ValueError("MIRAGE M-res256 does not yield 100 paired development K means")
+            e3_res256_shift = shift["mean"]
+            rows.append(["MIRAGE M-res256 minus MIRAGE locked, K mean", "E3 M-res256",
+                         p1.status(NOMINEE, "E3", "M-res256"), shift["n"], shift["mean"], shift["sd"], shift["p05"],
+                         shift["n_positive"], "description only", ""])
+    sentence = e1_sentences(main, stats.get("locked", {}).get("mean"), thumb, stats.get("E1-L"),
+                            stats.get("E1-C"), e3_res256_shift)
+    rows.append(["fixed sentence", "E1-M", reason, None, None, None, None, None, main["verdict"], sentence])
+    rows.append(["limitations (stated with every E1 result)", "", "", None, None, None, None, None, "", E1_LIMITATIONS])
+    tables["E1d_success.csv"] = (["line", "feature_set", "status", "n_draws", "mean", "sd", "p05", "draws_above_0",
+                                  "verdict", "text"], rows)
+
+    order, labels = dev_order(study)
+    if "E1e" not in drop and sizes:
+        sides = {p: min(sizes[p]) for p in order}
+        low, high, subset = matched_subset(sides, dict(zip(order, labels)))
+        keep = np.isin(order, subset)
+        sub_labels = np.asarray(labels)[keep]
+        rows = [["matched subset", f"L={low:g} px, U={high:g} px", "", "", len(subset), "", *[None] * len(SUMMARY)]]
+        values = {}
+        for key, sc in scored.items():
+            per = {}
+            for kd, v in sc.dev.items():
+                value, present = present_macro(v[keep], sub_labels, fm.RARE)
+                if value is not None:
+                    per[kd] = value
+            values[key] = per
+            rows += [[key[0], key[1], status[key], k, len(subset), " ".join(present_macro(np.ones(keep.sum(), bool), sub_labels, fm.RARE)[1]),
+                      *summary(v)] for k, v in by_k(per, KS)]
+        for s in FEATURE_SETS:
+            if (NOMINEE, s) in values and (fm.REFERENCE, s) in values:
+                rows += [[f"{NOMINEE} minus {fm.REFERENCE}", s, worst((NOMINEE, s), (fm.REFERENCE, s)), k, len(subset), "",
+                          *summary(v)] for k, v in by_k(paired(values[NOMINEE, s], values[fm.REFERENCE, s]), KS)]
+        tables["E1e_matched.csv"] = (["model", "feature_set", "status", "k", "n_queries", "classes_present", *SUMMARY], rows)
+
+    rows = []
+    rep = {key: rep_macro(study, sc) for key, sc in scored.items()}
+    ks_rep = sorted({k for k, _ in next(iter(rep.values()))})
+    for key, sc in scored.items():
+        counts = {kd: float(v.sum()) for kd, v in sc.rep.items()}
+        for k, v in by_k(rep[key], ks_rep):
+            note = "shown, never read" if k == 16 else ""
+            rows.append([key[0], key[1], status[key], k, "macro_recall", *summary(v), "", note])
+            if k != ev.K_MEAN_LABEL:
+                rows.append([key[0], key[1], status[key], k, "mean_correct_of_22", None,
+                             float(np.mean([c for (kk, _), c in counts.items() if kk == k])), None, None, None, "", note])
+    for s in FEATURE_SETS:
+        if (NOMINEE, s) in rep and (fm.REFERENCE, s) in rep:
+            for k, v in by_k(paired(rep[NOMINEE, s], rep[fm.REFERENCE, s]), ks_rep):
+                m = float(np.mean(v))
+                direction = "positive" if m > 0 else "negative" if m < 0 else "zero"
+                rows.append([f"{NOMINEE} minus {fm.REFERENCE}", s, worst((NOMINEE, s), (fm.REFERENCE, s)), k, "paired_macro_recall",
+                             *summary(v), direction if k != 16 and worst((NOMINEE, s), (fm.REFERENCE, s)) == INTERPRETED else "",
+                             "shown, never read" if k == 16 else "direction only"])
+    for (name, s), sc in refs.items():
+        for k, v in by_k(rep_macro(study, sc), ks_rep):
+            rows.append([name, s, "reference without a model", k, "macro_recall", *summary(v), "", "shown, never read" if k == 16 else ""])
+    tables["E1f_holdout.csv"] = (["model", "feature_set", "status", "k", "quantity", *SUMMARY, "direction", "note"], rows)
+
+    rows = [[arm, s, status[arm, s], *r] for (arm, s), sc in scored.items() for r in nine_way_rows(study, sc.nine)]
+    rows += [[name, s, "reference without a model", *r] for (name, s), sc in refs.items() if sc.nine is not None
+             for r in nine_way_rows(study, sc.nine)]
+    tables["E1g_nine_way.csv"] = (["model", "feature_set", "status", *NINE_HEADER], rows)
+
+    if "E1h" not in drop:
+        rows = []
+        for s in ("locked", "E1-M"):
+            if (NOMINEE, s) not in scored or (fm.REFERENCE, s) not in scored:
+                continue
+            a, b = scored[NOMINEE, s].dev, scored[fm.REFERENCE, s].dev
+            keys = sorted(a)
+            ks_rows = np.array([k for k, _ in keys])
+            A, B = np.array([a[x] for x in keys]), np.array([b[x] for x in keys])
+            full = mean_over_k(np.array([macro(r, labels, fm.RARE) for r in A]), ks_rows) - \
+                mean_over_k(np.array([macro(r, labels, fm.RARE) for r in B]), ks_rows)
+            diffs = loo_differences(A, B, labels, fm.RARE, ks_rows)
+            lo, hi = int(np.argmin(diffs)), int(np.argmax(diffs))
+            rows.append([s, worst((NOMINEE, s), (fm.REFERENCE, s)), len(order), float(full), float(diffs[lo]), order[lo],
+                         float(diffs[hi]), order[hi], "locked = P1, shown for reference" if s == "locked" else ""])
+        tables["E1h_leave_one_out.csv"] = (["feature_set", "status", "n_left_out", "full_difference", "smallest",
+                                            "smallest_image", "largest", "largest_image", "note"], rows)
+    return tables
+
+
+# ======================================================================= E2 ===
+def e2_cells(study: Study, p1: Phase1) -> dict[tuple[str, str], tuple[str, Mapping[str, Cell]]]:
+    """(arm, set) -> (status, nine-way cells by source): locked from the results archive, E1 sets rescored."""
+    out = {}
+    for arm in ARMS:
+        out[arm, "locked"] = (INTERPRETED, {s: study.results.nine_way(arm, s) for s in ("Kermany", "OCTID", "OCTDL")})
+        for s in E_SETS:
+            feats = p1.features(arm, s)
+            if feats is not None:
+                out[arm, s] = (p1.status(arm, s), nine_way_cells(study, *feats))
+    return out
+
+
+def e2_sets(study: Study) -> dict[str, tuple[str, list[str]]]:
+    """Query set -> (source cell, paths): the normal sets and the external rare sets."""
+    _, disjoint = study.kermany_normals()
+    out = {"Kermany patient-disjoint": ("Kermany", sorted(disjoint))}
+    for name in (*NORMAL_SETS[1:], *RARE_EXTERNAL):
+        source, label = name.split()
+        out[name] = (source, [r["path"] for r in study.queries if r["source"] == source and r["label"] == label])
+    return out
+
+
+def e2_tables(study: Study, cells: Mapping[tuple[str, str], tuple[str, Mapping[str, Cell]]],
+              properties: Mapping[str, Mapping[str, float]], categorical: Mapping[str, Mapping[str, str]],
+              drop: set[str] = frozenset()) -> dict[str, tuple[list[str], list[list]]]:
+    """E2a-E2e from nine-way cells (pure apart from the study's rosters). properties[path][name] holds the E2d
+    numbers of each original; categorical[path] its OCTDL mode and format."""
+    sets = e2_sets(study)
+    pred = {key: {s: dict(zip(c.queries, c.predicted)) for s, c in cs.items()} for key, (_, cs) in cells.items()}
+    status = {key: st for key, (st, _) in cells.items()}
+    feature_sets = [s for s in FEATURE_SETS if any(k[1] == s for k in cells)]
+    unit = {r["path"]: study.patient.get(r["path"], r["path"]) for r in study.queries}
+    tables = {}
+    rows = []
+    for (arm, s), p in pred.items():
+        for name, (source, paths) in sets.items():
+            got = [p[source][q] for q in paths]
+            counts = [sum(g == c for g in got) for c in fm.NINE]
+            groups = [sum(destination(g) == d for g in got) for d in ("NORMAL", "common", "rare")]
+            rows.append([arm, s, status[arm, s], name, len(paths), *counts, *groups, "supplement" if name in RARE_EXTERNAL else ""])
+    tables["E2a_destinations.csv"] = (["arm", "feature_set", "status", "query_set", "n", *fm.NINE, "group_NORMAL",
+                                       "group_CNV_DME_DRUSEN", "group_rare", "placement"], rows)
+    rows = []
+    for name in NORMAL_SETS:
+        source, paths = sets[name]
+        for s in feature_sets:
+            arms = [a for a in ARMS if (a, s) in pred]
+            failed = {a: {q for q in paths if pred[a, s][source][q] != "NORMAL"} for a in arms}
+            rare = {a: {q for q in paths if pred[a, s][source][q] in fm.RARE} for a in arms}
+            for n, count in enumerate(failure_overlap(failed, paths)):
+                state = NOT_INTERPRETED if any(status[a, s] == NOT_INTERPRETED for a in arms) else INTERPRETED
+                rows.append([name, s, f"normals failed by {n} of {len(arms)} arms", "", "", state, count])
+            for i, a in enumerate(arms):
+                for b in arms[i + 1:]:
+                    state = NOT_INTERPRETED if NOT_INTERPRETED in (status[a, s], status[b, s]) else INTERPRETED
+                    for what, pair_sets in (("failure Jaccard", failed), ("false-rare Jaccard", rare)):
+                        j = jaccard(pair_sets[a], pair_sets[b])
+                        rows.append([name, s, what, a, b, state, "—" if j is None else j])
+                    rows.append([name, s, "share given the same class", a, b, state,
+                                 same_class_share([pred[a, s][source][q] for q in paths], [pred[b, s][source][q] for q in paths])])
+    tables["E2b_overlap.csv"] = (["query_set", "feature_set", "quantity", "arm_a", "arm_b", "status", "value"], rows)
+    rows = []
+    for arm in ARMS:
+        if (arm, "E1-M") not in pred:
+            continue
+        for name in (*NORMAL_SETS, *RARE_EXTERNAL):
+            source, paths = sets[name]
+            for a in ("NORMAL", "common", "rare"):
+                for b in ("NORMAL", "common", "rare"):
+                    n = sum(destination(pred[arm, "locked"][source][q]) == a and destination(pred[arm, "E1-M"][source][q]) == b
+                            for q in paths)
+                    rows.append([arm, name, status[arm, "E1-M"], a, b, n])
+    tables["E2c_transitions.csv"] = (["arm", "query_set", "status", "locked", "E1-M", "count"], rows)
+    rows, cat_rows = [], []
+    for arm_index, arm in enumerate(ARMS):
+        for source_index, name in enumerate(NORMAL_SETS):
+            source, paths = sets[name]
+            units = [ev.kermany_pid(q) if source == "Kermany" else unit[q] for q in paths]
+            for set_index, s in enumerate(("locked", "E1-M")):
+                if (arm, s) not in pred:
+                    continue
+                failed = [pred[arm, s][source][q] != "NORMAL" for q in paths]
+                for prop_index, prop in enumerate(E2D_PROPERTIES):
+                    have = [i for i, q in enumerate(paths) if prop in properties.get(q, {})]
+                    if not have:
+                        continue
+                    values = [properties[paths[i]][prop] for i in have]
+                    main_text = name == "OCTDL NORMAL" and s == "locked"
+                    common = sum(destination(pred[arm, s][source][paths[i]]) == "common" for i in have)
+                    rare = sum(destination(pred[arm, s][source][paths[i]]) == "rare" for i in have)
+                    rng = None if "E2d-intervals" in drop else np.random.default_rng(
+                        [fm.SEED, E2_BOOT_NS, arm_index, source_index, set_index, prop_index])
+                    rows.append([arm, name, s, status[arm, s], prop, main_text, common, rare,
+                                 *e2d_row(values, [failed[i] for i in have], [units[i] for i in have], rng)])
+                if source == "OCTDL":
+                    for prop in ("mode", "format"):
+                        values = [categorical.get(q, {}).get(prop, "") for q in paths]
+                        for v in sorted(set(values) - {""}):
+                            sel = [destination(pred[arm, s][source][q]) for q, x in zip(paths, values) if x == v]
+                            failures = len(sel) - sel.count("NORMAL")
+                            cat_rows.append([arm, name, s, status[arm, s], prop, v, len(sel), failures,
+                                             sel.count("common"), sel.count("rare"), failures / len(sel)])
+    tables["E2d_properties.csv"] = (["arm", "query_set", "feature_set", "status", "property", "main_text_table",
+                                    "failed_common", "failed_rare", *E2D_HEADER], rows)
+    tables["E2d_categorical.csv"] = (["arm", "query_set", "feature_set", "status", "property", "value", "n", "failed",
+                                     "failed_common", "failed_rare", "failure_share"], cat_rows)
+    rows, patient_rows = [], []
+    source, paths = sets["OCTDL NORMAL"]
+    for (arm, s), p in pred.items():
+        by: dict[str, list[str]] = {}
+        for q in paths:
+            by.setdefault(study.patient[q], []).append(destination(p[source][q]))
+        patient_rows.extend([arm, s, status[arm, s], f"P{i:03d}", len(v), v.count("common"), v.count("rare"),
+                             (len(v) - v.count("NORMAL")) / len(v)] for i, (_, v) in enumerate(sorted(by.items()), 1))
+        failures = [sum(call != "NORMAL" for call in v) for v in by.values()]
+        scans = [len(v) for v in by.values()]
+        rows.append([arm, s, status[arm, s], len(by), sum(n == f for n, f in zip(scans, failures)),
+                     sum(0 < f < n for n, f in zip(scans, failures)), failures.count(0),
+                     float(np.mean(np.divide(failures, scans))),
+                     float(np.mean([v.count("common") / len(v) for v in by.values()])),
+                     float(np.mean([v.count("rare") / len(v) for v in by.values()])),
+                     float(np.mean(scans)), float(np.median(scans)),
+                     min(scans), max(scans)])
+    tables["E2e_octdl_patients.csv"] = (["arm", "feature_set", "status", "patients", "all_failed", "some_failed", "none_failed",
+                                         "failure_share_mean_per_patient", "common_disease_share_mean_per_patient",
+                                         "false_rare_share_mean_per_patient", "scans_per_patient_mean", "scans_per_patient_median",
+                                         "scans_per_patient_min", "scans_per_patient_max"], rows)
+    tables["E2e_octdl_patient_scans.csv"] = (["arm", "feature_set", "status", "patient", "scans", "called_common_disease",
+                                             "called_rare", "failure_share"], patient_rows)
+    return tables
+
+
+def e2f_groups(study: Study, cells: Mapping[tuple[str, str], tuple[str, Mapping[str, Cell]]]) -> tuple[dict, list[str]]:
+    """E2f groups from the locked nine-way: consensus failure / consensus normal (>= 3 of 4 arms) per source."""
+    sets = e2_sets(study)
+    groups = {}
+    for name in NORMAL_SETS[1:]:
+        source, paths = sets[name]
+        calls = {a: dict(zip(cells[a, "locked"][1][source].queries, cells[a, "locked"][1][source].predicted)) for a in ARMS}
+        groups[source, "consensus failure"] = [q for q in paths if sum(calls[a][q] != "NORMAL" for a in ARMS) >= 3]
+        groups[source, "consensus normal"] = [q for q in paths if sum(calls[a][q] == "NORMAL" for a in ARMS) >= 3]
+    return groups, sets["Kermany patient-disjoint"][1]
+
+
+def build_contact_sheet(sample: Sequence[Sequence[str]], images: Callable[[str, int], object], sheet: Path,
+                        phase: int, label: str) -> list[Path]:
+    """Write one blinded pass under Drive. Pass 2 requires completed, hashed pass 1 marks."""
+    sheet = prep.experiment_out(sheet)
+    key = sheet / "key" / "key.csv"
+    if phase == 2:
+        previous = sheet / "pass1" / "marks.csv"
+        if [list(r.values()) for r in prep.read_csv(key)] != list(sample):
+            raise ValueError("E2f pass 2 sample differs from the saved pass 1 roster")
+        validate_marks(prep.read_csv(previous), [row[0] for row in sample])
+        digest = prep.sha256(previous)
+        prep.write_once(previous.with_suffix(".sha256"), (digest + "\n").encode("ascii"))
+        print(f"SHA256 {digest}  {previous}")
+    else:
+        key.parent.mkdir(parents=True, exist_ok=True)
+        prep.write_csv(key, ["id", "path", "source", "group"], [list(r) for r in sample])
+    folder = sheet / f"pass{phase}"
+    folder.mkdir(parents=True, exist_ok=True)
+    figures = []
+    for neutral_id, path, *_ in sample:
+        buffer = io.BytesIO()
+        images(path, phase).save(buffer, format="PNG")
+        prep.write_once(folder / f"{neutral_id}.png", buffer.getvalue())
+        figures.append(f'<figure><img src="{neutral_id}.png" alt="{neutral_id}"><figcaption>{neutral_id}</figcaption></figure>')
+    marks = folder / "marks.csv"
+    if not marks.exists():
+        prep.write_csv(marks, ["id", *E2F_MARKS], [[row[0], *[""] * len(E2F_MARKS)] for row in sample])
+    page = folder / "sheet.html"
+    from html import escape
+    prep.write_once(page, ('<!doctype html><meta charset="utf-8"><title>Review sheet</title>'
+                           '<style>body{background:#111;color:#fff;font:16px system-ui}'
+                           'main{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}'
+                           'img{width:100%;height:auto}figure{margin:1rem}</style>'
+                           f'<p>{escape(label)}</p><main>{"".join(figures)}</main>').encode("utf-8"))
+    return [page, marks]
+
+
+# ======================================================================= E3 ===
+def feature_difference(locked: ev.Features, new: ev.Features, paths: Sequence[str]) -> dict:
+    return extract.repeat_check([locked.select(paths)], [new.select(paths)])
+
+
+def e3(study: Study, p1: Phase1, padded: Path | None = None) -> dict[str, tuple[list[str], list[list]]]:
+    """E3 checks, outcomes and criteria (1)-(3)."""
+    geometry = locked_geometry(study)
+    main_paths = [r["path"] for r in p1.main_inv]
+    ext_paths = [r["path"] for r in p1.ext_inv]
+    square = [p for p in main_paths if geometry[p]["width"] == geometry[p]["height"]]
+    non_square = [p for p in (*main_paths, *ext_paths) if geometry[p]["width"] != geometry[p]["height"]]
+    checks, scored, status = [], {}, {}
+    for arm in ARMS:
+        scored[arm, "locked"], status[arm, "locked"] = score_feature_set(study, study.features(arm), study.external_features(arm)), INTERPRETED
+    interpreted = {}
+    for arm, variants in E3_VARIANTS.items():
+        ref = p1.get("E3", arm, E3_REF)
+        if ref is None:
+            checks.append([arm, E3_REF, "E3-ref against locked features (5,927 images)", None, UNAVAILABLE])
+            interpreted[arm] = False
+        else:
+            c = p1.control(ref)
+            interpreted[arm] = c["passed"]
+            checks.append([arm, E3_REF, f"E3-ref against locked features ({c['images']} images)", c["max_difference_ratio"],
+                           "pass" if interpreted[arm] else NOT_INTERPRETED])
+        locked_all = p1.locked_all(arm)
+        for v in (E3_REF, *variants):
+            worker = p1.get("E3", arm, v)
+            if worker is None:
+                if v != E3_REF:
+                    checks.append([arm, v, "variant", None, UNAVAILABLE])
+                continue
+            for field in ("overrides", "code_matches_lock", "environment_matches_lock"):
+                checks.append([arm, v, field, json.dumps(worker.identity.get(field), sort_keys=True), ""])
+            rep = worker.identity.get("repeat_check") or {}
+            checks.append([arm, v, "repeat (recorded)", rep.get("max_difference_ratio"), f"{rep.get('images')} images"])
+            inputs = prep.read_csv(worker.folder / "variant_inputs.csv")
+            if [r["path"] for r in inputs] != [*main_paths, *ext_paths]:
+                raise ValueError(f"{worker.folder}: variant_inputs.csv differs from the locked inventory order")
+            changed = sum(r["input_changed"].lower() in ("1", "true") for r in inputs)
+            checks.append([arm, v, "inputs changed (worker)", changed, ""])
+            constant = sum(r.get("constant_minmax_input", "").lower() in ("1", "true") for r in inputs)
+            checks.append([arm, v, "constant min-max inputs (left unchanged)", constant, ""])
+            if v == E3_REF:
+                continue
+            feats = p1.features(arm, "E3", v)
+            merged = fx.merge(*feats)
+            square_ok = True
+            if v in E3_SQUARE:
+                sq = feature_difference(locked_all, merged, square)
+                square_ok = sq["max_difference_ratio"] <= CONTROL_TOL
+                checks.append([arm, v, f"square main images unchanged ({sq['images']})", sq["max_difference_ratio"],
+                               "pass" if square_ok else "fail; not interpreted"])
+            eff = feature_difference(locked_all, merged, non_square)
+            applied = eff["worst_image_difference_ratio"] > EFFECT_MIN
+            checks.append([arm, v, f"largest per-image difference on {eff['images']} non-square images",
+                           eff["worst_image_difference_ratio"], "change applied" if applied else "no effect, change not applied"])
+            scored[arm, v] = score_feature_set(study, *feats)
+            status[arm, v] = (NOT_INTERPRETED if not interpreted[arm] else "square check failed; not interpreted"
+                              if not square_ok else "no effect, change not applied; not interpreted"
+                              if not applied else INTERPRETED)
+    if padded is not None:
+        folder = padded / NOMINEE
+        prep.verify_complete(folder)
+        identity = prep.read_json(folder / "identity.json")
+        if (identity.get("arm"), identity.get("lock_sha256"), identity.get("external_lock_sha256")) != (
+            NOMINEE, prep.sha256(study.lock / "input_lock.json"), prep.sha256(study.external / "external_lock.json")
+        ):
+            raise ValueError("G1 padded MIRAGE belongs to a different arm or lock")
+        dim = extract.DIMENSIONS[NOMINEE]
+        feats = (ev.Features(extract.load_features(folder / "features.npz", p1.main_inv, dim), {p: i for i, p in enumerate(main_paths)}),
+                 ev.Features(extract.load_features(folder / "features_external.npz", p1.ext_inv, dim), {p: i for i, p in enumerate(ext_paths)}))
+        scored[NOMINEE, M_PAD], status[NOMINEE, M_PAD] = score_feature_set(study, *feats), M_PAD_NOTE
+    else:
+        checks.append([NOMINEE, M_PAD, M_PAD_NOTE, None, UNAVAILABLE])
+    dev = {key: dev_macro(study, sc) for key, sc in scored.items()}
+    rep = {key: rep_macro(study, sc) for key, sc in scored.items()}
+    inc = dev[fm.REFERENCE, "locked"]
+    rows, holdout = [], []
+    for (arm, v), d in dev.items():
+        if v == "locked" and arm not in E3_VARIANTS:
+            continue
+        rows += [[arm, v, status[arm, v], "macro_recall", k, *summary(x)] for k, x in by_k(d, KS)]
+        if v != "locked":
+            rows += [[arm, v, status[arm, v], "minus Inception-v3 locked", k, *summary(x)] for k, x in by_k(paired(d, inc), KS)]
+            rows += [[arm, v, status[arm, v], f"minus {arm} locked", k, *summary(x)] for k, x in by_k(paired(d, dev[arm, "locked"]), KS)]
+            for k, x in by_k(paired(rep[arm, v], rep[fm.REFERENCE, "locked"]), sorted({k for k, _ in rep[arm, v]})):
+                m = float(np.mean(x))
+                state = status[arm, v]
+                reading = ("positive" if m > 0 else "negative" if m < 0 else "zero") if state in (INTERPRETED, M_PAD_NOTE) else ""
+                holdout.append([arm, v, state, k, len(x), m, "shown, never read" if k == 16 else reading])
+    for arm in E3_VARIANTS:
+        variants = (*E3_VARIANTS[arm], M_PAD) if arm == NOMINEE else E3_VARIANTS[arm]
+        means = [float(np.mean(k_mean(dev[arm, v]))) for v in variants if (arm, v) in dev]
+        if means:
+            rows.append([arm, "all variants", "", "range of variant K-mean means", ev.K_MEAN_LABEL, len(means), min(means), None,
+                         None, max(means)])
+    tables = {"E3_checks.csv": (["arm", "variant", "check", "value", "status"], checks),
+              "E3_development.csv": (["arm", "variant", "status", "quantity", "k", *SUMMARY], rows),
+              "E3_holdout.csv": (["arm", "variant", "status", "k", "n_draws", "mean_difference_vs_locked_Inception",
+                                  "direction"], holdout)}
+    nine = []
+    locked_rows = {arm: {r[0]: r for r in nine_way_rows(study, scored[arm, "locked"].nine)} for arm in ARMS}
+    for (arm, v), sc in scored.items():
+        if v == "locked" and arm not in E3_VARIANTS:
+            continue
+        for r in nine_way_rows(study, sc.nine):
+            nine.append([arm, v, status[arm, v], *r])
+    tables["E3_nine_way.csv"] = (["arm", "variant", "status", *NINE_HEADER], nine)
+    kmean = lambda a, b: k_mean(paired(dev[a], dev[b]))  # noqa: E731
+    mirage = {v: kmean((NOMINEE, v), (fm.REFERENCE, "locked")) for v in E3_VARIANTS[NOMINEE]
+              if (NOMINEE, v) in dev and status[NOMINEE, v] == INTERPRETED}
+    rf_inc = {v: kmean(("RETFound", v), (fm.REFERENCE, "locked")) for v in E3_VARIANTS["RETFound"]
+              if ("RETFound", v) in dev and status["RETFound", v] == INTERPRETED}
+    m_rf = {v: k_mean(paired(dev[NOMINEE, "locked"], dev["RETFound", v])) for v in rf_inc}
+    crit = e3_criteria(mirage, rf_inc, m_rf)
+    if (NOMINEE, M_PAD) in dev:
+        crit.insert(len(E3_VARIANTS[NOMINEE]) + 1, ["(1) shown beside, not counted", NOMINEE, M_PAD,
+                    "p05 of K mean (variant - Inception-v3 locked)", fm.N_DRAWS, success_rule(kmean((NOMINEE, M_PAD), (fm.REFERENCE, "locked")))["p05"], M_PAD_NOTE])
+    if not any(("RETFound", v) in dev for v in E3_VARIANTS["RETFound"]):
+        crit = [r for r in crit if r[0] != "(2)"] + [["(2)", "RETFound", "", "", None, None, "RETFound unavailable in E3"]]
+    unstable, counted_variants = [], 0
+    pad_outcomes: dict[str, bool] = {}
+    for (arm, v), sc in scored.items():
+        if v == "locked" or arm not in E3_VARIANTS:
+            continue
+        counted = status[arm, v] in (INTERPRETED, M_PAD_NOTE)
+        counted_variants += counted
+        got = {r[0]: r for r in nine_way_rows(study, sc.nine)}
+        for name in NORMAL_SETS[1:]:
+            lk = locked_rows[arm][name]
+            inside = e3_interval_check(got[name][5], got[name][1], (lk[8], lk[9]))
+            counts = {a: locked_rows[a][name][5] for a in ARMS if a != arm} | {arm: got[name][5]}
+            ranks = ", ".join(f"{a} {r}" for a, r in sorted(ranks_with_ties(counts).items(), key=lambda row: row[1]))
+            r1s = [f"{r[0].split()[1]} {r[5]}/{r[1]}" for r in got.values()
+                   if r[0] in RARE_EXTERNAL and r[0].split()[0] == name.split()[0]]
+            crit.append(["(3)", arm, v, f"{name} false-rare count inside {arm}'s locked 95% interval",
+                         got[name][1], got[name][5], ("inside" if inside else "outside") +
+                         f" [{lk[8]:.3f}, {lk[9]:.3f}] as a rate" +
+                         f"; NORMAL recall {got[name][3] / got[name][1]:.3f}; R1 {', '.join(r1s)}"
+                         f"; ranks among four arms {ranks}"
+                         " (description only)" + (f"; {M_PAD_NOTE}" if v == M_PAD else
+                                                  "" if counted else f"; {status[arm, v]}, not counted")])
+            if v == M_PAD:
+                pad_outcomes[name] = inside
+            if counted and not inside:
+                unstable.append(f"{arm} {v} {name}" + (f" ({M_PAD_NOTE})" if v == M_PAD else ""))
+    complete_grid = counted_variants == 1 + sum(map(len, E3_VARIANTS.values()))
+    stability = ("outside: " + "; ".join(unstable) if unstable else "stable" if complete_grid else
+                 "not evaluable for the full grid; no evaluated variant outside")
+    if pad_outcomes and all(pad_outcomes.values()):
+        stability += f"; {M_PAD} inside on {', '.join(pad_outcomes)} ({M_PAD_NOTE})"
+    elif not pad_outcomes:
+        stability += f"; {M_PAD} {UNAVAILABLE} ({M_PAD_NOTE})"
+    crit.append(["(3)", "all", "", "result", counted_variants, None, stability])
+    crit.append(["scope", "", "", "", None, None, E3_SCOPE])
+    tables["E3_criteria.csv"] = (["criterion", "arm", "variant", "statistic", "n", "value", "result"], crit)
+    return tables
+
+
+# ======================================================================= E4 ===
+E4_SOURCES = ("Kermany test", "Yoo rare", "OCTID", "OCTDL")
+E4_NORMAL_PAIRS = (("Kermany test NORMAL", "OCTID NORMAL"), ("Kermany test NORMAL", "OCTDL NORMAL"),
+                   ("OCTID NORMAL", "OCTDL NORMAL"))
+
+
+def e4_pairs() -> list[tuple[str, str]]:
+    import itertools
+    return [*itertools.combinations(E4_SOURCES, 2), *E4_NORMAL_PAIRS]
+
+
+def e4_members(study: Study) -> dict[str, tuple[list[str], list[str]]]:
+    """Source -> (paths, units): Kermany by pid, rare and OCTID by image, OCTDL by patient."""
+    query = [r for r in study.roster if r["role"] == "query"]
+    rare = [r["path"] for r in prep.read_csv(study.lock / "extraction_inventory.csv") if r["path"].startswith("data/raw/rare/")]
+    out = {"Kermany test": [r["path"] for r in query if r["label"] in COMMON],
+           "Kermany test NORMAL": [r["path"] for r in query if r["label"] == "NORMAL"],
+           "Yoo rare": rare}
+    for source in ("OCTID", "OCTDL"):
+        out[source] = [r["path"] for r in study.queries if r["source"] == source]
+        out[f"{source} NORMAL"] = [r["path"] for r in study.queries if r["source"] == source and r["label"] == "NORMAL"]
+
+    def unit_of(p: str) -> str:
+        if p.startswith("data/raw/OCT2017/"):
+            return "Kermany:" + ev.kermany_pid(p)
+        return "OCTDL:" + study.patient[p] if p in study.patient else p
+    return {name: (paths, [unit_of(p) for p in paths]) for name, paths in out.items()}
+
+
+def e4_tables(members: Mapping[str, tuple[Sequence[str], Sequence[str]]], columns: Mapping[str, Mapping[str, np.ndarray]],
+              column_names: Mapping[str, Sequence[str]], arm_sets: Mapping[str, Mapping[str, np.ndarray]],
+              thumbs: Mapping[str, Mapping[str, np.ndarray]], drop: set[str] = frozenset(),
+              n_boot: int = E_BOOT, draws: int = fm.N_DRAWS,
+              status: Mapping[str, str] | None = None) -> dict[str, tuple[list[str], list[list]]]:
+    """E4 on per-image vectors. columns: G / S-raw / S-E1 -> path -> values (column_names gives their names);
+    arm_sets: 'MIRAGE locked', 'MIRAGE E1-M', ... -> path -> features; thumbs: 'raw' / 'E1-M' -> path -> vector."""
+    tables = {}
+    status = status or {}
+    pairs = e4_pairs()
+    stack = lambda table, paths: np.stack([np.asarray(table[p], dtype=np.float64) for p in paths])  # noqa: E731
+    # Main measure: few-shot source test on the normal-only pairs.
+    rows = []
+    for pair_index, (a, b) in enumerate(pairs):
+        if (a, b) not in E4_NORMAL_PAIRS:
+            continue
+        paths = [*members[a][0], *members[b][0]]
+        source = np.array([0] * len(members[a][0]) + [1] * len(members[b][0]))
+        units = [*members[a][1], *members[b][1]]
+        results = {}
+        for name, table in arm_sets.items():
+            if all(p in table for p in paths):
+                results[name] = source_fewshot(stack(table, paths), source, units, pair_index, prototype_predict, draws=draws)
+        for name, table in thumbs.items():
+            if all(p in table for p in paths):
+                results[f"thumbnail {name}"] = source_fewshot(stack(table, paths), source, units, pair_index,
+                                                              nearest_mean_predict, draws=draws)
+        for name, values in results.items():
+            rows += [[f"{a} vs {b}", name, "two-way macro recall (chance 0.50)", k, *summary(v),
+                      status.get(name, ""), ""] for k, v in by_k(values, KS)]
+        controlled = {name: name.replace(" locked", " E1-M") for name in results if name.endswith(" locked")}
+        controlled["thumbnail raw"] = "thumbnail E1-M"
+        for name, other in controlled.items():
+            if name in results and other in results:
+                diff = paired(results[other], results[name])
+                for k, v in by_k(diff, KS):
+                    reading = ""
+                    state = status.get(other, INTERPRETED)
+                    if k == ev.K_MEAN_LABEL and state == INTERPRETED and v:
+                        reading = "the control reduced separability" if np.percentile(v, 95) < 0 else "no reduction shown"
+                    rows.append([f"{a} vs {b}", f"{other} minus {name}", "paired difference", k, *summary(v), state, reading])
+        rows += [[f"{a} vs {b}", name, "", "", *[None] * len(SUMMARY), UNAVAILABLE, ""]
+                 for name, state in status.items() if state == UNAVAILABLE]
+    tables["E4a_fewshot_source_test.csv"] = (["pair", "feature_set", "quantity", "k", *SUMMARY, "status", "reading"], rows)
+    # Secondary: per-column AUROC with no fit (second source positive).
+    rows = []
+    for a, b in pairs:
+        for set_name, table in columns.items():
+            pa, pb = members[a][0], members[b][0]
+            if not pa or not pb or not all(p in table for p in (*pa, *pb)):
+                continue
+            A, B = stack(table, pa), stack(table, pb)
+            for j, col in enumerate(column_names[set_name]):
+                value = auroc(B[:, j], A[:, j])
+                sep = max(value, 1 - value)
+                rows.append([f"{a} vs {b}", set_name, col, len(pa), len(pb), value, sep, e4_reading(sep),
+                             "different sources: source and disease are mixed" if "Yoo rare" in (a, b) else ""])
+    tables["E4b_column_auroc.csv"] = (["pair", "feature_set", "column", "n_first", "n_second", "auroc_second_positive",
+                                       "separability", "reading", "note"], rows)
+    if "E4-probe" in drop:
+        return tables
+    rows, diffs = [], []
+    for pair_index, (a, b) in enumerate(pairs):
+        sets = {**{k: (v, False) for k, v in columns.items()}, **{k: (v, True) for k, v in arm_sets.items()}}
+        paths = [*members[a][0], *members[b][0]]
+        y = np.array([0] * len(members[a][0]) + [1] * len(members[b][0]))
+        units = np.array([*members[a][1], *members[b][1]])
+        folds = grouped_folds(y, units, pair_index)
+        oof = {}
+        for name, (table, rows_normal) in sets.items():
+            if not all(p in table for p in paths):
+                continue
+            scores, failures = probe_scores(stack(table, paths), y, folds, rows_normal)
+            oof[name] = (scores, failures)
+        rng = np.random.default_rng([fm.SEED, E4_BOOT_NS, pair_index])
+        g0, g1 = unit_index(units[y == 0].tolist()), unit_index(units[y == 1].tolist())
+        i0, i1 = np.flatnonzero(y == 0), np.flatnonzero(y == 1)
+        draws_idx = [(i0[resample_units(g0, rng)], i1[resample_units(g1, rng)]) for _ in range(n_boot)]
+        boot = {}
+        for name, (scores, failures) in oof.items():
+            point = auroc(scores[y == 1], scores[y == 0])
+            boot[name] = np.array([auroc(scores[j1], scores[j0]) for j0, j1 in draws_idx])
+            lo, hi = np.percentile(boot[name], [2.5, 97.5])
+            state = status.get(name, INTERPRETED)
+            rows.append([f"{a} vs {b}", name, len(i0), len(i1), len(g0), len(g1), point, lo, hi, state,
+                         e4_reading(point) if state == INTERPRETED else "", failures,
+                         "different sources: source and disease are mixed" if "Yoo rare" in (a, b) else ""])
+        point = {name: auroc(s[y == 1], s[y == 0]) for name, (s, _) in oof.items()}
+        comparisons = [("S-E1", "S-raw")] + [(f"{arm} E1-M", f"{arm} locked") for arm in ARMS] + \
+            [(f"{arm} locked", "S-raw") for arm in ARMS]
+        for new, old in comparisons:
+            if new in boot and old in boot:
+                d = boot[new] - boot[old]
+                lo, hi = np.percentile(d, [2.5, 97.5])
+                state = status.get(new, INTERPRETED)
+                diffs.append([f"{a} vs {b}", f"{new} minus {old}", point[new] - point[old], lo, hi, state,
+                              e4_pair_reading(point[old], point[new], lo, hi, not new.endswith(" locked"))
+                              if state == INTERPRETED else "",
+                              "different sources: source and disease are mixed" if "Yoo rare" in (a, b) else ""])
+    tables["E4c_probe_auroc.csv"] = (["pair", "feature_set", "n_first", "n_second", "units_first", "units_second", "auroc",
+                                      "boot95_low", "boot95_high", "status", "reading", "fits_not_converged", "note"], rows)
+    tables["E4d_probe_differences.csv"] = (["pair", "comparison", "auroc_difference", "boot95_low", "boot95_high",
+                                           "status", "reading", "note"], diffs)
+    return tables
+
+
+def e4_inputs(study: Study, p1: Phase1) -> tuple[dict, dict, dict, dict, dict]:
+    geometry = locked_geometry(study)
+    columns = {"G": {p: np.array([g[c] for c in GEOMETRY_G]) for p, g in geometry.items()}}
+    names = {"G": list(GEOMETRY_G)}
+    for key, which in (("S-raw", "raw"), ("S-E1", "E1-M")):
+        stats = p1.pixel_stats(which)
+        if stats:
+            columns[key], names[key] = stats, list(PIXEL_STATS)
+    arm_sets, status = {}, {}
+    for arm in ARMS:
+        for s in ("locked", "E1-M"):
+            feats = p1.features(arm, s)
+            status[f"{arm} {s}"] = p1.status(arm, s)
+            if feats is not None:
+                merged = fx.merge(*feats)
+                arm_sets[f"{arm} {s}"] = {p: merged.values[i] for p, i in merged.index.items()}
+    thumbs = {k: v for k, v in p1.thumbs().items() if k in ("raw", "E1-M")}
+    return columns, names, arm_sets, thumbs, status
+
+
+# =================================================================== E report ===
+E1_FILES = ("E1a_checks.csv", "E1b_development.csv", "E1c_paired.csv", "E1d_success.csv", "E1e_matched.csv",
+            "E1f_holdout.csv", "E1g_nine_way.csv", "E1h_leave_one_out.csv")
+
+
+def _read(out: Path, name: str) -> list[dict[str, str]]:
+    path = out / name
+    if not path.exists():
+        return []
+    with open(path, newline="", encoding="utf-8") as stream:
+        return list(csv.DictReader(stream))
+
+
+def e1_report(tables: Mapping[str, Sequence[Mapping[str, str]]]) -> str:
+    """E1_comparison.md from the E1 CSVs (rows as csv.DictReader gives them); nothing is computed."""
+    success = tables["E1d_success.csv"]
+    label = success[0]["posthoc"]
+    out = ["# E1 size and framing control (post hoc, Phase-1)", "",
+           f"Label of every row: {label}.", "",
+           "Only E1-M gives the verdict on M1; E1-L, E1-C, the references and the hold-out are descriptions and cannot "
+           "overturn or rescue it. The development spread is over support draws on 124 fixed queries, not a confidence interval.", "",
+           'Pixel-only reference (choice fixed in code before any E number). "Is above" means p05 > 0 across the '
+           "100 paired MIRAGE E1-M minus E1-M thumbnail K-mean differences. The quoted mean is the mean of those differences.", "",
+           "## 1. Success table (E1d)", "", "| Line | Set | Status | n | Mean | SD | p05 | Draws above 0 | Verdict |",
+           "|---|---|---|---|---|---|---|---|---|"]
+    for r in success:
+        if r["line"].startswith(("fixed sentence", "limitations")):
+            continue
+        out.append(f"| {r['line']} | {r['feature_set']} | {r['status']} | {r['n_draws']} | {_num(r['mean'])} | {_num(r['sd'])} | "
+                   f"{_num(r['p05'])} | {r['draws_above_0']} | {r['verdict']} |")
+    for r in success:
+        if r["line"] == "fixed sentence" and r["text"]:
+            out += ["", f"**Sentence.** {r['text']}"]
+        if r["line"].startswith("limitations"):
+            out += ["", f"**Limitations.** {r['text']}."]
+    checks = tables["E1a_checks.csv"]
+    out += ["", "## 2. Checks (E1a)", "", "| Check | Arm | Set | Quantity | Value | Status | Note |", "|---|---|---|---|---|---|---|"]
+    out += [f"| {r['check']} | {r['arm']} | {r['feature_set']} | {r['quantity']} | {r['value']} | {r['status']} | {r['note']} |"
+            for r in checks]
+    out += ["", "## 3. Development, K mean (E1b; per K in the CSV)", "", "| Model | Set | Status | Mean | SD | p05 | p95 |",
+            "|---|---|---|---|---|---|---|"]
+    out += [f"| {r['model']} | {r['feature_set']} | {r['status']} | {_num(r['mean'])} | {_num(r['sd'])} | {_num(r['p05'])} | {_num(r['p95'])} |"
+            for r in tables["E1b_development.csv"] if r["k"] == ev.K_MEAN_LABEL]
+    out += ["", "## 4. Paired differences, K mean (E1c)", "", "| Comparison | Set | Status | Mean | p05 | p95 |", "|---|---|---|---|---|---|"]
+    out += [f"| {r['comparison']} | {r['feature_set']} | {r['status']} | {_num(r['mean'])} | {_num(r['p05'])} | {_num(r['p95'])} |"
+            for r in tables["E1c_paired.csv"] if r["k"] == ev.K_MEAN_LABEL]
+    if tables.get("E1e_matched.csv"):
+        out += ["", "## 5. Matched subset (E1e; supports are not matched)", "", "| Model | Set | k | n queries | Classes | Mean | p05 |",
+                "|---|---|---|---|---|---|---|"]
+        out += [f"| {r['model']} | {r['feature_set']} | {r['k']} | {r['n_queries']} | {r['classes_present']} | {_num(r['mean'])} | {_num(r['p05'])} |"
+                for r in tables["E1e_matched.csv"] if r["k"] in (ev.K_MEAN_LABEL, "")]
+    out += ["", "## 6. Hold-out, legacy 22 (E1f; direction only, K = 16 shown and never read)", "",
+            "| Comparison | Set | k | Mean paired difference | Direction |", "|---|---|---|---|---|"]
+    out += [f"| {r['model']} | {r['feature_set']} | {r['k']} | {_num(r['mean'])} | {r['direction']} |"
+            for r in tables["E1f_holdout.csv"] if r["quantity"] == "paired_macro_recall"]
+    out += ["", "## 7. Nine-way audit (E1g)", "",
+            "| Model | Set | Status | Query set | n | Correct | NORMAL | CNV, DME or DRUSEN | Any rare | NORMAL recall | Rate | 95% (locked method) |",
+            "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for r in tables["E1g_nine_way.csv"]:
+        ci = f"{_num(r['ci95_low'])} to {_num(r['ci95_high'])}" if r["ci95_low"] else ""
+        out.append(f"| {r['model']} | {r['feature_set']} | {r['status']} | {r['query_set']} | {r['n']} | "
+                   f"{r['correct_class']} | {r['called_NORMAL']} | {r['called_CNV_DME_DRUSEN']} | {r['called_any_rare']} | "
+                   f"{_num(r['NORMAL_recall'])} | {r['rate']} {_num(r['rate_value'])} | {ci} |")
+    if tables.get("E1h_leave_one_out.csv"):
+        out += ["", "## 8. MIRAGE minus Inception-v3 K mean, each development query left out (E1h)", "",
+                "| Set | Full | Smallest | Image | Largest | Image |", "|---|---|---|---|---|---|"]
+        out += [f"| {r['feature_set']} | {_num(r['full_difference'])} | {_num(r['smallest'])} | {r['smallest_image']} | "
+                f"{_num(r['largest'])} | {r['largest_image']} |" for r in tables["E1h_leave_one_out.csv"]]
+    out += ["", "Not allowed: that size or framing \"explains\" or \"does not explain\" the locked advantage (say \"survives\" "
+            "or \"does not survive this control\"); \"keeps\" without the mean beside it; any reading of K = 16; E1-L or E1-C "
+            "as the main result; \"robust to framing\" beyond these three variants."]
+    return "\n".join(out) + "\n"
+
+
+def write_e1_report(out: Path) -> Path:
+    tables = {name: _read(out, name) for name in E1_FILES}
+    if not tables["E1d_success.csv"]:
+        raise SystemExit(f"{out} lacks E1d_success.csv: run `fm_posthoc.py e1` first")
+    path = out / "E1_comparison.md"
+    prep.write_once(path, e1_report(tables).encode("utf-8"))
+    return path
+
+
+def e2_report(rows: Sequence[Mapping[str, str]]) -> str:
+    """Summarize the registered E2d table and the number of intervals excluding 0.5."""
+    intervals = [r for r in rows if r["boot95_low"] and r["boot95_high"]]
+    excluded = sum(r["interval_excludes_0_5"] == "True" for r in intervals)
+    lines = ["# E2 external error analysis", "", rows[0]["posthoc"], "",
+             f"{excluded} of {len(intervals)} reported E2d intervals exclude 0.5.", "",
+             "## Locked-feature OCTDL normals", "",
+             "| Arm | Property | Failures | Common disease | False rare | AUROC | 95% interval |",
+             "|---|---|---|---|---|---|---|"]
+    for row in rows:
+        if row["main_text_table"] == "True":
+            interval = (f"{_num(row['boot95_low'])} to {_num(row['boot95_high'])}" if row["boot95_low"] else "—")
+            lines.append(f"| {row['arm']} | {row['property']} | {row['n_failed']} | {row['failed_common']} | "
+                         f"{row['failed_rare']} | {_num(row['auroc_failed_vs_not'])} | {interval} |")
+    lines += ["", "E2a records all destinations, E2b the overlap across arms, and E2c the locked-to-E1-M transitions.",
+              "The intervals describe associations among these scans. E2f uses one non-clinician rater."]
+    return "\n".join(lines) + "\n"
+
+
+# ===================================================================== E CLI ===
+def write_tables(out: Path, label: str, tables: Mapping[str, tuple[list[str], list[list]]]) -> list[Path]:
+    return [write(out, name, label, header, rows) for name, (header, rows) in tables.items()]
+
+
+def run_phase1(args: argparse.Namespace, out: Path) -> list[Path]:
+    """Steps e1-e4: rule 1 first (rule_commit and the subsection hash), then read, score and write once."""
+    labels, section = phase1_labels(args.date)
+    if getattr(args, "dry_run", False):
+        prep.experiment_out(out)
+        labels = {k: f"{label}; dry run using locked features as stand-ins" for k, label in labels.items()}
+    drop = set(args.drop.split(",")) if getattr(args, "drop", None) else set()
+    if drop - set(DROPPABLE):
+        raise SystemExit(f"--drop takes only {', '.join(DROPPABLE)}")
+    written = []
+    with tempfile.TemporaryDirectory() as tmp:
+        study = Study(args.attempt, Path(tmp))
+        cache = Path(tempfile.gettempdir()) / "few-shot-phase1-render"
+        root, receipts, rendered = phase1_root(args.phase1, Path(tmp), cache)
+        p1 = Phase1(study, root, receipts, dry_run=getattr(args, "dry_run", False), partial=args.partial,
+                    cached_render=rendered)
+        if args.step == "e1":
+            written += write_tables(out, f"{labels['E1']}; limitations: {E1_LIMITATIONS}",
+                                    e1(study, p1, section, args.data_root, drop))
+        elif args.step == "e2":
+            if args.sheet_pass == 2 and (args.sheet is None or "E2f" in drop):
+                raise SystemExit("--sheet-pass 2 requires --sheet and cannot be combined with --drop E2f")
+            cells = e2_cells(study, p1)
+            geometry = locked_geometry(study)
+            grey = p1.pixel_stats("raw")
+            properties = {p: {**g, **({"grey_mean": grey[p][0], "grey_sd": grey[p][1]} if p in grey else {})}
+                          for p, g in geometry.items()}
+            fmt = {r["path"]: r["format"] for r in p1.render_rows()}
+            mode = {r["path"]: r["mode"] for r in prep.read_csv(study.external / "external_inventory.csv")}
+            categorical = {p: {"mode": mode[p], **({"format": fmt[p]} if p in fmt else {})} for p in mode}
+            if args.sheet_pass == 1:
+                written += write_tables(out, labels["E2"], e2_tables(study, cells, properties, categorical, drop))
+            if "E2f" not in drop and args.sheet is not None:
+                groups, anchors = e2f_groups(study, cells)
+                sample = contact_sheet_sample(groups, anchors)
+                written += build_contact_sheet(sample, e2f_images(p1, args.data_root), args.sheet, args.sheet_pass, labels["E2"])
+        elif args.step == "e3":
+            g1_drive = args.attempt / "g1"
+            padded = (padded_root(args.padded or g1_drive, Path(tmp))
+                      if args.padded or g1_drive.is_dir() else None)
+            written += write_tables(out, f"{labels['E3']}; {E3_SCOPE}", e3(study, p1, padded))
+        else:
+            import sklearn
+            members = e4_members(study)
+            columns, names, arm_sets, thumbs, status = e4_inputs(study, p1)
+            label = f"{labels['E4']}; laptop run of record, scikit-learn {sklearn.__version__}"
+            written += write_tables(out, label, e4_tables(members, columns, names, arm_sets, thumbs, drop, status=status))
+    return written
+
+
+def e2f_images(p1: Phase1, data_root: Path | None) -> Callable[[str, int], object]:
+    """Pass 1: the E1-M square from the render archive; pass 2: the original scaled to 640 px wide
+    (render archive copy640 for external images, else the raw file under --data-root)."""
+    from PIL import Image
+    rows = {r["path"]: r for r in p1.render_rows()}
+    external = {r["path"] for r in p1.ext_inv}
+
+    def load(path: str, n: int):
+        if p1.render is None:
+            raise ValueError("the verified render archive is required for E2f")
+        if n == 1:
+            with Image.open(render_png(p1.render, "E1-M", path)) as image:
+                return image.convert("RGB")
+        if path in external:
+            source = render_png(p1.render, "external640", path)
+        else:
+            source = (data_root or Path(".")) / prep.safe_id(path)
+            if prep.sha256(source) != rows[path]["sha256"]:
+                raise ValueError(f"review original differs from the input lock: {path}")
+        with Image.open(source) as image:
+            image = image.convert("RGB")
+            if image.width != 640:
+                image = image.resize((640, max(1, round(image.height * 640 / image.width))), Image.Resampling.BICUBIC)
+            return image
+    return load
+
+
+def e2f_marks(marks: Path, key: Path | None, out: Path, label: str) -> list[str]:
+    """Hash a marks file (the SHA256 goes into CONTEXT.md); with the key, write the unblinded counts."""
+    digest = prep.sha256(marks)
+    lines = [f"SHA256 {digest}  {marks}"]
+    if key is not None:
+        sheet = key.parent.parent
+        if marks.resolve() not in {(sheet / phase / "marks.csv").resolve() for phase in ("pass1", "pass2")}:
+            raise ValueError("--marks must be the completed pass1 or pass2 marks.csv from this sheet")
+        roster = prep.read_csv(key)
+        ids = [r["id"] for r in roster]
+        for phase in ("pass1", "pass2"):
+            source = sheet / phase / "marks.csv"
+            validate_marks(prep.read_csv(source), ids)
+            digest = prep.sha256(source)
+            prep.write_once(source.with_suffix(".sha256"), (digest + "\n").encode("ascii"))
+            lines.append(f"SHA256 {digest}  {source}")
+        counts = mark_counts(prep.read_csv(marks), roster)
+        path = write(out, f"E2f_marks_{marks.parent.name}.csv", label,
+                     ["source", "group", "group_size", "mark", "value", "count", "note"], counts)
+        lines.append(f"wrote {path}")
+    return lines
+
+
+def add_phase1_commands(sub) -> None:
+    for step in ("e1", "e2", "e3", "e4"):
+        command = sub.add_parser(step, description=f"Phase-1 {step.upper()} (protocols.md section 8, Phase-1 controls).")
+        command.add_argument("--out", type=Path, default=OUT)
+        command.add_argument("--attempt", type=Path, required=True, help=f"the locked attempt folder ({ATTEMPT})")
+        command.add_argument("--phase1", type=Path, required=True,
+                             help="Drive phase1/ folder with the phase1-*.zip archives and receipts, or the unzipped root")
+        command.add_argument("--date", default=datetime.date.today().isoformat())
+        command.add_argument("--partial", action="store_true",
+                             help="allow missing render or E1-M arms in an incomplete Phase-1 delivery")
+        command.add_argument("--drop", help=f"laptop drop order, comma-separated subset of {','.join(DROPPABLE)}")
+        if step == "e1":
+            command.add_argument("--data-root", type=Path, help="checkout whose data/raw holds the images (laptop re-render)")
+            command.add_argument("--dry-run", action="store_true", help="label stand-in output and require scratch --out")
+        if step == "e2":
+            command.add_argument("--data-root", type=Path, help="checkout whose data/raw holds the images (E2f pass 2)")
+            command.add_argument("--sheet", type=Path, help="E2f contact-sheet folder in Drive; never inside the repository")
+            command.add_argument("--sheet-pass", type=int, choices=(1, 2), default=1,
+                                 help="generate E2f pass 2 after filling pass 1 marks")
+        if step == "e3":
+            command.add_argument("--padded", type=Path, help="G1 folder for M-pad (as for the g1 step)")
+    command = sub.add_parser("e-report", description="Write E1_comparison.md from the E1 CSVs in --out (nothing is computed).")
+    command.add_argument("--out", type=Path, default=OUT)
+    command = sub.add_parser("e2f-marks", description="SHA256 of an E2f marks file; with --key, the unblinded counts.")
+    command.add_argument("--out", type=Path, default=OUT)
+    command.add_argument("--marks", type=Path, required=True)
+    command.add_argument("--key", type=Path)
+    command.add_argument("--date", default=datetime.date.today().isoformat())
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="step", required=True)
@@ -1611,9 +3472,23 @@ def main() -> None:
             command.add_argument("--padded", type=Path, required=True,
                                  help="folder holding MIRAGE/ and Inception/ from G1, or the Drive g1/ folder with the "
                                       "g1-<arm>-<stamp>.zip archives and their .json receipts")
+    add_phase1_commands(sub)
     args = parser.parse_args()
     out = prep.writable_path(Path(__file__).resolve().parent, args.out)
-    if args.step == "run":
+    if args.step in ("e1", "e2", "e3", "e4"):
+        for path in run_phase1(args, out):
+            print("wrote", path)
+    elif args.step == "e-report":
+        print("wrote", write_e1_report(out))
+        properties = _read(out, "E2d_properties.csv")
+        if properties:
+            page = out / "E2_comparison.md"
+            prep.write_once(page, e2_report(properties).encode("utf-8"))
+            print("wrote", page)
+    elif args.step == "e2f-marks":
+        for line in e2f_marks(args.marks, args.key, out, phase1_labels(args.date)[0]["E2"]):
+            print(line)
+    elif args.step == "run":
         for path in run(args.attempt, out, set(args.only.split(",")) if args.only else None, args.date):
             print("wrote", path)
     elif args.step == "g1-report":
