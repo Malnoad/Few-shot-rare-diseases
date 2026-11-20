@@ -7,12 +7,12 @@ SHA256 `4e8df8d9…c5df`) and its dated amendments in
 [`docs/research/FM_AMENDMENTS.md`](docs/research/FM_AMENDMENTS.md) (A1, A2, A3). If this page and
 those two files ever disagree, **they win** and this page gets fixed.
 
-Status on 19 November 2026: the input lock was made on 13 November and its hashes deposited on
+Status on 20 November 2026: the input lock was made on 13 November and its hashes deposited on
 Zenodo (doi:10.5281/zenodo.24206472) before any score. **All pre-specified scores were computed
 on 14 November**; the nominee is MIRAGE. The results are summarised in
-`docs/report/2026-11-14_weekly_report.tex`. P0–P9 and G1 are done; P10 and the write-up remain,
-on the calendar of 19 November (section 8): last analysis 20 Nov, freeze 25 Nov, **delivery
-30 Nov**. Fine-tuning is not part of this study.
+`docs/report/2026-11-14_weekly_report.tex`. P0–P9, G1 and R2 are done; P10, the Phase-1 controls
+E1–E4 (mentor, 20 Nov) and the write-up remain, on the calendar of 20 November (section 8): freeze
+27 Nov, **delivery 3 Dec**. Fine-tuning is not part of this study.
 
 ## 1. The question
 
@@ -183,20 +183,21 @@ Steps 1 to 5 run in `colab_fm.ipynb` (one GPU session, no labels read). Steps 6 
 | S2 | 12–14 Nov | Final pilots, input lock, extraction (`colab_fm.ipynb`) | Done 13 Nov: attempt `final-20261113T170804Z`, run by Lam on an L4, code `2f48654`; input-lock SHA256 `239838279b77bb37211398a016c1c766273a35f5a06649b31f5cd97f562c001c`; four arms available, every repeat check exact on the first sequence; OCTID 410 and OCTDL 371 external queries, none excluded. Checked on the laptop 14 Nov. Hashes deposited on Zenodo (doi:10.5281/zenodo.24206472, created 13 Nov 19:53 UTC); Lam's approval recorded 14 Nov 09:11 UTC, before the first score |
 | S3 | 15–19 Nov | Development runs; **nominee sealed by 19 Nov** | Done 14 Nov: nominee **MIRAGE** (SHA256 of the file `nomination_binding.json`: `1738f7dec61526651511221a6d6723cd37e76e8accd0f05e09bba45569b1d82e`; the `binding_sha256` written inside it: `00891271d84e44dfd807ccd540742d046b27483337b50e83cab4dbd8a18406f7`). Evaluate notebook needed the locked Python 3.13.16 (commit `56fcb52`) |
 | S4 | 20–23 Nov | Legacy and external reporting | Done 14 Nov: `evaluation/results-20261114T093033Z.zip` on Drive (SHA256 `c963b1d7298c28f8151769d8d29cf98538ce0897582f57ff2ee867c76351b25f`). Summary in the 14 Nov weekly report |
-| S5 | 15–25 Nov (was 27) | Figures, tables, agreed post-hoc analyses (labelled); everything frozen 25 Nov | Started 15 Nov: first report written; P0–P9 and G1 done 18 Nov; plan below |
-| S6 | 25–30 Nov (was 28 Nov–3 Dec) | Final write-up; evidence audit 27 Nov, PDF freeze 28 Nov, delivery 30 Nov | Not started |
+| S5 | 15–27 Nov | Figures, tables, agreed post-hoc analyses (labelled) and the Phase-1 controls E1–E4; everything frozen 27 Nov | Started 15 Nov: P0–P9, G1 done 18 Nov; R2 done 20 Nov; plan below |
+| S6 | 28 Nov–3 Dec | Final write-up; evidence audit 1 Dec, PDF freeze 2 Dec, delivery 3 Dec | Draft sections exist (19 Nov) |
 
-Lam brought delivery forward to 30 November on 19 November (no GPU run is left in this study;
-the work is writing and the mentor's review). The calendar below is the binding one.
+On 19 November Lam brought delivery forward to 30 November; on 20 November, after the mentor's
+second feedback, Lam set it back to **3 December** so that one paper holds the locked results and
+the Phase-1 controls. The calendar below is the binding one.
 
 **Pull-forward rule (Lam, 19 Nov).** Dates in the calendar are the latest dates. When a stage
 finishes early, the next one starts at once. **Work runs in parallel (Lam, 19 Nov):** Lam does the
 slow steps (Colab runs, blind reviews) at once; the agents verify, analyse and draft at the same
 time; the mentor gives feedback whenever it comes and is not a gate. The gates that stay: a rule
-is committed and pushed before its numbers; no new analysis rule is added after 20 Nov; mentor
-feedback that arrives after the freeze changes wording only, never a number; v2 work starts as
-soon as v1's numbers are frozen, and its results stay out of the v1 paper except the labelled
-next-phase paragraph.
+is committed and pushed before its numbers; no new analysis rule is added after the Phase-1 rules
+are pushed (target 21 Nov); mentor feedback that arrives after the freeze changes wording only,
+never a number; Phase 2 work starts as soon as the numbers are frozen, and its results stay out of
+this paper except the labelled next-phase paragraph.
 
 ### Plan for S5 and S6 (version 2, 16 November; revised after the mentor's answers)
 
@@ -275,15 +276,16 @@ any GPU check.
 | 18 Nov | Mentor's answers due; P5 (always part), P4, P3; R1 | Lam decides placement |
 | 18 Nov | G1 ran on Colab (07:02 UTC) and was scored on the laptop | — |
 | 19 Nov | Records and push; P10 steps 1–2 (links, SIFT screen, blind review sheet) | Push before any P10 number |
-| 20 Nov | P10 step 3 (Lam's blind review) and sensitivity; W3 | **No new analysis starts after 20 Nov** |
-| 21–22 Nov | Methods and results draft; final figures and tables; weekly report from the draft | 21 Nov: spare day only |
-| 23–24 Nov | Draft sent to the mentor for feedback (any time, not a gate); v2 protocol drafted meanwhile, laptop only | — |
-| 25 Nov | Corrections; all numbers, tables and figures frozen | — |
-| 25–26 Nov | Discussion, limitations, one paragraph on the next phase; W4 | — |
-| 27–30 Nov | Evidence audit (27), PDF freeze (28), spare day (29), delivery (30) | — |
+| 19–20 Nov | Draft sections (Opus, Fable, Gemini, Sol); R2 computed 20 Nov | — |
+| 20–21 Nov | Phase-1 rules E1–E4 written, rebutted, pushed; E1/E3 code and notebook with a laptop dry run; P10 step 3 (Lam's blind review) and sensitivity; W3 | **No new analysis rule after the Phase-1 push** |
+| 22–23 Nov | Lam runs E1 and E3 on Colab; agents run E2 and E4 on the laptop | Each rule pushed before its numbers |
+| 24–26 Nov | Scoring and one verdict per experiment (Opus, Fable, Sol, Gemini); figures and tables | — |
+| 27 Nov | All numbers, tables and figures frozen | — |
+| 28–30 Nov | Paper reframed on reliability and generalisability; discussion, limitations, next phase; W4 | — |
+| 1–3 Dec | Evidence audit (1 Dec), PDF freeze (2 Dec), delivery (3 Dec) | — |
 
-Calendar changed 19 Nov at Lam's request (was: analysis to 21 Nov, review 25–26, freeze 27,
-audit 1 Dec, PDF 2 Dec, delivery 3 Dec).
+Calendar changed 19 Nov (delivery 30 Nov) and again 20 Nov after the mentor's second feedback
+(delivery 3 Dec with the Phase-1 controls).
 
 **If time runs short,** drop in this order: P2, the P5 cut-off, P4, G1. P0, P1, P3, P5 (destinations),
 P6, P7, P8 and R1 always stay. **If the mentor has not answered by 18 Nov,** Lam sends a reminder on 19 Nov;
@@ -453,6 +455,25 @@ results.
   image" for Yoo et al.'s classifier; MIRAGE's pretraining on unlabelled CSC, MacTel, MH and
   Stargardt scans is stated in Methods and Limitations; "RETFound has no published frozen result"
   is dropped (A3 records frozen linear-probe results in the MIRAGE paper).
+- 20 Nov, R2 computed after its rule (`65fe98c`) and code (`0ceeb56`) were pushed; the gate passed.
+  The proposal commit is tagged `fm-proposal-s1` (`b90c43a`).
+- 20 Nov, mentor's second feedback (relayed by Lam): the GAN-to-foundation-model line and the
+  source-confounding and external-degradation findings have real scientific value; a paper should
+  focus on the reliability and generalisability of the models, not on MIRAGE beating other
+  backbones. Three things to do: (1) control for image size and framing and check whether MIRAGE
+  keeps its advantage (the most critical); (2) error analysis on OCTID and OCTDL, especially normal
+  scans called other diseases; (3) sensitivity of MIRAGE and RETFound to preprocessing, so the
+  conclusions do not depend on the feature extraction. No more models and no more GAN work now.
+- 20 Nov, Lam's plan and decisions: two phases. **Phase 1 (to 3 Dec):** image size and framing,
+  how the different OCT sources shape the shortcut, and its effect on the foundation models: E1
+  (size and framing control, all four arms), E2 (external error analysis), E3 (MIRAGE and RETFound
+  preprocessing sensitivity), E4 (source separability across the OCT sources we have: Kermany,
+  Yoo et al.'s images, OCTID, OCTDL). One paper on 3 Dec holds the locked results and these
+  controls. Success rule for "MIRAGE keeps its advantage" under the main control: MIRAGE minus
+  Inception-v3, development K mean, 5th percentile over the 100 paired draws above 0; the hold-out
+  is read for direction only. The E1–E4 rules are written before any of their numbers. **Phase 2
+  (after 3 Dec):** the original direction: few-shot adaptation methods across foundation models,
+  datasets and rare-label tiers, with the Phase-1 shortcut audit as a standard check.
 
 ## 9. The files we control
 
