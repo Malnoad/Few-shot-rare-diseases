@@ -474,6 +474,116 @@ results.
   is read for direction only. The E1–E4 rules are written before any of their numbers. **Phase 2
   (after 3 Dec):** the original direction: few-shot adaptation methods across foundation models,
   datasets and rare-label tiers, with the Phase-1 shortcut audit as a standard check.
+- 20 Nov: Phase-1 rules E1–E4 added (subsection "Phase-1 controls E1–E4" at the end of this
+  section): Opus 5.5 draft, Fable 5.2 rebuttal (19 findings, 6 must-fix), revised text (drafts in
+  Drive `fm_v1/draft/phase1-2026-11-20/`). Lam's choices: E1-M as written (crop, centre square,
+  256 × 256); E3 input preprocessing only; E4 main measure the few-shot source test; Kermany's 1,000
+  test images in E4; contact sheet marked by Lam alone, as a non-clinician; two Colab sessions; the
+  fixed E1 sentences approved; agent defaults kept (E3 criterion 3 by the locked interval, alpha
+  dropped and counted, full-frame fallback). Committed and pushed before any E1–E4 number. Known
+  before the rules: G1 (M-pad) and R2.
+
+### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
+
+On 20 Nov the mentor asked for three things: M1, control image size and framing, then check whether
+MIRAGE keeps its advantage (the most critical); M2, error analysis on OCTID and OCTDL, especially
+normal scans called other diseases; M3, sensitivity of MIRAGE and RETFound to preprocessing, so the
+conclusions do not depend on the feature extraction. Lam turned these into E1 (M1, all four arms),
+E2 (M2), E3 (M3) and E4 (source separability across the OCT sources we have). No new model, no GAN
+image, no download beyond the locked OCTID and OCTDL files.
+
+**Rules shared by E1–E4.**
+
+1. *Rules before numbers.* This subsection is committed and pushed before any E number exists. The
+   scoring code checks that the commit adding it is on `origin` (`rule_commit`, as for P9) and also
+   stores the SHA256 of this subsection's text at that commit; if the working text differs, every
+   output label says so. After this push no analysis rule is added. A later edit may only fix a bug
+   that stops a run; it is dated under "Changes" and never changes a parameter, a variant, a set or
+   a reading rule.
+2. *Locked results never change.* Every E output is post hoc and every row carries: "post hoc,
+   Phase-1 rule E<n> timestamped by commit <sha> (<date>), computed <date>; outside the locked
+   protocol; never replaces a locked result". Rules 2–4 of the S5 plan apply. Everything is
+   released (A1 rule 6), including failed checks.
+3. *Written knowing the results.* These rules were written after every locked result and every post
+   hoc result to date (P0–P10, G1, R2). Two cells are known in advance and are labelled so: E3's
+   M-pad is G1's padded MIRAGE (18 Nov), and the locked values beside every E number are R2's.
+   Everything else in the design comes from pixel geometry and run times. Hence one main control,
+   one success rule fixed by Lam, and secondary variants read only as descriptions.
+4. *Same machinery.* The locked inventories, the locked development episodes (5 folds × K = 1, 2, 4,
+   8 × 100 draws), the locked reporting episodes (K = 1, 2, 4, 8, 16 × 100 draws), the locked
+   nine-way roster and the cosine prototypes (section 5, step 6). E1 and E3 draw no random numbers.
+   E2 and E4 draw with `numpy.random.default_rng([42, namespace, …])`, namespaces 12101–12103 and
+   14101–14103 (in use already: 5101/5102, 6101/6102, 7101/7102, 8101/8102, 9101, 9201,
+   10101–10103). Cluster intervals keep the locked convention (5,000 draws, seed 0).
+5. *One verdict.* Only E1's success rule gives a verdict on M1. E1's secondary variants, E3's grid
+   and E4 are printed beside it with fixed sentences and cannot overturn or rescue it.
+6. *Failures are reported.* A failed Colab step may be rerun once, unchanged. An arm that cannot load
+   is "unavailable" for that experiment. A failed check is reported with its numbers and the label
+   "not interpreted". No step stops on a property of an image: every such case has a fixed handling
+   below.
+7. *Images stay out of the repository.* Raw data is read-only. Rendered inputs, thumbnails, image
+   copies and contact sheets live in Drive `octfsl/fm_v1/final/<attempt>/phase1/` with a SHA256
+   receipt per archive. Only CSVs and generated Markdown pages enter `results/fm_v1/posthoc/`.
+
+**Definitions (E0).**
+
+- *Images.* Main: the locked `extraction_inventory.csv`, 5,146 images (146 rare, 4,000 Kermany
+  fitting, 1,000 Kermany test). External: `external_extraction_inventory.csv`, 781 images (OCTID
+  410, OCTDL 371). Each file is checked against its locked SHA256 before use. Feature files keep
+  inventory order and the locked cache format, keyed by the original paths, so the locked readers
+  (`fm_evaluate.open_features`, `fm_external.external_features`) read them unchanged.
+- *Decoding.* PIL `Image.open`, then `.convert("RGB")`, which drops alpha as every locked recipe
+  does. The render step records per file the mode, the container format (`Image.format`) and the
+  smallest alpha value; files with alpha below 255 are counted and reported, not stopped. *Grey*
+  means `.convert("RGB").convert("L")`, as in `fm_extract.geometry`.
+- *Content box.* The A2 border rule (rows of grey range ≤ 8 peeled from the top, then the bottom;
+  columns from the left, then the right) applied to the grey original, then applied again inside
+  the remaining box until it removes nothing. The first pass equals `fm_core.border_share`. Both
+  boxes are recorded per image. If the final box is empty or has a side under 32 px, that image
+  keeps its full frame, is flagged and counted. No image is re-cropped after the run.
+- *Development macro recall.* R2's unit: per (K, draw), macro recall over the 124 development queries
+  with the five folds pooled. K mean: the mean over K = 1, 2, 4, 8 within a draw (A2 B-1); a draw
+  that lacks any K makes the K mean "not evaluable". Spread: n, mean, SD, 5th and 95th percentile
+  over the 100 draws (`fm_evaluate.draw_summary`, numpy linear percentiles). Paired difference: arm
+  minus arm on the same draw. This spread is over support draws on 124 fixed queries, not a
+  confidence interval (section 5).
+- *Hold-out.* The legacy 22 on the locked reporting episodes: macro recall per K and the mean number
+  named correctly (mean of 100 draws), and the nine-way counts. Read for direction only: the sign of
+  the mean paired MIRAGE − Inception-v3 difference, per K and in the K mean. K = 16 is shown, never
+  read.
+- *Nine-way audit.* The locked roster; prototypes from the same feature set's 4,000 Kermany fitting
+  images and 124 development rare images. False-rare rate on the 169 patient-disjoint Kermany
+  normals, the 206 OCTID normals and the 332 OCTDL normals, with the locked intervals
+  (`fm_evaluate.nine_way_intervals`); beside it NORMAL recall, the destinations (NORMAL; CNV, DME or
+  DRUSEN; any rare) and R1.
+- *Colab checks, per arm and feature set.* Control: unchanged originals through the locked
+  extraction path, compared with the locked features (maximum difference ratio ≤ 1e-4, the A2 A-6
+  tolerance): all 5,927 images for MIRAGE and RETFound (E3-ref below), and for DINOv2; the first 20
+  inventory rows for Inception-v3. Repeat: 5 inputs encoded twice, recorded. Identity: code,
+  environment and any override, recorded in `identity.json`. An arm whose control fails has its
+  numbers released as "environment differs from the lock; not interpreted".
+
+| # | Analysis | Rule (fixed before computing) | Question | Tier |
+|---|---|---|---|---|
+| E1 | Size and framing control, four arms | **Main control E1-M**, one render per image shared by all arms: decode (E0); crop to the content box; centre square of side s = min(w, h) inside it (offsets floor((w − s)/2), floor((h − s)/2)); resize to 256 × 256 with PIL BICUBIC (`reducing_gap=None`); save as 8-bit RGB PNG. Each arm reads that PNG exactly as its locked extraction reads a file, with its locked transform and weights (Inception-v3: `stage3_classifier.load_image`, whose 256 × 256 resize leaves the input unchanged; the others: PIL open, `.copy()`, `encode`). The Colab render is the render of record: rendered twice, pixel hashes equal, archived with a receipt; features are extracted from those files. **Secondary, descriptive:** E1-L, resolution floor (E1-M with the resize replaced by 128 × 128 BOX, then 256 × 256 BICUBIC; 7 rare images have a content side under 128 px: CSC 2, MH 4 of which one hold-out, Stargardt 1); E1-C, crop only (no square, no resize; each arm then squashes or crops as locked; the mirror of G1). **References without a model,** on the same episodes and roster: size-only (locked, A2 N-1); content-size (the same rule on the content box's width and height); thumbnail (grey of the arm input of each variant, and of the original for "raw"; 16 × 16 BOX; 256 values / 255; nearest mean support, squared Euclidean, first class on ties; for E1-C a squashed non-square crop). **Matched subset:** development queries whose content short side lies in [L, U], L the largest class minimum and U the smallest class maximum over the 124 (pre-rule geometry: 164–296 px, 92 queries); supports are not matched. **Outputs** (one CSV each; `E1_comparison.md` generated from the CSVs): E1a checks: E0 checks, render receipt, laptop re-render agreement (count and largest grey difference; a report, never a stop), Inception-v3 decoder change (20 Kermany, 10 OCTID, 10 OCTDL originals decoded by PIL and saved as PNG, features against the locked ones), and the framing residual per source and rare class (A2 share of the controlled input; share of inputs with a near-black edge run, rows or columns with ≥ 95% of pixels ≤ 8, over 5% and over 10% of the side; near-white share); E1b development per arm, feature set (locked, E1-M, E1-L, E1-C), K and K mean, references beside; E1c paired differences (each FM − Inception-v3 within a feature set; each set − the arm's locked); E1d success table; E1e matched subset; E1f hold-out; E1g nine-way with the thumbnail row; E1h smallest and largest E1-M MIRAGE − Inception-v3 K mean with each development query left out (as P1). **Success rule (Lam, 20 Nov; fixed):** d_r = mean over K = 1, 2, 4, 8 of (MIRAGE E1-M − Inception-v3 E1-M) development macro recall on draw r; n must be 100, otherwise "not evaluable"; p05 = `numpy.percentile(d, 5)`, linear (it passes with up to five non-positive draws). p05 > 0: MIRAGE keeps its development advantage under the size and framing control; otherwise it does not. If either arm fails its control: "not evaluable", never re-specified. The verdict is E1-M alone. **E1d prints beside it** the same statistic (mean, SD, p05, draws above 0) for locked, E1-M, E1-L and E1-C, and two companion lines on the same draws: MIRAGE E1-M minus the content-size reference and minus the E1-M thumbnail (mean, p05). **Fixed sentences.** Pass: "Under the size and framing control, MIRAGE keeps a positive development advantage over Inception-v3 (mean x, locked 0.116; p05 y); it is / is not above the pixel-only reference (mean z)." Fail: "MIRAGE does not keep its development advantage under this control (mean x, p05 y); halving MIRAGE's input resolution alone moved its K mean by w (E3 M-res256)." When E1-L disagrees: "…, but not / and also when effective resolution is evened out (E1-L p05 = v)"; E1-C is quoted the same way. The hold-out is read for direction only. **Limitations stated with every E1 result:** the centre square drops lateral retina unequally by source and class; MIRAGE now gets 256 px of detail enlarged to 512; E1-M does not remove effective resolution (content short side 103–496 px), field of view, scanner appearance, compression, intensity, black-clipped background against speckle, or Kermany's white fill wedges. **Not allowed:** that size or framing "explains" or "does not explain" the locked advantage (say "survives" or "does not survive this control"); "keeps" without the mean beside it; any cause for an external false-rare rate; recognition from a lower false-rare rate without R1; E1-L or E1-C as the main result; any reading of K = 16; a new ranking or nomination; "robust to framing" beyond these three variants | M1 | Always (Colab) |
+| E2 | External error analysis | Laptop only, on the locked nine-way outputs and those of E1-M, E1-L and E1-C. **Sets:** OCTID NORMAL (206) and OCTDL NORMAL (332, 110 patients); the 169 patient-disjoint Kermany normals as calibration rows; external rare scans (OCTID CSC and MH, OCTDL MH) in the supplement. A *failure* is a normal scan given any class but NORMAL; a *false rare* is one given a rare class; both are reported, and the split of failures into common disease (CNV, DME, DRUSEN) and rare is shown everywhere. **E2a destinations:** counts in each of the nine classes and the three groups, per arm, source and feature set. **E2b overlap:** per source and feature set, normals failed by 0–4 arms; per pair of arms, the Jaccard index of the failure sets and of the false-rare sets ("—" when both are empty) and the share given the same class. **E2c transitions:** locked → E1-M, 3 × 3 counts per arm and source. **E2d image properties** of the original: width, height, aspect ratio, A2 border share, near-white share, grey mean, grey SD, and for OCTDL file mode and container format. Per arm, source and feature set (locked, E1-M): n, median and quartiles for failed and not-failed scans; failure share per tertile (cut points the 1/3 and 2/3 quantiles of that source's normals, numpy linear, ties to the lower tertile); the property's AUROC for failed against not-failed (P9's `auroc`) with a 95% percentile interval from 2,000 resamples of units within each group (images for OCTID, patients for OCTDL; namespace 12101). Fewer than 5 scans in either group: counts and medians only. The main-text table is fixed now: OCTDL normals, locked features, the seven common properties × four arms. The page reports how many of all E2d intervals exclude 0.5; any association quoted in the text is quoted for all four arms. No p-value, no test. **E2e OCTDL per patient:** patients with all, some or no scans failed; failure share averaged per patient (as P3); scans per patient. **E2f blinded contact sheet:** groups per source from the locked nine-way, "consensus failure" (non-NORMAL from ≥ 3 arms) and "consensus normal" (NORMAL from ≥ 3 arms); 16 per group at random (all if fewer; namespace 12102) plus 8 patient-disjoint Kermany normals as anchors; one random order (namespace 12103), neutral IDs, no label, group, output or source in any file name. Pass 1 shows only the E1-M square; Lam's marks are saved and their SHA256 recorded in `CONTEXT.md`; pass 2 shows the original scaled to 640 px wide, marks hashed the same way, then unblinding. Checklist: tilted or curved scan; low signal or heavy speckle; retina cut at an edge; visible bands or frame; overlay text or markers; visible abnormality (yes, no, unsure); scan width (narrow, wide). Result: counts of each mark per group within source; a group under 8 images is shown in full, with no comparison. One rater, not a clinician (Part E may add a second). Images stay in Drive and enter the paper only after Lam checks the dataset licences. **Allowed:** where normals go; how much the arms share failures; descriptive associations quoted for all four arms; visual descriptions by a non-clinician. **Not allowed:** causes; that a dataset's labels are wrong; clinical readings; significance | M2 | Always (laptop) |
+| E3 | Preprocessing sensitivity, MIRAGE and RETFound | **Base:** the locked recipe on the original images (no E1 control); each variant changes exactly one step; Inception-v3 and DINOv2 keep their locked features. A variant is a PIL step placed before the locked transform, or the replacement of one function or constant of the locked transform inside its own worker process; the override is recorded by name and value in `identity.json`; no hashed file is edited. **MIRAGE** (locked: resize in the file's own mode to 512 × 512 bilinear → L → /255 → per-image min-max → model → LayerNorm, mean of patch tokens): M-crop (short edge to 512 bilinear, centre crop 512), M-bicubic (BICUBIC at the 512 resize), M-nostretch (no per-image min-max), M-res256 (256 × 256 bilinear, then the locked path); M-pad is G1's padded MIRAGE, reused and labelled "known before this rule (G1, 18 Nov)". **RETFound** (locked: RGB → short edge 256 bicubic → centre crop 224 → ImageNet mean and std): R-squash (256 × 256 bicubic first), R-pad (black pad to square, `fm_pad_extract.pad_to_square`), R-bilinear (short edge 256 bilinear first), R-stretch (per-image min-max of the 8-bit RGB image to 0–255 over all channels, `np.round`), R-norm05 (mean and std 0.5), R-res128 (short edge 128 bicubic first). **Checks:** E3-ref, the E3 code path with the locked values through the same override mechanism, on all 5,927 images, must match the locked features within 1e-4, otherwise that arm's E3 is "not interpreted"; M-crop, R-squash and R-pad must leave the 1,032 square main images within 1e-4 of the locked features; every variant must differ from the locked features on at least one non-square image by a ratio above 1e-3, otherwise "no effect, change not applied"; repeats as E0. **Outcomes per variant:** development per K and K mean; paired differences against locked Inception-v3 and against the arm's locked features; hold-out direction; nine-way with R1 and NORMAL recall; per arm, the range of its variants' development K-mean means. **Criteria (fixed):** (1) MIRAGE: for each of M-crop, M-bicubic, M-nostretch and M-res256, p05 of the K mean of (MIRAGE variant − Inception-v3 locked) > 0; "kept within this grid" if all four, otherwise "sensitive to <list>"; M-pad shown beside, not counted. (2) RETFound: for each of the six variants, p95 of (RETFound variant − Inception-v3 locked) < 0 and p05 of (MIRAGE locked − RETFound variant) > 0; "position unchanged within this grid" if all six meet both. (3) External false-rare: for each variant, the false-rare count on OCTID and on OCTDL lies inside the arm's locked 95% interval (`fm_evaluate.nine_way_intervals`); "stable" if all, otherwise listed with NORMAL recall and R1 beside; ranks among the four arms are listed as description only. **Scope written into every E3 result:** "input preprocessing only; pooling and token choice are not varied" (unless Part E choice 2 adds a pooling variant before the push). If RETFound is unavailable, E3 reports MIRAGE alone and says "RETFound unavailable in E3". **Not allowed:** a "better" recipe; replacing a locked number; "robust to preprocessing" or "does not depend on feature extraction" beyond this grid; anything about what the features contain or about fine-tuning | M3 | Always (Colab) |
+| E4 | Source separability | Laptop only; the laptop run is the run of record (scikit-learn version recorded). **Sources and units:** Kermany, the 1,000 locked test images (pid); Yoo's 146 rare images (image; no patient IDs, the duplicate screen linked no pair); OCTID 410 (image; no patient IDs, so optimistic); OCTDL 371 (patient). **Pairs:** the six source pairs, and three normal-only pairs (Kermany test NORMAL 250, OCTID NORMAL 206, OCTDL NORMAL 332) where only the source differs; pairs with the rare images are labelled "different sources: source and disease are mixed". **Feature sets:** G (width, height, aspect ratio, A2 border share of the original); S-raw (8 grey statistics of the original: mean, SD, 1st, 50th and 99th percentile, share ≤ 8, share ≥ 250, entropy in bits of the 256-bin histogram); S-E1 (the same on the E1-M input); A-locked and A-E1 (each arm's locked and E1-M features). **Main measure, few-shot source test:** on the normal-only pairs, two-way cosine prototypes source against source with K = 1, 2, 4, 8 units per source as supports (one image per unit) and every image of the other units as queries; 100 draws (namespace 14103); two-way macro recall (chance 0.50), per arm, locked and E1-M, with the raw and E1-M thumbnails as the pixel reference; paired E1-M − locked difference per draw. **Secondary:** per-column AUROC of G and S with no fit; the logistic probe with `StratifiedGroupKFold(5, shuffle=True)` grouped by unit (random_state = `default_rng([42, 14101, pair]).integers(2**31 − 1)`), `fm_core.fit_logistic` for A sets and the same objective without row normalisation for G and S (columns z-scored on the training fold, a column with SD 0 dropped in that fold); out-of-fold scores pooled into one AUROC; 95% intervals from 2,000 resamples of units within each source over the pooled scores, without refitting (namespace 14102); paired S-E1 − S-raw, A-E1 − A-locked, A-locked − S-raw. Fits that do not converge are counted, never retuned. **Reading (fixed):** AUROC ≥ 0.95 "near-perfectly separable", 0.80–0.95 "strongly", 0.60–0.80 "partly", below 0.60 "hardly"; both AUROCs ≥ 0.99: "at ceiling; the difference is not read"; "the control reduced separability" only if the paired interval lies wholly below 0 (probe), or the p95 of the paired K-mean difference is below 0 (few-shot test). **Not allowed:** that the models use the source in the rare-disease task; that a low value means no source information; any causal link to the false-rare rate | Lam (source) | Always (laptop) |
+
+**GPU plan and drop order.** Measured: the lock (L4) took 1.7 (MIRAGE), 2.4 (DINOv2), 3.7
+(RETFound) and 34 min (Inception-v3, eager Keras, one image at a time) for all 5,927 images; G1
+took 32 min for Inception-v3 on an A100. Session 1 (required, about 3 h): setup, render, E1-M for
+all four arms, E1-L for MIRAGE and Inception-v3, all of E3. Session 2 (optional, about 1.5 h): E1-C
+for all four arms, E1-L for RETFound and DINOv2. If GPU time runs short, drop in this order: E1-C
+and E1-L for RETFound and DINOv2; E1-C for MIRAGE and Inception-v3; E3 R-res128 and R-bilinear; E3
+R-stretch and R-norm05. Never dropped: the checks, E1-M for all four arms, E1-L for MIRAGE and
+Inception-v3, E3-ref, M-crop, M-bicubic, M-nostretch, M-res256, R-squash and R-pad. On the laptop,
+drop in this order: E2f, the E4 probe rows, the E2d intervals, E1e, E1h. Never dropped: E1a–d,
+E1f–g, E2a–c, the E2d main-text table, E3's criteria, E4's few-shot source test and per-column AUROC.
+
+**Default placement** (Lam decides; the mentor gives feedback; rule 2 of the S5 plan): E1d (the success table
+with its companion lines), E1g and an E2 summary of destinations and overlap go in the main text's
+post hoc subsection, beside the locked numbers. Everything else goes to the supplement.
 
 ## 9. The files we control
 
