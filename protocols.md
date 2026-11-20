@@ -496,6 +496,11 @@ results.
   changes the development comparison by less than 0.005"; never "no shared patients". The E1–E4
   results are scored on the locked episodes, so the same duplicates sit inside them; E1 can be read
   beside this sensitivity, not re-run without them.
+- 21 Nov, Phase-1 Colab: Step 0 passed (MIRAGE, RETFound, DINOv2 reachable; commit `0578bce`; the
+  first attempt could not read the HF_TOKEN secret, fixed by granting notebook access). Session 1
+  started. Before any E1 result existed, Lam committed to run Session 2 right after Session 1
+  whatever Session 1 shows. E1–E4 are scored once, after Session 2; Session 1 outputs get integrity
+  checks only (receipts, code hashes, controls), never scores, before then.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 
