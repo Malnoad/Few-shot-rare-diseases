@@ -331,6 +331,22 @@ def textured(seed: int, h: int = 240, w: int = 320) -> np.ndarray:
     return cv2.GaussianBlur(img, (3, 3), 0)
 
 
+class R2Rules(unittest.TestCase):
+    def test_spread_gate_and_paired_difference(self):
+        draws = range(4)
+        values = {"MIRAGE": {(k, d): 0.5 + 0.01 * k + 0.001 * d for k in fm.K_DEV for d in draws},
+                  "Inception": {(k, d): 0.4 + 0.01 * k for k in fm.K_DEV for d in draws}}
+        k_scores = {a: {k: float(np.mean([values[a][k, d] for d in draws])) for k in fm.K_DEV} for a in values}
+        header, rows = ph.r2_rows(values, k_scores)
+        diff = [r for r in rows if r[0] == "MIRAGE minus Inception" and r[2] == 1][0]
+        self.assertEqual(diff[3], 4)
+        self.assertAlmostEqual(diff[4], 0.1015)  # 0.1 + mean(0, .001, .002, .003)
+        self.assertEqual(len(rows), 3 * (len(fm.K_DEV) + 1))  # two arms + one difference, K rows + K mean
+        k_scores["MIRAGE"][1] += 1e-6
+        with self.assertRaises(ValueError):
+            ph.r2_rows(values, k_scores)
+
+
 class P10Rules(unittest.TestCase):
     def test_s1_links_follow_headings_and_join_cut_lines(self):
         text = ["S1. Detailed links (contents)", "S1. Detailed links of collected", "https://data.example/set",

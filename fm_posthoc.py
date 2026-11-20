@@ -1473,6 +1473,47 @@ def p10_sheet(review: Sequence[Sequence], images: Mapping[str, np.ndarray], widt
             "</body></html>")
 
 
+# ====================================================================== R2 ===
+R2_ROW = "| R2 | Development spread over draws |"
+
+
+def r2_rows(values: Mapping[str, Mapping[tuple[int, int], float]], k_scores: Mapping[str, Mapping[int, float]],
+            reference: str = "Inception") -> tuple[list[str], list[list]]:
+    """Per arm and K (and the K mean): spread over draws of pooled development macro recall, then each arm
+    minus the reference paired on the draw. Gate: per-K means equal the nomination's k_scores within 1e-9."""
+    for arm, by_draw in values.items():
+        for k, expected in k_scores[arm].items():
+            got = float(np.mean([v for (kk, _), v in by_draw.items() if kk == k]))
+            if abs(got - expected) > 1e-9:
+                raise ValueError(f"R2 gate: {arm} K={k} mean {got} differs from nomination {expected}")
+    rows = []
+    for arm, by_draw in values.items():
+        for k, v in by_k(by_draw, KS):
+            rows.append([arm, "macro_recall", k, *summary(v)])
+    for arm in values:
+        if arm == reference:
+            continue
+        diff = {key: values[arm][key] - values[reference][key] for key in values[arm]}
+        for k, v in by_k(diff, KS):
+            rows.append([f"{arm} minus {reference}", "paired_difference", k, *summary(v)])
+    return ["arm", "quantity", "k", *SUMMARY], rows
+
+
+def r2(study: Study) -> tuple[list[str], list[list]]:
+    order, labels = dev_order(study)
+    nomination = json.loads(study.results.text("reports/nomination/nomination.json"))
+    values, k_scores = {}, {}
+    for arm in ARMS:
+        values[arm] = {key: macro(v, labels, fm.RARE) for key, v in pooled(study.matched(arm, "development"), order).items()}
+        k_scores[arm] = {int(k): float(s) for k, s in nomination["arms"][arm]["k_scores"].items()}
+    return r2_rows(values, k_scores)
+
+
+def r2_label(today: str) -> str:
+    return (f"pre-specified quantity (section 5), rule timestamped by commit {rule_commit(R2_ROW)[:7]} (19 Nov 2026), "
+            f"computed {today} after the results were known")
+
+
 def p10_label(today: str) -> str:
     return f"post hoc, rule timestamped by commit {rule_commit(P10_ROW)[:7]} (18 Nov 2026), computed {today}"
 
@@ -1527,6 +1568,8 @@ def run(attempt: Path, out: Path, only: set[str] | None, today: str) -> list[Pat
             written.append(write(out, "P6_probe_vs_prototype.csv", labels["P6"], *p6(study)))
         if want("P7"):
             written.append(write(out, "P7_ensemble.csv", labels["P7"], *p7(study)))
+        if want("R2"):
+            written.append(write(out, "R2_development_spread.csv", r2_label(today), *r2(study)))
         if want("P9"):
             label = p9_label(today)
             h1, rows, h2, diffs = p9(study)
