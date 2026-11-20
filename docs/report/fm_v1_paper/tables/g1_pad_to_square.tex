@@ -1,0 +1,25 @@
+% src: PH G1_pad_to_square.csv columns locked, padded, size_only (development lines 6-10/54-58; hold-out 11-21/59-69);
+%      K = 16 omitted from any reading (protocols.md 19 Nov G1 decision). Label: post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-18; sensitivity check outside A2 A-11, never replaces a locked result
+\begin{tabular}{@{}llcccccc@{}}
+\toprule
+ & & \multicolumn{3}{c}{MIRAGE} & \multicolumn{3}{c}{Inception-v3} \\ \cmidrule(lr){3-5}\cmidrule(l){6-8}
+Set & $K$ & Locked & Padded & Change & Locked & Padded & Change \\
+\midrule
+Development & 1 & 0.495 & 0.497 & +0.002 & 0.409 & 0.399 & $-$0.010 \\
+ & 2 & 0.615 & 0.611 & $-$0.004 & 0.499 & 0.484 & $-$0.015 \\
+ & 4 & 0.712 & 0.703 & $-$0.010 & 0.581 & 0.574 & $-$0.007 \\
+ & 8 & 0.777 & 0.774 & $-$0.003 & 0.647 & 0.642 & $-$0.005 \\
+ & 1--8 & 0.650 & 0.646 & $-$0.004 & 0.534 & 0.525 & $-$0.009 \\
+\addlinespace[2pt]
+Hold-out & 1 & 0.536 & 0.518 & $-$0.018 & 0.430 & 0.427 & $-$0.003 \\
+ & 2 & 0.685 & 0.662 & $-$0.023 & 0.497 & 0.500 & +0.003 \\
+ & 4 & 0.799 & 0.788 & $-$0.011 & 0.556 & 0.559 & +0.003 \\
+ & 8 & 0.867 & 0.861 & $-$0.005 & 0.614 & 0.618 & +0.004 \\
+ & 1--8 & 0.722 & 0.707 & $-$0.014 & 0.524 & 0.526 & +0.002 \\
+\midrule
+ & & \multicolumn{6}{c}{Nine-way: scans called NORMAL / called any rare (locked $\to$ padded)} \\
+\multicolumn{2}{@{}l}{Kermany patient-disjoint (169)} & \multicolumn{3}{c}{169 $\to$ 166 / 0 $\to$ 2} & \multicolumn{3}{c}{150 $\to$ 157 / 4 $\to$ 4} \\
+\multicolumn{2}{@{}l}{OCTID NORMAL (206)} & \multicolumn{3}{c}{202 $\to$ 0 / 4 $\to$ 206} & \multicolumn{3}{c}{182 $\to$ 8 / 15 $\to$ 198} \\
+\multicolumn{2}{@{}l}{OCTDL NORMAL (332)} & \multicolumn{3}{c}{26 $\to$ 1 / 30 $\to$ 306} & \multicolumn{3}{c}{66 $\to$ 13 / 11 $\to$ 302} \\
+\bottomrule
+\end{tabular}

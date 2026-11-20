@@ -1,0 +1,12 @@
+% src: PH P9_rare_vs_normal_auroc.csv lines 2-21 (auroc, boot95_low, boot95_high); label: post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Set & MIRAGE & DINOv2 & Inception-v3 & RETFound \\
+\midrule
+OCTID CSC against OCTID NORMAL & 0.878 (0.832--0.919) & 0.856 (0.801--0.901) & 0.805 (0.749--0.854) & 0.756 (0.679--0.825) \\
+OCTID MH against OCTID NORMAL & 0.684 (0.618--0.748) & 0.918 (0.876--0.954) & 0.784 (0.724--0.838) & 0.550 (0.472--0.637) \\
+OCTID CSC+MH against OCTID NORMAL & 0.781 (0.733--0.824) & 0.887 (0.854--0.919) & 0.795 (0.749--0.835) & 0.653 (0.589--0.715) \\
+OCTDL MH against OCTDL NORMAL & 0.357 (0.261--0.468) & 0.978 (0.949--0.998) & 0.634 (0.543--0.717) & 0.456 (0.358--0.562) \\
+\makecell[l]{Hold-out 22 vs 169 Kermany\\normals (source and disease mixed)} & 1.000 (1.000--1.000) & 0.995 (0.986--1.000) & 0.989 (0.967--1.000) & 0.958 (0.872--1.000) \\
+\bottomrule
+\end{tabular}

@@ -1,0 +1,473 @@
+% v1 paper of the frozen-encoder study, assembled 20 Nov 2026 from the reviewed drafts in
+% Drive fm_v1/draft/2026-11-19/ (intro.md, methods_results_v2.md, discussion.md, claim_ledger.md)
+% and the R2 development spread. Template: docs/report/fm_ieee/main.tex (tag fm-proposal-s1).
+% Build from this directory: tectonic --keep-logs main.tex
+%
+% Source keys in "% src:" comments (as in the drafts):
+%   PR  = protocols.md. Line numbers are those of commit 50a03dc (the drafts' base); at HEAD 24da8f3,
+%         lines 256-439 move +2 and lines from 440 move +16 (R2 rule row and the 19 Nov
+%         "after the draft review" entry were added).
+%   AM  = docs/research/FM_AMENDMENTS.md; FP = docs/research/FM_PROTOCOL.md
+%   WR  = docs/report/2026-11-14_weekly_report.tex
+%   ARC = D:/Few-shot/drive/fm_v1/final/final-20261113T170804Z/evaluation/results-20261114T093033Z.zip
+%   LOCK= D:/Few-shot/drive/fm_v1/final/final-20261113T170804Z/input-lock.zip
+%   DRV = D:/Few-shot/drive/fm_v1/final/final-20261113T170804Z/ (step11_pilots.txt, step14_external.txt)
+%   PH  = results/fm_v1/posthoc/ (post hoc; every row labelled); R2 = PH R2_development_spread.csv
+%   HP  = results/fm_v1/posthoc/pre_rule/2026-11-18/fable_holdout_plan.md, section D (adopted wording)
+%   LS  = docs/research/lit-scan-gan-vs-basic.md; CX = docs/research/CONTEXT.md
+%   M/I/D = methods_results_v2.md / intro.md / discussion.md (draft, with their own source comments)
+% Rounding: three decimals, half up from the shortest decimal form (0.7265 -> 0.727, 0.7725 -> 0.773);
+% agent default recorded in PR (HEAD) 19 Nov "after the draft review". Tables: make_tables.py.
+\documentclass[conference]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx,booktabs,array,makecell}
+\usepackage{xurl}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={Frozen Foundation Models for Few-Shot Rare Retinal OCT Classification: A Pre-Registered, Shortcut-Audited Evaluation},pdfauthor={Doan Tung Lam, Ha Quang Minh, Pham Duc Anh, Ngo Hoang Phuc}}
+\newcommand{\todo}[1]{\textbf{[TODO: #1]}}
+\newcommand{\fnRS}{\textsuperscript{a}}
+\renewcommand\theadfont{\normalsize}
+% IEEEtran.bst's documented control-entry citation avoids a printed reference.
+\makeatletter
+\def\bstctlcite{\@ifnextchar[{\@bstctlcite}{\@bstctlcite[@auxout]}}
+\def\@bstctlcite[#1]#2{\@bsphack
+  \@for\@citeb:=#2\do{%
+    \edef\@citeb{\expandafter\@firstofone\@citeb}%
+    \if@filesw\immediate\write\csname #1\endcsname{\string\citation{\@citeb}}\fi}%
+  \@esphack}
+\makeatother
+\begin{document}
+\bstctlcite{IEEEcontrol}
+\title{Frozen Foundation Models for Few-Shot Rare Retinal OCT Classification: A Pre-Registered, Shortcut-Audited Evaluation\\[2pt]
+{\normalsize\todo{draft title; Lam to approve}}}
+% src: title built on the positioning sentence, PR l.33-34 and l.430-432 (Lam, 19 Nov; mentor to confirm 23 Nov); Q1 option PR l.297
+\author{\IEEEauthorblockN{Doan Tung Lam, Ha Quang Minh, Pham Duc Anh, Ngo Hoang Phuc}
+\IEEEauthorblockA{National Economics University}}
+\maketitle
+
+\begin{abstract}
+\todo{draft abstract; Lam to approve.}
+Rare retinal diseases have few labelled optical coherence tomography (OCT) images, and frozen foundation models are an attractive way to classify them from a handful of examples. On small, multi-source benchmarks it is unclear how far such scores can be trusted and whether they carry to images from other sources. We report a pre-registered, shortcut-audited evaluation of three frozen foundation models (MIRAGE, DINOv2 and RETFound) against frozen ImageNet Inception-v3, the backbone family of Yoo et al., on the public five-class rare-disease benchmark of Yoo et al.\ (124 development and 22 hold-out images). The protocol, its three dated amendments, rosters, episodes and code were hashed into an input lock before any score. Every model saw the same labelled examples ($K=1$ to 8 per class, 100 draws) and a cosine-prototype classifier. MIRAGE was nominated from the development folds, with a macro recall of 0.650 averaged over $K$, against 0.534 for Inception-v3. A reference that sees only image width and height scored 0.578 at $K=1$, above every model, and 0.569 averaged over $K$; only MIRAGE was above it on that average. In a nine-way audit that adds the four Kermany classes, MIRAGE called 0 of 169 patient-disjoint Kermany normal scans, 4 of 206 OCTID and 30 of 332 OCTDL normal scans rare, for the published, frame-filling inputs; it called only 26 of the 332 OCTDL normal scans normal. On the 22 hold-out images, inspected in earlier work, MIRAGE led Inception-v3 by 0.197 averaged over $K$; with four or five images per class this shows direction only. Which backbone ranks first matters less than these limits: image size alone rivals most models, and false-rare rates differ by source. The results describe these web-collected images and agreement with published labels; they make no clinical claim.
+\end{abstract}
+% src: 124/22 PR l.54-55; lock PR l.5-11, l.183; K and draws PR l.127-128; 0.650/0.534 ARC nomination.json; 0.578, 0.569 ARC size_only_reference.csv lines 2, 6; 0/169, 4/206, 30/332 ARC external_source_audit.csv lines 38, 52, 49; frame-filling qualifier PR l.418-419; 26/332 same file line 50; +0.197 ARC paired_differences.csv line 67; direction only HP D(1)
+\begin{IEEEkeywords}
+optical coherence tomography, rare retinal disease, few-shot learning, frozen encoders, foundation models, shortcut learning, pre-registration
+\end{IEEEkeywords}
+
+\section{Introduction}
+\label{sec:intro}
+Some retinal diseases have very few labelled OCT images. Here ``rare'' means label scarcity within a dataset, not prevalence in patients. A class is rare when it holds at most 5\% of its dataset's labelled images, and few-shot when the pool its examples are drawn from holds at most 30 labelled images.
+% src: PR l.355-358 (B1, 18 Nov), l.378-379
+The five classes of the public benchmark of Yoo et al.\ \cite{Yoo2021} are both: central serous chorioretinopathy (CSC), macular hole (MH), macular telangiectasia (MacTel), Stargardt disease and retinitis pigmentosa (RP). Each class has 23 to 32 images, 0.55--0.77\% of the 4,146 labelled images this study used (our own subsample of 4,000 Kermany images plus the 146 rare images). Development pools hold 19 to 27 images.
+% src: PR l.360-363; PR l.54; ARC reports/geometry/MIRAGE/geometry_summary.csv lines 2, 4, 6, 8 (Kermany fitting n = 1000 per class). Denominator kept as in PR (C9; FP l.273 counts 5,146 per encoder) -- agent default, see README
+Pools this small leave few images to train a classifier and fewer to test one.
+
+Frozen pretrained encoders offer another route. Each image becomes a feature vector, each class becomes the mean of a few labelled examples, and a new image takes the nearest class. SimpleShot showed that nearest-centroid classification on fixed features is a serious few-shot baseline at several $K$ \cite{SimpleShot2019}; our rule is of that kind, without its centring step.
+% src: PR l.493 (SimpleShot, section 10); AM l.316; LITERATURE_KB l.244; PR l.320 (centring dropped)
+RETFound \cite{RETFound2023} and MIRAGE \cite{MIRAGE2025} were pretrained on retinal images; DINOv2 \cite{DINOv2} learned general-purpose features from everyday images. MIRAGE compared the same kinds of encoder, but with classifiers trained on each full dataset \cite{MIRAGE2025}.
+% src: PR l.41-46; PR l.30-31; AM l.310
+
+A small benchmark built from many sources also invites shortcuts: a model can sort images by how they were acquired, cropped or stored, rather than by the retina. \todo{no shortcut-learning paper is among the 12 tracked sources (PR section 10); Lam to approve adding one, or keep this sentence uncited.}
+Yoo et al.\ collected the rare images by web search; they carry no patient identifiers \cite{Yoo2021}.
+% src: Yoo PMC7829497 ("Google Images and Google search engine"); PR l.381-383; HP D(3)
+Before our input lock, a rule that used only file width and height reached a leave-one-out macro recall of 0.659 on the 124 development images (chance 0.20). The same pre-lock check also scored the 22 hold-out images.
+% src: docs/research/FM_RULE_TRACKER.md l.26 (N-1); docs/research/fm_independent_review/FM_INDEPENDENT_REVIEW.md l.82-85 (0.659); AM l.65-67 (disclosure)
+The rare images also have wide flat borders. In the locked geometry table, the median share of the image in flat border rows and columns is 0.34 to 0.50 per rare class among development images; for Kermany, OCTID and OCTDL it is at most 0.002 per class.
+% src: ARC reports/geometry/MIRAGE/geometry_summary.csv border_share_median lines 15, 17, 19, 21, 23 (0.339-0.502) and lines 2-14 (0.0; Kermany DME fitting 0.00195)
+In our earlier replication, rare and common images were almost linearly separable in frozen Inception-v3 features. Disease and source were confounded, so that test could not say which of the two the features read.
+% src: CX l.117, l.132-134
+
+This raises a question for any classifier that includes these classes: how often does it call normal scans from other sources ``rare''? None of the four studies we compared when the protocol was written (Yoo et al.\ \cite{Yoo2021}, RETFound \cite{RETFound2023}, MIRAGE \cite{MIRAGE2025} and a 2026 external validation on OCTID \cite{TVST2026}) measured this.
+% src: AM l.297-314 (A3 precedent table, 13 Nov; l.313)
+
+This paper is a pre-registered, shortcut-audited evaluation of frozen foundation models on a public rare-OCT benchmark.
+% src: PR l.33-34, l.430-432 (Lam, 19 Nov; mentor to confirm 23 Nov)
+Its aim is less to find the best backbone than to measure how far frozen-encoder scores on this benchmark can be trusted (against cues such as image size, and across support draws) and how they carry to normal and disease images from other sources. \todo{reframing toward reliability and generalisability (coordinator, 20 Nov, after the mentor's request); Lam to approve the wording.}
+% src: framing only, no new number; mentor request of 20 Nov relayed by the coordinator (Phase-1 E1-E4, rules not yet written)
+We compare MIRAGE, RETFound and DINOv2 with frozen ImageNet Inception-v3, the backbone family of Yoo et al., at 1 to 8 labelled images per disease in development and up to 16 on the hold-out. Beside the five-way task, a nine-way audit adds the four common Kermany classes \cite{Kermany2018} and counts normal scans from other sources called rare. Our contributions are three.
+% src: PR l.35-36, l.92, l.127-128, l.140-141; PR l.423-425 (wording); PR l.23-25
+\begin{enumerate}
+\item \textbf{A pre-registered comparison on identical supports.} The protocol was frozen on 5 November 2026 and amended three times, each dated (A1 on 12 November, A2 and A3 on 13 November), before the input lock of 13 November. Rosters, episodes, models, code and rules were hashed into that lock, and the hashes were deposited on Zenodo; the approval of the lock, recorded before the first scoring file was written, already cites the deposit as published (Section~\ref{sec:design}). One model was nominated from the development folds only and sealed before any model of this study was scored on a hold-out or external image. Two earlier looks are disclosed: our October replication had scored the 22 hold-out images, and the pre-lock size check above used the labels of the development and hold-out images. Every model saw the same support images at $K=1$, 2, 4 and 8 per class, drawn 100 times, and is read against Inception-v3 on the same draws.
+% src: PR l.5-11; AM l.7, l.56, l.168; PR l.183; ARC approvals.json (recorded_utc 2026-11-14T09:11:48, "published 2026-11-14"); PR l.136-140, l.184; PR l.55-56; PR l.245 (October heads 17/18/19 of 22); AM l.65-67; PR l.127-128
+\item \textbf{A shortcut audit.} A size-only reference, which sees no pixel, sits beside every model and every $K$. A model at or below it has not shown that it reads the retina. Passing it is necessary, not sufficient: the audit measures some acquisition cues and removes none. The false-rare rate on normal scans is reported for Kermany, OCTID and OCTDL separately, each beside the share of the same sources' disease images that the head calls any rare class. For OCTID and OCTDL disease images we report agreement with the published labels only.
+% src: AM l.97-101 (A2 N-1); PR l.104; AM l.41, l.48-50; PR l.140-143; PR l.256 (R1); PR l.83-84
+\item \textbf{A clear account of what can be compared.} We document the provenance of the public release and state what our numbers can and cannot be compared with (Section~\ref{sec:related}). All planned results are released, favourable or not.
+% src: PR l.59-67; PR l.421-427; AM l.192-193 (A1 rule 6); development spread filled by R2 (PR HEAD l.256-257)
+\end{enumerate}
+
+MIRAGE was nominated. Its development macro recall, averaged over $K=1$, 2, 4 and 8, was 0.650 (the score it was nominated on, which the locked file calls optimistic), against 0.534 for Inception-v3.
+% src: ARC reports/nomination/nomination.json arms.MIRAGE.score 0.6497, arms.Inception.score 0.5339; "interpretation": "prespecified allocation rule; selected development score is optimistic"
+Image size alone scored 0.578 at $K=1$, above every model; MIRAGE cleared it from $K=2$. RETFound stayed below the size-only reference at every $K$. DINOv2 and Inception-v3 passed it only at $K=4$ and 8, and the size-only mean over $K$ (0.569) is above both of their means (0.558 and 0.534).
+% src: ARC size_only_reference.csv lines 2-6 (0.578, 0.550, 0.560, 0.589; mean 0.569); nomination.json k_scores
+With the published, frame-filling inputs, MIRAGE called 0 of 169 patient-disjoint Kermany normal scans rare, 4 of 206 OCTID and 30 of 332 OCTDL. Beside these, the same head called 41 of 102 OCTID CSC images and 11 of 102 OCTID MH images any rare class, and 3 of 39 OCTDL MH images (post hoc, R1). It called only 26 of the 332 OCTDL normal scans normal. Other models' false-rare rates, some lower than MIRAGE's, are in Section~\ref{sec:res-frr}.
+% src: ARC external_source_audit.csv lines 38, 52, 49, 50; PH R1_rare_beside_false_rare.csv lines 11-13; qualifier PR l.418-419; lower rates: same file lines 67 (Inception OCTDL 11) and 16 (RETFound OCTID 0)
+On the 22 hold-out images, the nine-way head named 20 correctly for MIRAGE and 13 for Inception-v3; with four or five images per class, these counts show direction only.
+% src: ARC external_source_audit.csv Kermany recall_<rare class> numerators (Table III); WR l.288-291; HP D(1)
+
+\section{Related Work}
+\label{sec:related}
+\textbf{Rare OCT diseases on this benchmark.} Yoo et al.\ \cite{Yoo2021} trained a nine-way classifier on Inception-v3 features, with per-disease CycleGANs that turned normal scans into rare-disease images; they also tried a prototypical network, a Siamese network and nearest neighbours. They reported 92.1\% accuracy on an independent test and 93.9\% in five-fold cross-validation, for a classifier trained on every rare training image plus generated ones; most test images were common classes. Their test files are not public, and the public release changed after submission (version 1, 27 March 2020, 119 images; version 2, 29 October 2020, 146 images, which we use). Their figures are therefore context, not a baseline.
+% src: Yoo PMC7829497 (Tables 2, 3; prototypical, Siamese, KNN); HP D(2), adopted PR l.421-427; "every rare training image" PR l.110-111 (agent default, PR HEAD 19 Nov entry); version dates pre_rule/2026-11-18/md_versions.json; "after submission": Yoo article history (received 15 Apr 2020, accepted 15 Jan 2021; claim ledger X5, M94)
+Our 22-image hold-out matches the class counts of the test in Yoo et al.; which images they tested on was never published. It was inspected in our earlier work, so it is not blind, and we read it for direction only.
+% src: HP D(1), adopted PR l.421-424; PR l.55-58
+
+Later work reusing these images did not rebuild that test either. Sun et al.\ \cite{Sun2024} drew repeated five-way $K$-shot tasks ($K=1$, 3, 5) from the rare images with a trained network. Our development protocol resembles that design, with frozen encoders, grouped folds and 100 paired draws. Pools, draws and training differ, so we do not rank our results against theirs. We found Sun et al.\ on 18 November, after the lock; the registered amendment A3 still lists $K$-shot evaluation on these images as a gap, which we correct here.
+% src: LS l.149-154; PR l.32-33, l.498; HP D(2); "resembles" agent default (PR HEAD 19 Nov entry); AM l.310-311
+Tai et al.\ \cite{Tai2025} re-implemented the pipeline of Yoo et al.\ and set their five-fold cross-validation accuracy (93.76\%) beside Yoo's 93.9\%. They also report per-class rates on an independent test that the paper does not define. We avoid such comparisons.
+% src: LS l.102, l.137; PR l.499
+
+\textbf{Frozen encoders and few-shot classification.} MIRAGE \cite{MIRAGE2025} compared supervised ImageNet pretraining, DINOv2, RETFound and itself with linear probes on full datasets, including Kermany, OCTID and OCTDL; its balanced accuracy is the same quantity as our macro recall. Pretraining can overlap with test sources. RETFound saw the whole Kermany release. MIRAGE's in-house pretraining data share no source with our tests but include unlabelled scans of four of the five diseases (CSC, MacTel, MH and Stargardt). Web-trained DINOv2 may have seen these pictures, which cannot be checked.
+% src: AM l.205-206, l.231-235, l.310; PR l.88-92; PR l.221 (W1, checked 16 Nov); PR l.383-386
+Scoring against OCTID's \cite{OCTID2020} published labels, with its CSR class treated as CSC, follows earlier external tests \cite{TVST2026,EyeDiff2026}. None of the four studies we compared when the protocol was written registered its analysis plan, and none measured acquisition cues.
+% src: PR l.496-497 (section 10 rows TVST 2026 and EyeDiff 2026); AM l.34-36; AM l.313-314
+
+\section{Methods}
+\label{sec:methods}
+\subsection{Design and registration}
+\label{sec:design}
+This is a pre-registered, shortcut-audited evaluation of frozen foundation models on a public rare-OCT benchmark. The protocol (v1.0, frozen 5 November 2026) and three dated amendments (A1--A3) were hashed with rosters, episodes, model identities and code into an input lock on 13 November 2026.
+% src: PR l.5-11, l.183 (lock SHA256 2398...c001c, code 2f48654); AM l.7, l.56, l.168
+The lock hashes were deposited on Zenodo (doi:10.5281/zenodo.24206472); the approval of the lock, recorded at 09:11:48 UTC on 14 November before the first scoring file was written, already cites the record as published that day. \todo{exact Zenodo publication time: Lam reads it on the record (claim ledger C7, X11).}
+% src: ARC approvals.json recorded_utc 2026-11-14T09:11:48+00:00 and timestamp_record "Zenodo DOI 10.5281/zenodo.24206472, published 2026-11-14"; ZIP entry times approvals.json 09:11:48, first runs/ entry 09:11:52; PR l.183 (record created 13 Nov 19:53 UTC)
+The comparison is descriptive; we make no causal or clinical claim.
+% src: PR l.26-27
+
+\subsection{Data}
+\textbf{Rare benchmark.} We used the 146 rare-disease OCT images released with Yoo et al.\ \cite{Yoo2021}. Yoo et al.\ collected them by web search and labelled them with knowledge of their source pages. The images carry no patient identifiers, and their availability on the web gives no right to redistribute them. Development used 124 images (CSC 27, MH 26, MacTel 25, Stargardt 19, RP 27).
+% src: PR l.59-63, l.381-386; HP D(3); PR l.54; FP l.52-53
+The hold-out is 22 rare images (5 CSC, 5 MH, 4 MacTel, 4 Stargardt, 4 RP) drawn once with a fixed seed from the public release. It matches the class counts of the test in Yoo et al.; which images they tested on was never published. These 22 images were inspected in our earlier work, so the test is not blind. We report exact counts and read them for direction only.
+% src: HP D(1), adopted PR l.421-424
+
+\textbf{Provenance.} The Mendeley record (btv6yrdbmv) has two versions. Version 1 (27 March 2020) holds 119 images, the total in Yoo et al. Version 2 (29 October 2020), which we use, holds 146: the 118 version 1 files kept unchanged and 28 files new to version 2 (27 new file names and a different picture under the old name MacTel/20.PNG). Twenty-one of the 22 hold-out images are in version 1; RP/20.PNG is an addition. This is a file-identity check; it says nothing about which images Yoo et al.\ tested on.
+% src: PR l.59-63 (count corrected 19 Nov, e349e6c); pre_rule/2026-11-18/v1_to_ours.csv (119 rows, 118 pixel matches); HP A.9
+The paper gives Stargardt 15+4 and RP 12+4 images. The version 1 folders hold RP 19 and Stargardt 16, as in Sun et al.\ \cite{Sun2024}; version 2, used here, holds RP 31 and Stargardt 23. Every per-class result naming RP or Stargardt carries footnote~a: \emph{the folder labels for RP and Stargardt disagree with the counts in the original paper; macro recall is unaffected.}
+% src: PR l.64-67 (commit 50a03dc); Yoo XML; v1_to_ours.csv (RP.zip 19, "Stargart disease.zip" 16); PR l.54-55 (27+4, 19+4)
+
+\textbf{Layout.} The rare images are letterboxed. In the locked geometry summary (A2 border rule: complete edge rows and columns whose grey range is at most 8), the median border share per rare class is 0.34--0.50 for development images and 0.22--0.56 for hold-out images; it is 0 (at most 0.002) for every Kermany, OCTID and OCTDL class (Table~\ref{tab:geometry}).
+% src: ARC reports/geometry/MIRAGE/geometry_summary.csv border_share_median: fitting lines 15, 17, 19, 21, 23 (0.339 RP ... 0.502 CSC); query lines 16, 18, 20, 22, 24 (0.218 RP ... 0.561 MacTel); lines 2-14 (0.0; DME fitting 0.00195); PR l.68-71; AM l.130-134
+
+\textbf{Duplicate screen.} We fingerprinted the 146 images (identical files, identical pixels, and a 64-bit difference hash at Hamming distance at most 4). No pair was flagged.
+% src: PR l.122-124; FP l.80-82
+
+\textbf{Common classes.} The nine-way audit uses 1,000 fitting images per Kermany class (4,000; seed 42) and the 250 official test images per class \cite{Kermany2018}. The headline Kermany false-rare rate uses the 169 normal test images (154 patients) whose patient ID is in no fitting row.
+% src: WR l.92-93; FP l.263-266; AM l.116-120 (A2 A-5); PH P1_nine_way_exact_bounds.csv (patients 154)
+
+\textbf{External images (query only).} OCTID \cite{OCTID2020}: NORMAL 206, CSR 102 (scored as CSC), MH 102. OCTDL \cite{OCTDL2024}: NORMAL 332 (110 patients) and MH 39 (28 patients). Under the project definition of ``rare'', OCTID CSC and MH are common-tier classes in their own dataset (tier D; 17.8\% each of 572 labelled images), and OCTDL MH is a rare class that is not few-shot (tier B; 1.9\% of 2,064 images; 28 of 821 patients, 3.4\%). The five benchmark classes are rare and few-shot (tier A).
+% src: AM l.21-26 (A1 table); PR l.77-81; DRV step14_external.txt lines 1-2; PR l.351-366, l.378-381 (B1 tiers; external sets named by tier)
+We evaluated agreement with OCTID's and OCTDL's published CSC/CSR and MH labels using benchmark-only $K$-shot supports. Clinical label equivalence, patient independence and freedom from acquisition shortcuts were not established.
+% src: AM l.48-50 (A1 rule 7, required wording, verbatim)
+OCTID images carry an orientation icon; we did not crop or mask it, and it is a known acquisition cue. External images that matched a locked image were to be removed automatically; none was excluded (OCTID 410 of 410, OCTDL 371 of 371 kept). The screen flagged 25 near-duplicate (difference-hash) and 4 identical-pixel pairs among the external images themselves, and none between an external image and a fitting or hold-out image. Flagged external pairs are linked into one dependence group, as the rule requires; OCTDL formed 113 dependence groups.
+% src: AM l.151, l.196 (A2 A-3); AM l.248-256 (A3 S-1); DRV step14_external.txt lines 1-3
+
+\subsection{Models}
+\label{sec:models}
+Four frozen encoders: RETFound (Nature OCT weights; 1024-d) \cite{RETFound2023}, MIRAGE-Base (OCT input only; 768-d) \cite{MIRAGE2025}, DINOv2-Base (768-d) \cite{DINOv2} and ImageNet Inception-v3 (Keras; 2048-d). Inception-v3 is the reference: the backbone family of Yoo et al. It is never nominated.
+% src: PR l.41-46; WR l.124-130; PR l.423-425; AM l.225-227
+Each encoder uses the input transform of its own published frozen-probe code. MIRAGE resizes to $512\times512$, converts to grey and min--max scales each image; Inception-v3 uses the historical 256-then-299 resizing and global average pooling. The arms therefore see different fields of view. MIRAGE and Inception-v3 resize the whole image. DINOv2 and RETFound resize and centre-crop: they keep a median of 0.28 of each OCTDL image, 0.51 of each OCTID image and 0.69--0.77 of each benchmark image (Table~\ref{tab:geometry}).
+% src: AM l.71-76 (A2 A-11); FP l.137; ARC reports/geometry/DINOv2/geometry_summary.csv retained_fraction_median lines 10-11 (0.280, 0.278), 12-14 (0.510), 15-24 (0.691-0.766); MIRAGE file 1.0 on every line
+RETFound and MIRAGE keep their default, untrained final LayerNorm. For RETFound this is a new \texttt{fc\_norm} layer; the trained \texttt{norm} layer of the checkpoint is not used, as in the upstream frozen-feature code. No sensitivity run on this choice was made, and our repeat check does not compare outputs with upstream code.
+% src: AM l.78-85 (A2 A-7); AM l.93 (A-6); DRV step11_pilots.txt line 3. "RETFound has no published frozen result" dropped (A3 AM l.310, l.316-317; agent default PR HEAD 19 Nov entry)
+Nothing is fine-tuned; no adapter, augmentation or generated image is used. RETFound was pretrained partly on Kermany images (the whole release). MIRAGE was not pretrained on our test sources, but its pretraining data include unlabelled CSC, MacTel, MH and Stargardt scans, four of the five benchmark diseases. DINOv2 is web-trained and may have seen these pictures; this cannot be checked.
+% src: PR l.48; PR l.221 (W1, checked 16 Nov); PR l.383-386
+Before the lock, each model was timed on 100 images, and its outputs from the first and last timed passes had to agree (cosine at least 0.9999 for every image; largest difference at most $10^{-4}$ of the largest absolute output), with one retry allowed. All four passed on the first attempt (worst difference 0, lowest cosine 1.000000).
+% src: AM l.87-92 (A2 A-6); AM l.262-265 (A3 S-3); DRV step11_pilots.txt lines 2, 5, 8, 11, 14
+
+\subsection{Episodes and classifier}
+Per class, the 124 development images were dealt into five fixed folds (seed 42); folds held 27/26/24/24/23 images. The images carry no patient IDs, so folds are image-level. For each held-out fold, $K=1$, 2, 4 and 8 supports per class were drawn from the other four folds, 100 times, nested across $K$. Every model saw exactly the same supports and queries. Stargardt has 19 development images; with one fold held out, its smallest support pool is 15 images, which limits development to $K\le8$. For the hold-out, supports were drawn from all 124 development images, $K=1$, 2, 4, 8 and 16, 100 draws.
+% src: PR l.125-128; WR l.160-166, l.175-176; PR l.140-141
+The primary classifier is a cosine prototype: normalise each support, average per class, normalise again, and assign the closest class \cite{SimpleShot2019}. A fixed L2-regularised logistic probe is secondary: in development at $K=4$ only, on the first 25 draws per fold, and on the hold-out at every $K$, on the first 25 draws. The probe finished in the locked run (125 of 125 development and 125 of 125 hold-out episodes per arm), so A3's rule for omitting it did not apply.
+% src: PR l.134-135; FP l.188-190, l.197-207; ARC runs/*/{development,reporting}/summary.json (logistic complete 125/125, omit_logistic_reason null); AM l.276-280
+The metric is macro recall: recall per class, then the plain mean over the five classes. It equals MIRAGE's balanced accuracy. Chance is 0.20. No $K$ is primary; where one number is needed it is the mean over $K=1$, 2, 4, 8.
+% src: PR l.88-92; AM l.103-104 (A2 B-1)
+
+\subsection{Nomination}
+One foundation model was nominated from the development folds only. Its score was per-class recall pooled over folds, averaged over classes, then over $K$ and draws. Models within 0.02 of the best counted as tied; the fastest of those would win, by the locked timings. The nomination was sealed before any hold-out or external image was scored.
+% src: PR l.136-140; FP l.215-234; PR l.184 (nomination_binding.json SHA256 1738f7de...d82e; binding_sha256 00891271...06f7)
+
+\subsection{Reporting and spread}
+After the seal we scored the 22 hold-out images and the nine-way audit. The nine-way head has one prototype per class, built from the 4,000 Kermany fitting images and all 124 development rare images. The false-rare rate (FRR) is the share of truly normal scans called any rare class, reported separately for Kermany, OCTID and OCTDL.
+% src: PR l.140-143; WR l.177-179; FP l.263-270, l.276-277; PR l.25
+Spread over support draws is reported as mean, SD and 5th--95th percentiles. It describes variability for these images, not a confidence interval for new patients; large-$K$ support sets overlap heavily, so a narrow spread is not population precision. The locked evaluation wrote development means only. The development SDs and percentiles in Table~\ref{tab:dev} were computed from the locked development outputs under rule R2, committed on 19 November before computing; they are a pre-specified quantity, computed after the results were known, and their gate (every per-$K$ mean equals the locked nomination value within $10^{-9}$) passed.
+% src: PR l.145-147; FP l.250-251; PR HEAD l.256-257 (rule R2; commit 65fe98c); R2 column posthoc ("pre-specified quantity (section 5), rule timestamped by commit 65fe98c (19 Nov 2026), computed 2026-11-20 after the results were known"); commit 24da8f3 ("gate passed")
+Only the nine-way rates carry 95\% intervals: 5,000 cluster resamples (seed 0) for Kermany (cluster: patient) and OCTDL (cluster: the locked dependence group, which joins each patient's images and any linked pairs), and exact Clopper--Pearson intervals for OCTID (image-level and conditional, as OCTID has no patient IDs). We report no $p$-values.
+% src: AM l.123-128 (A2 B-3); AM l.248-252 (S-1); ARC external_source_audit.csv interval_method
+
+\subsection{External two-way test}
+The OCTID two-way test reuses the locked hold-out episodes, keeping only their CSC and MH supports. A query takes the larger of its CSC and MH cosines (ties to CSC). Chance is 0.50. The test is exploratory. The pre-registered reporting order describes it as the test where image size is constant. It is not: OCTID CSC images are 750 to 879 pixels wide and 500 to 586 high, while every OCTID MH image is 750 by 500. We therefore do not call image size constant here, a dated departure from A2's reporting order, and we report what the size-only reference does in this test (Section~\ref{sec:res-octid}).
+% src: AM l.106-114 (A2 A-1); AM l.137-140; ARC geometry_summary.csv (MIRAGE) lines 12-13. C2: where the deviation is recorded (FM_DEVIATIONS.md, AM l.62-63, does not exist) is Lam's -- see README
+
+\subsection{Size-only reference}
+For every locked episode, a size-only rule assigns each query to the class whose supports have the nearest mean width and height of the original file. It uses no pixel and no encoder. It is a diagnostic of the benchmark, never an arm, and a model at or below it has not shown that it reads the retina. This cue was found before the lock and disclosed in A2. Fig.~\ref{fig:sizes} shows the image sizes it uses.
+% src: AM l.97-101 (A2 N-1); PR l.104; AM l.65-67
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig3_image_sizes.pdf}
+\caption{Width and height of the 146 benchmark rare images, from the input lock. Filled: the 124 development images; open: the 22 hold-out images. Image size differs by class. The size-only reference uses only these two numbers; no model is involved.}
+\label{fig:sizes}
+% src: LOCK image_inventory.csv columns label, split, width, height (146 rare rows; train 124, test 22)
+\end{figure}
+
+\subsection{Post hoc analyses}
+After the locked results we ran agreed post hoc analyses (P0--P10, G1) and one reporting change (R1). P0--P9 and R1 were computed on a laptop from the locked features and outputs; P2 also applies the nine-way classifiers trained in our earlier work. P2 and P3 are analyses outside the locked study. G1 re-extracted MIRAGE and Inception-v3 features from padded images in one extra GPU session. P10 works on the image files. Their rules were committed before their numbers (16 November, P9 on 18 November, P10 on 19 November); P0, P6 and P7 were first computed before the rules were timestamped and are labelled so.
+% src: PR l.226-236, l.241-254, l.329-354, l.399-404; PR l.275, l.431-432
+Beside every FRR we show the share of the same sources' disease images that the head calls any rare class (R1). Two of these analyses sit in the main text under one heading marked post hoc (Section~\ref{sec:res-posthoc}): size-right against size-wrong queries (P4) and CSC against MH on development images (P8), beside and never replacing the locked size-only reference. All others are in the supplement. No post hoc result replaces a locked one.
+% src: PR l.256 (R1); placement PR HEAD 19 Nov "after the draft review" (2); PR l.229-232 (rule 2)
+
+\section{Results}
+\label{sec:results}
+\subsection{Run integrity}
+All four arms completed every planned episode: 2,000 prototype episodes per arm in development and 500 on the hold-out. No external image was excluded; flagged external pairs were grouped, not removed. Locked extraction times per image were 13.57\,ms (MIRAGE), 14.03\,ms (DINOv2), 23.91\,ms (RETFound) and 323.66\,ms (Inception-v3), on one NVIDIA L4 (Table~\ref{tab:pilot}).
+% src: ARC runs/*/development/summary.json, runs/*/reporting/summary.json; DRV step14_external.txt lines 1-3; DRV step11_pilots.txt
+
+\subsection{Five-way development (primary) and nomination}
+MIRAGE had the highest development macro recall of the four encoders at every $K$: 0.495 at $K=1$, rising to 0.777 at $K=8$, mean 0.650 (Table~\ref{tab:dev}, Fig.~\ref{fig:recall}). DINOv2 followed (mean 0.558), then Inception-v3 (0.534) and RETFound (0.406). No other model was within 0.02 of MIRAGE, so the tie-break was not used, and MIRAGE was nominated.
+% src: ARC reports/nomination/nomination.json arms.*.k_scores, .score, nominee; 0.650 - 0.558 = 0.092 > 0.02
+MIRAGE minus Inception-v3 was $+0.086$, $+0.116$, $+0.132$ and $+0.130$ at $K=1$, 2, 4 and 8, and $+0.116$ on the mean over $K$ (SD 0.037; 5th--95th percentile over draws $+0.069$ to $+0.185$). The 5th percentile of the paired difference was above zero at every $K$ ($+0.001$ at $K=1$).
+% src: R2 rows "MIRAGE minus Inception" (mean 0.11577, sd 0.03739, p05 0.06895, p95 0.18504; K=1 p05 0.00085); means = differences of the locked nomination.json k_scores
+DINOv2 led Inception-v3 by 0.024 on the mean over $K$ ($-0.025$ to $+0.086$); the two were within 0.01 at $K=1$ and 2. RETFound was lowest at every $K$ ($-0.128$ against Inception-v3; $-0.186$ to $-0.070$).
+% src: R2 rows "DINOv2 minus Inception" (0.02365; -0.0254, 0.0863; K=1 -0.0022, K=2 -0.0025) and "RETFound minus Inception" (-0.1278; -0.1864, -0.0698)
+The size-only reference reached 0.578 at $K=1$ and 0.569 on the mean over $K$. At $K=1$ it was above every model. MIRAGE cleared it from $K=2$ (0.615 against 0.550). DINOv2 and Inception-v3 cleared it at $K=4$ and 8 only, and RETFound never did.
+% src: ARC size_only_reference.csv lines 2-6; nomination.json k_scores
+
+\begin{table*}[t]
+\caption{Development five-way macro recall (primary): 124 queries, five folds pooled; mean over 100 support draws per $K$, every arm on the same supports and queries.}
+\label{tab:dev}
+\centering\footnotesize
+\resizebox{\textwidth}{!}{\input{tables/t1_development.tex}}
+\par\smallskip
+\parbox{\textwidth}{\footnotesize Mean $K$ 1--8 is the average over $K=1$, 2, 4, 8 that the nomination used. Cells: mean; below it, SD over draws (and 5th--95th percentiles for the mean over $K$ and for paired rows). These describe variation over support draws for these images; they are not confidence intervals. Paired rows: difference from Inception-v3 on the same draws. $^\dagger$Pre-specified quantity (protocol Section~5), computed after the results were known: rule R2 committed on 19 November 2026 before computing, computed on 20 November 2026 from the locked development outputs; every mean equals the locked value. Means and the size-only row are locked. Chance is 0.20. MIRAGE was nominated; no other model was within 0.02.}
+\end{table*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{figures/fig2_recall_vs_k.pdf}
+\caption{Five-way macro recall against the number of labelled examples per class ($K$). Left: development, 124 queries with the five folds pooled (primary). Right: the hold-out of 22 images, a seed-42 draw matching the class counts of Yoo et al.; these images were inspected in earlier work. Lines: mean over 100 support draws per $K$; every arm sees the same supports and queries. Dashed line and grey band: size-only reference (nearest mean image width and height), mean and 5th--95th percentile over draws. Dotted line: chance (0.20). Model spreads are not drawn; development spreads are in Table~\ref{tab:dev}, hold-out spreads in Table~\ref{tab:holdout}. $K=16$ exists for the hold-out only.}
+\label{fig:recall}
+% src: ARC nomination.json k_scores; support_draw_summary.csv (prototype); size_only_reference.csv
+\end{figure*}
+
+\subsection{False-rare rate by source (secondary)}
+\label{sec:res-frr}
+MIRAGE called no patient-disjoint Kermany normal scan rare (0 of 169), 4 of 206 OCTID normal scans and 30 of 332 OCTDL normal scans (Table~\ref{tab:frr}). These rates hold for the published, frame-filling inputs.
+% src: ARC external_source_audit.csv lines 38, 52, 49; qualifier PR l.418-419
+MIRAGE called only 26 of the 332 OCTDL normal scans NORMAL; it called 276 a common disease. No model called most OCTDL normal scans NORMAL: Inception-v3 called 255 of 332 a common disease, RETFound 177 and DINOv2 46, and DINOv2 instead called 141 rare (Fig.~\ref{fig:normals}). A clinic-to-clinic macular-hole analysis is in the supplement (P3, post hoc).
+% src: ARC runs/<arm>/external/OCTDL/nine_way/metrics.json confusion row NORMAL (MIRAGE [26,148,118,10,...] -> 276; Inception 255; RETFound 177; DINOv2 46); external_source_audit.csv (DINOv2 OCTDL FRR 141); PR l.379-382 (pointer only, no cause)
+On OCTID, all four arms called 182 to 202 of the 206 normal scans NORMAL. On all 250 Kermany normal test scans (secondary), the counts called rare were 0 (MIRAGE), 10 (DINOv2), 7 (Inception-v3) and 1 (RETFound).
+% src: external_source_audit.csv recall_NORMAL numerators OCTID (189, 188, 202, 182); false_rare_rate_all lines 3, 21, 39, 57
+A low FRR can also mean that the head rarely says ``rare''. On OCTID, MIRAGE called 41 of 102 CSC and 11 of 102 MH images any rare class; RETFound called none of either (R1, post hoc).
+% src: PH R1_rare_beside_false_rare.csv rows MIRAGE/RETFound, OCTID
+In a post hoc check that padded every image with black to a square (G1, supplement), external normal scans went almost entirely to rare classes for MIRAGE and Inception-v3; the false-rare rates above hold for frame-filling inputs.
+% src: optional G1 sentence, one only (PR l.419-422); included as agent default, labelled post hoc -- Lam may delete; PH G1_comparison.md section 4 (MIRAGE OCTID NORMAL 202 -> 0, OCTDL 26 -> 1 called NORMAL)
+
+\begin{table*}[t]
+\caption{Nine-way audit: truly normal scans that the head calls any of the five rare classes (count, rate and 95\% interval), with locked called-NORMAL counts and, beside them, the post hoc R1 share.}
+\label{tab:frr}
+\centering\footnotesize
+\resizebox{\textwidth}{!}{\input{tables/t2_false_rare.tex}}
+\par\smallskip
+\parbox{\textwidth}{\footnotesize Kermany headline: the 169 normal test images whose patients are in no fitting row; all 250 is secondary. Intervals: 5,000 cluster resamples (seed 0), by patient for Kermany and by dependence group (each patient's images and any linked pairs) for OCTDL; exact Clopper--Pearson, image-level and conditional, for OCTID, which has no patient IDs. A zero count gets a zero-width resampling interval (MIRAGE, Kermany); zero is not shown to be the true rate, and exact bounds are in the supplement (P1, post hoc). Called NORMAL: locked counts, no interval (intervals in Table~\ref{tab:perclass}). $^\ddagger$Post hoc (R1; rule committed 16 November 2026): images that OCTID or OCTDL label CSC/CSR or MH (OCTID CSC and MH: common classes in OCTID, tier D; OCTDL MH: tier B) and that the same head calls any rare class. It shows whether a low false-rare rate comes from a head that rarely says ``rare''. These are the datasets' published labels, not clinically confirmed. The rates hold for the published, frame-filling inputs.}
+\end{table*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{figures/fig4_normal_scans.pdf}
+\caption{Where truly normal scans go in the nine-way audit, by source and encoder: called NORMAL, called a common disease (CNV, DME or drusen), or called one of the five rare classes. Kermany: all 250 official normal test images; the headline false-rare rate (Table~\ref{tab:frr}) uses the 169 whose patients are in no fitting row. OCTID: 206 scans. OCTDL: 332 scans from 110 patients. Number at right: scans called rare. The head has one prototype per class, from 1,000 Kermany images per common class and the 124 development rare images; no OCTID or OCTDL image is used for fitting.}
+\label{fig:normals}
+% src: ARC runs/<arm>/reporting/nine_way/metrics.json and runs/<arm>/external/{OCTID,OCTDL}/nine_way/metrics.json, NORMAL row cells
+\end{figure*}
+
+\subsection{Hold-out of 22 (secondary, inspected before)}
+With all 124 development images as prototypes (the nine-way head), MIRAGE named 20 of the 22 hold-out images correctly, DINOv2 15, Inception-v3 13 and RETFound 9 (Table~\ref{tab:holdout}).
+% src: ARC external_source_audit.csv Kermany recall_<rare class> numerators; WR l.288-291
+On the five-way task, MIRAGE's macro recall was 0.722 on the mean over $K$ (SD 0.063; 5th--95th 0.615--0.830), against 0.524 for Inception-v3 and 0.618 for the size-only reference. MIRAGE minus Inception-v3 was $+0.197$ on the mean over $K$ (SD 0.085; 5th--95th $+0.042$ to $+0.343$); per $K$ it was $+0.106$ ($-0.121$ to $+0.350$) at $K=1$, $+0.188$ ($-0.020$ to $+0.440$) at $K=2$, $+0.243$ ($+0.030$ to $+0.440$) at $K=4$, $+0.253$ ($+0.060$ to $+0.390$) at $K=8$ and $+0.273$ ($+0.189$ to $+0.342$) at $K=16$.
+% src: ARC support_draw_summary.csv (prototype, mean_k1_2_4_8: MIRAGE line 31, Inception line 43); size_only_reference.csv line 12; paired_differences.csv lines 62-67 (K=16 p05 0.1885 -> 0.189)
+DINOv2 was level with Inception-v3 ($+0.002$; $-0.136$ to $+0.124$), and RETFound was below it ($-0.186$; $-0.308$ to $-0.052$). Against the size-only reference, MIRAGE was higher from $K=2$ on; DINOv2 was higher only at $K=8$; Inception-v3 and RETFound were never higher. At $K=16$ the size-only reference reached 0.727, above every arm except MIRAGE (0.894). With four or five images per class, these numbers show direction only.
+% src: paired_differences.csv lines 55, 31; support_draw_summary.csv; size_only_reference.csv line 11 (0.7265 -> 0.727); HP D(1)
+
+\begin{table*}[t]
+\caption{Hold-out of 22 images (5 CSC, 5 MH, 4 MacTel, 4 Stargardt, 4 RP): locked nine-way exact counts per class and arm, with five-way macro recall per $K$ beside them.}
+\label{tab:holdout}
+\centering\footnotesize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\textwidth}{!}{\input{tables/t3_holdout.tex}}
+\par\smallskip
+\parbox{\textwidth}{\footnotesize The images are a seed-42 draw from the public release that matches the class counts of Yoo et al.; they were inspected in earlier work, so the test is not blind. Nine-way head: one prototype per class, from 1,000 Kermany images per common class and all 124 development rare images; an image counts as correct only if it receives its own rare class among the nine. Five-way: $K$ supports per class from the 124 development images, 100 draws per $K$, prototype classifier; below the mean over $K$, SD and 5th--95th percentiles over draws. Paired rows: difference from Inception-v3 on the same draws, mean (5th to 95th percentile). With 4 or 5 images per class, read for direction only. \fnRS The folder labels for RP and Stargardt disagree with the counts in the original paper; macro recall is unaffected.}
+\end{table*}
+
+\subsection{OCTID two-way test (exploratory)}
+\label{sec:res-octid}
+On OCTID, CSC against MH, MIRAGE's two-class macro recall was 0.737 on the mean over $K$ (SD 0.069; 5th--95th 0.613--0.842), from 0.647 at $K=1$ to 0.837 at $K=8$ (Table~\ref{tab:octid}). DINOv2 reached 0.768, Inception-v3 0.711 and RETFound 0.512. DINOv2 was higher than the nominee at $K=1$ to 8; MIRAGE was higher only at $K=16$ (0.898 against 0.863).
+% src: ARC external_two_way.csv lines 2-25 (MIRAGE 14-19; DINOv2 8-13; Inception 20-25; RETFound 2-7)
+MIRAGE minus Inception-v3 was $+0.026$ on the mean over $K$. The locked files hold no paired spread for this difference, and the two arms' 5th--95th ranges overlap (0.613--0.842 and 0.614--0.792). At $K=8$, MIRAGE recalled 0.849 of CSC and 0.825 of MH queries. RETFound collapsed to one class in 60, 56, 50 and 44 of 100 draws at $K=1$, 2, 4 and 8, and MIRAGE in 3 draws at $K=1$.
+% src: external_two_way.csv lines 19, 25 (0.7369 - 0.7107); external_paired_differences.csv holds no two-way rows; line 17 (recall_CSC_mean, recall_MH_mean); collapsed_draws lines 2-5, 14
+The size-only reference sent all 204 queries to CSC in every draw and scored 0.50. Every OCTID image is larger than every benchmark CSC and MH development image, so the reference cannot separate the two classes here. This does not test whether size differs by class inside OCTID (some CSC files are $879\times586$; every MH file is $750\times500$), and freedom from acquisition shortcuts was not established. These results measure agreement with OCTID's published labels, not clinically confirmed transfer.
+% src: external_two_way.csv lines 26-31; ARC geometry_summary.csv (MIRAGE) lines 12-13, 15, 17; AM l.41, l.48-50, l.110-111; PR l.83-84
+
+\begin{table*}[t]
+\caption{OCTID central serous chorioretinopathy (OCTID ``CSR'') against macular hole, two-way (exploratory): 102 + 102 queries; macro recall over the two classes, mean of 100 draws.}
+\label{tab:octid}
+\centering\footnotesize
+\input{tables/t4_octid_two_way.tex}
+\par\smallskip
+\parbox{\textwidth}{\footnotesize Supports: the CSC and MH images of the locked hold-out episodes, benchmark images only. Chance is 0.50. Last column: draws in which every query went to one class. The size-only reference sent every query to CSC in every draw: every OCTID image is larger than every benchmark CSC and MH development image, so it cannot separate the two classes here; this does not test whether size differs by class inside OCTID. We evaluated agreement with OCTID's published labels; clinical label equivalence, patient independence and freedom from acquisition shortcuts were not established. Per-class recall and confusion counts: Table~\ref{tab:twoway}.}
+\end{table*}
+
+\subsection{Post hoc analyses beside the size-only reference (labelled; rules committed 16 November 2026)}
+\label{sec:res-posthoc}
+\emph{This subsection is post hoc. Both rules were committed (commit 1eb3964) before their numbers were computed on 16 November 2026. Neither result replaces the locked size-only reference above.}
+% src: PH P4_size_right_vs_wrong.csv and P8_csc_vs_mh_development.csv column posthoc ("post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16"); placement PR HEAD 19 Nov "after the draft review" (2)
+
+\textbf{Size-right against size-wrong queries (P4).} In the locked development episodes, the size-only rule named 0.594 of query cells correctly (29,441 of 49,600). Table~\ref{tab:p4} splits each episode's queries by whether the size-only rule named them correctly and gives each model's recall in each group. Every model scored higher on size-right than on size-wrong queries on the mean over $K$: MIRAGE 0.663 against 0.646, DINOv2 0.577 against 0.537, Inception-v3 0.543 against 0.509 and RETFound 0.443 against 0.394. For MIRAGE the order reversed at $K=4$ (0.708 against 0.730) and $K=8$ (0.762 against 0.795). This is a description, not proof that any model uses image size.
+% src: PH P4_size_right_vs_wrong.csv line 42 (share_of_query_cells_size_right 0.59357, 29441/49600); mean_k1_2_4_8 rows (MIRAGE 0.66279/0.64587; DINOv2 0.57694/0.53742; Inception 0.54295/0.50910; RETFound 0.44334/0.39361); MIRAGE K=4 0.70769/0.73035, K=8 0.76224/0.79496; PR l.247 ("A description, not proof")
+
+\textbf{CSC against MH on development (P8).} P8 is the like-for-like comparator for the OCTID two-way test: development CSC and MH queries only, with the same two-way rule (Table~\ref{tab:p8}). On the mean over $K$, DINOv2 scored 0.864, Inception-v3 0.794, MIRAGE 0.711 and RETFound 0.634, and the size-only rule scored 0.968, above every model. MIRAGE minus Inception-v3 was $-0.083$ (SD 0.052; 5th--95th $-0.164$ to $+0.010$), against $+0.026$ on OCTID.
+% src: PH P8_csc_vs_mh_development.csv lines 11, 16, 21, 6, 26, 31 (0.8639, 0.7106, 0.7940, 0.6343; size_only 0.9680; MIRAGE-Inception -0.0834, sd 0.0524, p05 -0.1636, p95 +0.0104; locked column 0.0261); PR l.251
+
+\begin{table}[t]
+\caption{Post hoc (P4; rule committed 16 Nov 2026, computed 16 Nov 2026). Development macro recall on queries the size-only rule names correctly (size-right) and wrongly (size-wrong), in the same episodes.}
+\label{tab:p4}
+\centering\footnotesize
+\setlength{\tabcolsep}{4pt}
+\input{tables/t5_p4_size_right_wrong.tex}
+\par\smallskip
+\parbox{\columnwidth}{\footnotesize Mean of per-episode macro recall over 500 fold-level episodes per $K$ (5 folds $\times$ 100 draws); a class with no query in a group in an episode is left out of that episode's average. Mean: average of the four $K$. A description, not proof.}
+\end{table}
+
+\begin{table*}[t]
+\caption{Post hoc (P8; rule committed 16 Nov 2026, computed 16 Nov 2026). CSC against MH on the development images, two-way (larger of the two cosines, ties to CSC): the like-for-like comparator for Table~\ref{tab:octid}.}
+\label{tab:p8}
+\centering\footnotesize
+\input{tables/t6_p8_csc_mh_development.tex}
+\par\smallskip
+\parbox{\textwidth}{\footnotesize Locked development episodes, CSC and MH queries only; mean of 100 draws; chance 0.50. Paired row: per $K$, mean (5th to 95th percentile). Last column: the locked OCTID two-way mean over $K$ (Table~\ref{tab:octid}), shown for comparison.}
+\end{table*}
+
+\subsection{Phase-1 controls (E1--E4)}
+\label{sec:res-phase1}
+\textbf{[TODO: Phase-1 controls E1--E4 (mentor, 20 Nov)]}: size and framing controls, external error analysis and preprocessing sensitivity. Rules are being written; no result exists and none is reported here. State each rule's commit before its numbers, and label each result as it is labelled in its rule.
+% src: mentor request of 20 Nov 2026 relayed by the coordinator; delivery moved to 3 Dec
+
+\section{Discussion}
+\label{sec:discussion}
+\subsection{What the results show}
+On the 124 development images, MIRAGE had the highest five-way macro recall of the four encoders at every $K$, from 0.495 at $K=1$ to 0.777 at $K=8$, with a mean of 0.650. It led the Inception-v3 reference, the backbone family of Yoo et al., by 0.116 on the mean over $K$, on identical supports and queries (5th--95th percentile over draws $+0.069$ to $+0.185$; Table~\ref{tab:dev}). DINOv2 scored 0.558 and Inception-v3 0.534; RETFound was lowest at every $K$ (mean 0.406).
+% src: ARC nomination.json; R2 MIRAGE minus Inception mean_k1_2_4_8 (p05 0.06895, p95 0.18504)
+On the 22 hold-out images the direction was the same. MIRAGE reached 0.722 on the mean over $K$ and Inception-v3 0.524; the paired difference was $+0.197$ ($+0.042$ to $+0.343$), and the nine-way head named 20 of the 22 images correctly for MIRAGE and 13 for Inception-v3.
+% src: ARC support_draw_summary.csv lines 31, 43; paired_differences.csv line 67; external_source_audit.csv
+
+\subsection{What the results do not show}
+This is a descriptive comparison of checkpoints. It does not show why MIRAGE leads, and it makes no clinical claim. MIRAGE was not the best model on every test: in the exploratory OCTID two-way test DINOv2 scored above it (Section~\ref{sec:disc-octid}), and in the supplement a post hoc per-class breakdown (P0) shows that its macular-hole recall on development was below that of DINOv2 and Inception-v3.
+% src: PR l.26-27; ARC external_two_way.csv; PH P0_per_class_recall.csv lines 9, 15, 21 (label "rule fixed after first look"); P0 in the supplement (PR HEAD 19 Nov entry)
+We cannot say why RETFound, pretrained on retinal OCT, scored lowest. We know of no published prototype or $K$-shot result for frozen RETFound on these classes; the published frozen results we read use linear probes trained on full datasets \cite{MIRAGE2025}. We ran no recipe check, so a pipeline effect cannot be excluded.
+% src: AM l.310, l.316-317; AM l.93 (A-6); AM l.78-85 (A-7)
+We do not rank our numbers against earlier work. Yoo et al.'s 92.1\% and 93.9\% come from a nine-way classifier trained on every rare training image plus generated ones; they are context, not a baseline. Sun et al.\ \cite{Sun2024} already drew five-way $K$-shot tasks from these images with a trained network; pools, draws and training differ. October's trained heads applied to OCTID and OCTDL are in the supplement (P2, post hoc, outside the locked study).
+% src: HP D(2); PR l.424 (context only); PR l.498; PR l.245, l.234-236 (P2, rule 4)
+
+\subsection{Image size and source}
+Image width and height alone (the size-only reference) reached 0.569 on the development mean over $K$, where guessing gives 0.20, and 0.578 at $K=1$, above every encoder. On the mean over $K$, only MIRAGE had a higher development score than this reference; DINOv2 (0.558) and Inception-v3 (0.534) were below it. Per $K$, MIRAGE had a higher mean than the reference from $K=2$, DINOv2 and Inception-v3 only at $K=4$ and 8, and RETFound at no $K$. At $K=4$, Inception-v3 had 0.581 against the reference's 0.560, whose SD over draws was 0.051; no file gives a paired spread for this gap.
+% src: ARC size_only_reference.csv lines 2-6 (k=4 sd 0.0507); nomination.json; AM l.103-104
+On the hold-out the reference reached 0.618 on the mean over $K$ and 0.727 at $K=16$. Again only MIRAGE was above it on the mean over $K$ (0.722); Inception-v3 never had a higher mean than the reference, and DINOv2 did only at $K=8$. A model at or below this reference has not shown that it reads the retina.
+% src: size_only_reference.csv lines 7-12 (0.7265 -> 0.727; one rounding rule, claim ledger X1); support_draw_summary.csv; PR l.104
+Two different cues are at work. Within the five rare classes, image size differs by class: the median width of the development images runs from 327\,px for MH to 482\,px for MacTel (Fig.~\ref{fig:sizes}). Size alone therefore predicts the five-way class well above chance. We do not know why the sizes differ. In the nine-way audit a second cue is added: every rare image comes from one web-collected set and every common image from Kermany, so disease and source change together, and the study cannot separate the two there.
+% src: ARC geometry_summary.csv (MIRAGE) lines 15, 17, 19, 21, 23 width_median (CSC 414, MH 327, MacTel 482, RP 393, Stargardt 410); AM l.41-42; PR l.381-383; P9 label "source and disease are mixed" (PH P9 lines 18-21)
+Every encoder resizes its input to a fixed size, and DINOv2 and RETFound also centre-crop it (Section~\ref{sec:models}). Resizing changes the pixel count but keeps the layout of the image, including the dark bands around the scan (Section~\ref{sec:disc-layout}). Whether any model uses these cues was not tested.
+% src: PR l.214 ("Every model resizes its input"); ARC geometry DINOv2 retained_fraction; claim ledger D15 (aspect-ratio clause dropped as unsourced)
+The post hoc split by size-right and size-wrong queries (P4, Section~\ref{sec:res-posthoc}) shows every model higher on size-right queries on the mean over $K$; it describes, and does not prove, use of size.
+% src: PH P4_size_right_vs_wrong.csv mean_k1_2_4_8 rows; PR l.247
+
+\subsection{The false-rare audit}
+The nominee called none of the 169 patient-disjoint Kermany normals rare, 4 of 206 OCTID normals and 30 of 332 OCTDL normals; an exact bound for the zero count is in the supplement (P1, post hoc). These rates hold for the published, frame-filling inputs.
+% src: ARC external_source_audit.csv lines 38, 52, 49; PH P1_nine_way_exact_bounds.csv line 116 (supplement); PR l.418-419
+A low false-rare rate alone can mean that the head rarely says ``rare''. Beside each rate we therefore show the share of external images with a published CSC/CSR or MH label that the same nine-way head called any rare class (R1, post hoc). This head has one prototype per class, built from the 4,000 Kermany fitting images and all 124 development rare images; it uses no $K$-shot supports. OCTID CSR (scored as CSC) and OCTID MH are common classes in OCTID (tier D, 17.8\% each of 572 labelled images); OCTDL MH is a rare class in OCTDL (tier B, 1.9\% of 2,064 images).
+% src: PR l.256 (R1); WR l.177-178; PR l.351-366, l.378-381
+On OCTID, MIRAGE called 41 of 102 CSR images and 11 of 102 MH images rare; on OCTDL, 3 of 39 MH images. The same caution therefore applies to the nominee for macular hole: on OCTDL it called a larger share of normal scans rare (30 of 332, 0.090) than of MH scans (3 of 39, 0.077). On OCTDL, Inception-v3 (11 of 332) and RETFound (18 of 332) made fewer false-rare calls than MIRAGE; DINOv2 made 141. RETFound called no OCTID normal rare, but it also called none of the 204 OCTID CSR and MH images rare.
+% src: PH R1_rare_beside_false_rare.csv lines 11-13 (0.0904, 0.0769), 17, 5, 9, 3, 4; ARC external_source_audit.csv lines 67, 13, 31, 16
+
+\subsection{OCTDL normal scans}
+MIRAGE called only 26 of 332 OCTDL normal scans NORMAL; it called 276 a common disease. No arm called most OCTDL normals NORMAL: DINOv2 called the most (145), but it called 141 rare. We make no claim about the cause. The supplement gives the class each normal scan received with its top-two score gap (P5) and a clinic-to-clinic macular-hole analysis (P3), both post hoc.
+% src: ARC external_source_audit.csv lines 50, 32, 31; metrics.json NORMAL row; PR l.379-382 (no cause); P3, P5 in the supplement (PR l.379-381; PR HEAD 19 Nov entry)
+
+\subsection{Letterbox layout}
+\label{sec:disc-layout}
+The rare images are letterboxed. In the locked geometry summary, the median border share per rare class is 0.34--0.50 for development images and 0.22--0.56 for hold-out images; for Kermany, OCTID and OCTDL it is 0 (at most 0.002). Layout therefore differs between the rare set and every other source, beside size. This study does not test whether any model uses it. A per-image count made outside any rule is released in the supplement with its label.
+% src: ARC geometry_summary.csv (MIRAGE) lines 2-24; 126/146 only in the supplement (agent default, PR HEAD 19 Nov entry; pre_rule/README.md l.5-6)
+
+\subsection{The OCTID two-way test (exploratory)}
+\label{sec:disc-octid}
+In the OCTID two-way test (CSR, scored as CSC, against MH), DINOv2 scored above the nominee on the mean over $K$ (0.768 against 0.737). MIRAGE led Inception-v3 by 0.026 (0.711 for Inception-v3), and RETFound scored 0.512, where guessing gives 0.50. The size-only reference called every query CSC in every draw and scored 0.50, because every OCTID image is larger than every benchmark CSC and MH development image; this does not test whether size differs by class inside OCTID.
+% src: ARC external_two_way.csv lines 13, 19, 25, 7, 26-31; geometry_summary.csv lines 12-17 (claim ledger X12)
+On development CSC and MH images, the like-for-like comparator (P8, post hoc) reverses the MIRAGE--Inception-v3 order ($-0.083$; $-0.164$ to $+0.010$), and the size-only rule scores 0.968, above every model. We evaluated agreement with OCTID's and OCTDL's published CSC/CSR and MH labels using benchmark-only $K$-shot supports. Clinical label equivalence, patient independence and freedom from acquisition shortcuts were not established.
+% src: PH P8_csc_vs_mh_development.csv lines 31, 26; AM l.48-50 (A1 rule 7, verbatim)
+
+\subsection{Phase-1 controls (E1--E4)}
+\textbf{[TODO: Phase-1 controls E1--E4 (mentor, 20 Nov)]}: what the size and framing controls, the external error analysis and the preprocessing sensitivity change in the reading above (Section~\ref{sec:res-phase1}). To be written only after their results exist.
+
+\section{Limitations}
+\label{sec:limitations}
+\textbf{Images.} The rare images come from web searches, carry no patient identifiers, and total 19 to 27 development images per class; our results describe these images, cannot be compared number-for-number with earlier studies, and the folder labels for RP and Stargardt disagree with the counts in the original paper. Yoo et al.\ labelled them knowing their source pages. Whether one case sits on both sides of a split cannot be tested; the duplicate screen detects near-identical files only. \todo{P10 same-picture audit: Lam's blind review in progress; result and wording to be added. If nothing is found, the wording is ``no same picture found by this screen'', never ``no shared patients''.}
+% src: HP D(3) (verbatim); Yoo XML; PR l.381-383; PR l.122-124, l.213; PR l.253 (P10 rule and wording)
+
+\textbf{Nomination.} MIRAGE was nominated on the development folds, so its development score is optimistic. The hold-out and external scores were computed after the nomination was sealed; the hold-out is not blind.
+% src: ARC nomination.json "interpretation"; PR l.136-143
+
+\textbf{Hold-out.} The 22 hold-out images are a fixed-seed draw that matches the class counts of the test in Yoo et al.; which images they tested on was never published. We inspected these images in earlier work, so the test is not blind. With four or five images per class, it shows direction only.
+% src: HP D(1); PR l.55-58
+
+\textbf{External labels.} No clinician checked the OCTID or OCTDL labels. OCTID gives no patient identifiers, so its intervals are image-level and conditional. The 332 OCTDL normals come from 110 patients. OCTID images carry an orientation icon, which we did not crop or mask; it is a known acquisition cue.
+% src: PR l.217; AM l.44-45, l.123-128, l.151; DRV step14_external.txt
+
+\textbf{Spread.} The SD and percentiles over support draws describe variability for these images, not confidence intervals for new patients; at large $K$ the supports overlap heavily. The development spreads were computed after the results were known, under a rule committed before computing. Only the nine-way rates carry 95\% intervals, conditional on the fitted head.
+% src: PR l.145-147; R2 label; ARC external_source_audit.csv interval_method ("conditional on the fitted head")
+
+\textbf{Labels of two classes.} Per-class results for RP and Stargardt carry a footnote. The paper gives Stargardt 15+4 = 19 and RP 12+4 = 16 images, while the version 1 folders hold RP 19 and Stargardt 16, so the two names may be swapped in one of them. Version 2, which we use, holds Stargardt 23 and RP 31. Macro recall is unaffected.
+% src: PR l.64-67; v1_to_ours.csv; PR l.54-55; HP l.13
+
+\textbf{Provenance.} Version 1 of the release holds 119 images, the total in Yoo et al.; version 2, which we use, holds 146, and 21 of the 22 hold-out images are in version 1. This file-identity check says nothing about which images Yoo et al.\ tested on.
+% src: PR l.59-63; HP A.9
+
+\textbf{Pretraining overlap.} RETFound was pretrained on the whole Kermany release (109,309 images), so our 169 Kermany test normals are likely among its pretraining images; this is unchecked. According to their published data lists, neither RETFound nor MIRAGE was pretrained on OCTID or OCTDL. MIRAGE's pretraining data include unlabelled CSC, MacTel, MH and Stargardt scans from in-house data, which are not public. DINOv2 was trained on web-scale images and may have seen these web pictures; this cannot be checked.
+% src: PR l.221 (W1, checked 16 Nov); PR l.383-386; ARC reports/external/interpretation.json "screened"
+
+\textbf{Scope.} All encoders were frozen; the results say nothing about fine-tuned models.
+% src: PR l.48-49; AM l.195-198
+
+\section{Next phase}
+These experiments are outside this study. The next version of this study (v2) starts, under its own rule, by removing the letterbox: crop the flat bands from the rare images, re-extract MIRAGE and Inception-v3, and rescore. We also plan to consider a planted-cue test, in which a domain's own artefact is added to the $K$ rare examples only and measured as false-rare calls on clean common images; whether it is run has not been decided. \todo{Lam decides whether to name the planted-cue test here.} Separate from v2, the next phase fine-tunes the encoders under its own protocol: first a test where image size does not predict the disease, with patient identifiers if possible; then light adaptation (LoRA or the last blocks) of MIRAGE and RETFound inside the same $K$-shot episodes, with settings fixed in advance; full fine-tuning only if light adaptation gains clearly on development and the gain holds on OCTID and OCTDL.
+% src: PR l.304-318 (letterbox removal decided 19 Nov; planted-cue "Lam's choice pending"; fine-tuning order); PR l.196-199
+
+\section{Conclusion}
+\todo{draft conclusion; Lam to approve.}
+Under a pre-registered protocol with identical supports, frozen MIRAGE gave the highest five-way development macro recall on the public rare-OCT benchmark of Yoo et al., ahead of DINOv2, the Inception-v3 reference and RETFound, and it was the only model above the size-only reference on the mean over $K$. Image width and height alone beat every model at $K=1$, so a model that does not clear this reference has not shown that it reads the retina. With frame-filling inputs, the nominee rarely called normal scans from Kermany or OCTID rare, but it called most OCTDL normal scans a common disease, and its false-rare rates must be read beside how often it calls true disease images rare. These results describe these web-collected images and agreement with published labels; they make no clinical claim.
+% src: as in Sections IV-B, IV-C and V (ARC nomination.json; size_only_reference.csv; external_source_audit.csv; R1)
+
+\section*{Registration}
+The protocol (v1.0, 5 November 2026), amendments A1--A3 and the input-lock hashes were deposited on Zenodo (doi:10.5281/zenodo.24206472) before any score of this study. \todo{state the exact publication time from the Zenodo record (A3 S-5: ``the report states which was done and when'').}
+% src: PR l.10-11, l.183; AM l.272-274 (A3 S-5); ARC approvals.json
+
+\section*{Data availability}
+The rare images are version 2 of Mendeley dataset btv6yrdbmv \cite{Yoo2021}; availability on the web gives no right to redistribute them. The common classes are from Kermany et al.\ \cite{Kermany2018}; external images from OCTID \cite{OCTID2020} and OCTDL \cite{OCTDL2024}. The locked results archive and the post hoc tables (one CSV per analysis, every row labelled) are released \todo{where: repository path or public archive}.
+% src: PR l.59-62, l.383-384; PR section 10; PR l.233 (rule 3, everything released)
+
+\section*{Code availability}
+The locked study code is commit \texttt{2f48654} (input-lock SHA256 \texttt{2398\ldots c001c}); post hoc analyses are in \texttt{fm\_posthoc.py}, the G1 extraction code is commit \texttt{39c3d73} and its scoring commit \texttt{36dad48}. \todo{public archive of the exact locked code (e.g.\ Zenodo) and the repository's public or private status.}
+% src: PR l.183, l.401-404; PR l.523-526 (section 11); claim ledger section 6
+
+\section*{Use of AI tools}
+\todo{draft wording; Lam to approve and to match the venue's policy.} AI agents (Claude Opus 5.5, Claude Fable 5.2, GPT-6.1 Sol, GPT-6.2 Sol, Gemini 4 Argon High, Gemini 4 Carbon and Astra 6.2) helped write analysis code and tests, check numbers against their source files, review drafts adversarially and draft text. The authors set every rule, ran every GPU session, made every decision recorded in the protocol and its amendments, reviewed every result, and remain responsible for this work.
+% src: claim ledger section 6 (agents named in PR l.366, l.376; AM l.53, l.60, l.176-177; pre_rule/README.md l.8); PR HEAD 19 Nov "after the draft review" (Gemini 4 Carbon review, GPT 6.2 Sol numbers check); PR section 7 (what only Lam does)
+
+\section*{Ethics, funding, competing interests and acknowledgements}
+\todo{ethics statement (public, de-identified datasets; wording per venue), funding, competing interests and acknowledgements: Lam to supply.}
+
+\section*{Venue}
+\todo{venue not chosen (deferred since 13 Nov); page limit, reporting checklist (e.g.\ CLAIM 2024) and supplement format depend on it.}
+% src: PR l.527 (section 11); PR l.523
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\input{supplement.tex}
+\end{document}

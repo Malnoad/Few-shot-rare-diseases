@@ -1,0 +1,22 @@
+% src: PH P5_not_sure_cutoff.csv lines 2-13; label: post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16
+\begin{tabular}{@{}llrrcccc@{}}
+\toprule
+Arm & Set & Normals & Not sure & \makecell{Called rare\\(all / sure)} & \makecell{Called NORMAL\\(all / sure)} & \makecell{Called common\\(all / sure)} & Role \\
+\midrule
+RETFound & Kermany patient-disjoint & 169 & 8 & 1 / 0 & 149 / 145 & 19 / 16 & calibration \\
+ & OCTID & 206 & 21 & 0 / 0 & 189 / 179 & 17 / 6 & result \\
+ & OCTDL & 332 & 10 & 18 / 17 & 137 / 132 & 177 / 173 & result \\
+\addlinespace[2pt]
+DINOv2 & Kermany patient-disjoint & 169 & 8 & 6 / 5 & 146 / 143 & 17 / 13 & calibration \\
+ & OCTID & 206 & 18 & 17 / 10 & 188 / 177 & 1 / 1 & result \\
+ & OCTDL & 332 & 63 & 141 / 113 & 145 / 123 & 46 / 33 & result \\
+\addlinespace[2pt]
+MIRAGE & Kermany patient-disjoint & 169 & 8 & 0 / 0 & 169 / 161 & 0 / 0 & calibration \\
+ & OCTID & 206 & 46 & 4 / 0 & 202 / 160 & 0 / 0 & result \\
+ & OCTDL & 332 & 295 & 30 / 14 & 26 / 4 & 276 / 19 & result \\
+\addlinespace[2pt]
+Inception-v3 & Kermany patient-disjoint & 169 & 8 & 4 / 4 & 150 / 145 & 15 / 12 & calibration \\
+ & OCTID & 206 & 12 & 15 / 13 & 182 / 175 & 9 / 6 & result \\
+ & OCTDL & 332 & 95 & 11 / 9 & 66 / 42 & 255 / 186 & result \\
+\bottomrule
+\end{tabular}

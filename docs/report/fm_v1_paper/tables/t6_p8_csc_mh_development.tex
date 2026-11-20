@@ -1,0 +1,15 @@
+% src: PH P8_csc_vs_mh_development.csv lines 2-31 (mean; sd/p05/p95 on the mean line; paired per k p05/p95);
+%      last column = locked_OCTID_two_way_macro_mean on the mean line (= Table 4). Label: post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Arm & $K=1$ & $K=2$ & $K=4$ & $K=8$ & \makecell{Mean $K$ 1--8\\(SD; 5th--95th)} & \makecell{OCTID\\(locked)} \\
+\midrule
+MIRAGE & 0.613 & 0.674 & 0.744 & 0.811 & \makecell{0.711\\{\scriptsize (0.038; 0.658--0.782)}} & 0.737 \\
+DINOv2 & 0.744 & 0.845 & 0.910 & 0.957 & \makecell{0.864\\{\scriptsize (0.036; 0.807--0.921)}} & 0.768 \\
+Inception-v3 & 0.681 & 0.762 & 0.836 & 0.897 & \makecell{0.794\\{\scriptsize (0.040; 0.724--0.863)}} & 0.711 \\
+RETFound & 0.561 & 0.603 & 0.657 & 0.716 & \makecell{0.634\\{\scriptsize (0.039; 0.575--0.688)}} & 0.512 \\
+Size-only & 0.938 & 0.973 & 0.981 & 0.981 & \makecell{0.968\\{\scriptsize (0.018; 0.934--0.981)}} & 0.500 \\
+\midrule
+\makecell[l]{MIRAGE $-$\\Inception-v3 (paired)} & \makecell{$-$0.068\\{\scriptsize ($-$0.174 to +0.119)}} & \makecell{$-$0.088\\{\scriptsize ($-$0.230 to +0.072)}} & \makecell{$-$0.092\\{\scriptsize ($-$0.192 to +0.019)}} & \makecell{$-$0.086\\{\scriptsize ($-$0.172 to $-$0.001)}} & \makecell{$-$0.083\\{\scriptsize (0.052; $-$0.164 to +0.010)}} & +0.026 \\
+\bottomrule
+\end{tabular}

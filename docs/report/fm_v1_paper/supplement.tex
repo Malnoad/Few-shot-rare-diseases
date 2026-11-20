@@ -1,0 +1,205 @@
+% Supplement of the v1 paper (input by main.tex). Source keys as in main.tex.
+% Placement (Lam, PR HEAD 19 Nov "after the draft review" (2)): P0, P1, P2, P5 here; P3, P6, P7, P9, G1
+% already placed here (PR l.249-252, l.379-381, l.409-410). P4, P8 in the main text (Section IV-F).
+\clearpage
+\onecolumn
+\setcounter{table}{0}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\theHtable}{S\arabic{table}}
+\setcounter{figure}{0}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\theHfigure}{S\arabic{figure}}
+\begin{center}
+{\Large Supplementary material}
+\end{center}
+
+\section*{S-A. Locked results that A3 places in the supplement}
+These are pre-specified results from the locked run (results archive \texttt{results-20261114T093033Z.zip}); A3 places them in the supplement only. The Kermany all-250 false-rare rate, which A3 lists in the main-text secondary row, is in Table~\ref{tab:frr}.
+% src: AM l.184-190; PR l.114-118
+
+\subsection*{S1. Logistic probe (secondary classifier)}
+Table~\ref{tab:logistic} gives five-way macro recall with the fixed L2-regularised logistic probe on the hold-out, first 25 support draws per $K$. In development the probe ran at $K=4$ only (125 episodes per arm); the locked run wrote no development summary for it, and its only summary is the post hoc P6 (Table~\ref{tab:p6}).
+% src: ARC support_draw_summary.csv (classifier=logistic), paired_differences.csv (logistic); ARC runs/<arm>/development/logistic/ (per-episode files only); methods_results_v2.md section 8.2 S1
+
+\begin{table}[!htbp]
+\caption{Hold-out five-way macro recall with the fixed logistic probe (secondary classifier), first 25 support draws per $K$. Paired rows: difference from Inception-v3 on the same draws.}
+\label{tab:logistic}
+\centering\footnotesize
+\input{tables/s1_logistic.tex}
+\end{table}
+
+\subsection*{S2. Five-way output shares on external disease images}
+\begin{table}[!htbp]
+\caption{Five-way head on external images labelled CSC/CSR or MH by OCTID or OCTDL: share of queries given their own class, mean over draws, by $K$. Supports are benchmark images only. These measure agreement with the datasets' published labels (OCTID CSC and MH: common classes in OCTID, tier D; OCTDL MH: tier B). MacTel, Stargardt and RP receive no external claim. Mean counts per predicted class are in \texttt{external\_transfer\_outputs.csv} (released).}
+\label{tab:transfer}
+\centering\footnotesize
+\input{tables/s2_transfer.tex}
+\end{table}
+% src: ARC reports/external/external_transfer_summary.csv; AM l.32-40 (A1 rules 1-3)
+
+\subsection*{S3. Nine-way per-class recall with 95\% intervals}
+\begin{table}[!htbp]
+\caption{Nine-way per-class recall: count/denominator (rate; 95\% interval). Interval methods as in Table~\ref{tab:frr}. The Kermany rows include the 22 hold-out rare images.}
+\label{tab:perclass}
+\centering\scriptsize
+\setlength{\tabcolsep}{3pt}
+\input{tables/s3_perclass.tex}
+\par\smallskip
+\parbox{\textwidth}{\footnotesize \fnRS The folder labels for RP and Stargardt disagree with the counts in the original paper; macro recall is unaffected.}
+\end{table}
+
+\subsection*{S4. Nine-way confusion counts}
+\begin{table}[!htbp]
+\caption{Nine-way confusion counts (rows: true class; columns: assigned class, in the order NORMAL, CNV, DME, DRUSEN, CSC, MH, MacTel, Stargardt\fnRS, RP\fnRS). ``Kermany + hold-out'': the 1,000 Kermany test images and the 22 hold-out rare images. Empty true rows are dropped.}
+\label{tab:confusion}
+\centering\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\input{tables/s4_confusion.tex}
+\end{table}
+% src: ARC runs/<arm>/{reporting,external/OCTID,external/OCTDL}/nine_way/metrics.json
+
+\clearpage
+\subsection*{S5. Pilot timing, repeat checks and external screen}
+\begin{table}[!htbp]
+\caption{Locked pilot on one NVIDIA L4 (code \texttt{2f48654}): median warm time per image over 100 images, loading time, peak GPU memory and the repeat check; one pilot sequence in the session.}
+\label{tab:pilot}
+\centering\footnotesize
+\begin{tabular}{@{}lrrrcc@{}}
+\toprule
+Arm & ms per image & Load (s) & Peak GPU memory (GB) & Worst difference & Lowest cosine \\
+\midrule
+MIRAGE & 13.57 & 5.5 & 0.37 & 0 & 1.000000 \\
+DINOv2 & 14.03 & 5.4 & 0.37 & 0 & 1.000000 \\
+Inception-v3 & 323.66 & 9.5 & 2.33 & 0 & 1.000000 \\
+RETFound & 23.91 & 22.0 & 1.24 & 0 & 1.000000 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\parbox{\textwidth}{\footnotesize RETFound loaded with missing keys \texttt{fc\_norm.weight}, \texttt{fc\_norm.bias}, \texttt{head.weight}, \texttt{head.bias} and 106 unexpected keys, including \texttt{norm.weight} (Section~\ref{sec:models}). External screen: OCTID 410 queries from 410 candidates, OCTDL 371 from 371, none excluded; OCTID 410 and OCTDL 113 dependence groups; flagged pairs among external images 25 (difference hash) and 4 (identical pixels); none between an external image and a fitting or hold-out image.}
+\end{table}
+% src: DRV step11_pilots.txt lines 1-15; DRV step14_external.txt lines 1-3
+
+\subsection*{S6. OCTID two-way test: per-class recall and confusion counts}
+\begin{table}[!htbp]
+\caption{OCTID two-way test per $K$: macro recall, per-class recall and mean confusion counts over draws (denominators 102 CSC and 102 MH), and draws in which every query went to one class.}
+\label{tab:twoway}
+\centering\footnotesize
+\input{tables/s7_two_way.tex}
+\end{table}
+% src: ARC reports/external/external_two_way.csv lines 2-31; AM l.37-40 (A1 rule 3)
+
+\subsection*{S7. Image geometry by source, class and role (diagnostic)}
+\begin{table}[!htbp]
+\caption{Image geometry by source, class and role, from the original files: median (min--max). Border share: the share of image area in complete edge rows and columns whose grey range is at most 8. Near-white share: pixels at 250 or above (median). Retained fraction: the share of the image each input transform keeps (MIRAGE and Inception-v3 resize the whole image; DINOv2 and RETFound resize and centre-crop). Descriptive; it gates nothing.}
+\label{tab:geometry}
+\centering\scriptsize
+\setlength{\tabcolsep}{3pt}
+\input{tables/s_geometry.tex}
+\par\smallskip
+\parbox{\textwidth}{\footnotesize Benchmark roles: development (fitting) and hold-out (query); Kermany: fitting and test; OCTID and OCTDL: query only. \fnRS The folder labels for RP and Stargardt disagree with the counts in the original paper.}
+\end{table}
+
+\clearpage
+\section*{S-B. Post hoc results (15--20 November 2026)}
+\todo{confirm the end date of this heading once P10 is done.}
+Every item below is post hoc and carries the label of its source file. Rules were committed before the numbers (16 November 2026, commit \texttt{1eb3964}; P9 on 18 November, commit \texttt{39c3d73}; P10 on 19 November), except P0, P6 and P7, which were first computed before the rules were timestamped. No post hoc result replaces a locked one. P4 and P8 are in the main text (Section~\ref{sec:res-posthoc}); R1 sits beside every false-rare rate (Table~\ref{tab:frr}).
+% src: PR l.226-236 (rules 1-4), l.241-256, l.329-354; PR l.275-278; PH CSV posthoc columns
+
+\subsection*{P0. Per-class development recall}
+\begin{table}[!htbp]
+\caption{Post hoc, rule fixed after first look (first computed 15 Nov 2026). Recall per class on the development images, prototype classifier, mean over $K=1$--8 and 100 draws.}
+\label{tab:p0}
+\centering\footnotesize
+\input{tables/p0_per_class.tex}
+\par\smallskip
+\parbox{0.6\textwidth}{\footnotesize \fnRS The folder labels for RP and Stargardt disagree with the counts in the original paper; macro recall is unaffected.}
+\end{table}
+MIRAGE's macular-hole recall (0.540) was below that of DINOv2 (0.612) and Inception-v3 (0.623).
+% src: PH P0_per_class_recall.csv lines 15, 9, 21 (mean_k1_2_4_8 0.5405, 0.6117, 0.6235)
+
+\subsection*{P1. Exact bounds and leave-one-image-out}
+\begin{table}[!htbp]
+\caption{Post hoc, rule committed 16 Nov 2026. Clopper--Pearson 95\% bounds for nine-way counts of scans called any rare class. OCTDL counts are clustered (332 normal images from 110 patients; 39 MH images from 28 patients), and the exact bound treats images as independent.}
+\label{tab:p1}
+\centering\footnotesize
+\input{tables/p1_exact_bounds.tex}
+\end{table}
+For MIRAGE's zero count on the 169 patient-disjoint Kermany normals, the exact 95\% upper bound is 0.022. MIRAGE minus Inception-v3, mean development macro recall over $K=1$--8, was $+0.116$ with all 124 development queries; leaving out one query image at a time gave values from 0.109 (without MH/23.PNG) to 0.122 (without Stargardt/19.PNG). On the hold-out the full difference was $+0.197$; leaving out one image at a time gave 0.173 (without MacTel/18.PNG) to 0.232 (without RP/17.PNG). Per-image changes are in \texttt{P1\_leave\_one\_out.csv}.
+% src: PH P1_nine_way_exact_bounds.csv line 116 (cp95_high 0.0216); PH P1_leave_one_out_summary.csv lines 2-3 (0.11577; 0.10941 MH/23.PNG; 0.12219 Stargardt/19.PNG; 0.19737; 0.17288 MacTel/18.PNG; 0.23179 RP/17.PNG)
+
+\subsection*{P2. October's trained heads on OCTID and OCTDL (outside the locked study)}
+\begin{table}[!htbp]
+\caption{Post hoc, rule committed 16 Nov 2026; outside the locked study (rule 4): October's nine-way heads, trained with real rare images only (none), with basic augmentation (basic) or with CycleGAN images (gan), applied unchanged to the locked Inception-v3 features of OCTID and OCTDL. Counts of images.}
+\label{tab:p2}
+\centering\footnotesize
+\input{tables/p2_october_heads.tex}
+\end{table}
+All gates passed: each head's class order matched; the heads reproduced 17, 18 and 19 of the 22 hold-out images (none, basic, gan); and the external lock records the same Inception-v3 recipe as the locked arm. The heads also reproduced all 1,022 October test predictions. A failed gate would have been reported, not fixed.
+% src: PH P2_gates.csv lines 2-13; PH P2_october_heads_external.csv lines 2-16; PR l.245
+
+\subsection*{P3. Clinic-to-clinic macular-hole agreement (outside the locked study)}
+\begin{table}[!htbp]
+\caption{Post hoc, rule committed 16 Nov 2026; outside the locked study (rule 4): OCTDL macular holes used as examples although A1 makes them query-only. Agreement between two macular-hole labels, never transfer. Two-way (NORMAL against MH) macro recall, mean over $K=1$--8 and 100 draws, chance 0.50; OCTDL examples at most one image per patient per class; OCTDL queries scored per image and per patient.}
+\label{tab:p3}
+\centering\footnotesize
+\input{tables/p3_clinic_to_clinic.tex}
+\end{table}
+% src: PH P3_clinic_to_clinic_mh.csv rows k=mean_k1_2_4_8; per-K rows and collapsed draws in the same file; rosters P3_example_rosters.csv (released, not shown); PR l.246, l.379-381
+
+\subsection*{P5. Normal-scan destinations and a ``not sure'' cut-off}
+\begin{table}[!htbp]
+\caption{Post hoc, rule committed 16 Nov 2026. A ``not sure'' cut-off per model, set at the 9th-smallest top-two score gap of the 169 patient-disjoint Kermany normals (8 lie below it), applied unchanged to OCTID and OCTDL normal scans. ``Sure'': gap at or above the cut-off. The Kermany row is calibration only, not a result. Normal recall is shown beside the false-rare rate, never in its place.}
+\label{tab:p5}
+\centering\footnotesize
+\input{tables/p5_not_sure.tex}
+\end{table}
+The top-two gap distributions per destination, source and arm are in \texttt{P5\_gap\_summary.csv}, and per-scan destinations in \texttt{P5\_normal\_scans.csv} (released, not shown).
+% src: PH P5_not_sure_cutoff.csv lines 2-13; PR l.248, l.348-349 (9th-smallest gap); P5_gap_summary.csv, P5_normal_scans.csv
+
+\subsection*{P6. Prototype against logistic probe}
+\begin{table}[!htbp]
+\caption{Post hoc, computed before the rules were timestamped (first computed 16 Nov 2026). Logistic probe minus prototype, five-way macro recall, paired over the first 25 draws: mean (5th to 95th percentile).}
+\label{tab:p6}
+\centering\footnotesize
+\input{tables/p6_probe_vs_prototype.tex}
+\end{table}
+The same comparison for five-way output shares on OCTID CSC, OCTID MH and OCTDL MH is in \texttt{P6\_probe\_vs\_prototype.csv}.
+% src: PH P6_probe_vs_prototype.csv (development K=4; hold-out K=1-16; external rows); PR l.249, l.331-335
+
+\subsection*{P7. Ensemble (one line)}
+Post hoc, rule fixed after first look (first computed 15 Nov 2026). A z-scored MIRAGE + DINOv2 ensemble scored 0.695 against 0.650 for MIRAGE in development and 0.718 against 0.722 on the hold-out (mean over $K=1$--8). It is never called a result: the protocol forbids a classifier added to improve a model.
+% src: PH P7_ensemble.csv lines 21, 6, 60, 42 (0.6949, 0.6497, 0.7182, 0.7216); PR l.250
+
+\subsection*{P9. Rare against normal, no cut-off}
+\begin{table}[!htbp]
+\caption{Post hoc, rule committed 18 Nov 2026. Per-scan AUROC of one prototype score (the largest rare cosine minus the largest common cosine), disease scans against normal scans of the same set, with 95\% intervals from 2,000 bootstrap resamples (patients for OCTDL, images for OCTID).}
+\label{tab:p9}
+\centering\footnotesize
+\input{tables/p9_auroc.tex}
+\end{table}
+The hold-out row mixes source and disease. An AUROC below 0.5 means this score ranks those scans the wrong way; MIRAGE's OCTDL value (0.357) says nothing about what MIRAGE's features contain. The OCTID values hold under the published input path; with black bars added, the same score ranks OCTID the other way (G1). The share of disease scans above the score that only 5\% of each set's normals exceed is read from the test set itself, so it is an upper bound, never a result; it is released in \texttt{P9\_rare\_vs\_normal\_auroc.csv} with the paired MIRAGE differences in \texttt{P9\_rare\_vs\_normal\_differences.csv}.
+% src: PH P9_rare_vs_normal_auroc.csv line 16 (0.3574); PR l.252, l.387-390, l.419-421
+
+\subsection*{G1. Pad-to-square input check}
+\begin{table}[!htbp]
+\caption{Post hoc sensitivity check outside A2 A-11 (rule committed 16 Nov 2026, computed 18 Nov 2026); it never replaces a locked result. MIRAGE and Inception-v3 re-extracted with every image padded with black to a square around its centre, then given each model's own locked transform; scored with the locked episodes and nine-way roster.}
+\label{tab:g1}
+\centering\footnotesize
+\input{tables/g1_pad_to_square.tex}
+\end{table}
+Development and hold-out recall moved by at most 0.023 at $K=1$--8 (mean of 100 draws), a near-null test because the rare inputs are already near square. With black padding, external normal scans went almost entirely to rare classes for both models (MIRAGE: OCTID 202 $\to$ 0 and OCTDL 26 $\to$ 1 called NORMAL). The rare images are letterboxed, and padding gives wide external scans that layout. External nine-way results depend on input geometry. We draw no conclusion about cause, robustness to aspect ratio, a ranking of the two models on padded inputs, or what the features contain, and we read no $K=16$ value. Checks: unpadded controls and 1,032 square images were within $1.43\times10^{-6}$ of the locked features, and repeats were exact; the GPU differed (L4 for the lock, A100 for G1), and the MIRAGE environment differed only in the patch versions of \texttt{filelock} and \texttt{regex}. Full tables, including padded P9: \texttt{G1\_comparison.md}.
+% src: PH G1_pad_to_square.csv; G1_comparison.md sections 1-5; PR l.401-422 (allowed and forbidden claims)
+
+\subsection*{P10. Same-picture audit}
+\todo{P10 result: Lam's blind review of the screened pairs is in progress (20 Nov); the review key and screen files were not opened for this draft. Add the result, the screen's measured recall on synthetic positives and the sensitivity rows (beside the locked numbers, never replacing them). Wording if nothing is found: ``no same picture found by this screen'', never ``no shared patients''.}
+% src: PR l.253 (P10 rule); PR l.277-278
+
+\section*{S-C. Released outside any rule}
+The files below were computed outside any committed rule and are released under rule 3; they are not results.
+% src: pre_rule/README.md; PR l.393-397, l.435-441
+
+\textbf{Provenance.} \texttt{pre\_rule/2026-11-18/v1\_to\_ours.csv} maps the 119 files of Mendeley version 1 to our 146 by file and pixel hash (118 pixel matches); \texttt{md\_versions.json} is the dataset's version list.
+% src: v1_to_ours.csv (119 rows, 118 pixel matches); PR l.59-63, l.435-438
+
+\textbf{Per-image layout (pre-rule count, 18 November 2026; computed outside any rule, not a result).} In a per-image count made outside any rule, 126 of the 146 rare images have a dark flat border covering at least 25\% of the image, mostly bands above and below the scan (\texttt{rare\_layout.csv}, scripts \texttt{geom\_a.py} and \texttt{geom\_b.py}). A figure of 128 quoted in an earlier discussion could not be reproduced and is withdrawn.
+% src: PR l.71-74, l.439-441; pre_rule/2026-11-18/rare_layout.csv (not recounted). Placement: agent default (PR HEAD 19 Nov entry: "the pre-rule count of 126 appears only in the supplement with its label"); note pre_rule/README.md l.5-6 says these files may be quoted only to say they exist

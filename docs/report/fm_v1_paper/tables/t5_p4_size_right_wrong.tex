@@ -1,0 +1,18 @@
+% src: PH P4_size_right_vs_wrong.csv column mean_episode_macro (lines 2-41); label: post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+Arm & Queries & $K=1$ & $K=2$ & $K=4$ & $K=8$ & Mean \\
+\midrule
+MIRAGE & size-right & 0.546 & 0.635 & 0.708 & 0.762 & 0.663 \\
+ & size-wrong & 0.451 & 0.607 & 0.730 & 0.795 & 0.646 \\
+\addlinespace[2pt]
+DINOv2 & size-right & 0.415 & 0.518 & 0.641 & 0.735 & 0.577 \\
+ & size-wrong & 0.395 & 0.476 & 0.597 & 0.682 & 0.537 \\
+\addlinespace[2pt]
+Inception-v3 & size-right & 0.411 & 0.509 & 0.595 & 0.656 & 0.543 \\
+ & size-wrong & 0.405 & 0.483 & 0.544 & 0.605 & 0.509 \\
+\addlinespace[2pt]
+RETFound & size-right & 0.372 & 0.416 & 0.475 & 0.510 & 0.443 \\
+ & size-wrong & 0.292 & 0.359 & 0.429 & 0.495 & 0.394 \\
+\bottomrule
+\end{tabular}
