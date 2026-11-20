@@ -1,6 +1,8 @@
 % Supplement of the v1 paper (input by main.tex). Source keys as in main.tex.
 % Placement (Lam, PR HEAD 19 Nov "after the draft review" (2)): P0, P1, P2, P5 here; P3, P6, P7, P9, G1
 % already placed here (PR l.249-252, l.379-381, l.409-410). P4, P8 in the main text (Section IV-F).
+% P10 (21 Nov): tables here, a summary paragraph in Section IV-F (agent default, coordinator brief; Lam decides).
+% Phase-1 E1-E4: section S-D at the end, typeset only when the generated tables exist.
 \clearpage
 \onecolumn
 \setcounter{table}{0}
@@ -100,10 +102,9 @@ RETFound & 23.91 & 22.0 & 1.24 & 0 & 1.000000 \\
 \end{table}
 
 \clearpage
-\section*{S-B. Post hoc results (15--20 November 2026)}
-\todo{confirm the end date of this heading once P10 is done.}
-Every item below is post hoc and carries the label of its source file. Rules were committed before the numbers (16 November 2026, commit \texttt{1eb3964}; P9 on 18 November, commit \texttt{39c3d73}; P10 on 19 November), except P0, P6 and P7, which were first computed before the rules were timestamped. No post hoc result replaces a locked one. P4 and P8 are in the main text (Section~\ref{sec:res-posthoc}); R1 sits beside every false-rare rate (Table~\ref{tab:frr}).
-% src: PR l.226-236 (rules 1-4), l.241-256, l.329-354; PR l.275-278; PH CSV posthoc columns
+\section*{S-B. Post hoc results (15--21 November 2026)}
+Every item below is post hoc and carries the label of its source file. Rules were committed before the numbers (16 November 2026, commit \texttt{1eb3964}; P9 on 18 November, commit \texttt{39c3d73}; P10 on 18 November, commit \texttt{dcbb323}), except P0, P6 and P7, which were first computed before the rules were timestamped. No post hoc result replaces a locked one. P4 and P8 are in the main text, with a summary of P10 (Section~\ref{sec:res-posthoc}); R1 sits beside every false-rare rate (Table~\ref{tab:frr}).
+% src: PR l.226-236 (rules 1-4), l.241-256, l.329-354; PR l.275-278; PH CSV posthoc columns; end date: P10_sensitivity.csv computed 2026-11-21 (last post hoc result before the Phase-1 controls); P10 commit dcbb323 (PH P10_*.csv label "(18 Nov 2026)")
 
 \subsection*{P0. Per-class development recall}
 \begin{table}[!htbp]
@@ -191,8 +192,29 @@ Development and hold-out recall moved by at most 0.023 at $K=1$--8 (mean of 100 
 % src: PH G1_pad_to_square.csv; G1_comparison.md sections 1-5; PR l.401-422 (allowed and forbidden claims)
 
 \subsection*{P10. Same-picture audit}
-\todo{P10 result: Lam's blind review of the screened pairs is in progress (20 Nov); the review key and screen files were not opened for this draft. Add the result, the screen's measured recall on synthetic positives and the sensitivity rows (beside the locked numbers, never replacing them). Wording if nothing is found: ``no same picture found by this screen'', never ``no shared patients''.}
-% src: PR l.253 (P10 rule); PR l.277-278
+Post hoc, rule committed 18 Nov 2026 (commit \texttt{dcbb323}); screen and review sheet computed 19 Nov 2026; the reviewer's marks (SHA256 \texttt{15a9606fce87\ldots}) committed on 21 Nov 2026 before the review key was joined; sensitivity computed 21 Nov 2026. Method in Section~\ref{sec:posthoc-methods}; summary in Section~\ref{sec:res-posthoc}. The SIFT screen scored all 10,585 pairs of the 146 rare images (median 4 inliers, largest 869); the cut-off, the largest score among 2,000 rare--Kermany pairs (1,617 Kermany images), was 18 inliers, and all 146 synthetic copies reached it. Thirty-five pairs reached the cut-off; with 10 synthetic copies and 10 decoys they made the 55 review items. The reviewer, one author who is not a clinician, marked all 10 synthetic copies ``same picture'' and all 10 decoys ``different''. Of the 35 screened pairs, 14 were marked ``same picture'', 1 ``same case, other slice'', 1 ``unsure'' and 19 ``different'' (Table~\ref{tab:p10pairs}). No pair shared a source link: the source list of Yoo et al.\ names no file. Per-pair scores are in \texttt{P10\_screen\_pairs.csv}, the review key and marks in \texttt{P10\_review\_key.csv} and \texttt{P10\_review\_marks.csv} (released; no image is released).
+% src: PH P10_screen_summary.csv lines 2-13 (10585; 2000; 1617; cut-off 18; 35; 35; 146; 1.000; median 4.0; max 869; "0 (S1 names no file)"; 55); P10_screen_synthetic.csv (146 of 146 at_or_above_cutoff); marks SHA256 15a9606fce8779b1... (sha256sum of P10_review_marks.csv; label of P10_sensitivity.csv), committed abb1770 (PR@fec827e l.485-486); P10_review_key.csv joined with P10_review_marks.csv (pair: 14 same picture, 1 same case, 1 unsure, 19 different; synthetic 10 same picture; decoy 10 different)
+
+\begin{table}[!htbp]
+\caption{Post hoc (P10; rule committed 18 Nov 2026, marks committed 21 Nov 2026). Image pairs marked as a match in the blind review, with the set of each image and the keypoint score (RANSAC inliers; cut-off 18). Images are named by their released folder and file.}
+\label{tab:p10pairs}
+\centering\footnotesize
+\input{tables/p10_pairs.tex}
+\par\smallskip
+\parbox{0.75\textwidth}{\footnotesize Hold-out images in bold: MacTel/19, RP/17, RP/20 and Stargardt/03 have a same-picture copy among the development images. RP/20 is an addition in version 2 of the release. The unsure pair carries the reviewer's note ``probably a follow-up visit'' (a non-clinician's reading). The locked duplicate screen (identical files, identical pixels, difference hash at Hamming distance at most 4) flagged none of these pairs. A screen for copies of one picture cannot rule out other slices or visits of the same patient.}
+\end{table}
+% src: tables/p10_pairs.tex (PH P10_matched_pairs.csv; P10_review_key.csv; P10_review_marks.csv); PR@fec827e l.488-491; unsure note: P10_review_marks.csv item 11
+
+\begin{table}[!htbp]
+\caption{Post hoc (P10; rule committed 18 Nov 2026, computed 21 Nov 2026). Five-way macro recall, mean over $K=1$--8 (prototype classifier, locked episodes), locked and recomputed without the marked matches: in development, without each query that shares a mark with a support of its episode; on the hold-out, without each hold-out image marked against any development image. Beside the locked numbers, never replacing them.}
+\label{tab:p10}
+\centering\footnotesize
+\setlength{\tabcolsep}{4pt}
+\resizebox{\textwidth}{!}{\input{tables/p10_sensitivity.tex}}
+\par\smallskip
+\parbox{0.9\textwidth}{\footnotesize Arm rows: mean over 100 draws (SD). Paired rows: difference from Inception-v3 on the same draws, mean (5th to 95th percentile). ``Without same picture or case'': the 14 same-picture pairs and the same-case pair; ``also without unsure'': the unsure pair counted as a match too. Locked columns are the locked values (Table~\ref{tab:dev}; hold-out, Table~\ref{tab:holdout}). Spread over support draws, not confidence intervals; the hold-out shows direction only. Per-$K$ rows are in \texttt{P10\_sensitivity.csv}.}
+\end{table}
+% src: tables/p10_sensitivity.tex (PH P10_sensitivity.csv rows k = mean_k1_2_4_8)
 
 \section*{S-C. Released outside any rule}
 The files below were computed outside any committed rule and are released under rule 3; they are not results.
@@ -203,3 +225,150 @@ The files below were computed outside any committed rule and are released under 
 
 \textbf{Per-image layout (pre-rule count, 18 November 2026; computed outside any rule, not a result).} In a per-image count made outside any rule, 126 of the 146 rare images have a dark flat border covering at least 25\% of the image, mostly bands above and below the scan (\texttt{rare\_layout.csv}, scripts \texttt{geom\_a.py} and \texttt{geom\_b.py}). A figure of 128 quoted in an earlier discussion could not be reproduced and is withdrawn.
 % src: PR l.71-74, l.439-441; pre_rule/2026-11-18/rare_layout.csv (not recounted). Placement: agent default (PR HEAD 19 Nov entry: "the pre-rule count of 126 appears only in the supplement with its label"); note pre_rule/README.md l.5-6 says these files may be quoted only to say they exist
+
+% ------------------------------------------------------------------ Phase-1 controls E1-E4
+% Every block below is typeset only when make_tables.py has written its table from the E CSVs (\havetable, main.tex).
+% Default placement (PR@fec827e l.603-605): E1d, E1g and the E2 summary in the main text (post hoc subsection,
+% part "Phase-1 controls E1--E4"); the rest here. The OCTDL locked-feature E2d table, which the E2 rule (l.588)
+% fixes as main text, is in main.tex (tab:e2d), placed there by Lam on 21 Nov (agent-loop round 1, finding 3).
+\section*{S-D. Phase-1 controls E1--E4 (post hoc; rules committed 20 November 2026)}
+Methods in Section~\ref{sec:phase1}. Every E output is post hoc, outside the locked protocol, and never replaces a locked result; failed checks are released. Full per-$K$ rows are in the CSVs.
+\havetable{e1_label}\ifgen\else
+\todo{no E1--E4 result exists yet (21 Nov); the tables appear here once \texttt{make\_tables.py} has read the E CSVs.}
+\fi
+% src: PR@fec827e l.516-525 (rules 1-2), l.603-605 (placement)
+
+\havetable{e1_label}\ifgen
+\subsection*{E1. Size and framing control}
+Label of every E1 row: \input{tables/e1_label.tex}. Limitations stated with every E1 result: \input{tables/e1_limitations.tex}
+\fi
+\havetable{e1a_checks}\ifgen
+\subsubsection*{E1a. Checks}
+{\scriptsize\setlength{\tabcolsep}{3pt}\input{tables/e1a_checks.tex}}
+\input{tables/e1a_checks_note.tex}
+\fi
+\havetable{e1b_development}\ifgen
+\subsubsection*{E1b. Development macro recall per model and feature set, references beside}
+Mean over 100 draws (SD); mean over $K$ 1--8: mean (SD; 5th--95th percentile). Spread over support draws, not a confidence interval.
+{\scriptsize\setlength{\tabcolsep}{3pt}\input{tables/e1b_development.tex}}
+\fi
+\havetable{e1c_paired}\ifgen
+\subsubsection*{E1c. Paired differences}
+Each foundation model minus Inception-v3 within a feature set, and each feature set minus the same model's locked features, on the same draws: mean (5th to 95th percentile).
+{\scriptsize\setlength{\tabcolsep}{3pt}\input{tables/e1c_paired.tex}}
+\fi
+\havetable{e1e_matched}\ifgen
+\subsubsection*{E1e. Matched subset}
+\input{tables/e1e_matched_note.tex}
+{\scriptsize\setlength{\tabcolsep}{3pt}\input{tables/e1e_matched.tex}}
+\fi
+\havetable{e1f_holdout}\ifgen
+\subsubsection*{E1f. Hold-out of 22}
+\input{tables/e1f_holdout_note.tex}
+{\scriptsize\setlength{\tabcolsep}{3pt}\input{tables/e1f_holdout.tex}}
+\fi
+\havetable{e1h_leave_one_out}\ifgen
+\subsubsection*{E1h. Each development query left out}
+Smallest and largest MIRAGE minus Inception-v3 mean over $K$ 1--8 with one development query left out (as P1). \input{tables/e1h_leave_one_out_note.tex}
+\begin{center}\footnotesize\input{tables/e1h_leave_one_out.tex}\end{center}
+\fi
+
+\havetable{e2_label}\ifgen
+\subsection*{E2. External error analysis}
+Label of every E2 row: \input{tables/e2_label.tex}. A failure is a normal scan given any class but NORMAL; a false rare, one given a rare class. Descriptive only: no cause, no test, no clinical reading.
+\fi
+\havetable{e2a_destinations}\ifgen
+\subsubsection*{E2a. Destinations}
+Counts in each of the nine classes and the three groups. External disease images are shown here only. \input{tables/e2a_destinations_note.tex}
+{\scriptsize\setlength{\tabcolsep}{2.5pt}\input{tables/e2a_destinations.tex}}
+\fi
+\havetable{e2b_pairs}\ifgen
+\subsubsection*{E2b. Overlap between pairs of models}
+Jaccard index of the failure sets and of the false-rare sets, and the share of scans given the same class. \input{tables/e2b_pairs_note.tex}
+{\scriptsize\input{tables/e2b_pairs.tex}}
+\fi
+\havetable{e2c_transitions}\ifgen
+\subsubsection*{E2c. Locked to E1-M transitions}
+\input{tables/e2c_transitions_note.tex}
+{\scriptsize\input{tables/e2c_transitions.tex}}
+\fi
+\havetable{e2d_properties}\ifgen
+\subsubsection*{E2d. Image properties, all sets}
+\input{tables/e2d_properties_note.tex}
+{\scriptsize\setlength{\tabcolsep}{2.5pt}\input{tables/e2d_properties.tex}}
+\fi
+\havetable{e2d_categorical}\ifgen
+\subsubsection*{E2d. OCTDL file mode and container format}
+{\scriptsize\input{tables/e2d_categorical.tex}}
+\fi
+\havetable{e2e_patients}\ifgen
+\subsubsection*{E2e. OCTDL normal scans per patient}
+\input{tables/e2e_patients_note.tex}
+\begin{center}\scriptsize\input{tables/e2e_patients.tex}\end{center}
+\fi
+\havetable{e2f_pass1}\ifgen
+\subsubsection*{E2f. Blinded contact sheet, pass 1 (E1-M squares)}
+\input{tables/e2f_pass1_note.tex}
+{\scriptsize\input{tables/e2f_pass1.tex}}
+\fi
+\havetable{e2f_pass2}\ifgen
+\subsubsection*{E2f. Blinded contact sheet, pass 2 (originals)}
+\input{tables/e2f_pass2_note.tex}
+{\scriptsize\input{tables/e2f_pass2.tex}}
+\fi
+
+\havetable{e3_label}\ifgen
+\subsection*{E3. Preprocessing sensitivity, MIRAGE and RETFound}
+Label of every E3 row: \input{tables/e3_label.tex}.
+\fi
+\havetable{e3_criteria}\ifgen
+\subsubsection*{E3. Criteria (1)--(3)}
+{\scriptsize\input{tables/e3_criteria.tex}}
+\fi
+\havetable{e3_development}\ifgen
+\subsubsection*{E3. Development macro recall per variant}
+\input{tables/e3_development_note.tex}
+{\scriptsize\setlength{\tabcolsep}{3pt}\input{tables/e3_development.tex}}
+\fi
+\havetable{e3_holdout}\ifgen
+\subsubsection*{E3. Hold-out direction per variant}
+\input{tables/e3_holdout_note.tex}
+{\scriptsize\setlength{\tabcolsep}{3pt}\input{tables/e3_holdout.tex}}
+\fi
+\havetable{e3_nine_way}\ifgen
+\subsubsection*{E3. Nine-way audit per variant}
+Cells as in Table~\ref{tab:frr}. \input{tables/e3_nine_way_note.tex}
+{\scriptsize\setlength{\tabcolsep}{2.5pt}\input{tables/e3_nine_way.tex}}
+\fi
+\havetable{e3_checks}\ifgen
+\subsubsection*{E3. Checks}
+\input{tables/e3_checks_note.tex}
+{\scriptsize\input{tables/e3_checks.tex}}
+\fi
+
+\havetable{e4_label}\ifgen
+\subsection*{E4. Source separability}
+Label of every E4 row: \input{tables/e4_label.tex}. E4 does not show whether the models use the source in the rare-disease task, and a low value does not mean that the features hold no source information.
+\fi
+\havetable{e4a_fewshot}\ifgen
+\subsubsection*{E4a. Few-shot source test (main measure)}
+\input{tables/e4a_fewshot_note.tex}
+{\scriptsize\setlength{\tabcolsep}{3pt}\input{tables/e4a_fewshot.tex}}
+\fi
+\havetable{e4b_columns}\ifgen
+\subsubsection*{E4b. Per-column separability, no fit}
+\input{tables/e4b_columns_note.tex}
+\begin{center}\scriptsize\input{tables/e4b_columns.tex}\end{center}
+\fi
+\havetable{e4c_probe}\ifgen
+\subsubsection*{E4c. Logistic probe}
+\input{tables/e4c_probe_note.tex}
+\begin{center}\scriptsize\setlength{\tabcolsep}{3pt}\resizebox{\textwidth}{!}{\input{tables/e4c_probe.tex}}\end{center}
+\fi
+\havetable{e4d_probe_diff}\ifgen
+\subsubsection*{E4d. Logistic probe, paired differences}
+\input{tables/e4d_probe_diff_note.tex}
+\begin{center}\scriptsize\setlength{\tabcolsep}{3pt}\resizebox{\textwidth}{!}{\input{tables/e4d_probe_diff.tex}}\end{center}
+\fi
+% src: tables/e*.tex, generated by make_tables.py from the E CSVs of fm_posthoc.py (e1-e4, e2f-marks); each file's first
+%      comment names its CSV and label. Rules: PR@fec827e l.587-590.

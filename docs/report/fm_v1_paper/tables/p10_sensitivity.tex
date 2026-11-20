@@ -1,0 +1,20 @@
+% src: PH P10_sensitivity.csv rows k=mean_k1_2_4_8 (mean, sd, p05, p95) and column excluded; label: post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-21; marks SHA256 15a9606fce87
+%      arm rows: mean (SD); paired rows ('<arm> minus Inception'): mean (p05 to p95). Locked columns equal R2 / the locked archive.
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+ & \multicolumn{3}{c}{Development (124 queries), mean $K$ 1--8} & \multicolumn{3}{c}{Hold-out (22 images), mean $K$ 1--8} \\
+\cmidrule(lr){2-4}\cmidrule(l){5-7}
+Arm & Locked & \makecell{Without same\\picture or case} & \makecell{Also without\\unsure} & Locked & \makecell{Without same\\picture or case} & \makecell{Also without\\unsure} \\
+\midrule
+MIRAGE (nominee) & \makecell{0.650\\{\scriptsize (0.028)}} & \makecell{0.643\\{\scriptsize (0.030)}} & \makecell{0.642\\{\scriptsize (0.030)}} & \makecell{0.722\\{\scriptsize (0.063)}} & \makecell{0.751\\{\scriptsize (0.066)}} & \makecell{0.751\\{\scriptsize (0.066)}} \\
+DINOv2 & \makecell{0.558\\{\scriptsize (0.028)}} & \makecell{0.551\\{\scriptsize (0.029)}} & \makecell{0.550\\{\scriptsize (0.029)}} & \makecell{0.526\\{\scriptsize (0.065)}} & \makecell{0.511\\{\scriptsize (0.078)}} & \makecell{0.511\\{\scriptsize (0.078)}} \\
+Inception-v3 (reference) & \makecell{0.534\\{\scriptsize (0.029)}} & \makecell{0.530\\{\scriptsize (0.029)}} & \makecell{0.529\\{\scriptsize (0.029)}} & \makecell{0.524\\{\scriptsize (0.067)}} & \makecell{0.511\\{\scriptsize (0.090)}} & \makecell{0.511\\{\scriptsize (0.090)}} \\
+RETFound & \makecell{0.406\\{\scriptsize (0.024)}} & \makecell{0.400\\{\scriptsize (0.025)}} & \makecell{0.398\\{\scriptsize (0.025)}} & \makecell{0.338\\{\scriptsize (0.065)}} & \makecell{0.300\\{\scriptsize (0.071)}} & \makecell{0.300\\{\scriptsize (0.071)}} \\
+\midrule
+\makecell[l]{MIRAGE $-$\\Inception-v3 (paired)} & \makecell{+0.116\\{\scriptsize (+0.069 to +0.185)}} & \makecell{+0.113\\{\scriptsize (+0.064 to +0.185)}} & \makecell{+0.113\\{\scriptsize (+0.064 to +0.184)}} & \makecell{+0.197\\{\scriptsize (+0.042 to +0.343)}} & \makecell{+0.240\\{\scriptsize (+0.089 to +0.407)}} & \makecell{+0.240\\{\scriptsize (+0.089 to +0.407)}} \\
+\makecell[l]{DINOv2 $-$\\Inception-v3 (paired)} & \makecell{+0.024\\{\scriptsize ($-$0.025 to +0.086)}} & \makecell{+0.021\\{\scriptsize ($-$0.032 to +0.083)}} & \makecell{+0.021\\{\scriptsize ($-$0.032 to +0.083)}} & \makecell{+0.002\\{\scriptsize ($-$0.136 to +0.124)}} & \makecell{0.000\\{\scriptsize ($-$0.149 to +0.162)}} & \makecell{0.000\\{\scriptsize ($-$0.149 to +0.162)}} \\
+\makecell[l]{RETFound $-$\\Inception-v3 (paired)} & \makecell{$-$0.128\\{\scriptsize ($-$0.186 to $-$0.070)}} & \makecell{$-$0.130\\{\scriptsize ($-$0.188 to $-$0.070)}} & \makecell{$-$0.131\\{\scriptsize ($-$0.189 to $-$0.073)}} & \makecell{$-$0.186\\{\scriptsize ($-$0.308 to $-$0.052)}} & \makecell{$-$0.211\\{\scriptsize ($-$0.398 to $-$0.060)}} & \makecell{$-$0.211\\{\scriptsize ($-$0.398 to $-$0.060)}} \\
+\midrule
+Excluded & none & \makecell{1,196 query--episode\\exclusions per arm} & \makecell{1,378 query--episode\\exclusions per arm} & none & \makecell{4 images} & \makecell{4 images} \\
+\bottomrule
+\end{tabular}

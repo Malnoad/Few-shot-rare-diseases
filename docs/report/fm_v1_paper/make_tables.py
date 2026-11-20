@@ -8,13 +8,27 @@ Rounding (agent default, open to Lam's objection, protocols.md 19 Nov "after the
 three decimals, half up (away from zero) from the shortest decimal form of the stored value,
 taken as its 12-significant-digit form, so 0.7264999999999999 -> 0.7265 -> 0.727.
 
+Phase-1 controls E1-E4 (protocols.md section 8, "Phase-1 controls E1-E4"): the e_* generators read
+the CSVs that `fm_posthoc.py e1|e2|e3|e4` write (and E2f_marks_<pass>.csv from `e2f-marks`). A
+generator whose CSV does not exist yet writes nothing and says nothing; main.tex and supplement.tex
+show a generated table only when its .tex file exists. Nothing is computed beyond counting the E2d
+rows whose interval excludes 0.5, as fm_posthoc.e2_report does for E2_comparison.md.
+
     D:/Few-shot/.venv/Scripts/python.exe docs/report/fm_v1_paper/make_tables.py
+    # E tables only, from another folder (e.g. a dry run), into a scratch folder:
+    D:/Few-shot/.venv/Scripts/python.exe docs/report/fm_v1_paper/make_tables.py --e-only --e-dir <dir> --out <scratch>
+
+Stand-in or test tables never enter tables/: with --e-dir other than results/fm_v1/posthoc, or with
+any E CSV labelled "dry run", writing into tables/ is refused.
 """
 from __future__ import annotations
 
+import argparse
 import csv
 import io
 import json
+import math
+import re
 import zipfile
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
@@ -24,7 +38,9 @@ REPO = HERE.parents[2]
 PH = REPO / "results" / "fm_v1" / "posthoc"
 ATTEMPT = Path("D:/Few-shot/drive/fm_v1/final/final-20261113T170804Z")
 ARC = ATTEMPT / "evaluation" / "results-20261114T093033Z.zip"
-OUT = HERE / "tables"
+TABLES = HERE / "tables"
+OUT = TABLES  # --out
+E_DIR = PH  # --e-dir
 
 ARMS = ("MIRAGE", "DINOv2", "Inception", "RETFound")
 NAME = {"MIRAGE": "MIRAGE", "DINOv2": "DINOv2", "Inception": "Inception-v3", "RETFound": "RETFound"}
@@ -70,7 +86,7 @@ def read_ph(name: str) -> list[dict]:
 
 
 def write(name: str, lines: list[str]) -> None:
-    OUT.mkdir(exist_ok=True)
+    OUT.mkdir(parents=True, exist_ok=True)
     (OUT / f"{name}.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("wrote", name)
 
@@ -527,7 +543,882 @@ def g1():
     write("g1_pad_to_square", L)
 
 
+P10_EXCLUSIONS = (("locked (no exclusion)", "Locked"), ("marked same picture or same case", "\\makecell{Without same\\\\picture or case}"),
+                  ("also counting unsure", "\\makecell{Also without\\\\unsure}"))
+
+
+def p10_sensitivity():
+    rows = read_ph("P10_sensitivity.csv")
+    by = {(r["phase"], r["exclusion"], r["arm"], r["k"]): r for r in rows}
+    excluded = {(r["phase"], r["exclusion"]): r["excluded"] for r in rows}
+    label = rows[0]["posthoc"]
+    phases = ("development", "hold-out")
+    L = [r"% src: PH P10_sensitivity.csv rows k=mean_k1_2_4_8 (mean, sd, p05, p95) and column excluded; label: " + label,
+         r"%      arm rows: mean (SD); paired rows ('<arm> minus Inception'): mean (p05 to p95). Locked columns equal R2 / the locked archive.",
+         r"\begin{tabular}{@{}l" + "c" * 6 + r"@{}}", r"\toprule",
+         r" & \multicolumn{3}{c}{Development (124 queries), mean $K$ 1--8} & \multicolumn{3}{c}{Hold-out (22 images), mean $K$ 1--8} \\",
+         r"\cmidrule(lr){2-4}\cmidrule(l){5-7}",
+         "Arm & " + " & ".join(lab for _ in phases for _, lab in P10_EXCLUSIONS) + r" \\", r"\midrule"]
+    for arm in ARMS:
+        cells = []
+        for ph in phases:
+            for ex, _ in P10_EXCLUSIONS:
+                r = by[(ph, ex, arm, "mean_k1_2_4_8")]
+                cells.append(two(f(r["mean"]), f"({f(r['sd'])})"))
+        L.append(ROLE[arm] + " & " + " & ".join(cells) + r" \\")
+    L.append(r"\midrule")
+    for arm in ("MIRAGE", "DINOv2", "RETFound"):
+        cells = []
+        for ph in phases:
+            for ex, _ in P10_EXCLUSIONS:
+                r = by[(ph, ex, f"{arm} minus Inception", "mean_k1_2_4_8")]
+                cells.append(two(f(r["mean"], sign=True), f"({rng(r['p05'], r['p95'], sign=True)})"))
+        L.append(r"\makecell[l]{" + f"{NAME[arm]} $-$" + r"\\Inception-v3 (paired)} & " + " & ".join(cells) + r" \\")
+    L.append(r"\midrule")
+
+    def lead(text: str) -> str:
+        n = int(text.split()[0])
+        if n == 0:
+            return "none"
+        return r"\makecell{" + (f"{n:,} query--episode" + r"\\exclusions per arm" if "query" in text else f"{n} images") + "}"
+    L.append("Excluded & " + " & ".join(lead(excluded[(ph, ex)]) for ph in phases for ex, _ in P10_EXCLUSIONS) + r" \\")
+    L += [r"\bottomrule", r"\end{tabular}"]
+    write("p10_sensitivity", L)
+
+
+P10_MARK_ORDER = ("same picture", "same case, other slice", "unsure")
+
+
+def p10_pairs():
+    pairs = read_ph("P10_matched_pairs.csv")
+    key = read_ph("P10_review_key.csv")
+    marks = {r["item"]: r for r in read_ph("P10_review_marks.csv")}
+    # Same join as fm_posthoc.p10_matched_pairs: every reviewed item except the synthetic copies.
+    review = {frozenset((r["left"], r["right"])): (marks[r["item"]]["mark"], r["inliers"]) for r in key if r["kind"] != "synthetic"}
+    unique: dict[frozenset, dict] = {}
+    for r in pairs:
+        k = frozenset((r["image_a"], r["image_b"]))
+        unique.setdefault(k, dict(r, sets=[]))["sets"].append(r["exclusion"])
+    entries = []
+    for k, r in unique.items():
+        mark, inliers = review[k]
+        first = "marked same picture or same case" in r["sets"]
+        assert first == (mark in P10_MARK_ORDER[:2]) and (mark != "unsure" or r["sets"] == ["also counting unsure"]), (k, mark)
+        entries.append((P10_MARK_ORDER.index(mark), r["image_a"], r, mark, inliers))
+    counts = [sum(e[0] == i for e in entries) for i in range(3)]
+    assert counts == [14, 1, 1], counts  # the 21 Nov change-log entry (protocols.md section 8)
+    short = lambda p: p.replace("data/raw/rare/", "")  # noqa: E731
+    L = [r"% src: PH P10_matched_pairs.csv (pairs, sets); mark and screen inliers: PH P10_review_key.csv joined with",
+         r"%      PH P10_review_marks.csv on item (synthetic copies excluded, as in fm_posthoc.p10_matched_pairs);",
+         r"%      label: " + pairs[0]["posthoc"],
+         r"\begin{tabular}{@{}rllllr@{}}", r"\toprule",
+         r" & Image & Set & Image & Set & Inliers \\", r"\midrule"]
+    n = 0
+    for i, mark in enumerate(P10_MARK_ORDER):
+        group = sorted((e for e in entries if e[0] == i), key=lambda e: (e[1], e[2]["image_b"]))
+        L.append(r"\multicolumn{6}{@{}l}{\emph{" + {"same picture": "Same picture", "same case, other slice": "Same case, other slice",
+                                                    "unsure": "Unsure (counted only in the second exclusion set)"}[mark]
+                 + f" ({len(group)})" + r"}} \\")
+        for _, _, r, _, inliers in group:
+            n += 1
+            sa, sb = (r"\textbf{hold-out}" if s == "hold-out" else s for s in (r["set_a"], r["set_b"]))
+            L.append(f"{n} & {short(r['image_a'])} & {sa} & {short(r['image_b'])} & {sb} & {inliers}" + r" \\")
+    L += [r"\bottomrule", r"\end{tabular}"]
+    write("p10_pairs", L)
+
+
+# ---------------------------------------------------------------- Phase-1 controls E1-E4 (post hoc)
+
+E_FILES = {
+    1: ("E1a_checks.csv", "E1b_development.csv", "E1c_paired.csv", "E1d_success.csv", "E1e_matched.csv",
+        "E1f_holdout.csv", "E1g_nine_way.csv", "E1h_leave_one_out.csv"),
+    2: ("E2a_destinations.csv", "E2b_overlap.csv", "E2c_transitions.csv", "E2d_properties.csv", "E2d_categorical.csv",
+        "E2e_octdl_patients.csv", "E2e_octdl_patient_scans.csv"),
+    3: ("E3_checks.csv", "E3_development.csv", "E3_holdout.csv", "E3_nine_way.csv", "E3_criteria.csv"),
+    4: ("E4a_fewshot_source_test.csv", "E4b_column_auroc.csv", "E4c_probe_auroc.csv", "E4d_probe_differences.csv"),
+}
+FSETS = ("locked", "E1-M", "E1-L", "E1-C")
+KM = "mean_k1_2_4_8"
+KS = ("1", "2", "4", "8")
+NORMALS = ("Kermany patient-disjoint", "OCTID NORMAL", "OCTDL NORMAL")
+RARE_EXT = ("OCTID CSC", "OCTID MH", "OCTDL MH")
+REFS = {"size_only": "Size-only", "content_size": "Content-size", "thumbnail": "Thumbnail"}
+NINE = ("NORMAL", "CNV", "DME", "DRUSEN") + RARE
+SHORT9 = ("NOR", "CNV", "DME", "DRU", "CSC", "MH", "MacT", "Starg" + FN, "RP" + FN)
+PLAIN = {"interpreted", "reference without a model", ""}
+ESC = {"\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#", "_": r"\_", "{": r"\{", "}": r"\}",
+       "~": r"\textasciitilde{}", "^": r"\textasciicircum{}"}
+UNI = (("—", "---"), ("–", "--"), ("−", "$-$"), ("≥", r"$\geq$"), ("≤", r"$\leq$"), ("→", r"$\to$"), ("×", r"$\times$"))
+HEX = re.compile(r"\b[0-9a-f]{32,64}\b")
+
+
+def tex(s) -> str:
+    """Plain text as LaTeX; hex digests shortened to 12 characters (full values stay in the CSV)."""
+    s = HEX.sub(lambda m: m.group(0)[:12] + "\x00", str(s))
+    s = "".join(ESC.get(c, c) for c in s).replace("\x00", r"\ldots{}")
+    for a, b in UNI:
+        s = s.replace(a, b)
+    return s
+
+
+def pretty(name: str) -> str:
+    """Arm, reference and comparison names as printed: Inception -> Inception-v3, minus -> $-$."""
+    s = re.sub(r"\bInception\b(?!-v3)", "Inception-v3", name)
+    for k, v in REFS.items():
+        s = re.sub(rf"\b{k}\b", v, s)
+    return tex(s.replace(" minus ", " − "))
+
+
+def val(x) -> str:
+    """A CSV value of any kind: integers as stored, small non-zero numbers in powers of ten, else 3 decimals."""
+    if x is None or str(x).strip() == "":
+        return "--"
+    s = str(x).strip()
+    if re.fullmatch(r"-?\d+", s):
+        return s
+    try:
+        v = float(s)
+    except ValueError:
+        return tex(s)
+    if not math.isfinite(v):
+        return tex(s)
+    if v == 0:
+        return "0"
+    if abs(v) < 1e-3:
+        m, e = f"{v:.1e}".split("e")
+        return f"${m}\\times10^{{{int(e)}}}$"
+    return f(v)
+
+
+def has(x) -> bool:
+    return x is not None and str(x).strip() != ""
+
+
+def cell_sd(r, sign=False) -> str:
+    """Mean over draws, SD below (support-draw spread, never a CI)."""
+    if not r or not has(r.get("mean")):
+        return "--"
+    return two(f(r["mean"], sign=sign), f"({f(r['sd'])})") if has(r.get("sd")) else f(r["mean"], sign=sign)
+
+
+def cell_p(r, sign=False) -> str:
+    """Mean over draws, 5th to 95th percentile below."""
+    if not r or not has(r.get("mean")):
+        return "--"
+    if not has(r.get("p05")):
+        return f(r["mean"], sign=sign)
+    return two(f(r["mean"], sign=sign), f"({rng(r['p05'], r['p95'], sign=sign)})")
+
+
+def cell_all(r, sign=False) -> str:
+    """Mean, then (SD; 5th to 95th percentile): the K-mean column."""
+    if not r or not has(r.get("mean")):
+        return "--"
+    parts = [f(r["sd"])] if has(r.get("sd")) else []
+    if has(r.get("p05")):
+        parts.append(rng(r["p05"], r["p95"], sign=sign))
+    return two(f(r["mean"], sign=sign), "(" + "; ".join(parts) + ")") if parts else f(r["mean"], sign=sign)
+
+
+def model_key(m: str):
+    return (0, ARMS.index(m)) if m in ARMS else (1, list(REFS).index(m)) if m in REFS else (2, m)
+
+
+def set_key(s: str):
+    return (FSETS.index(s), s) if s in FSETS else (len(FSETS), s)
+
+
+class Marks:
+    """Superscript marks for statuses other than 'interpreted' (or a reference's), explained in the note."""
+    SYMBOLS = ("*", r"\dagger", r"\ddagger", r"\S", r"\P", r"\|", "**", r"\dagger\dagger")
+
+    def __init__(self):
+        self.used: dict[str, str] = {}
+
+    def __call__(self, status: str) -> str:
+        if status in PLAIN:
+            return ""
+        if status not in self.used:
+            self.used[status] = self.SYMBOLS[len(self.used) % len(self.SYMBOLS)]
+        return f"$^{{{self.used[status]}}}$"
+
+    def note(self) -> str:
+        return " ".join(f"$^{{{s}}}${tex(st)}." for st, s in self.used.items())
+
+
+def read_e(name: str) -> list[dict] | None:
+    path = E_DIR / name
+    if not path.exists():
+        return None
+    with open(path, encoding="utf-8", newline="") as fh:
+        return list(csv.DictReader(fh))
+
+
+def write_e(name: str, source: str, lines: list[str], note: str = "") -> bool:
+    """<name>.tex and <name>_note.tex (the note may be empty); the first comment names the source CSV."""
+    rows = read_e(source) or [{}]
+    head = [f"% src: {source} in {E_DIR.as_posix()} (generated by make_tables.py; formatting only);",
+            "% label: " + rows[0].get("posthoc", "")]
+    write(name, head + lines)
+    (OUT / f"{name}_note.tex").write_text(note + "\n", encoding="utf-8")
+    return True
+
+
+def longtable(spec: str, header: list[str], body: list[str]) -> list[str]:
+    head = " & ".join(header) + r" \\"
+    return [r"\begin{longtable}{" + spec + "}", r"\toprule", head, r"\midrule", r"\endfirsthead", r"\toprule", head,
+            r"\midrule", r"\endhead", r"\bottomrule", r"\endfoot", r"\bottomrule", r"\endlastfoot", *body, r"\end{longtable}"]
+
+
+def grouped(rows: list[dict], *keys: str) -> dict[tuple, list[dict]]:
+    out: dict[tuple, list[dict]] = {}
+    for r in rows:
+        out.setdefault(tuple(r[k] for k in keys), []).append(r)
+    return out
+
+
+def e_labels() -> int:
+    """e<n>_label.tex: the posthoc label of each experiment's CSVs (E1 without its limitations clause, which
+    e1_limitations.tex prints); all distinct labels if the files disagree."""
+    written = 0
+    for n, files in E_FILES.items():
+        names = list(files) + ([p.name for p in sorted(E_DIR.glob("E2f_marks_*.csv"))] if n == 2 else [])
+        labels = []
+        for name in names:
+            rows = read_e(name)
+            if rows:
+                lab = rows[0]["posthoc"].split("; limitations: ")[0] if n == 1 else rows[0]["posthoc"]
+                if lab not in labels:
+                    labels.append(lab)
+        if labels:
+            text = tex(labels[0]) if len(labels) == 1 else "Labels differ between files: " + " | ".join(tex(x) for x in labels)
+            OUT.mkdir(parents=True, exist_ok=True)
+            (OUT / f"e{n}_label.tex").write_text(text + "\n", encoding="utf-8")
+            print("wrote", f"e{n}_label")
+            written += 1
+    return written
+
+
+# --- E1 ---------------------------------------------------------------------------------------
+
+def e1d() -> bool:
+    rows = read_e("E1d_success.csv")
+    if rows is None:
+        return False
+    stat = [r for r in rows if r["line"] != "fixed sentence" and not r["line"].startswith("limitations")]
+    L = [r"% cells: n_draws, mean, sd, p05, draws_above_0, verdict as stored; mean and p05 are paired differences (signed).",
+         r"\begin{tabular}{@{}p{4.4cm}lp{2.6cm}ccccl@{}}", r"\toprule",
+         r"Line & Feature set & Status & $n$ & Mean & SD & p05 & Draws $>0$ & Verdict \\", r"\midrule"]
+    for r in stat:
+        line = pretty(r["line"].replace(", K mean", ""))
+        signed = (lambda x: f(x, sign=True) if has(x) else "--")  # noqa: E731
+        L.append(" & ".join([line, tex(r["feature_set"]), tex(r["status"]) or "--", val(r["n_draws"]), signed(r["mean"]),
+                             val(r["sd"]), signed(r["p05"]), val(r["draws_above_0"]), tex(r["verdict"])]) + r" \\")
+    L += [r"\bottomrule", r"\end{tabular}"]
+    sentence = next((r for r in rows if r["line"] == "fixed sentence"), None)
+    limits = next((r for r in rows if r["line"].startswith("limitations")), None)
+    note = ""
+    if sentence:
+        note = f"Verdict on E1-M: \\textbf{{{tex(sentence['verdict'])}}}"
+        if has(sentence["status"]):
+            note += f" ({tex(sentence['status'])})"
+        note += "." + (f" Fixed sentence: ``{tex(sentence['text'])}''" if has(sentence["text"]) else
+                       " The fixed sentence is not filled: a statistic it quotes is missing.")
+    write_e("e1d_success", "E1d_success.csv", L, note)
+    OUT.joinpath("e1_limitations.tex").write_text((tex(limits["text"]) + "." if limits else "") + "\n", encoding="utf-8")
+    return True
+
+
+def nine_cells(by: dict, count_sets=NORMALS) -> list[str]:
+    """False-rare count/n (rate; interval) on the three normal sets, called NORMAL, R1 and hold-out correct."""
+    cells = []
+    for s in count_sets:
+        r = by.get(s)
+        if not r:
+            cells.append("--")
+            continue
+        iv = f"; {rng(r['ci95_low'], r['ci95_high'])}" if has(r.get("ci95_low")) else ""
+        cells.append(two(f"{r['called_any_rare']}/{r['n']}", f"({f(r['rate_value'])}{iv})"))
+    nor = [by[s]["called_NORMAL"] if s in by else "--" for s in ("OCTID NORMAL", "OCTDL NORMAL")]
+    cells.append(" / ".join(nor))
+    r1 = [by[s]["called_any_rare"] if s in by else "--" for s in RARE_EXT]
+    cells.append(f"{r1[0]} / {r1[1]}; {r1[2]}")
+    cells.append(by["Legacy 22"]["correct_class"] if "Legacy 22" in by else "--")
+    return cells
+
+
+NINE_HEAD = [r"\makecell{Kermany normals\\(patient-disjoint)}", "OCTID normals", "OCTDL normals",
+             r"\makecell{Called NORMAL\\OCTID / OCTDL}", r"\makecell{R1: OCTID CSC / MH;\\OCTDL MH}", r"\makecell{Hold-out\\correct}"]
+
+
+def e1g() -> bool:
+    rows = read_e("E1g_nine_way.csv")
+    if rows is None:
+        return False
+    marks = Marks()
+    groups = grouped(rows, "model", "feature_set")
+    L = [r"% cells: called_any_rare/n (rate_value; ci95_low--ci95_high) on the normal sets; called_NORMAL; R1 = called_any_rare",
+         r"%        on OCTID CSC, OCTID MH, OCTDL MH; hold-out = correct_class of 'Legacy 22'.",
+         r"\begin{tabular}{@{}ll" + "c" * 6 + r"@{}}", r"\toprule",
+         r" & & \multicolumn{3}{c}{Normal scans called any rare class: count/$n$ (rate; 95\% interval)} & & & \\",
+         r"\cmidrule(lr){3-5}", "Model & Set & " + " & ".join(NINE_HEAD) + r" \\", r"\midrule"]
+    last = None
+    for (model, s) in sorted(groups, key=lambda k: (model_key(k[0]), set_key(k[1]))):
+        g = groups[model, s]
+        if last is not None and model != last:
+            L.append(r"\addlinespace[2pt]")
+        by = {r["query_set"]: r for r in g}
+        L.append(" & ".join([pretty(model) if model != last else "", tex(s) + marks(g[0]["status"]), *nine_cells(by)]) + r" \\")
+        last = model
+    L += [r"\bottomrule", r"\end{tabular}"]
+    return write_e("e1g_nine_way", "E1g_nine_way.csv", L, marks.note())
+
+
+def e1a() -> bool:
+    rows = read_e("E1a_checks.csv")
+    if rows is None:
+        return False
+    body = [" & ".join([tex(r["check"]), pretty(r["arm"]) if r["arm"] else "", tex(r["feature_set"]), tex(r["quantity"]),
+                        val(r["value"]), tex(r["status"]), tex(r["note"])]) + r" \\" for r in rows]
+    L = longtable(r"@{}p{3.3cm}lp{1.5cm}p{3.6cm}p{2.2cm}p{1.6cm}p{3.2cm}@{}",
+                  ["Check", "Arm", "Set", "Quantity", "Value", "Status", "Note"], body)
+    return write_e("e1a_checks", "E1a_checks.csv", L, "Hashes are shortened to 12 characters; the full values are in the CSV.")
+
+
+def e_kmean_table(name: str, source: str, key: str, sign: bool) -> bool:
+    """E1b (key = model) or E1c (key = comparison): per K mean with SD or percentiles, K mean in full, status."""
+    rows = read_e(source)
+    if rows is None:
+        return False
+    groups = grouped(rows, key, "feature_set")
+    body, last = [], None
+    order = sorted(groups, key=lambda k: (model_key(k[0].split()[0]), k[0], set_key(k[1])))
+    for (m, s) in order:
+        g = {r["k"]: r for r in groups[m, s]}
+        status = groups[m, s][0]["status"]
+        if last is not None and m != last:
+            body.append(r"\addlinespace[2pt]")
+        per_k = [(cell_p if sign else cell_sd)(g.get(k), sign) for k in KS]
+        body.append(" & ".join([pretty(m) if m != last else "", tex(s), *per_k, cell_all(g.get(KM), sign), tex(status)]) + r" \\")
+        last = m
+    head = ["Model" if key == "model" else "Comparison", "Set", "$K=1$", "$K=2$", "$K=4$", "$K=8$", "Mean $K$ 1--8", "Status"]
+    L = longtable(r"@{}p{3.6cm}l" + "c" * 5 + r"p{2.6cm}@{}", head, body)
+    return write_e(name, source, L)
+
+
+def e1e() -> bool:
+    rows = read_e("E1e_matched.csv")
+    if rows is None:
+        return False
+    head_row = next((r for r in rows if r["model"] == "matched subset"), None)
+    rest = [r for r in rows if r["model"] != "matched subset"]
+    groups = grouped(rest, "model", "feature_set")
+    body, last = [], None
+    for (m, s) in sorted(groups, key=lambda k: (model_key(k[0].split()[0]), k[0], set_key(k[1]))):
+        g = {r["k"]: r for r in groups[m, s]}
+        sign = " minus " in m
+        if last is not None and m != last:
+            body.append(r"\addlinespace[2pt]")
+        first = groups[m, s][0]
+        body.append(" & ".join([pretty(m) if m != last else "", tex(s), *[(cell_p if sign else cell_sd)(g.get(k), sign) for k in KS],
+                                cell_all(g.get(KM), sign), tex(first["classes_present"]) or "--", tex(first["status"])]) + r" \\")
+        last = m
+    L = longtable(r"@{}p{3.2cm}l" + "c" * 5 + r"p{2.4cm}p{2.2cm}@{}",
+                  ["Model", "Set", "$K=1$", "$K=2$", "$K=4$", "$K=8$", "Mean $K$ 1--8", "Classes present", "Status"], body)
+    note = (f"Matched subset: {tex(head_row['feature_set'])}, {head_row['n_queries']} development queries; supports are not matched."
+            if head_row else "")
+    return write_e("e1e_matched", "E1e_matched.csv", L, note)
+
+
+def e1f() -> bool:
+    rows = read_e("E1f_holdout.csv")
+    if rows is None:
+        return False
+    ks = ("1", "2", "4", "8", "16")
+    body = []
+    for quantity, title in (("macro_recall", "Five-way macro recall"), ("mean_correct_of_22", "Mean number named correctly (of 22)"),
+                            ("paired_macro_recall", "MIRAGE minus Inception-v3, paired (direction only)")):
+        sel = [r for r in rows if r["quantity"] == quantity]
+        if not sel:
+            continue
+        body.append(r"\multicolumn{10}{@{}l}{\emph{" + title + r"}} \\")
+        groups = grouped(sel, "model", "feature_set")
+        last = None
+        for (m, s) in sorted(groups, key=lambda k: (model_key(k[0].split()[0]), k[0], set_key(k[1]))):
+            g = {r["k"]: r for r in groups[m, s]}
+            sign = quantity == "paired_macro_recall"
+            fmt = cell_p if sign else (lambda r, _s=False: val(r["mean"]) if r else "--")
+            cells = [fmt(g.get(k), sign) if sign else fmt(g.get(k)) for k in ks]
+            km = cell_all(g.get(KM), sign) if quantity != "mean_correct_of_22" else "--"
+            body.append(" & ".join([pretty(m) if m != last else "", tex(s), *cells, km, tex(g[KM]["direction"]) if KM in g else "",
+                                    tex(groups[m, s][0]["status"])]) + r" \\")
+            last = m
+    L = longtable(r"@{}p{3.0cm}l" + "c" * 6 + r"lp{2.2cm}@{}",
+                  ["Model", "Set", "$K=1$", "$K=2$", "$K=4$", "$K=8$", r"\makecell{$K=16$\\(not read)}", "Mean $K$ 1--8",
+                   "Direction", "Status"], body)
+    return write_e("e1f_holdout", "E1f_holdout.csv", L,
+                   "The hold-out is read for direction only: the sign of the mean paired MIRAGE $-$ Inception-v3 difference, "
+                   "per $K$ and in the mean over $K=1$--8. $K=16$ is shown, never read.")
+
+
+def e1h() -> bool:
+    rows = read_e("E1h_leave_one_out.csv")
+    if rows is None:
+        return False
+    short = lambda p: tex(p.replace("data/raw/rare/", ""))  # noqa: E731
+    L = [r"\begin{tabular}{@{}llrcllll@{}}", r"\toprule",
+         r"Set & Status & Left out & Full & Smallest & (image) & Largest & (image) \\", r"\midrule"]
+    L += [" & ".join([tex(r["feature_set"]), tex(r["status"]), r["n_left_out"], f(r["full_difference"], sign=True),
+                      f(r["smallest"], sign=True), short(r["smallest_image"]), f(r["largest"], sign=True),
+                      short(r["largest_image"])]) + r" \\" for r in rows]
+    L += [r"\bottomrule", r"\end{tabular}"]
+    notes = "; ".join(f"{tex(r['feature_set'])}: {tex(r['note'])}" for r in rows if has(r["note"]))
+    return write_e("e1h_leave_one_out", "E1h_leave_one_out.csv", L, notes + ("." if notes else ""))
+
+
+# --- E2 ---------------------------------------------------------------------------------------
+
+def e2_summary() -> bool:
+    """Main text: destinations of normal scans (NORMAL / common disease / rare) per arm and feature set (E2a),
+    and normals failed by 0-4 arms (E2b)."""
+    rows = read_e("E2a_destinations.csv")
+    if rows is None:
+        return False
+    marks = Marks()
+    by = {(r["arm"], r["feature_set"], r["query_set"]): r for r in rows}
+    sets = [s for s in FSETS if any(k[1] == s for k in by)]
+    L = [r"% cells: group_NORMAL / group_CNV_DME_DRUSEN / group_rare per arm, feature set and normal set.",
+         r"\begin{tabular}{@{}ll" + "c" * len(sets) + r"@{}}", r"\toprule",
+         r" & & \multicolumn{" + str(len(sets)) + r"}{c}{Called NORMAL / common disease / rare} \\",
+         r"\cmidrule(l){3-" + str(2 + len(sets)) + "}", "Normal scans & Arm & " + " & ".join(tex(s) for s in sets) + r" \\",
+         r"\midrule"]
+    for i, q in enumerate(NORMALS):
+        n = next((r["n"] for (a, s, qq), r in by.items() if qq == q), "?")
+        label = {"Kermany patient-disjoint": "Kermany (calibration)", "OCTID NORMAL": "OCTID", "OCTDL NORMAL": "OCTDL"}[q]
+        for j, arm in enumerate(ARMS):
+            cells = []
+            for s in sets:
+                r = by.get((arm, s, q))
+                cells.append("--" if r is None else f"{r['group_NORMAL']} / {r['group_CNV_DME_DRUSEN']} / {r['group_rare']}"
+                             + marks(r["status"]))
+            L.append((f"{label} ({n})" if j == 0 else "") + f" & {NAME[arm]} & " + " & ".join(cells) + r" \\")
+        if i < len(NORMALS) - 1:
+            L.append(r"\addlinespace[2pt]")
+    L += [r"\bottomrule", r"\end{tabular}"]
+    write_e("e2_destinations_summary", "E2a_destinations.csv", L, marks.note())
+    over = read_e("E2b_overlap.csv")
+    if over:
+        fail = [r for r in over if r["quantity"].startswith("normals failed by ")]
+        parsed = {}
+        for r in fail:
+            m = re.fullmatch(r"normals failed by (\d+) of (\d+) arms", r["quantity"])
+            parsed.setdefault((r["query_set"], r["feature_set"]), {"m": int(m.group(2)), "status": r["status"]})[int(m.group(1))] = r["value"]
+        marks2 = Marks()
+        L = [r"% cells: E2b_overlap.csv quantity 'normals failed by n of m arms' (value).",
+             r"\begin{tabular}{@{}llccccc@{}}", r"\toprule",
+             r" & & \multicolumn{5}{c}{Normal scans failed (any class but NORMAL) by this many arms} \\", r"\cmidrule(l){3-7}",
+             r"Normal scans & Set & 0 & 1 & 2 & 3 & 4 \\", r"\midrule"]
+        last = None
+        for (q, s) in sorted(parsed, key=lambda k: (NORMALS.index(k[0]) if k[0] in NORMALS else 9, set_key(k[1]))):
+            d = parsed[q, s]
+            cells = [d.get(i, "--") for i in range(5)]
+            name = {"Kermany patient-disjoint": "Kermany (calibration)"}.get(q, q.replace(" NORMAL", ""))
+            L.append(" & ".join([name if q != last else "", tex(s) + marks2(d["status"]) + (f" ({d['m']} arms)" if d["m"] != 4 else ""),
+                                 *cells]) + r" \\")
+            last = q
+        L += [r"\bottomrule", r"\end{tabular}"]
+        write_e("e2_overlap_summary", "E2b_overlap.csv", L, marks2.note())
+    return True
+
+
+def e2a_full() -> bool:
+    rows = read_e("E2a_destinations.csv")
+    if rows is None:
+        return False
+    marks = Marks()
+    body, last = [], None
+    for r in sorted(rows, key=lambda r: (ARMS.index(r["arm"]), set_key(r["feature_set"]),
+                                         (NORMALS + RARE_EXT).index(r["query_set"]) if r["query_set"] in NORMALS + RARE_EXT else 9)):
+        key = (r["arm"], r["feature_set"])
+        if last is not None and key != last:
+            body.append(r"\addlinespace[1pt]")
+        body.append(" & ".join([NAME[r["arm"]] if key != last else "", (tex(r["feature_set"]) + marks(r["status"])) if key != last else "",
+                                tex(r["query_set"]), r["n"], *[r[c] for c in NINE],
+                                f"{r['group_NORMAL']} / {r['group_CNV_DME_DRUSEN']} / {r['group_rare']}"]) + r" \\")
+        last = key
+    L = longtable(r"@{}lll r" + "r" * 9 + "c@{}", ["Arm", "Set", "Query set", "$n$", *SHORT9, r"\makecell{NORMAL / common\\/ rare}"], body)
+    return write_e("e2a_destinations", "E2a_destinations.csv", L, marks.note())
+
+
+def e2b_pairs() -> bool:
+    rows = read_e("E2b_overlap.csv")
+    if rows is None:
+        return False
+    marks = Marks()
+    pairs = [r for r in rows if r["arm_a"]]
+    by = grouped(pairs, "query_set", "feature_set", "arm_a", "arm_b")
+    body, last = [], None
+    for k in sorted(by, key=lambda k: (NORMALS.index(k[0]) if k[0] in NORMALS else 9, set_key(k[1]), ARMS.index(k[2]), ARMS.index(k[3]))):
+        q = {r["quantity"]: r["value"] for r in by[k]}
+        if last is not None and k[:2] != last:
+            body.append(r"\addlinespace[1pt]")
+        body.append(" & ".join([tex(k[0]) if k[:2] != last else "", (tex(k[1]) + marks(by[k][0]["status"])) if k[:2] != last else "",
+                                f"{NAME[k[2]]} / {NAME[k[3]]}", val(q.get("failure Jaccard")), val(q.get("false-rare Jaccard")),
+                                val(q.get("share given the same class"))]) + r" \\")
+        last = k[:2]
+    L = longtable(r"@{}lllccc@{}", ["Normal scans", "Set", "Arms", "Failure Jaccard", "False-rare Jaccard", "Same class"], body)
+    return write_e("e2b_pairs", "E2b_overlap.csv", L,
+                   ("--- : both sets empty (no Jaccard index). " if any(r["value"] == "—" for r in pairs) else "") + marks.note())
+
+
+def e2c() -> bool:
+    rows = read_e("E2c_transitions.csv")
+    if rows is None:
+        return False
+    marks = Marks()
+    groups = grouped(rows, "arm", "query_set")
+    order = ("NORMAL", "common", "rare")
+    body, last = [], None
+    for (arm, q) in sorted(groups, key=lambda k: (ARMS.index(k[0]), (NORMALS + RARE_EXT).index(k[1]) if k[1] in NORMALS + RARE_EXT else 9)):
+        c = {(r["locked"], r["E1-M"]): r["count"] for r in groups[arm, q]}
+        if last is not None and arm != last:
+            body.append(r"\addlinespace[1pt]")
+        body.append(" & ".join([NAME[arm] if arm != last else "", tex(q) + marks(groups[arm, q][0]["status"]),
+                                *[c.get((a, b), "--") for a in order for b in order]]) + r" \\")
+        last = arm
+    letters = {"NORMAL": "N", "common": "C", "rare": "R"}
+    L = longtable(r"@{}ll" + "r" * 9 + "@{}", ["Arm", "Scans", *[f"{letters[a]}$\\to${letters[b]}" for a in order for b in order]], body)
+    return write_e("e2c_transitions", "E2c_transitions.csv", L,
+                   "Locked $\\to$ E1-M, per scan: N, called NORMAL; C, a common disease (CNV, DME or DRUSEN); R, any rare class. " + marks.note())
+
+
+E2D_NAMES = {"width": "Width (px)", "height": "Height (px)", "aspect_ratio": "Aspect ratio", "border_share": "Border share",
+             "near_white_share": "Near-white share", "grey_mean": "Grey mean", "grey_sd": "Grey SD"}
+
+
+def e2d_count(rows: list[dict]) -> str:
+    intervals = [r for r in rows if has(r["boot95_low"]) and has(r["boot95_high"])]
+    excluded = sum(r["interval_excludes_0_5"] == "True" for r in intervals)
+    return f"{excluded} of {len(intervals)} reported E2d intervals exclude 0.5 (all arms, sets, feature sets and properties)."
+
+
+def e2d_main() -> bool:
+    """The E2d table the E2 rule fixes as the main-text table: OCDTL normals, locked features, seven properties x four arms."""
+    rows = read_e("E2d_properties.csv")
+    if rows is None:
+        return False
+    sel = {(r["arm"], r["property"]): r for r in rows if r["main_text_table"] == "True"}
+    props = [p for p in E2D_NAMES if any(k[1] == p for k in sel)]
+    L = [r"% cells: auroc_failed_vs_not (boot95_low--boot95_high); below: failed_median / not_failed_median.",
+         r"\begin{tabular}{@{}l" + "c" * 4 + r"@{}}", r"\toprule", "Property & " + " & ".join(NAME[a] for a in ARMS) + r" \\", r"\midrule"]
+    firsts = [next((r for (a, p), r in sel.items() if a == arm), None) for arm in ARMS]
+    L.append(r"\makecell[l]{Failed (common / rare);\\not failed} & " + " & ".join(
+        "--" if r is None else two(f"{r['n_failed']} ({r['failed_common']} / {r['failed_rare']})", r["n_not_failed"]) for r in firsts) + r" \\")
+    L.append(r"\midrule")
+    for p in props:
+        cells = []
+        for arm in ARMS:
+            r = sel.get((arm, p))
+            if r is None:
+                cells.append("--")
+                continue
+            top = f(r["auroc_failed_vs_not"]) + (f" ({rng(r['boot95_low'], r['boot95_high'])})" if has(r["boot95_low"]) else "") \
+                if has(r["auroc_failed_vs_not"]) else "--"
+            cells.append(two(top, f"{val(r['failed_median'])} / {val(r['not_failed_median'])}"))
+        L.append(E2D_NAMES[p] + " & " + " & ".join(cells) + r" \\")
+    L += [r"\bottomrule", r"\end{tabular}"]
+    return write_e("e2d_octdl_locked", "E2d_properties.csv", L, e2d_count(rows))
+
+
+def e2d_all() -> bool:
+    rows = read_e("E2d_properties.csv")
+    if rows is None:
+        return False
+    marks = Marks()
+    body, last = [], None
+    for r in rows:
+        key = (r["arm"], r["query_set"], r["feature_set"])
+        if last is not None and key != last:
+            body.append(r"\addlinespace[1pt]")
+        q = lambda a, b, c: f"{val(r[a])} ({val(r[b])}--{val(r[c])})" if has(r[b]) else val(r[a])  # noqa: E731
+        terts = " / ".join(val(r[f"failure_share_tertile_{i}"]) for i in (1, 2, 3))
+        auc = (f(r["auroc_failed_vs_not"]) + (f" ({rng(r['boot95_low'], r['boot95_high'])})" if has(r["boot95_low"]) else "")
+               if has(r["auroc_failed_vs_not"]) else "--")
+        body.append(" & ".join([NAME[r["arm"]] if key != last else "", tex(r["query_set"]) if key != last else "",
+                                (tex(r["feature_set"]) + marks(r["status"])) if key != last else "", E2D_NAMES.get(r["property"], tex(r["property"])),
+                                f"{r['n_failed']} / {r['n_not_failed']}", q("failed_median", "failed_q1", "failed_q3"),
+                                q("not_failed_median", "not_failed_q1", "not_failed_q3"), terts, auc]) + r" \\")
+        last = key
+    L = longtable(r"@{}llllccccc@{}", ["Arm", "Normals", "Set", "Property", r"\makecell{Failed /\\not failed}",
+                                                     r"\makecell{Failed: median\\(q1--q3)}", r"\makecell{Not failed: median\\(q1--q3)}",
+                                                     r"\makecell{Failure share\\by tertile}", r"\makecell{AUROC failed vs not\\(95\% interval)}"], body)
+    return write_e("e2d_properties", "E2d_properties.csv", L, e2d_count(rows) + " " + marks.note())
+
+
+def e2d_cat() -> bool:
+    rows = read_e("E2d_categorical.csv")
+    if rows is None:
+        return False
+    body = [" & ".join([NAME[r["arm"]], tex(r["query_set"]), tex(r["feature_set"]), tex(r["property"]), tex(r["value"]), r["n"],
+                        r["failed"], r["failed_common"], r["failed_rare"], val(r["failure_share"])]) + r" \\" for r in rows]
+    L = longtable(r"@{}lllllrrrrc@{}", ["Arm", "Normals", "Set", "Property", "Value", "$n$", "Failed", "Common", "Rare", "Failure share"], body)
+    return write_e("e2d_categorical", "E2d_categorical.csv", L)
+
+
+def e2e() -> bool:
+    rows = read_e("E2e_octdl_patients.csv")
+    if rows is None:
+        return False
+    marks = Marks()
+    L = [r"\begin{tabular}{@{}llrcccccc@{}}", r"\toprule",
+         r"Arm & Set & Patients & \makecell{All / some / no\\scans failed} & \makecell{Failure share\\per patient} & "
+         r"\makecell{Common-disease\\share per patient} & \makecell{False-rare share\\per patient} & \makecell{Scans per patient:\\mean, median (min--max)} \\",
+         r"\midrule"]
+    for r in sorted(rows, key=lambda r: (ARMS.index(r["arm"]), set_key(r["feature_set"]))):
+        L.append(" & ".join([NAME[r["arm"]], tex(r["feature_set"]) + marks(r["status"]), r["patients"],
+                             f"{r['all_failed']} / {r['some_failed']} / {r['none_failed']}", val(r["failure_share_mean_per_patient"]),
+                             val(r["common_disease_share_mean_per_patient"]), val(r["false_rare_share_mean_per_patient"]),
+                             f"{val(r['scans_per_patient_mean'])}, {val(r['scans_per_patient_median'])} "
+                             f"({r['scans_per_patient_min']}--{r['scans_per_patient_max']})"]) + r" \\")
+    L += [r"\bottomrule", r"\end{tabular}"]
+    return write_e("e2e_patients", "E2e_octdl_patients.csv", L, marks.note())
+
+
+def e2f() -> int:
+    n = 0
+    for path in sorted(E_DIR.glob("E2f_marks_*.csv")):
+        rows = read_e(path.name)
+        body = [" & ".join([tex(r["source"]), tex(r["group"]), r["group_size"], tex(r["mark"]), tex(r["value"]), r["count"],
+                            tex(r["note"])]) + r" \\" for r in rows]
+        L = longtable(r"@{}llrllrp{4cm}@{}", ["Source", "Group", "Size", "Mark", "Value", "Count", "Note"], body)
+        n += write_e("e2f_" + path.stem.replace("E2f_marks_", "").lower(), path.name, L,
+                     "One rater (Lam), not a clinician; counts of each mark per group within source.")
+    return n
+
+
+# --- E3 ---------------------------------------------------------------------------------------
+
+def e3_criteria_t() -> bool:
+    rows = read_e("E3_criteria.csv")
+    if rows is None:
+        return False
+    body = [" & ".join([tex(r["criterion"]), pretty(r["arm"]), tex(r["variant"]), tex(r["statistic"]), val(r["n"]),
+                        val(r["value"]), tex(r["result"])]) + r" \\" for r in rows]
+    L = longtable(r"@{}p{1.6cm}lp{1.5cm}p{4.2cm}rcp{5.2cm}@{}", ["Criterion", "Arm", "Variant", "Statistic", "$n$", "Value", "Result"], body)
+    return write_e("e3_criteria", "E3_criteria.csv", L)
+
+
+E3_ORDER = ("locked", "E3-ref", "M-crop", "M-bicubic", "M-nostretch", "M-res256", "M-pad", "R-squash", "R-pad", "R-bilinear",
+            "R-stretch", "R-norm05", "R-res128", "all variants")
+
+
+def e3_key(k):
+    return (model_key(k[0]), E3_ORDER.index(k[1]) if k[1] in E3_ORDER else 99, k[1])
+
+
+def e3_dev() -> bool:
+    rows = read_e("E3_development.csv")
+    if rows is None:
+        return False
+    groups = grouped(rows, "arm", "variant")
+    body, last = [], None
+    for (arm, v) in sorted(groups, key=e3_key):
+        q = {(r["quantity"], r["k"]): r for r in groups[arm, v]}
+        if last is not None and arm != last:
+            body.append(r"\addlinespace[2pt]")
+        if v == "all variants":
+            r = q[("range of variant K-mean means", KM)]
+            body.append(" & ".join(["", "range over variants", f"{f(r['mean'])}--{f(r['p95'])} ({r['n_draws']} variants)", "", "", ""]) + r" \\")
+            continue
+        status = groups[arm, v][0]["status"]
+        body.append(" & ".join([NAME[arm] if arm != last else "", tex(v), cell_all(q.get(("macro_recall", KM))),
+                                cell_p(q.get(("minus Inception-v3 locked", KM)), True), cell_p(q.get((f"minus {arm} locked", KM)), True),
+                                tex(status)]) + r" \\")
+        last = arm
+    L = longtable(r"@{}llcccp{3.6cm}@{}", ["Arm", "Variant", r"\makecell{Macro recall, mean $K$ 1--8\\(SD; 5th--95th)}",
+                                            r"\makecell{$-$ Inception-v3 locked\\(paired)}", r"\makecell{$-$ same arm locked\\(paired)}",
+                                            "Status"], body)
+    return write_e("e3_development", "E3_development.csv", L, "Per-$K$ rows are in the CSV.")
+
+
+def e3_hold() -> bool:
+    rows = read_e("E3_holdout.csv")
+    if rows is None:
+        return False
+    groups = grouped(rows, "arm", "variant")
+    ks = ("1", "2", "4", "8", "16", KM)
+    body, last = [], None
+    for (arm, v) in sorted(groups, key=e3_key):
+        g = {r["k"]: r for r in groups[arm, v]}
+        if last is not None and arm != last:
+            body.append(r"\addlinespace[2pt]")
+        body.append(" & ".join([NAME[arm] if arm != last else "", tex(v),
+                                *[f(g[k]["mean_difference_vs_locked_Inception"], sign=True) if k in g else "--" for k in ks],
+                                tex(g[KM]["direction"]) if KM in g else "", tex(groups[arm, v][0]["status"])]) + r" \\")
+        last = arm
+    L = longtable(r"@{}ll" + "c" * 6 + r"lp{3cm}@{}", ["Arm", "Variant", "$K=1$", "$K=2$", "$K=4$", "$K=8$", r"\makecell{$K=16$\\(not read)}",
+                                                       "Mean $K$ 1--8", "Direction", "Status"], body)
+    return write_e("e3_holdout", "E3_holdout.csv", L,
+                   "Mean paired difference from locked Inception-v3 over 100 draws; read for direction only.")
+
+
+def e3_nine() -> bool:
+    rows = read_e("E3_nine_way.csv")
+    if rows is None:
+        return False
+    marks = Marks()
+    groups = grouped(rows, "arm", "variant")
+    body, last = [], None
+    for (arm, v) in sorted(groups, key=e3_key):
+        if last is not None and arm != last:
+            body.append(r"\addlinespace[2pt]")
+        by = {r["query_set"]: r for r in groups[arm, v]}
+        body.append(" & ".join([NAME[arm] if arm != last else "", tex(v) + marks(groups[arm, v][0]["status"]), *nine_cells(by)]) + r" \\")
+        last = arm
+    L = longtable(r"@{}ll" + "c" * 6 + "@{}", ["Arm", "Variant", *NINE_HEAD], body)
+    return write_e("e3_nine_way", "E3_nine_way.csv", L, marks.note())
+
+
+def e3_checks_t() -> bool:
+    rows = read_e("E3_checks.csv")
+    if rows is None:
+        return False
+    body = [" & ".join([NAME.get(r["arm"], tex(r["arm"])), tex(r["variant"]), tex(r["check"]), val(r["value"]), tex(r["status"])]) + r" \\"
+            for r in rows]
+    L = longtable(r"@{}llp{6cm}p{3.5cm}p{3.5cm}@{}", ["Arm", "Variant", "Check", "Value", "Status"], body)
+    return write_e("e3_checks", "E3_checks.csv", L, "Hashes are shortened to 12 characters; the full values are in the CSV.")
+
+
+# --- E4 ---------------------------------------------------------------------------------------
+
+E4_ABBR = {"Kermany test": "K", "Yoo rare": "Y", "OCTID": "ID", "OCTDL": "DL", "Kermany test NORMAL": "KN", "OCTID NORMAL": "IDN",
+           "OCTDL NORMAL": "DLN"}
+E4_NOTE = ("Sources: K, Kermany test (1,000; patient units); Y, the 146 rare images of Yoo et al.\\ (image units); ID, OCTID (410; image units); "
+           "DL, OCTDL (371; patient units); KN, IDN, DLN: their normal scans only. Pairs with Y: different sources, source and disease are mixed.")
+
+
+def pair_abbr(p: str) -> str:
+    a, b = p.split(" vs ")
+    return f"{E4_ABBR.get(a, tex(a))}--{E4_ABBR.get(b, tex(b))}"
+
+
+def e4a() -> bool:
+    rows = read_e("E4a_fewshot_source_test.csv")
+    if rows is None:
+        return False
+    marks = Marks()
+    groups = grouped(rows, "pair", "feature_set")
+    body, last = [], None
+    for (p, s) in groups:
+        g = {r["k"]: r for r in groups[p, s]}
+        r = g.get(KM) or groups[p, s][0]
+        if last is not None and p != last:
+            body.append(r"\addlinespace[2pt]")
+        paired = " minus " in s
+        body.append(" & ".join([pair_abbr(p) if p != last else "", pretty(s) + marks(r["status"]),
+                                *[(cell_p if paired else cell_sd)(g.get(k), paired) for k in KS], cell_all(g.get(KM), paired),
+                                tex(r["reading"])]) + r" \\")
+        last = p
+    L = longtable(r"@{}llcccccp{3cm}@{}", ["Pair", "Features", "$K=1$", "$K=2$", "$K=4$", "$K=8$", "Mean $K$ 1--8", "Reading"], body)
+    return write_e("e4a_fewshot", "E4a_fewshot_source_test.csv", L,
+                   "Two-way macro recall of source against source (chance 0.50), 100 draws; paired rows: E1-M minus locked on the same draw. "
+                   + E4_NOTE + " " + marks.note())
+
+
+def e4_matrix(name: str, source: str, rowkey, cell, title: str, note: str) -> bool:
+    rows = read_e(source)
+    if rows is None:
+        return False
+    pairs = list(dict.fromkeys(r["pair"] for r in rows))
+    keys = list(dict.fromkeys(rowkey(r) for r in rows))
+    by = {(rowkey(r), r["pair"]): r for r in rows}
+    L = [r"\begin{tabular}{@{}l" + "c" * len(pairs) + r"@{}}", r"\toprule", title + " & " + " & ".join(pair_abbr(p) for p in pairs) + r" \\",
+         r"\midrule"]
+    for k in keys:
+        L.append(k[1] + " & " + " & ".join(cell(by.get((k, p))) for p in pairs) + r" \\")
+    L += [r"\bottomrule", r"\end{tabular}"]
+    return write_e(name, source, L, note)
+
+
+def e4b() -> bool:
+    return e4_matrix("e4b_columns", "E4b_column_auroc.csv",
+                     lambda r: (r["feature_set"], f"{tex(r['feature_set'])}: {tex(r['column'])}"),
+                     lambda r: "--" if r is None else f(r["separability"]),
+                     "Column", "Separability of one column with no fit, max(AUROC, 1 $-$ AUROC); reading: $\\geq 0.95$ near-perfectly, "
+                     "0.80--0.95 strongly, 0.60--0.80 partly, below 0.60 hardly separable. " + E4_NOTE)
+
+
+def e4c() -> bool:
+    def cell(r):
+        if r is None:
+            return "--"
+        flag = "$^{*}$" if has(r["fits_not_converged"]) and r["fits_not_converged"] not in ("0", "0.0") else ""
+        mark = "" if r["status"] in PLAIN else r"$^{\dagger}$"
+        return two(f(r["auroc"]) + flag + mark, f"({rng(r['boot95_low'], r['boot95_high'])})")
+    return e4_matrix("e4c_probe", "E4c_probe_auroc.csv", lambda r: (r["feature_set"], pretty(r["feature_set"])), cell,
+                     "Features", "Logistic probe, out-of-fold AUROC pooled over five grouped folds (95\\% interval from 2,000 resamples "
+                     "of units within each source, without refitting). $^{*}$Some fits did not converge (count in the CSV). "
+                     "$^{\\dagger}$Status other than interpreted (in the CSV). " + E4_NOTE)
+
+
+def e4d() -> bool:
+    code = {"the control reduced separability": "r", "no reduction shown": "n", "at ceiling; the difference is not read": "c",
+            "descriptive comparison": "d"}
+
+    def cell(r):
+        if r is None:
+            return "--"
+        c = code.get(r["reading"], "")
+        return two(f(r["auroc_difference"], sign=True) + (f"$^{{{c}}}$" if c else ""),
+                   f"({rng(r['boot95_low'], r['boot95_high'], sign=True)})")
+    return e4_matrix("e4d_probe_diff", "E4d_probe_differences.csv", lambda r: (r["comparison"], pretty(r["comparison"])), cell,
+                     "Comparison", "Paired AUROC differences on the same resamples. Reading: $^{r}$the control reduced separability "
+                     "(interval wholly below 0); $^{n}$no reduction shown; $^{c}$at ceiling, the difference is not read; "
+                     "$^{d}$descriptive comparison. " + E4_NOTE)
+
+
+E_GENERATORS = (e1d, e1g, e1a, lambda: e_kmean_table("e1b_development", "E1b_development.csv", "model", False),
+                lambda: e_kmean_table("e1c_paired", "E1c_paired.csv", "comparison", True), e1e, e1f, e1h,
+                e2_summary, e2a_full, e2b_pairs, e2c, e2d_main, e2d_all, e2d_cat, e2e, e2f,
+                e3_criteria_t, e3_dev, e3_hold, e3_nine, e3_checks_t, e4a, e4b, e4c, e4d)
+
+
+def e_guard() -> None:
+    """Never write stand-in or test tables into tables/."""
+    out, tables = OUT.resolve(), TABLES.resolve()
+    if out != tables and not out.is_relative_to(tables):
+        return
+    if E_DIR.resolve() != PH.resolve():
+        raise SystemExit("refusing to write E tables from another --e-dir into tables/; give a scratch --out")
+    for name in (n for files in E_FILES.values() for n in files):
+        rows = read_e(name)
+        if rows and "dry run" in rows[0].get("posthoc", ""):
+            raise SystemExit(f"refusing: {name} is a dry run (stand-in features); give a scratch --out")
+
+
+def e_tables() -> None:
+    e_guard()
+    written = e_labels()
+    for gen in E_GENERATORS:
+        written += int(gen() or 0)
+    if written:
+        print(f"E1-E4: {written} generated files from {E_DIR.as_posix()}")
+
+
 def main() -> None:
+    global OUT, E_DIR
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--out", type=Path, default=TABLES, help="folder for the .tex tables (default: tables/)")
+    ap.add_argument("--e-dir", type=Path, default=PH, help="folder holding the E1-E4 CSVs (default: results/fm_v1/posthoc)")
+    ap.add_argument("--e-only", action="store_true", help="write only the E1-E4 tables (no locked archive needed)")
+    args = ap.parse_args()
+    OUT, E_DIR = args.out.resolve(), args.e_dir.resolve()
+    if not args.e_only:
+        locked_and_posthoc()
+    e_tables()
+
+
+def locked_and_posthoc() -> None:
     with zipfile.ZipFile(ARC) as z:
         t_development(z)
         t_frr(z)
@@ -549,6 +1440,8 @@ def main() -> None:
     p6()
     p9()
     g1()
+    p10_sensitivity()
+    p10_pairs()
 
 
 if __name__ == "__main__":

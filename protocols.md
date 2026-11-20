@@ -501,6 +501,13 @@ results.
   started. Before any E1 result existed, Lam committed to run Session 2 right after Session 1
   whatever Session 1 shows. E1–E4 are scored once, after Session 2; Session 1 outputs get integrity
   checks only (receipts, code hashes, controls), never scores, before then.
+- 21 Nov, correction (found by the agent-loop review of the paper; Lam chose a change-log note so the
+  hashed Phase-1 subsection stays unchanged): the E1 row's aside "(it passes with up to five
+  non-positive draws)" is wrong. With `numpy.percentile(d, 5)` (linear) on 100 draws, p05 = d₍₅₎ +
+  0.95 (d₍₆₎ − d₍₅₎) on the sorted draws, so the rule always passes with at most four non-positive
+  draws, always fails with six or more, and with exactly five depends on the values (five at −0.1
+  and 95 at +0.001 give p05 = −0.004). The rule itself, p05 > 0, is unchanged and is what the code
+  applies.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 

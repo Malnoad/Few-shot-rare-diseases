@@ -12,7 +12,16 @@
 %   ARC = D:/Few-shot/drive/fm_v1/final/final-20261113T170804Z/evaluation/results-20261114T093033Z.zip
 %   LOCK= D:/Few-shot/drive/fm_v1/final/final-20261113T170804Z/input-lock.zip
 %   DRV = D:/Few-shot/drive/fm_v1/final/final-20261113T170804Z/ (step11_pilots.txt, step14_external.txt)
+%   PR@fec827e = protocols.md at commit fec827e (21 Nov), used for the P10 and E1-E4 text added on 21 Nov:
+%         P10 rule row l.254; change log 20 Nov l.460-484, 21 Nov (P10) l.485-498; subsection
+%         "Phase-1 controls E1-E4" l.505-605 (shared rules l.514-545, E0 l.547-584, E1-E4 rows l.587-590,
+%         GPU plan and drop order l.592-601, default placement l.603-605).
+%   DEV = docs/research/FM_DEVIATIONS.md (D1: OCTID size not constant)
 %   PH  = results/fm_v1/posthoc/ (post hoc; every row labelled); R2 = PH R2_development_spread.csv
+%   P10 files (PH): P10_screen_summary.csv, P10_screen_synthetic.csv, P10_review_key.csv, P10_review_marks.csv,
+%         P10_matched_pairs.csv, P10_sensitivity.csv (line numbers count the header as line 1)
+%   E CSVs: written by fm_posthoc.py e1-e4 into PH (none exists on 21 Nov); tables/e*.tex are generated from
+%         them by make_tables.py and shown only when present (\havetable below)
 %   HP  = results/fm_v1/posthoc/pre_rule/2026-11-18/fable_holdout_plan.md, section D (adopted wording)
 %   LS  = docs/research/lit-scan-gan-vs-basic.md; CX = docs/research/CONTEXT.md
 %   M/I/D = methods_results_v2.md / intro.md / discussion.md (draft, with their own source comments)
@@ -22,13 +31,17 @@
 \usepackage[T1]{fontenc}
 \usepackage{cite}
 \usepackage{amsmath,amssymb}
-\usepackage{graphicx,booktabs,array,makecell}
+\usepackage{graphicx,booktabs,array,makecell,longtable}
 \usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
 \hypersetup{pdftitle={Frozen Foundation Models for Few-Shot Rare Retinal OCT Classification: A Pre-Registered, Shortcut-Audited Evaluation},pdfauthor={Doan Tung Lam, Ha Quang Minh, Pham Duc Anh, Ngo Hoang Phuc}}
 \newcommand{\todo}[1]{\textbf{[TODO: #1]}}
 \newcommand{\fnRS}{\textsuperscript{a}}
 \renewcommand\theadfont{\normalsize}
+% Phase-1 (E1-E4) tables: \havetable{name}\ifgen ... \fi typesets a block only if tables/name.tex exists,
+% i.e. only after make_tables.py has read the E CSVs that fm_posthoc.py writes. No E result exists on 21 Nov.
+\newif\ifgen
+\newcommand{\havetable}[1]{\IfFileExists{tables/#1.tex}{\gentrue}{\genfalse}}
 % IEEEtran.bst's documented control-entry citation avoids a printed reference.
 \makeatletter
 \def\bstctlcite{\@ifnextchar[{\@bstctlcite}{\@bstctlcite[@auxout]}}
@@ -148,8 +161,8 @@ The paper gives Stargardt 15+4 and RP 12+4 images. The version 1 folders hold RP
 \textbf{Layout.} The rare images are letterboxed. In the locked geometry summary (A2 border rule: complete edge rows and columns whose grey range is at most 8), the median border share per rare class is 0.34--0.50 for development images and 0.22--0.56 for hold-out images; it is 0 (at most 0.002) for every Kermany, OCTID and OCTDL class (Table~\ref{tab:geometry}).
 % src: ARC reports/geometry/MIRAGE/geometry_summary.csv border_share_median: fitting lines 15, 17, 19, 21, 23 (0.339 RP ... 0.502 CSC); query lines 16, 18, 20, 22, 24 (0.218 RP ... 0.561 MacTel); lines 2-14 (0.0; DME fitting 0.00195); PR l.68-71; AM l.130-134
 
-\textbf{Duplicate screen.} We fingerprinted the 146 images (identical files, identical pixels, and a 64-bit difference hash at Hamming distance at most 4). No pair was flagged.
-% src: PR l.122-124; FP l.80-82
+\textbf{Duplicate screen.} We fingerprinted the 146 images (identical files, identical pixels, and a 64-bit difference hash at Hamming distance at most 4). No pair was flagged. A post hoc same-picture audit later found pairs that this screen missed (P10; Sections~\ref{sec:posthoc-methods} and~\ref{sec:res-posthoc}).
+% src: PR l.122-124; FP l.80-82; P10: PR@fec827e l.489 ("The locked duplicate screen (dHash <= 4) had flagged none of the 14")
 
 \textbf{Common classes.} The nine-way audit uses 1,000 fitting images per Kermany class (4,000; seed 42) and the 250 official test images per class \cite{Kermany2018}. The headline Kermany false-rare rate uses the 169 normal test images (154 patients) whose patient ID is in no fitting row.
 % src: WR l.92-93; FP l.263-266; AM l.116-120 (A2 A-5); PH P1_nine_way_exact_bounds.csv (patients 154)
@@ -196,7 +209,7 @@ Only the nine-way rates carry 95\% intervals: 5,000 cluster resamples (seed 0) f
 
 \subsection{External two-way test}
 The OCTID two-way test reuses the locked hold-out episodes, keeping only their CSC and MH supports. A query takes the larger of its CSC and MH cosines (ties to CSC). Chance is 0.50. The test is exploratory. The pre-registered reporting order describes it as the test where image size is constant. It is not: OCTID CSC images are 750 to 879 pixels wide and 500 to 586 high, while every OCTID MH image is 750 by 500. We therefore do not call image size constant here, a dated departure from A2's reporting order, and we report what the size-only reference does in this test (Section~\ref{sec:res-octid}).
-% src: AM l.106-114 (A2 A-1); AM l.137-140; ARC geometry_summary.csv (MIRAGE) lines 12-13. C2: where the deviation is recorded (FM_DEVIATIONS.md, AM l.62-63, does not exist) is Lam's -- see README
+% src: AM l.106-114 (A2 A-1); AM l.137-140; ARC geometry_summary.csv (MIRAGE) lines 12-13. Deviation recorded as DEV D1 (FM_DEVIATIONS.md, added 20 Nov, commit aa722b9)
 
 \subsection{Size-only reference}
 For every locked episode, a size-only rule assigns each query to the class whose supports have the nearest mean width and height of the original file. It uses no pixel and no encoder. It is a diagnostic of the benchmark, never an arm, and a model at or below it has not shown that it reads the retina. This cue was found before the lock and disclosed in A2. Fig.~\ref{fig:sizes} shows the image sizes it uses.
@@ -211,10 +224,31 @@ For every locked episode, a size-only rule assigns each query to the class whose
 \end{figure}
 
 \subsection{Post hoc analyses}
-After the locked results we ran agreed post hoc analyses (P0--P10, G1) and one reporting change (R1). P0--P9 and R1 were computed on a laptop from the locked features and outputs; P2 also applies the nine-way classifiers trained in our earlier work. P2 and P3 are analyses outside the locked study. G1 re-extracted MIRAGE and Inception-v3 features from padded images in one extra GPU session. P10 works on the image files. Their rules were committed before their numbers (16 November, P9 on 18 November, P10 on 19 November); P0, P6 and P7 were first computed before the rules were timestamped and are labelled so.
-% src: PR l.226-236, l.241-254, l.329-354, l.399-404; PR l.275, l.431-432
-Beside every FRR we show the share of the same sources' disease images that the head calls any rare class (R1). Two of these analyses sit in the main text under one heading marked post hoc (Section~\ref{sec:res-posthoc}): size-right against size-wrong queries (P4) and CSC against MH on development images (P8), beside and never replacing the locked size-only reference. All others are in the supplement. No post hoc result replaces a locked one.
-% src: PR l.256 (R1); placement PR HEAD 19 Nov "after the draft review" (2); PR l.229-232 (rule 2)
+\label{sec:posthoc-methods}
+After the locked results we ran agreed post hoc analyses (P0--P10, G1) and one reporting change (R1). P0--P9 and R1 were computed on a laptop from the locked features and outputs; P2 also applies the nine-way classifiers trained in our earlier work. P2 and P3 are analyses outside the locked study. G1 re-extracted MIRAGE and Inception-v3 features from padded images in one extra GPU session. P10 works on the image files. Their rules were committed before their numbers (16 November; P9 and P10 on 18 November); P0, P6 and P7 were first computed before the rules were timestamped and are labelled so.
+% src: PR l.226-236, l.241-254, l.329-354, l.399-404; PR l.275, l.431-432; P10 commit dcbb323 (2026-11-18 03:42 +0700; label of every P10 CSV: "rule timestamped by commit dcbb323 (18 Nov 2026)"); P9 commit 39c3d73 (2026-11-18 01:42 +0700)
+Beside every FRR we show the share of the same sources' disease images that the head calls any rare class (R1). Three of these analyses sit in the main text under one heading marked post hoc (Section~\ref{sec:res-posthoc}): size-right against size-wrong queries (P4) and CSC against MH on development images (P8), beside and never replacing the locked size-only reference, and a summary of the same-picture audit (P10), whose tables are in the supplement. All others are in the supplement. No post hoc result replaces a locked one.
+% src: PR l.256 (R1); placement PR HEAD 19 Nov "after the draft review" (2); PR l.229-232 (rule 2). P10 summary in the main text: agent default (coordinator brief, 21 Nov), Lam decides (rule 2: "Lam decides any other placement")
+
+\textbf{Same-picture audit (P10).} Yoo et al.\ took the rare images from web searches, so one published picture, or slices of one case report, could sit on both sides of a split. The rule has three steps, run on a laptop with the raw files read-only. (1)~Provenance: the source list in the supplementary material of Yoo et al.\ gives links per disease, not per file, so no file could be mapped to a link. (2)~Screen: every pair of the 146 images, across labels (10,585 pairs), was scored on greyscale images by OpenCV SIFT keypoint matching (Lowe ratio 0.75, RANSAC homography with a 5-pixel threshold); the score is the inlier count. The cut-off is the largest score among 2,000 random pairs of a rare and a Kermany image, which come from different sources and cannot show the same picture: 18 inliers. On synthetic copies (each rare image re-cropped to 70--90\% of each side, rescaled by 0.5--1.5 and saved as JPEG quality 70), the screen reached the cut-off for 146 of 146. (3)~Review: one author, not a clinician, marked 55 items in random order, blind to label, split and score: the 35 rare pairs at or above the cut-off (they include the 30 highest-scoring pairs), 10 synthetic copies and 10 random low-score pairs as decoys, each as ``same picture'', ``same case, other slice'', ``different'' or ``unsure''. The marks were committed before the review key was joined. Sensitivity, beside the locked numbers and never replacing them: development macro recall (prototype, locked episodes, all four models, mean over $K=1$--8) recomputed without each query that shares a ``same picture'' or ``same case'' mark with a support of its episode, and again counting ``unsure'' as a match; hold-out recall recomputed without each hold-out image so marked against any development image.
+% src: rule PR@fec827e l.254 (P10 row); step 1: PH P10_source_links.csv (79 links: 77 "no file named: S1 lists links per disease", 2 "dataset link") and P10_screen_summary.csv line 12 ("pairs sharing a source link: 0 (S1 names no file)"); step 2: P10_screen_summary.csv lines 2-5, 8-9 (10585; 2000; cut-off 18; synthetic 146, recall 1.000) and P10_screen_synthetic.csv (146 of 146 at_or_above_cutoff = 1); ratio 0.75, RANSAC 5.0 px: fm_posthoc.py l.1235 (P10_RATIO, P10_RANSAC_PX); step 3: P10_screen_summary.csv lines 6-7, 13 (35; 35; 55 items), P10_review_key.csv kinds (pair 35, of which 30 "top 30"; synthetic 10; decoy 10); marks committed abb1770 before the join (PR@fec827e l.485-486); sensitivity rule PR@fec827e l.254
+
+\subsection{Phase-1 controls (E1--E4)}
+\label{sec:phase1}
+After the locked and post hoc results, internal review asked for three further checks: control image size and framing and see whether MIRAGE keeps its advantage; analyse the errors on OCTID and OCTDL, especially normal scans called another class; and test how far MIRAGE and RETFound depend on preprocessing. We turned these into four controls, E1--E4, and committed their rules on 20 November 2026, before any E number. The rules were written knowing every locked result and the post hoc results then available; two cells were known in advance (E3's padded MIRAGE is G1, and the locked values beside every E number are those of R2). Every E output is labelled post hoc and outside the locked protocol, never replaces a locked result, and is released, including failed checks. E1--E4 reuse the locked inventories, development and reporting episodes, nine-way roster and cosine prototypes; E1 and E3 draw no random numbers, and E2 and E4 use fixed seeded streams. Because the episodes are the locked ones, the same-picture pairs found by P10 sit inside them; E1 is read beside the P10 sensitivity, not re-run without them. Each new feature set has a GPU check: unchanged originals passed through the locked extraction must match the locked features (largest difference at most $10^{-4}$ of the largest absolute output; all 5,927 images for MIRAGE, RETFound and DINOv2, the first 20 for Inception-v3). A model that fails is reported as ``environment differs from the lock; not interpreted''.
+% src: mentor's second feedback PR@fec827e l.460-466 (M1-M3); Lam's plan l.467-476; rules added and pushed before any E number l.477-484 and l.516-521 (rule 1; commit 4b4e883, 2026-11-20 22:10 +0700); rule 2 l.522-525; rule 3 l.526-530 (two cells known); rule 4 l.531-536 (same machinery; namespaces 12101-12103, 14101-14103); duplicates inside the episodes l.496-498; Colab checks l.578-584 (tolerance 1e-4, A2 A-6). "internal review" = the mentor (wording: agent default, Lam decides)
+
+\textbf{E1, size and framing control (all four models).} The main control, E1-M, renders each image once for all models: decode to RGB, which drops alpha as every locked recipe does; crop to the content box, found by applying the A2 border rule (complete edge rows, then columns, whose grey range is at most 8) again inside the remaining box until it removes nothing (a box with a side under 32\,px keeps the full frame and is counted); take the centred square of side $\min(w,h)$; resize to $256\times256$ with bicubic interpolation; save as an 8-bit RGB PNG. Each model reads that file with its own locked transform and weights. Two secondary variants are descriptive only: E1-L, a resolution floor ($128\times128$ box filter before the $256\times256$ resize), and E1-C, which only crops to the content box and leaves each model to squash or crop as locked. Three references use no model, on the same episodes and roster: the locked size-only rule, the same rule on the content box's width and height (content-size), and a $16\times16$ grey thumbnail of each input with a nearest-mean rule. A matched subset keeps the development queries whose content short side lies between the largest class minimum and the smallest class maximum; supports are not matched. \emph{Success rule} (fixed on 20 November 2026): $d_r$ is the mean over $K=1$, 2, 4 and 8 of MIRAGE E1-M minus Inception-v3 E1-M development macro recall on draw $r$; $n$ must be 100, otherwise the result is ``not evaluable''; $p_{05}$ is the 5th percentile of $d$ with linear interpolation (\texttt{numpy.percentile(d, 5)}), so the rule passes when at most four draws are non-positive and fails when six or more are. If $p_{05}>0$, MIRAGE keeps its development advantage under the size and framing control; otherwise it does not. If either model fails its control, the result is ``not evaluable'' and is never re-specified. The verdict comes from E1-M alone; E1-L, E1-C, the references, E3 and E4 are printed beside it with sentences fixed in advance and cannot overturn or rescue it. The hold-out is read for direction only, and $K=16$ is shown but not read. E1-M does not remove effective resolution, field of view, scanner appearance, compression, intensity, black-clipped background against speckle, or Kermany's white fill wedges; its centre square drops lateral retina unequally by source and class; and MIRAGE now receives 256 pixels of detail enlarged to 512.
+% src: PR@fec827e l.587 (E1 row: E1-M, E1-L, E1-C, references, matched subset, success rule, fixed sentences, limitations); E0 decoding and content box l.554-562; rule 5 (one verdict) l.537-538; hold-out reading l.569-572
+
+\textbf{E2, external error analysis.} On the locked nine-way outputs and those of the E1 feature sets, a normal scan given any class but NORMAL is a \emph{failure}, and one given a rare class a \emph{false rare}; both are reported, with failures split into common disease and rare. E2 reports where OCTID (206) and OCTDL (332, from 110 patients) normal scans go, with the 169 patient-disjoint Kermany normals as calibration rows; how far the four models fail the same scans (scans failed by 0--4 models, and Jaccard indices per pair of models); how each scan's call moves from the locked to the E1-M features; and seven properties of the original files (width, height, aspect ratio, border share, near-white share, grey mean and SD) for failed and not-failed scans, as medians, failure share by tertile and an AUROC with a 95\% interval from 2,000 resamples of units (images for OCTID, patients for OCTDL). It also summarises OCTDL per patient. One author, not a clinician, marks a blinded contact sheet of scans that most models fail or pass, in two passes (the E1-M square, then the original), with the marks hashed before unblinding. E2 reports no test or $p$-value, quotes any association for all four models, and assigns no cause; it does not judge the datasets' labels.
+% src: PR@fec827e l.588 (E2 row: sets, failure and false rare, E2a-E2f, allowed and not allowed); "most models" = non-NORMAL / NORMAL from >= 3 of 4 arms (E2f)
+
+\textbf{E3, preprocessing sensitivity (MIRAGE and RETFound).} Starting from each model's locked recipe on the original images, each variant changes one step. MIRAGE: a centre crop instead of squashing, bicubic instead of bilinear resizing, no per-image min--max stretch, or a $256\times256$ input. RETFound: squashing to $256\times256$, black padding to a square, bilinear instead of bicubic resizing, a per-image min--max stretch, mean and SD of 0.5 instead of ImageNet's, or a 128-pixel short edge. G1's padded MIRAGE is shown beside them, labelled as known before the rule. Inception-v3 and DINOv2 keep their locked features. A replay of the locked recipe through the same mechanism must match the locked features within $10^{-4}$ on all 5,927 images, the crop, squash and pad variants must leave square images unchanged, and each variant must change at least one non-square image. Three criteria are fixed: (1)~for each MIRAGE variant, the 5th percentile over draws of the development $K$ mean of (variant minus locked Inception-v3) is above 0; (2)~for each RETFound variant, the 95th percentile of (variant minus locked Inception-v3) is below 0 and the 5th percentile of (locked MIRAGE minus variant) is above 0; (3)~each variant's false-rare count on OCTID and on OCTDL lies inside that model's locked 95\% interval. Scope: input preprocessing only; pooling and token choice are not varied.
+% src: PR@fec827e l.589 (E3 row: base, variants, M-pad label, checks, criteria (1)-(3), scope sentence verbatim)
+
+\textbf{E4, source separability.} E4 measures how easily the OCT sources can be told apart: Kermany (the 1,000 locked test images, patient units), the 146 benchmark images (image units, although P10 found same-picture pairs among them), OCTID (410, image units) and OCTDL (371, patient units). The main measure is a few-shot source test on the three normal-only pairs, where only the source differs (Kermany 250, OCTID 206 and OCTDL 332 normal scans): two-way cosine prototypes from $K=1$, 2, 4 and 8 units per source, every image of the other units as a query, 100 draws, two-way macro recall (chance 0.50), per model on the locked and E1-M features, with thumbnails as a pixel reference. Secondary measures are the AUROC of each geometry and grey-level column with no fit, and a logistic probe with grouped five-fold cross-validation, on the six source pairs and the three normal-only pairs; pairs with the benchmark images mix source and disease. Readings are fixed in advance: an AUROC of at least 0.95 is ``near-perfectly separable'', 0.80--0.95 ``strongly'', 0.60--0.80 ``partly'' and below 0.60 ``hardly''; when both AUROCs are at least 0.99 the pair is ``at ceiling'' and the difference is not read; ``the control reduced separability'' requires the paired interval to lie wholly below 0 (probe) or the 95th percentile of the paired $K$-mean difference to be below 0 (few-shot test). E4 does not show whether the models use the source in the rare-disease task.
+% src: PR@fec827e l.590 (E4 row: sources and units, pairs, feature sets, main measure, secondary, reading, not allowed); P10 pairs: PR@fec827e l.488. Default placement (Lam decides): E1d, E1g and an E2 summary in the main text, the rest in the supplement (l.603-605); drop orders l.592-601
 
 \section{Results}
 \label{sec:results}
@@ -315,16 +349,21 @@ The size-only reference sent all 204 queries to CSC in every draw and scored 0.5
 \parbox{\textwidth}{\footnotesize Supports: the CSC and MH images of the locked hold-out episodes, benchmark images only. Chance is 0.50. Last column: draws in which every query went to one class. The size-only reference sent every query to CSC in every draw: every OCTID image is larger than every benchmark CSC and MH development image, so it cannot separate the two classes here; this does not test whether size differs by class inside OCTID. We evaluated agreement with OCTID's published labels; clinical label equivalence, patient independence and freedom from acquisition shortcuts were not established. Per-class recall and confusion counts: Table~\ref{tab:twoway}.}
 \end{table*}
 
-\subsection{Post hoc analyses beside the size-only reference (labelled; rules committed 16 November 2026)}
+\subsection{Post hoc analyses (labelled; rules committed 16, 18 and 20 November 2026)}
 \label{sec:res-posthoc}
-\emph{This subsection is post hoc. Both rules were committed (commit 1eb3964) before their numbers were computed on 16 November 2026. Neither result replaces the locked size-only reference above.}
-% src: PH P4_size_right_vs_wrong.csv and P8_csc_vs_mh_development.csv column posthoc ("post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16"); placement PR HEAD 19 Nov "after the draft review" (2)
+\emph{This subsection is post hoc. The rules of P4 and P8 were committed (commit 1eb3964) before their numbers were computed on 16 November 2026; the rule of P10 was committed on 18 November 2026 (commit dcbb323), and its numbers were computed on 19 and 21 November 2026. No result here replaces a locked result.}
+% src: PH P4_size_right_vs_wrong.csv and P8_csc_vs_mh_development.csv column posthoc ("post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16"); placement PR HEAD 19 Nov "after the draft review" (2); P10: PH P10_screen_summary.csv column posthoc ("... dcbb323 (18 Nov 2026), computed 2026-11-19") and P10_sensitivity.csv ("... computed 2026-11-21; marks SHA256 15a9606fce87")
 
 \textbf{Size-right against size-wrong queries (P4).} In the locked development episodes, the size-only rule named 0.594 of query cells correctly (29,441 of 49,600). Table~\ref{tab:p4} splits each episode's queries by whether the size-only rule named them correctly and gives each model's recall in each group. Every model scored higher on size-right than on size-wrong queries on the mean over $K$: MIRAGE 0.663 against 0.646, DINOv2 0.577 against 0.537, Inception-v3 0.543 against 0.509 and RETFound 0.443 against 0.394. For MIRAGE the order reversed at $K=4$ (0.708 against 0.730) and $K=8$ (0.762 against 0.795). This is a description, not proof that any model uses image size.
 % src: PH P4_size_right_vs_wrong.csv line 42 (share_of_query_cells_size_right 0.59357, 29441/49600); mean_k1_2_4_8 rows (MIRAGE 0.66279/0.64587; DINOv2 0.57694/0.53742; Inception 0.54295/0.50910; RETFound 0.44334/0.39361); MIRAGE K=4 0.70769/0.73035, K=8 0.76224/0.79496; PR l.247 ("A description, not proof")
 
 \textbf{CSC against MH on development (P8).} P8 is the like-for-like comparator for the OCTID two-way test: development CSC and MH queries only, with the same two-way rule (Table~\ref{tab:p8}). On the mean over $K$, DINOv2 scored 0.864, Inception-v3 0.794, MIRAGE 0.711 and RETFound 0.634, and the size-only rule scored 0.968, above every model. MIRAGE minus Inception-v3 was $-0.083$ (SD 0.052; 5th--95th $-0.164$ to $+0.010$), against $+0.026$ on OCTID.
 % src: PH P8_csc_vs_mh_development.csv lines 11, 16, 21, 6, 26, 31 (0.8639, 0.7106, 0.7940, 0.6343; size_only 0.9680; MIRAGE-Inception -0.0834, sd 0.0524, p05 -0.1636, p95 +0.0104; locked column 0.0261); PR l.251
+
+\textbf{Same-picture audit (P10).} A keypoint screen and a blind review found 14 same-picture pairs among the 146 rare images (Table~\ref{tab:p10pairs}). One further pair was marked the same case on another slice (MacTel/09 and MacTel/23) and one unsure (CSC/26 and CSC/27, noted as probably a follow-up visit); the other 19 screened pairs were marked different. All 10 synthetic copies were marked ``same picture'' and all 10 decoys ``different''. The locked duplicate screen had flagged none of the 14 pairs. Four of the 22 hold-out images have a same-picture copy among the development images: MacTel/19, RP/17, RP/20 and Stargardt/03.
+% src: PH P10_review_marks.csv joined with P10_review_key.csv on item (kind "pair": 14 "same picture", 1 "same case, other slice" = item 26 MacTel/23-MacTel/09, 1 "unsure" = item 11 CSC/26-CSC/27 with note "... probably a follow-up visit ...", 19 "different"; kind "synthetic": 10 "same picture"; kind "decoy": 10 "different"); PR@fec827e l.485-491; hold-out images: PH P10_matched_pairs.csv rows with set "hold-out" (MacTel/19, RP/20, RP/17, Stargardt/03)
+Removing the matched pairs (14 same picture, 1 same case) changes the development comparison by less than 0.005. Without each development query matched to a support of its episode, MIRAGE minus Inception-v3 on the mean over $K$ moved from $+0.116$ to $+0.113$ (5th percentile over draws $+0.069$ to $+0.064$). Without the four hold-out images, MIRAGE's hold-out macro recall moved from 0.722 to 0.751, and MIRAGE minus Inception-v3 from $+0.197$ to $+0.240$. Counting the unsure pair as a match changed neither difference by more than 0.001 (Table~\ref{tab:p10}). These are sensitivity values beside the locked results; the locked values above remain the reported results.
+% src: PH P10_sensitivity.csv (k = mean_k1_2_4_8): development "MIRAGE minus Inception" line 36 (locked 0.115769, p05 0.068949), line 110 (same picture or case excluded: 0.112920, p05 0.064039), line 184 (also unsure: 0.113127, p05 0.063710); hold-out MIRAGE line 54 (0.721599) and line 128 (0.751016); hold-out "MIRAGE minus Inception" line 75 (0.197375) and lines 149, 223 (0.240083); wording PR@fec827e l.495-496 ("removing them changes the development comparison by less than 0.005"; 0.115769 - 0.112920 = 0.0028)
 
 \begin{table}[t]
 \caption{Post hoc (P4; rule committed 16 Nov 2026, computed 16 Nov 2026). Development macro recall on queries the size-only rule names correctly (size-right) and wrongly (size-wrong), in the same episodes.}
@@ -345,10 +384,54 @@ The size-only reference sent all 204 queries to CSC in every draw and scored 0.5
 \parbox{\textwidth}{\footnotesize Locked development episodes, CSC and MH queries only; mean of 100 draws; chance 0.50. Paired row: per $K$, mean (5th to 95th percentile). Last column: the locked OCTID two-way mean over $K$ (Table~\ref{tab:octid}), shown for comparison.}
 \end{table*}
 
-\subsection{Phase-1 controls (E1--E4)}
+\subsubsection{Phase-1 controls E1--E4 (rules committed 20 November 2026)}
 \label{sec:res-phase1}
-\textbf{[TODO: Phase-1 controls E1--E4 (mentor, 20 Nov)]}: size and framing controls, external error analysis and preprocessing sensitivity. Rules are being written; no result exists and none is reported here. State each rule's commit before its numbers, and label each result as it is labelled in its rule.
-% src: mentor request of 20 Nov 2026 relayed by the coordinator; delivery moved to 3 Dec
+\textbf{[TODO: Phase-1 results E1--E4]}: no E result exists yet and none is reported here. The rules were committed (4b4e883, 20 Nov) before any E number; methods in Section~\ref{sec:phase1}. Write this subsection only after the numbers exist: E1's verdict from E1-M alone with its fixed sentence and the limitations stated with every E1 result; E2 without causes; E3 with its scope sentence; E4 with its fixed readings; each result labelled as in its rule. The tables of the default placement (E1 success table, E1 nine-way audit, E2 summary) appear here automatically once \texttt{make\_tables.py} has read the E CSVs; Lam decides the final placement.
+% src: PR@fec827e l.477-484, l.499-503 (E1-E4 scored once, after Session 2), l.516-525 (rules 1-2), l.587-590, l.603-605 (default placement)
+\havetable{e1d_success}\ifgen
+\begin{table*}[t]
+\caption{Post hoc, Phase-1 E1 (rule committed 20 Nov 2026): size and framing control. MIRAGE minus Inception-v3, development macro recall averaged over $K=1$, 2, 4, 8 within each of the 100 paired draws, per feature set, with the companion lines.}
+\label{tab:e1d}
+\centering\footnotesize
+\input{tables/e1d_success.tex}
+\par\smallskip
+\parbox{\textwidth}{\footnotesize Only the E1-M row gives the verdict ($p_{05}>0$ over the 100 paired draws); the other feature sets and the companion lines are descriptions and cannot overturn or rescue it. Spread over support draws on 124 fixed queries, not a confidence interval. \input{tables/e1d_success_note.tex} Limitations stated with every E1 result: \input{tables/e1_limitations.tex} Label: \input{tables/e1_label.tex}.}
+\end{table*}
+\fi
+\havetable{e1g_nine_way}\ifgen
+\begin{table*}[t]
+\caption{Post hoc, Phase-1 E1 (rule committed 20 Nov 2026): nine-way audit per model and feature set. Normal scans called any rare class (count/$n$, rate and 95\% interval by the locked method), normal scans called NORMAL, external disease images called any rare class (R1) and hold-out images named correctly.}
+\label{tab:e1g}
+\centering\footnotesize
+\resizebox{\textwidth}{!}{\input{tables/e1g_nine_way.tex}}
+\par\smallskip
+\parbox{\textwidth}{\footnotesize Prototypes from the same feature set's 4,000 Kermany fitting images and 124 development rare images; locked rows are the locked results (Table~\ref{tab:frr}). Intervals as in Table~\ref{tab:frr}. R1: OCTID CSC and MH (102 each) and OCTDL MH (39) called any rare class; published labels, not clinically confirmed. Reference rows use no model. No cause is assigned to any external false-rare rate. \input{tables/e1g_nine_way_note.tex} Label: \input{tables/e1_label.tex}.}
+\end{table*}
+\fi
+\havetable{e2_destinations_summary}\ifgen
+\begin{table*}[t]
+\caption{Post hoc, Phase-1 E2 (rule committed 20 Nov 2026): where truly normal scans go in the nine-way audit, per model and feature set (called NORMAL / a common disease / a rare class), and how many of the four models fail the same scans.}
+\label{tab:e2}
+\centering\footnotesize
+\input{tables/e2_destinations_summary.tex}
+\havetable{e2_overlap_summary}\ifgen
+\par\medskip
+\input{tables/e2_overlap_summary.tex}
+\fi
+\par\smallskip
+\parbox{\textwidth}{\footnotesize A failure is a normal scan given any class but NORMAL. Kermany rows (169 patient-disjoint normals) are calibration rows. Descriptive only: no cause, no test. Pairwise Jaccard indices, transitions and image properties are in the supplement. \input{tables/e2_destinations_summary_note.tex} \havetable{e2_overlap_summary_note}\ifgen\input{tables/e2_overlap_summary_note.tex}\fi Label: \input{tables/e2_label.tex}.}
+\end{table*}
+\fi
+\havetable{e2d_octdl_locked}\ifgen
+\begin{table*}[t]
+\caption{Post hoc, Phase-1 E2d (rule committed 20 Nov 2026; the main-text table the E2 rule fixes): image properties of OCTDL normal scans, locked features. Per property and model: AUROC of the property for failed against not-failed scans (95\% interval from 2,000 resamples of patients); below, the median for failed / not-failed scans. Any association quoted in the text is quoted for all four models.}
+\label{tab:e2d}
+\centering\footnotesize
+\input{tables/e2d_octdl_locked.tex}
+\par\smallskip
+\parbox{\textwidth}{\footnotesize \input{tables/e2d_octdl_locked_note.tex}}
+\end{table*}
+\fi
 
 \section{Discussion}
 \label{sec:discussion}
@@ -403,18 +486,19 @@ On development CSC and MH images, the like-for-like comparator (P8, post hoc) re
 % src: PH P8_csc_vs_mh_development.csv lines 31, 26; AM l.48-50 (A1 rule 7, verbatim)
 
 \subsection{Phase-1 controls (E1--E4)}
-\textbf{[TODO: Phase-1 controls E1--E4 (mentor, 20 Nov)]}: what the size and framing controls, the external error analysis and the preprocessing sensitivity change in the reading above (Section~\ref{sec:res-phase1}). To be written only after their results exist.
+\textbf{[TODO: Phase-1 controls E1--E4 (mentor, 20 Nov)]}: what the size and framing controls, the external error analysis, the preprocessing sensitivity and the source separability change in the reading above (Sections~\ref{sec:phase1} and~\ref{sec:res-phase1}). To be written only after their results exist, within each rule's allowed claims (e.g.\ ``survives'' or ``does not survive this control'', never ``explains''; ``kept within this grid'', never ``robust to preprocessing'').
+% src: PR@fec827e l.587 (E1 not allowed), l.589 (E3 not allowed), l.588, l.590
 
 \section{Limitations}
 \label{sec:limitations}
-\textbf{Images.} The rare images come from web searches, carry no patient identifiers, and total 19 to 27 development images per class; our results describe these images, cannot be compared number-for-number with earlier studies, and the folder labels for RP and Stargardt disagree with the counts in the original paper. Yoo et al.\ labelled them knowing their source pages. Whether one case sits on both sides of a split cannot be tested; the duplicate screen detects near-identical files only. \todo{P10 same-picture audit: Lam's blind review in progress; result and wording to be added. If nothing is found, the wording is ``no same picture found by this screen'', never ``no shared patients''.}
-% src: HP D(3) (verbatim); Yoo XML; PR l.381-383; PR l.122-124, l.213; PR l.253 (P10 rule and wording)
+\textbf{Images.} The rare images come from web searches, carry no patient identifiers, and total 19 to 27 development images per class; our results describe these images, cannot be compared number-for-number with earlier studies, and the folder labels for RP and Stargardt disagree with the counts in the original paper. Yoo et al.\ labelled them knowing their source pages. The locked duplicate screen detects near-identical files only, and it missed all 14 same-picture pairs that a post hoc keypoint screen and a blind review found (P10). Four of the 22 hold-out images (MacTel/19, RP/17, RP/20 and Stargardt/03) have a same-picture copy among the development images; RP/20, an addition in version 2 of the release, is a copy of the development image RP/03. The locked numbers include these images; the P10 sensitivity sits beside them and replaces none. The review had one rater, who is not a clinician, and a screen for copies of one picture cannot rule out other slices or visits of the same patient, so whether other slices or visits of the same patients sit on both sides of a split remains untested.
+% src: HP D(3) (verbatim); Yoo XML; PR l.381-383; PR l.122-124, l.213; P10: PR@fec827e l.485-498 (14 pairs, dHash missed all 14, four hold-out images, RP/20 a version-2 addition copying RP/03; wording "never 'no shared patients'"); PH P10_matched_pairs.csv (hold-out rows); RP/20 version-2 addition: pre_rule/2026-11-18/v1_to_ours.csv and Data, Provenance above; one non-clinician rater: P10 review by Lam (PR@fec827e l.485)
 
 \textbf{Nomination.} MIRAGE was nominated on the development folds, so its development score is optimistic. The hold-out and external scores were computed after the nomination was sealed; the hold-out is not blind.
 % src: ARC nomination.json "interpretation"; PR l.136-143
 
-\textbf{Hold-out.} The 22 hold-out images are a fixed-seed draw that matches the class counts of the test in Yoo et al.; which images they tested on was never published. We inspected these images in earlier work, so the test is not blind. With four or five images per class, it shows direction only.
-% src: HP D(1); PR l.55-58
+\textbf{Hold-out.} The 22 hold-out images are a fixed-seed draw that matches the class counts of the test in Yoo et al.; which images they tested on was never published. We inspected these images in earlier work, so the test is not blind, and four of them have a same-picture copy among the development images (P10). With four or five images per class, it shows direction only.
+% src: HP D(1); PR l.55-58; P10: PR@fec827e l.490-491; PH P10_matched_pairs.csv
 
 \textbf{External labels.} No clinician checked the OCTID or OCTDL labels. OCTID gives no patient identifiers, so its intervals are image-level and conditional. The 332 OCTDL normals come from 110 patients. OCTID images carry an orientation icon, which we did not crop or mask; it is a known acquisition cue.
 % src: PR l.217; AM l.44-45, l.123-128, l.151; DRV step14_external.txt
