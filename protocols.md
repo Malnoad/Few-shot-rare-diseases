@@ -610,6 +610,7 @@ notebook checks out the commit it is pinned to. Steps for a runner: `FM_FIRST_RU
 | `colab_fm.ipynb` | Loads the four models, times them, locks the inputs, stages OCTID and OCTDL, saves all features | GPU, Hugging Face token, about 1–1.5 h | Done: attempt `final-20261113T170804Z` (13 Nov); input lock `23983827…`, external lock `3414889b…` | None; a rerun would make a new attempt |
 | `colab_fm_evaluate.ipynb` | Development, nomination, legacy, nine-way and external reports from the saved features | No GPU, no token | Done: `results-20261114T093033Z.zip` (14 Nov); nominee MIRAGE | None |
 | `colab_fm_pad.ipynb` | G1: MIRAGE and Inception-v3 re-extracted with every image padded to a square | GPU, no token, about 1 h (estimate) | Done 18 Nov 07:02 UTC (A100), pinned at `90fd4fe`; archives in Drive `g1/`, receipts match | None |
+| `colab_fm_control.ipynb` | Phase-1 E1 and E3: renders the controlled inputs, re-extracts the four arms (E1) and the MIRAGE/RETFound variants (E3), saves archives with receipts to Drive `phase1/` | Step 0: CPU, token; Session 1: GPU, about 3 h (required); Session 2: GPU, about 1.5 h (optional) | Ready 21 Nov: built from `0578bce` (Opus and GPT 6.2 Sol, reviewed by Fable 5.2), pinned there; laptop dry run reproduces R2 | Lam runs Step 0, then Sessions 1 and 2; scoring (`fm_posthoc.py e1`–`e4`) once, after the last session |
 
 Laptop only, no Colab: P0–P9 and G1 scoring (done), P10 (19–20 Nov, after its rule is pushed).
 
