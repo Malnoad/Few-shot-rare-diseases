@@ -482,6 +482,20 @@ results.
   fixed E1 sentences approved; agent defaults kept (E3 criterion 3 by the locked interval, alpha
   dropped and counted, full-frame fallback). Committed and pushed before any E1–E4 number. Known
   before the rules: G1 (M-pad) and R2.
+- 21 Nov, P10 done. Lam's blind marks (all 55 items; SHA256 `15a9606f…`) were committed (`abb1770`)
+  before the key was joined. Check: the 10 synthetic copies were all marked "same picture" and the
+  10 decoys all "different". Of the 35 screened pairs: 14 "same picture", 1 "same case, other
+  slice" (MacTel 09/23), 1 "unsure" (CSC 26/27, Lam's note: probably a follow-up visit), 19
+  "different". The locked duplicate screen (dHash ≤ 4) had flagged none of the 14. Four of the 22
+  hold-out images have a same-picture copy in development: MacTel/19, RP/17, RP/20 (a version-2
+  addition, a copy of RP/03) and Stargardt/03. Sensitivity (`P10_sensitivity.csv`, code `f6fdafd`):
+  development MIRAGE minus Inception-v3 K mean 0.116 → 0.113 (p05 0.069 → 0.064) without each
+  query matched to a support of its episode; hold-out MIRAGE 0.722 → 0.751 and MIRAGE minus
+  Inception-v3 0.197 → 0.240 without the four images; counting "unsure" changes neither beyond
+  0.001. Wording: "a keypoint screen and a blind review found 14 same-picture pairs; removing them
+  changes the development comparison by less than 0.005"; never "no shared patients". The E1–E4
+  results are scored on the locked episodes, so the same duplicates sit inside them; E1 can be read
+  beside this sensitivity, not re-run without them.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 
