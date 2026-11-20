@@ -47,7 +47,7 @@ qualifier (C9); called-NORMAL counts without intervals in Table II (C5); R1 colu
 ## Open (visible TODO markers in the PDF)
 
 Title, abstract, conclusion and the reliability reframing (Lam approves); Phase-1 controls E1-E4
-(Results and Discussion placeholders); P10; post hoc heading end date; Zenodo publication time;
+(Results and Discussion placeholders); Zenodo publication time;
 shortcut-learning citation; planted-cue wording; data and code archive locations; AI-use wording;
 ethics, funding, competing interests, acknowledgements; venue; missing bib fields (Sun 2024 title
 and DOI, TVST 2026 authors and title).

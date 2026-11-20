@@ -1,0 +1,570 @@
+% Weekly report to the mentor, 21 November 2026: everything since 15 November (the 14 Nov report).
+% Purpose: Lam (author; they/them) keeps track of the project and updates the mentor. Post hoc results
+% only, each labelled and placed beside the locked numbers of 14 Nov. No E1-E4 number exists on 21 Nov
+% (Phase-1 Colab Session 1 is running); none is written or implied here.
+% Build: pdflatex 2026-11-21_weekly_report.tex (twice), or tectonic. No figure and no \input, so the
+% .tex builds alone. Standard packages only (same preamble as 2026-11-14_weekly_report.tex), so it also
+% builds on Overleaf (upload this file only).
+% Source keys used in the % src: comments (line numbers are file lines; CSV line 1 is the header):
+%   Files at commit 6e4175d (21 Nov 06:28 +0700, on origin), the head of t3/fm-code-prep when this was written:
+%   PR   = protocols.md (6e4175d adds 7 change-log lines after l.503: lines from l.504 on are 7 higher than at fec827e)
+%   PH   = results/fm_v1/posthoc/ (post hoc CSVs; every row labelled); G1P = PH G1_comparison.md
+%   CX   = docs/research/CONTEXT.md;  DEV = docs/research/FM_DEVIATIONS.md
+%   ML   = docs/research/MENTOR_LEARNING_LOG.md (added in 6e4175d)
+%   PAP  = docs/report/fm_v1_paper/main.tex; PAPS = docs/report/fm_v1_paper/supplement.tex;
+%   PAPR = docs/report/fm_v1_paper/README.md (unchanged since aa722b9)
+%   GIT  = git log of branch t3/fm-code-prep (commit times +0700); all commits listed are on origin
+% Rounding: half up from the 12-significant-digit form of the stored value (PR l.451-452).
+% Not opened for numbers: results/fm_v1/posthoc/pre_rule/ (only its existence is mentioned).
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[margin=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{hyperref}
+
+\definecolor{accent}{HTML}{0550AE}
+\hypersetup{colorlinks=true, linkcolor=accent, urlcolor=accent, citecolor=accent}
+\setlist{nosep, leftmargin=1.4em}
+\captionsetup{font=small, labelfont=bf}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\renewcommand{\arraystretch}{1.15}
+\newcommand{\file}[1]{\texttt{\small #1}}
+\newcommand{\hash}[1]{\texttt{\footnotesize #1}}
+\newcommand{\ask}[2]{\par\smallskip\noindent\textcolor{accent}{\textbf{#1.}} #2\par}
+
+\title{\textbf{Frozen foundation-model encoders for few-shot recognition of rare retinal diseases on OCT}\\[2pt]
+  \large Weekly report, 15--21 November 2026: your feedback, the post hoc results and the Phase-1 controls}
+\author{Doan Tung Lam}
+\date{21 November 2026}
+
+\begin{document}
+\maketitle
+
+% ---------------------------------------------------------------------------------------
+\section{Summary of the week}
+
+Every locked number of 14 November stands unchanged. You gave feedback twice. The first (17--18 November)
+defined ``rare'' by how few labelled images exist and accepted our protocol because it is transparent: no one
+can compare with Yoo et al.\ \cite{yoo2021}, whose test split was never published.
+The second (20 November) asked for a paper on the reliability and generalisability of the models, not on
+MIRAGE beating other backbones, through three controls and with no new model. We computed the agreed post
+hoc analyses (P0--P10, R1, R2, G1), each beside the locked numbers. Two findings matter most. A same-picture
+audit (P10) found 14 pairs of copies among the 146 rare images, and 4 of the 22 hold-out images have a copy
+among the development images; removing them moves the development comparison by less than 0.005. Padding
+every image with black to a square (G1) sends almost all external normal scans to rare classes, so external
+nine-way results depend on input geometry. We narrowed the novelty claim after finding Sun et al.\ 2024
+\cite{sun2024}, and recorded that the public release (146 images) is not the paper's set (119). The rules of
+the Phase-1 controls E1--E4 were pushed on 20 November, before any E number; the code and the Colab notebook
+followed on 21 November, Step~0 passed and Session~1 is running. No E result exists yet. A first paper draft
+was assembled on 20 November. Delivery is 3 December.
+% src: locked numbers unchanged: PR l.229-230 (rule 2), PR l.529-532; feedback 1: ML l.10-15, PR l.353-358, l.400-402;
+% src: feedback 2: PR l.460-466; post hoc list: PR l.242-259; 14 pairs, 4 of 22, "less than 0.005": PR l.485-496;
+% src: PH P10_sensitivity.csv lines 36, 110 (0.115769 -> 0.112920); G1: PR l.411-419; Sun 2024: PR l.31-34, l.429-434;
+% src: 146 vs 119: PR l.59-63; E rules pushed 4b4e883 (GIT 20 Nov 22:10), PR l.477-484; code 0578bce, notebook a2c5da2
+% src: (GIT 21 Nov 03:13, 03:26); Step 0, Session 1: PR l.499-503; paper: PAPR l.3-6 (assembled 20 Nov; aa722b9, GIT 20 Nov
+% src: 21:21); delivery 3 Dec: PR l.189-191
+
+% ---------------------------------------------------------------------------------------
+\section{What the mentor said and what changed}
+
+\textbf{Feedback 1 (17--18 November).} ``Rare'' should be judged by how few labelled images exist, not by
+how common the disease is. The methods are simple. Later (18 November): the protocol and the existing results
+are acceptable because they are transparent; on comparability with Yoo et al., ``even the reviewer cannot
+identify clearly what it is because no one can compare'' (nobody has their test split).
+% src: ML l.12-15; PR l.353-354 (mentor answered 17 Nov), l.400-402 (18 Nov, quote verbatim)
+
+\smallskip
+\noindent{\small
+\begin{tabularx}{\linewidth}{@{}P{3.1cm} Y P{2.6cm}@{}}
+\toprule
+Request & What we did & Where recorded \\
+\midrule
+Define ``rare'' by label scarcity &
+Definition B1 (Lam and you, 18 Nov): \emph{rare} = at most 5\% of the dataset's labelled images (at most 3\%
+also stated); \emph{few-shot} = example pool of at most 30. Tiers: A rare and few-shot; B rare, pool over 30
+(capped); C few-shot, over 5\%; D common. Yoo's five classes are tier A (pools of 19--27; class totals
+0.55--0.77\% of the 4,146 images used); OCTID CSC and MH tier D (102 each, 17.8\% of 572); OCTDL MH tier B
+(1.9\% of images; 28 of 821 patients, 3.4\%). External sets are worded as agreement with published labels. &
+\file{protocols.md} \S8, 18 Nov; \hash{39c3d73}, \hash{dcbb323} \\
+The methods are simple &
+No method added to this study: the design stays as locked, and the protocol forbids changes after results.
+Fine-tuning (LoRA) moved to the next phase, on data where image size does not predict the class; Phase 2
+(after 3 Dec) studies few-shot adaptation methods. &
+\file{protocols.md} \S6, \S8; \hash{dcbb323}, \hash{0b051c4} \\
+Transparent is enough; ``no one can compare'' &
+No forced comparison: both locked sets stay, no new split, no new number. ``A hold-out matching their class
+counts'', never ``their test set''; Inception-v3 is ``the backbone family of Yoo et al.''; their 92.1 and 93.9
+are context only. Provenance recorded; novelty narrowed (Section~\ref{sec:prov}). &
+\file{protocols.md} \S1, \S3, \S8; \hash{ca0d26d}; \file{CONTEXT.md} 19 Nov \\
+Our follow-up (problem B5): hold-out leakage &
+Same-picture audit P10: rule 18 Nov, result 21 Nov (Section~\ref{sec:p10}). &
+\hash{dcbb323}, \hash{01c3b7c}, \hash{917ab3b} \\
+\bottomrule
+\end{tabularx}}
+% src: B1 and tiers: PR l.359-368 (commit dcbb323, GIT); 17.8% of 572 and 1.9% of 2,064: PR l.354-356 (commit 39c3d73);
+% src: OCTDL MH 1.9% by images, 28 of 821 patients = 3.4%: PR l.380-381; class totals 23-32 = 0.55-0.77% of 4,146: PR l.364-366;
+% src: wording: PR l.380-384; methods simple: ML l.13; no outcome-driven change: PR l.155-156; fine-tuning next phase:
+% src: PR l.392-393 (dcbb323); Phase 2: PR l.474-476 (0b051c4); comparability: PR l.425-431 (ca0d26d), PR l.56-58;
+% src: CX l.127 (CONTEXT.md decisions row 2026-11-19); P10 for B5: PR l.392 (dcbb323); GIT 01c3b7c (19 Nov), 917ab3b (21 Nov)
+
+\medskip
+\noindent
+\textbf{Feedback 2 (20 November).} The line from GAN augmentation to foundation models, and the findings on
+source confounding and external degradation, have real scientific value. A paper should focus on the
+reliability and generalisability of the models, not on MIRAGE beating other backbones. Three things to do:
+(1) control for image size and framing and check whether MIRAGE keeps its advantage (the most critical);
+(2) error analysis on OCTID and OCTDL, especially normal scans called other diseases; (3) sensitivity of
+MIRAGE and RETFound to preprocessing. No more models and no more GAN work now.
+% src: PR l.460-466; ML l.34-38
+
+\smallskip
+\noindent{\small
+\begin{tabularx}{\linewidth}{@{}P{3.1cm} Y P{2.6cm}@{}}
+\toprule
+Request & What we did & Where recorded \\
+\midrule
+Reliability and generalisability, not ranking &
+Two phases. Phase 1 (to 3 Dec): image size, framing and source, and their effect on the models; one paper on
+3 Dec holds the locked results and these controls (delivery moved back from 30 Nov). The draft introduction
+carries a reframing sentence for Lam to approve; the full reframing is planned for 28--30 Nov. &
+\file{protocols.md} \S8; \hash{0b051c4}; paper \hash{aa722b9} \\
+(1) Size and framing & E1, all four models: one main control, one success rule (Section~\ref{sec:phase1}). &
+rules \hash{4b4e883}, code \hash{0578bce}, notebook \hash{a2c5da2} \\
+(2) External errors & E2 (laptop): where external normal scans go, which scans the models fail together. &
+\hash{4b4e883} \\
+(3) Preprocessing & E3: a fixed grid of one-step changes to the MIRAGE and RETFound recipes. & \hash{4b4e883} \\
+No new model, no GAN & None added; the rules allow no new model, no GAN image and no new download. &
+\hash{4b4e883} \\
+(Lam's addition) & E4: how easily the four OCT sources can be told apart. & \hash{4b4e883} \\
+\bottomrule
+\end{tabularx}}
+% src: two phases: PR l.467-476 (0b051c4, GIT 20 Nov 21:00); reframing TODO: PAP l.100; 28-30 Nov: PR l.284;
+% src: 30 Nov -> 3 Dec: PR l.189-191; E1-E4 and their mapping to M1-M3: PR l.514-519, l.594-597 (4b4e883, GIT 20 Nov 22:10);
+% src: no new model/GAN/download: PR l.518-519; code and notebook: GIT 0578bce, a2c5da2; PR l.639
+
+% ---------------------------------------------------------------------------------------
+\section{Results added since 15 November (all post hoc)}
+\label{sec:results}
+
+Every result here was computed after the locked results of 14 November, sits beside them under a dated post
+hoc label and never replaces them. Each rule was committed and pushed before its numbers, except P0, P6 and
+P7, first looks that are labelled so. Everything is released, favourable or not.
+% src: PR l.227-237 (rules 1-4), l.333-342 (P6 label; rule 1 met 16 Nov 17:56, commit 1eb3964), l.229 (P0, P7 label)
+
+\subsection{Development spread over support draws (R2)}
+R2 adds the spread that protocol section~5 promised and the locked notebook did not write: rule committed
+19 November (\hash{65fe98c}), computed 20 November after the results were known. Gate passed: every mean
+equals the locked nomination value within $10^{-9}$. The paper uses it as Table~I.
+% src: PR l.257 (R2 rule, gate 1e-9, label, Table 1), l.458-459 (computed 20 Nov after 65fe98c and 0ceeb56; gate passed);
+% src: PH R2_development_spread.csv column posthoc ("rule timestamped by commit 65fe98c (19 Nov 2026), computed 2026-11-20")
+
+\medskip
+\noindent{\small
+\begin{tabularx}{\linewidth}{@{}P{3.6cm} R R R R R R >{\raggedleft\arraybackslash}p{2.3cm}@{}}
+\toprule
+Development macro recall & $K=1$ & $K=2$ & $K=4$ & $K=8$ & Mean $K$1--8 & SD & 5th--95th pct \\
+\midrule
+\textbf{MIRAGE} (nominee) & 0.495 & 0.615 & 0.712 & 0.777 & \textbf{0.650} & 0.028 & 0.603 to 0.688 \\
+% src: PH R2_development_spread.csv lines 12-16
+DINOv2 & 0.407 & 0.497 & 0.616 & 0.711 & 0.558 & 0.028 & 0.511 to 0.606 \\
+% src: PH R2_development_spread.csv lines 7-11
+Inception-v3 (reference) & 0.409 & 0.499 & 0.581 & 0.647 & 0.534 & 0.029 & 0.494 to 0.583 \\
+% src: PH R2_development_spread.csv lines 17-21
+RETFound & 0.318 & 0.375 & 0.442 & 0.489 & 0.406 & 0.024 & 0.367 to 0.441 \\
+% src: PH R2_development_spread.csv lines 2-6
+\midrule
+MIRAGE $-$ Inception-v3 & $+$0.086 & $+$0.116 & $+$0.132 & $+$0.130 & $+$\textbf{0.116} & 0.037 & $+$0.069 to $+$0.185 \\
+% src: PH R2_development_spread.csv lines 32-36
+DINOv2 $-$ Inception-v3 & $-$0.002 & $-$0.002 & $+$0.036 & $+$0.064 & $+$0.024 & 0.034 & $-$0.025 to $+$0.086 \\
+% src: PH R2_development_spread.csv lines 27-31
+RETFound $-$ Inception-v3 & $-$0.090 & $-$0.124 & $-$0.139 & $-$0.159 & $-$0.128 & 0.035 & $-$0.186 to $-$0.070 \\
+% src: PH R2_development_spread.csv lines 22-26
+\midrule
+\textit{Size-only reference (locked)} & \textit{0.578} & \textit{0.550} & \textit{0.560} & \textit{0.589} & \textit{0.569} & & \\
+% src: G1P l.28-32, column "Size only" (locked size-only reference)
+\textit{Chance} & \textit{0.200} & \textit{0.200} & \textit{0.200} & \textit{0.200} & \textit{0.200} & & \\
+% src: PR l.89-90 ("Guessing gives 0.20")
+\bottomrule
+\end{tabularx}}
+
+\smallskip
+\noindent{\small 124 development queries, five folds pooled; mean over 100 support draws, every model on the
+same supports. Paired rows: difference from Inception-v3 on the same draw. SD and percentiles (for the mean
+over $K$) describe variation over draws on fixed images; they are not confidence intervals.}
+% src: PR l.257 (unit: 124 queries, folds pooled), l.145-147 (spread is not a confidence interval)
+
+\medskip
+\noindent
+The 5th percentile of MIRAGE minus Inception-v3 is above zero at every $K$ ($+0.001$, $+0.015$, $+0.052$,
+$+0.071$). DINOv2 minus Inception-v3 includes zero at every $K$. RETFound minus Inception-v3 has its 95th
+percentile below zero at every $K$ ($-0.0003$ at $K=1$). The size-only reference beats every model at $K=1$.
+% src: PH R2_development_spread.csv p05 lines 32-35 (0.000848, 0.015124, 0.051972, 0.071306); DINOv2 p05/p95 lines 27-31
+% src: (all p05 < 0 < p95); RETFound p95 lines 22-26 (max -0.000319 at K=1); size-only 0.578 at K=1 (G1P l.28) > 0.495 (R2 line 12)
+
+\subsection{Post hoc analyses P0--P9 and R1}
+
+\noindent{\small
+\begin{tabularx}{\linewidth}{@{}l P{3.0cm} Y P{1.9cm}@{}}
+\toprule
+& Analysis & Key result & Placement \\
+\midrule
+P0 & Recall per disease (first look) & MIRAGE is not the best model for macular hole: 0.540, against 0.612 for
+DINOv2 and 0.623 for Inception-v3 (development, mean $K$1--8). & Supplement \\
+% src: PH P0_per_class_recall.csv lines 15, 9, 21 (mean_k1_2_4_8); label "rule fixed after first look"; placement PR l.447-448
+P1 & Exact bounds; leave one image out & MIRAGE called 0 of 169 patient-disjoint Kermany normals rare: exact
+95\% upper bound 0.022. With any one image left out, MIRAGE minus Inception-v3 (mean $K$) stays within
+0.109--0.122 on development (all: 0.116) and 0.173--0.232 on the hold-out (all: 0.197). & Supplement \\
+% src: PH P1_nine_way_exact_bounds.csv line 116 (cp95_high 0.0216); PH P1_leave_one_out_summary.csv lines 2-3
+P3 & Clinic-to-clinic macular hole (outside the locked study) & OCTID examples, OCTDL queries, two-way (chance
+0.50): DINOv2 0.858, RETFound 0.675, MIRAGE 0.550 (its recall on OCTDL normals 0.130), Inception-v3 0.500.
+Reverse: MIRAGE 0.691. Worded as agreement between two macular-hole labels. & Supplement \\
+% src: PH P3_clinic_to_clinic_mh.csv lines 21, 6, 36, 51 (image units, mean_k1_2_4_8), line 36 recall_NORMAL_mean 0.130,
+% src: line 46 (reverse, MIRAGE 0.691); wording PR l.247; placement PR l.384-385
+P4 & Size-right against size-wrong queries & The size-only rule names 0.594 of development query cells
+correctly; every model scores higher on those (MIRAGE 0.663 against 0.646; Inception-v3 0.543 against
+0.509). A description, not proof. & Main text \\
+% src: PH P4_size_right_vs_wrong.csv line 42 (0.594, 29441/49600), lines 26, 31, 36, 41; PR l.248; placement PR l.446-447
+P5 & Where normal scans go; ``not sure'' cut-off & Of 332 OCTDL normals, MIRAGE calls 26 normal, 276 a common
+disease and 30 rare; 295 fall below its ``not sure'' cut-off, set on Kermany normals only. & Supplement \\
+% src: PH P5_not_sure_cutoff.csv line 10 (normals 332, not_sure 295, false_rare 30, called_normal 26, called_common 276); PR l.249
+P8 & CSC against MH on development & MIRAGE minus Inception-v3 $-0.083$ (5th--95th $-0.164$ to $+0.010$),
+against $+0.026$ on the OCTID two-way test; size-only 0.968, above every model. & Main text \\
+% src: PH P8_csc_vs_mh_development.csv line 31 (-0.0834, p05 -0.1636, p95 0.0104, locked OCTID 0.0261), line 26 (0.968)
+P9 & Rare against normal, AUROC, no cut-off & MIRAGE: OCTID CSC+MH 0.781 (95\% 0.733--0.824); OCTDL MH 0.357
+(0.261--0.468), so this score ranks OCTDL scans the wrong way; DINOv2 on OCTDL 0.978. & Supplement \\
+% src: PH P9_rare_vs_normal_auroc.csv lines 12, 16, 15; reading of MIRAGE's OCTDL value: PR l.390-392
+R1 & External disease images beside each false-rare rate & The MIRAGE head calls 41 of 102 OCTID CSC, 11 of
+102 OCTID MH and 3 of 39 OCTDL MH images any rare class: a low false-rare rate can mean it rarely says
+``rare''. & Beside every false-rare rate \\
+% src: PH R1_rare_beside_false_rare.csv lines 11-13; PR l.259
+\bottomrule
+\end{tabularx}}
+
+\smallskip
+\noindent
+Also in the supplement: P2 (October's trained heads on OCTID and OCTDL; gates passed, 17, 18 and 19 of 22
+reproduced), P6 (prototype against logistic probe) and P7 (MIRAGE+DINOv2 ensemble: development 0.695 against
+0.650, hold-out 0.718 against 0.722; one line, never called a result).
+% src: P2 gates PR l.346; P6 PR l.250; P7 PR l.251; placement PR l.446-448
+
+\subsection{G1: pad-to-square input check}
+G1 re-extracted MIRAGE and Inception-v3 with every image padded with black to a square, and scored the locked
+episodes and roster. It ran on Colab on 18 November; unpadded controls and the 1,032 square images matched the
+locked features within $1.43\times10^{-6}$. G1 goes to the supplement; the main text keeps the locked 26 of
+332 OCTDL normals called normal, with no claim about its cause. Lam's decisions of 19 November fix the wording:
+% src: PR l.255 (rule), l.403-410 (ran 18 Nov 07:02 UTC; 1,032 square images within 1.43e-6), l.411-414 (placement, 26 of 332)
+
+\smallskip
+\noindent{\small
+\begin{tabularx}{\linewidth}{@{}Y P{6.2cm}@{}}
+\toprule
+Allowed & Not allowed \\
+\midrule
+Development and hold-out recall moved by at most 0.023 at $K=1$--8: a near-null test, because the rare inputs
+are already near square. &
+That squashing did or did not cause the OCTDL result; robustness to aspect ratio. \\
+With black padding, external normal scans go almost entirely to rare classes. Called NORMAL: MIRAGE OCTID
+202 $\rightarrow$ 0, OCTDL 26 $\rightarrow$ 1; Inception-v3 182 $\rightarrow$ 8, 66 $\rightarrow$ 13. &
+Padded external ``gains'' as recognition; ``rare is a not-Kermany bin''; ``bars caused it''. \\
+The rare images are letterboxed and padding gives external scans that layout: external nine-way results
+depend on input geometry. &
+Any reading of $K=16$; any MIRAGE-versus-Inception-v3 ranking from padded scores. \\
+P9 caveat: the locked OCTID AUROCs hold ``under the published input path; with black bars added, the same
+score ranks OCTID the other way'' (MIRAGE 0.781 $\rightarrow$ 0.198). &
+Anything about what the features contain. \\
+\bottomrule
+\end{tabularx}}
+% src: claims from PR l.414-424; largest change 0.023: G1P l.28-31, l.40-43 (MIRAGE hold-out K=2 -0.023);
+% src: called NORMAL: G1P l.67-68, l.73-74; P9 padded: G1P l.84 (OCTID CSC+MH 0.781 -> 0.198); optional G1 sentence: PR l.423-424
+
+\subsection{P10: same-picture audit of the 146 rare images}
+\label{sec:p10}
+Yoo et al.\ took the rare images from web searches, so one published picture could sit on both sides of a
+split. Their source list gives links per disease, not per file, so no file could be mapped to a link. A
+keypoint screen (SIFT with RANSAC; score = inlier count) scored all 10,585 pairs. The cut-off, 18 inliers, is
+the largest score among 2,000 rare--Kermany pairs, which cannot show the same picture; re-cropped synthetic
+copies reached it for 146 of 146 images. Lam marked 55 items blind to label, split and score (the 35 pairs at
+or above the cut-off, 10 synthetic copies, 10 decoys), and the marks were committed (\hash{abb1770}) before the
+key was joined. All copies were marked ``same picture'' and all decoys ``different''. Of the 35 pairs: 14
+``same picture'', 1 ``same case, other slice'' (MacTel 09/23), 1 ``unsure'' (CSC 26/27; Lam's note: probably a
+follow-up visit) and 19 ``different''. The locked duplicate screen had flagged none of the 14. \textbf{Four of the 22
+hold-out images have a same-picture copy in development:} MacTel/19, RP/17, RP/20 and Stargardt/03.
+% src: PR l.254 (rule), l.485-491; PH P10_screen_summary.csv lines 2, 3, 5, 6, 8, 9, 12, 13; P10_source_links.csv ("no file
+% src: named: S1 lists links per disease"; PAP l.233-234); P10_review_key.csv kinds (35 pair, 10 synthetic, 10 decoy);
+% src: P10_review_marks.csv joined with the key (synthetic 10 same picture; decoy 10 different; pairs 14/1/1/19); GIT abb1770;
+% src: PH P10_matched_pairs.csv lines 6, 10, 12, 13-14 (hold-out images)
+
+\medskip
+\noindent{\small
+\begin{tabularx}{\linewidth}{@{}P{4.3cm} P{3.1cm} R R R@{}}
+\toprule
+P10 sensitivity (mean over $K$1--8) & Excluded & Development: MIRAGE $-$ Inception-v3 (5th pct) & Hold-out:
+MIRAGE & Hold-out: MIRAGE $-$ Inception-v3 (5th--95th) \\
+\midrule
+Locked (no exclusion) & none & $+$0.116 ($+$0.069) & 0.722 & $+$0.197 ($+$0.042 to $+$0.343) \\
+% src: PH P10_sensitivity.csv lines 36, 54, 75
+Without ``same picture'' or ``same case'' & 1,196 query-episodes; 4 hold-out images & $+$0.113 ($+$0.064)
+& 0.751 & $+$0.240 ($+$0.089 to $+$0.407) \\
+% src: PH P10_sensitivity.csv lines 110, 128, 149 (excluded column: 1196 query-episode exclusions per arm; 4 hold-out images)
+Also counting ``unsure'' & 1,378 query-episodes; 4 hold-out images & $+$0.113 ($+$0.064) & 0.751 & $+$0.240
+($+$0.089 to $+$0.407) \\
+% src: PH P10_sensitivity.csv lines 184, 202, 223
+\bottomrule
+\end{tabularx}}
+
+\smallskip
+\noindent
+Agreed wording: ``a keypoint screen and a blind review found 14 same-picture pairs; removing them changes the
+development comparison by less than 0.005''; never ``no shared patients''. E1--E4 use the locked episodes, so
+these pairs sit inside them; E1 will be read beside this sensitivity, not re-run without them.
+% src: PR l.254 (exclusion rule), l.494-498 (wording, E1 read beside); 0.116 - 0.113 = 0.0028 (PH P10_sensitivity.csv lines 36, 110)
+
+\subsection{Dataset provenance, layout and novelty}
+\label{sec:prov}
+\textbf{Provenance} (file identity only). Mendeley btv6yrdbmv version~1 (27 March 2020) holds 119 images, the
+total in Yoo et al. Version~2 (29 October 2020), which we use, holds 146: the 118 version-1 files unchanged plus
+28 new files (27 new names and a different picture under MacTel/20.PNG). 21 of the 22 hold-out images are in
+version~1. RP/20.PNG is a version-2 addition and, P10 found, a copy of the development image RP/03. Yoo et al.\
+give Stargardt 15+4 and RP 12+4, but the version-1 folders hold RP 19 and Stargardt 16 (as does Sun et al.), so
+the two names may be swapped in one of them; per-class results for these two carry a footnote, and macro
+recall is unaffected. The mapping file sits in \file{results/fm\_v1/posthoc/pre\_rule/}, released outside any
+rule.
+% src: PR l.59-67 (counts, dates, footnote); PR l.490-491 (RP/20 a version-2 addition, a copy of RP/03); PR l.437-440 (pre_rule);
+% src: "the two names may be swapped in one of them": PAP l.509
+
+\smallskip
+\noindent
+\textbf{Layout.} In the locked geometry summary, the median share of flat border per rare class is 0.34--0.50
+(development) and 0.22--0.56 (hold-out), against 0 (at most 0.002) for Kermany, OCTID and OCTDL. E1's main
+control crops these borders away. One deviation from a locked text is recorded (D1): A2 and A3 call the OCTID
+two-way test the one ``where image size is constant''; it is not, and since every OCTID image is larger than
+every benchmark CSC and MH image, the size-only rule sends all its queries to CSC.
+% src: PR l.68-71; E1 content box: PR l.565-569, l.594; DEV l.10 (D1, 20 Nov; "sends all 204 queries to CSC and scores 0.50")
+
+\smallskip
+\noindent
+\textbf{Novelty.} Sun et al.\ \cite{sun2024} already drew five-way $K$-shot tasks ($K = 1$, 3, 5) from the same
+rare images, with a trained network; it is not a numeric comparator (other pool and training). Our claim is
+narrowed to ``a pre-registered, shortcut-audited evaluation of frozen foundation models on a public rare-OCT
+benchmark'': frozen encoders at 1 to 16 images per disease on identical supports, how often normal scans from
+other sources are called rare, and what image size and source alone explain. Lam's positioning, to be
+confirmed with you at the 23 November review.
+% src: PR l.31-37 (narrowed 19 Nov), l.432-434, l.674
+
+% ---------------------------------------------------------------------------------------
+\section{Phase 1 (to 3 December): the controls E1--E4}
+\label{sec:phase1}
+
+One agent drafted the rules, a second rebutted them (19 findings, 6 must-fix), and Lam fixed the open
+choices. No E number exists yet.
+% src: PR l.477-484 (Opus 5.5 draft, Fable 5.2 rebuttal: 19 findings, 6 must-fix; Lam's choices)
+
+\medskip
+\noindent{\small
+\begin{tabularx}{\linewidth}{@{}P{1.75cm} Y Y P{2.35cm}@{}}
+\toprule
+Request & Design & Success rule or criteria (fixed 20 Nov) & Status (21 Nov) \\
+\midrule
+\textbf{E1} (M1): size and framing &
+Main control E1-M, one render for all four models: crop the flat borders, take the centred square, resize to
+$256\times256$; each model then applies its locked transform. Descriptive variants E1-L (resolution floor)
+and E1-C (crop only); references without a model (size-only, content size, $16\times16$ thumbnail). &
+Per draw, mean over $K=1,2,4,8$ of MIRAGE E1-M $-$ Inception-v3 E1-M development macro recall. 5th percentile
+over the 100 paired draws above 0: MIRAGE keeps its advantage under this control; otherwise not; a failed
+control: ``not evaluable''. Verdict from E1-M alone, in sentences fixed in advance; hold-out for direction
+only. &
+Session~1 (E1-M; E1-L for MIRAGE and Inception-v3): running. Session~2: the rest of E1. \\
+\textbf{E2} (M2): external errors &
+Laptop, on locked and E1 nine-way outputs: where the 206 OCTID and 332 OCTDL normals go; how many models fail
+the same scans; locked $\rightarrow$ E1-M moves; seven image properties of failed scans; OCTDL per patient; a
+blinded contact sheet marked by Lam (non-clinician). &
+Descriptive only: no test, no $p$-value, no cause, no judgement of a dataset's labels; any association quoted
+for all four models. &
+Laptop, after Session~2. \\
+\textbf{E3} (M3): preprocessing &
+One step changed at a time. MIRAGE: centre crop, bicubic, no min--max stretch, 256-pixel input (G1's padding
+beside, known in advance). RETFound: squash, black pad, bilinear, min--max stretch, mean and SD 0.5, 128-pixel
+short edge. &
+MIRAGE: every variant $-$ Inception-v3 has its 5th percentile (mean over $K$) above 0: ``kept within this
+grid''. RETFound: every variant below Inception-v3 (95th percentile) and below MIRAGE (5th percentile of MIRAGE
+$-$ variant above 0). False-rare counts inside the locked 95\% intervals: ``stable''. Input preprocessing
+only. &
+Session~1 (all of E3): running. \\
+\textbf{E4} (Lam): source separability &
+Kermany (1,000 test), Yoo's 146, OCTID 410, OCTDL 371. Main: a few-shot source test on the three normal-only
+pairs, locked and E1-M features. Secondary: AUROC per image property; grouped logistic probe. &
+Fixed readings: AUROC $\ge 0.95$ ``near-perfectly separable'', 0.80--0.95 ``strongly'', 0.60--0.80 ``partly'',
+below 0.60 ``hardly''. No claim that models use the source in the rare task. &
+Laptop, after Session~2. \\
+\bottomrule
+\end{tabularx}}
+% src: E1: PR l.594 (E1-M, E1-L, E1-C, references, success rule, fixed sentences, hold-out); E2: PR l.595 (seven common
+% src: properties; Lam marks the sheet: PR l.480-481); E3: PR l.596 (variants, criteria 1-3, scope); E4: PR l.597 (sources and
+% src: sizes, main measure, readings, not allowed); M1-M3: PR l.514-519; sessions: PR l.599-603; status: PR l.499-503, l.639
+
+\medskip
+\noindent
+\textbf{Integrity.}
+\begin{itemize}
+  \item \emph{Rules before numbers.} The rules were pushed (\hash{4b4e883}, 20 November 22:10) before any E
+        number; the scoring code checks that commit and hashes the rule text. No analysis rule is added after
+        this push; a later edit may only fix a bug that stops a run.
+  \item \emph{Written knowing the results.} Two cells were known in advance and are labelled so (E3's padded
+        MIRAGE is G1; the locked values beside every E number are R2's). Hence one main control and one
+        success rule; E1's variants, E3 and E4 cannot overturn or rescue the E1 verdict.
+  \item \emph{Colab checks.} For each model, unchanged originals through the locked path must match the locked
+        features within $10^{-4}$ (all 5,927 images; the first 20 for Inception-v3), or its numbers are ``not
+        interpreted''. A failed step may be rerun once, unchanged.
+  \item \emph{Scored once.} Before any E1 result existed, Lam committed to run Session~2 right after
+        Session~1, whatever Session~1 shows. E1--E4 are scored once, after Session~2; Session~1 outputs get
+        integrity checks only.
+  \item \emph{Images stay in Drive,} with a SHA-256 receipt per archive; only CSVs and generated pages enter the
+        repository.
+\end{itemize}
+% src: PR l.523-528 (rule 1), GIT 4b4e883 20 Nov 22:10 +0700; PR l.533-537 (rule 3); PR l.544-545 (rule 5);
+% src: PR l.585-590 (Colab checks, 5,927 images, 1e-4), l.546-549 (rule 6); PR l.499-503 (scored once); PR l.550-552 (rule 7)
+
+\noindent
+\textbf{Status.} Rules \hash{4b4e883} (20 Nov 22:10); code \hash{0578bce} (21 Nov 03:13); notebook
+\file{colab\_fm\_control.ipynb} pinned to it (\hash{a2c5da2}, 03:26), whose laptop dry run reproduces R2.
+On 21 November Step~0 passed (MIRAGE, RETFound and DINOv2 reachable, after a token-access fix) and
+Session~1 started (planned about 3~h); Session~2 (about 1.5~h) follows, then E1--E4 are scored once.
+% src: GIT (commit times +0700); PR l.639 (notebook pinned, dry run reproduces R2); PR l.499-503 (Step 0, HF_TOKEN fix,
+% src: Session 1, Session 2 commitment; recorded in fec827e); PR l.601-603 (Session 1 about 3 h, Session 2 about 1.5 h)
+
+% ---------------------------------------------------------------------------------------
+\section{Paper status}
+
+The draft (\file{docs/report/fm\_v1\_paper/}, IEEE conference template) was assembled on 20 November from the
+reviewed section drafts. Its tables are generated from the locked and post hoc files, and every numeric
+sentence has a source comment. The P10 text and the Phase-1 methods were added on 21 November
+(\hash{6e4175d}), after two rounds of agent review. \emph{Done}: text and numbers complete, awaiting Lam's
+final read; \emph{draft}: text with open items; \emph{TODO}: not written.
+% src: PAPR l.1-17; PR l.626 ("rebuilt, never hand-edited numbers"); GIT 6e4175d (21 Nov 06:28, "Paper: add P10 and the E1-E4
+% src: Methods"; message: "Reviewed with agent-loop (2 rounds ...)"); PAP l.15-24 (sources for the text added on 21 Nov)
+
+\medskip
+\noindent{\small
+\begin{tabularx}{\linewidth}{@{}P{6.3cm} P{1.5cm} Y@{}}
+\toprule
+Part & Status & Open \\
+\midrule
+Title, abstract, I Introduction & Draft & Lam approves; reframing sentence; a shortcut-learning citation (none
+among the tracked sources) \\
+II Related work & Draft & Title and DOI of Sun et al.\ 2024 unverified \\
+III Methods, including post hoc and Phase-1 methods & Done & -- \\
+IV Results: locked (R2 as Table~I) and post hoc (P4, P8, P10) & Done & Placement (Lam) \\
+IV Results: Phase-1 controls, inside the one dated post hoc subsection & \textbf{TODO} & After E1--E4 are
+scored; the default main-text tables (E1 success, E1 nine-way, E2 summary, E2d) appear when their files exist \\
+V Discussion; VI Limitations (includes P10) & Draft & Phase-1 parts TODO \\
+VII Next phase & Draft & Whether to name the planted-cue test (Lam) \\
+VIII Conclusion & \textbf{TODO} & Draft only, for Lam \\
+Declarations & Draft & Zenodo time; data and code archive; AI use; ethics, funding; venue not chosen \\
+Supplement & Draft & Locked S1--S7; P0--P3, P5--P7, P9, G1, P10; E1--E4 placeholders \\
+\bottomrule
+\end{tabularx}}
+% src: PAP section lines: title/abstract TODO l.57, l.64; I l.72 (TODOs l.85, l.100); II l.122; III l.139-251 (post hoc l.226-234,
+% src: Phase-1 l.236-251; D1 l.211-212); IV l.253-434 (post hoc subsection l.352, Phase-1 subsubsection l.387, TODO l.389;
+% src: E tables guarded by \havetable: e1d_success, e1g_nine_way, e2_destinations_summary, e2d_octdl_locked l.391-434);
+% src: V l.436-490 (TODO l.489); VI l.492-519; VII l.521-522 (planted-cue TODO); VIII l.525-526 (TODO); declarations l.530-550;
+% src: PAPR l.47-53 (open items, incl. Sun 2024 bib fields); PAPS l.18-242 (S-A S1-S7, S-B P0-P10, S-D E1-E4)
+
+% ---------------------------------------------------------------------------------------
+\section{Calendar to 3 December, and Phase 2}
+
+Dates are the latest dates; when a step finishes early, the next one starts at once. Lam does the slow steps,
+the agents verify and draft at the same time, and your feedback is welcome whenever it comes.
+% src: PR l.193-196 (pull-forward rule; parallel work; mentor not a gate)
+
+\medskip
+\noindent{\small
+\begin{tabularx}{\linewidth}{@{}l Y P{3.0cm}@{}}
+\toprule
+Dates & Work & Status (21 Nov) \\
+\midrule
+16--18 Nov & P0--P9, R1; G1 run on Colab and scored & Done \\
+19--21 Nov & P10; R2; paper draft; Phase-1 rules, code and notebook & Done \\
+21--23 Nov & E1 and E3 on Colab (Sessions 1 and 2); 23 Nov: review with you (positioning) & Session~1 running \\
+24--26 Nov & E1--E4 scored once; E2 and E4 on the laptop; one verdict per experiment; figures and tables & -- \\
+\textbf{27 Nov} & \textbf{All numbers, tables and figures frozen} & -- \\
+28--30 Nov & Paper reframed on reliability and generalisability; discussion, limitations, next phase & -- \\
+1--3 Dec & Evidence audit (1 Dec), PDF freeze (2 Dec), \textbf{delivery (3 Dec)} & -- \\
+\bottomrule
+\end{tabularx}}
+% src: PR l.272-285 (calendar rows); PR l.186 (P0-P9, G1 done 18 Nov; R2 20 Nov); PR l.403-409 (G1 ran 18 Nov);
+% src: PR l.485-503 (P10 done; Session 1 started 21 Nov, ahead of the 22-23 Nov slot); PR l.37, l.433-434 (23 Nov review)
+
+\smallskip
+\noindent
+No new analysis rule after the Phase-1 push; feedback after the freeze changes wording only, never a number.
+\textbf{Phase 2 (after 3 December)} returns to the original direction: few-shot adaptation methods across
+foundation models, datasets and rare-label tiers, with the Phase-1 shortcut audit as a standard check. It may
+start once the numbers are frozen; its results stay out of this paper except one labelled paragraph.
+Fine-tuning runs in order, under its own protocol: a test where image size does not predict the disease
+(patient IDs if possible); light adaptation (LoRA or the last blocks) of MIRAGE and RETFound in the same
+$K$-shot episodes; full fine-tuning only if that gains clearly on development and holds on OCTID and OCTDL.
+Decided for the next version: remove the letterbox and rescore. Open (Lam): a planted-cue test; DINOv3.
+% src: PR l.196-199 (gates); PR l.474-476 (Phase 2); PR l.198-200 (starts when frozen; results out of this paper);
+% src: PR l.313-320 (fine-tuning order); PR l.308-309, l.435-436 (letterbox removal, decided 19 Nov); PR l.310-311
+% src: (planted-cue, Lam's choice pending); PR l.393-394 (DINOv3: v2 or next phase decided after 3 Dec)
+
+% ---------------------------------------------------------------------------------------
+\section{Open questions for you}
+
+\ask{Q1}{Positioning. Is ``a pre-registered, shortcut-audited evaluation of frozen foundation models on a
+public rare-OCT benchmark'', written around reliability and generalisability rather than which model wins, the
+framing you want for the 3 December paper? We would like to confirm it at the 23 November review.}
+% src: PR l.33-37, l.432-434; PR l.460-463; PAP l.98-100
+
+\ask{Q2}{The hold-out after P10. Four of the 22 hold-out images have a copy in development. The locked
+22-image numbers stay; the draft gives the values without the four (MIRAGE minus Inception-v3 $+0.240$,
+against the locked $+0.197$) in the main-text post hoc paragraph and names the copies in the Limitations. Is
+that enough, or should the hold-out table itself carry a labelled row without the four images?}
+% src: PR l.489-494, l.229-230 (rule 2); PH P10_sensitivity.csv lines 75, 149; PAP l.363-366 (post hoc paragraph), l.500 (Limitations)
+
+\ask{Q3}{Placement. By default the E1 success table, the E1 nine-way audit and an E2 summary go in the main
+text's post hoc subsection, with the E2 table of OCTDL image properties that the E2 rule fixes for the main
+text; everything else goes to the supplement. One optional main-text sentence would point to G1. Do you agree
+with this placement and with that sentence?}
+% src: PR l.610-612 (default placement), l.595 (E2 rule: "The main-text table is fixed now: OCTDL normals, locked features, the
+% src: seven common properties x four arms"), l.608; PAP l.425-432 (e2d_octdl_locked); PR l.423-424 (optional G1 sentence)
+
+\ask{Q4}{A second rater. Lam alone, a non-clinician, marked the P10 pairs and will mark the E2 contact sheet
+(24--26 November). Do you know a clinician or a second rater who could mark the same sheet blind? Otherwise it
+stays a stated limitation.}
+% src: PR l.480-481 (contact sheet marked by Lam alone, as a non-clinician), l.595 ("One rater, not a clinician (Part E may
+% src: add a second)"); PAP l.494 (one non-clinician rater, P10); calendar PR l.282
+
+\medskip
+\noindent\rule{\linewidth}{0.4pt}\\
+{\footnotesize \textbf{Record.} Every rule, decision and date above is in
+\href{https://github.com/Malnoad/Few-shot-rare-diseases/blob/t3/fm-code-prep/protocols.md}{\file{protocols.md}},
+section~8. Commits since 15 November, all pushed to \file{t3/fm-code-prep}: post hoc plan \hash{1eb3964}
+(16 Nov); P9 and G1 code \hash{39c3d73}, P10 rule and B1 \hash{dcbb323} (18 Nov); G1 outputs \hash{d25e152},
+19 Nov decisions \hash{ca0d26d}, R2 rule \hash{65fe98c} (19 Nov); R2 \hash{24da8f3}, two-phase plan
+\hash{0b051c4}, paper \hash{aa722b9}, Phase-1 rules \hash{4b4e883} (20 Nov); Phase-1 code \hash{0578bce} and
+notebook \hash{a2c5da2}, P10 marks \hash{abb1770} and result \hash{917ab3b}, Phase-1 start \hash{fec827e},
+paper P10 and Phase-1 methods \hash{6e4175d} (21 Nov). Locked results: input lock of 13 November, hashes on Zenodo
+(\href{https://doi.org/10.5281/zenodo.24206472}{doi:10.5281/zenodo.24206472}). Every number has a source
+comment in this file. Claude (Anthropic) helped prepare this report.\par}
+% src: GIT (all commits on origin/t3/fm-code-prep); PR l.10-11 (Zenodo)
+
+\begin{thebibliography}{9}
+\bibitem{yoo2021} T.\,K. Yoo, J.\,Y. Choi, H.\,K. Kim. Feasibility study to improve deep learning in OCT
+diagnosis of rare retinal diseases with few-shot classification. \emph{Med.\ Biol.\ Eng.\ Comput.}
+59:401--415, 2021.
+\bibitem{sun2024} Sun, Wei, Wang, Zheng. \emph{Medical Image Analysis} 93:103102, 2024 (full title and DOI
+not yet verified).
+\end{thebibliography}
+
+\end{document}
