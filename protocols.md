@@ -526,6 +526,18 @@ results.
   recorded an interruption and an E1-L-RETFound retry from the stopped view; the logs, read after
   the copy to the laptop, show neither. No E number was computed before the copy was complete and
   every receipt matched (28 archives).
+- 21 Nov, E1–E4 scored once on the laptop (scoring code as of `f6fdafd`, unchanged since; at `fb4ef19`; outputs
+  `results/fm_v1/posthoc/E*.csv`, `E1_comparison.md`, `E2_comparison.md`). Checks: subsection SHA256
+  same at the rule commit and in the working text; 25 feature and render archives equal to their
+  receipts; every E1 control and both E3-ref full controls within 1e-4 (all pass); the three E3
+  square checks pass and all ten E3 variants change the features; render fallback 0, alpha below
+  255 0; laptop re-render identical for all 5,146 main images (the 781 external originals are not
+  on the laptop, reported). `environment_matches_lock` is false for MIRAGE, RETFound and DINOv2
+  (Colab Python 3.13 environment) and true for Inception-v3; recorded, not a gate. The first E2 run
+  wrote its tables, then stopped at the E2f contact sheet because the local Drive mirror lies inside
+  a project checkout; rerun unchanged with the sheet outside the project
+  (`D:/octfsl-phase1-e2f/pass1/`), the tables rewritten byte for byte. Verdicts follow the
+  cross-analysis and Lam's approval.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 
