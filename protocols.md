@@ -501,6 +501,12 @@ results.
   started. Before any E1 result existed, Lam committed to run Session 2 right after Session 1
   whatever Session 1 shows. E1–E4 are scored once, after Session 2; Session 1 outputs get integrity
   checks only (receipts, code hashes, controls), never scores, before then.
+- 21 Nov, Session 1 done (Lam's stamp `PHASE1 STAMP | 20261121T011510Z | session=1`): NVIDIA
+  A100-SXM4-40GB, commit `0578bce`; completed render, E1-M for all four arms, E1-L for MIRAGE and
+  Inception-v3, E3-ref and every E3 variant for MIRAGE (M-crop, M-bicubic, M-nostretch, M-res256)
+  and RETFound (R-squash, R-pad, R-stretch, R-norm05, R-bilinear, R-res128); missing none, dropped
+  none. Session logs `phase1-logs-s1-20261121T011510Z.zip` (SHA256 `c5eb784e…`). No E number was
+  computed. Session 2 follows, as committed.
 - 21 Nov, correction (found by the agent-loop review of the paper; Lam chose a change-log note so the
   hashed Phase-1 subsection stays unchanged): the E1 row's aside "(it passes with up to five
   non-positive draws)" is wrong. With `numpy.percentile(d, 5)` (linear) on 100 draws, p05 = d₍₅₎ +
