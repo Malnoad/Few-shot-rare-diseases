@@ -1,4 +1,6 @@
-"""Post hoc rules of protocols.md section 8 on small synthetic inputs (no locked file is read)."""
+"""Post hoc rules of protocols.md section 8 on small synthetic inputs (no locked file is read; one test compares
+the tracked files of record with the Phase-1 freeze file)."""
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -435,6 +437,43 @@ class E1DRules(unittest.TestCase):
         self.assertEqual((k16[13], k16[14]), ("", "shown, not read"))
         hk = next(r for r in rows if r[0] == "hold-out" and r[6] == "mean_k1_2_4_8")
         self.assertEqual(hk[13], "positive")
+
+
+class FreezeRules(unittest.TestCase):
+    def test_text_files_fold_crlf_and_binary_files_do_not(self):
+        self.assertEqual(ph.fingerprint("a.csv", b"x,1\r\n"), ph.fingerprint("a.csv", b"x,1\n"))
+        self.assertNotEqual(ph.fingerprint("a.png", b"x\r\n"), ph.fingerprint("a.png", b"x\n"))
+
+    def test_diff_names_changed_added_and_removed_files(self):
+        diff = ph.freeze_diff({"a": "1", "b": "2", "c": "3"}, {"a": "1", "b": "9", "d": "4"})
+        self.assertEqual(diff, {"changed": ["b"], "added": ["d"], "removed": ["c"]})
+
+    def test_amendment_keeps_old_and_new_hashes_and_its_reason(self):
+        manifest = {"frozen": "2026-11-22", "files": {"a": "1", "b": "2"}, "amendments": []}
+        new = ph.freeze_amend(manifest, {"a": "1", "b": "5", "e": "6"}, "2026-11-25", "error in b, change log 25 Nov")
+        self.assertEqual(new["files"], {"a": "1", "b": "5", "e": "6"})
+        self.assertEqual(new["amendments"], [{"date": "2026-11-25", "reason": "error in b, change log 25 Nov",
+                                              "changes": {"b": ["2", "5"], "e": [None, "6"]}}])
+        self.assertEqual(manifest["files"], {"a": "1", "b": "2"})  # the input is not changed
+        with self.assertRaises(ValueError):
+            ph.freeze_amend(manifest, {"a": "1", "b": "2"}, "2026-11-25", "nothing to record")
+        with self.assertRaises(ValueError):
+            ph.freeze_amend(manifest, {"a": "7", "b": "2"}, "2026-11-25", " ")
+
+    def test_files_of_record_match_the_freeze(self):
+        path = ph.REPO / ph.FREEZE_FILE
+        if not path.exists():
+            self.skipTest("not frozen yet")
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        diff = ph.freeze_diff(manifest["files"], ph.tracked_fingerprints(manifest["scope"]))
+        self.assertEqual(ph.freeze_report(diff), [], "a frozen file changed: amend with `fm_posthoc.py freeze --reason ...`")
+
+    def test_widening_the_scope_is_an_amendment_that_names_the_new_scope(self):
+        manifest = {"frozen": "2026-11-22", "scope": ["results"], "files": {"results/a": "1"}, "amendments": []}
+        new = ph.freeze_amend(manifest, {"results/a": "1", "tables/t": "2"}, "2026-11-26", "step 2", ["results", "tables"])
+        self.assertEqual(new["scope"], ["results", "tables"])
+        self.assertEqual(new["amendments"][0]["scope"], ["results", "tables"])
+        self.assertEqual(new["amendments"][0]["changes"], {"tables/t": [None, "2"]})
 
 
 class P10Rules(unittest.TestCase):

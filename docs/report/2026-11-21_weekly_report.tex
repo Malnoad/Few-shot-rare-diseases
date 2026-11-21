@@ -613,7 +613,7 @@ hold-out shows direction only. \\
 \textbf{E2} (request 2): external errors &
 On the laptop, with the locked and E1 nine-way outputs: where the 206 OCTID and 332 OCTDL normals go; how many
 models fail the same scans; how calls move from locked to E1-M; seven image properties of failed scans; OCTDL per
-patient; a blinded contact sheet that I mark (I am not a clinician). &
+patient; a blinded contact sheet that I mark (I am not a clinician; dropped on 22 Nov before marking). &
 Descriptive only: no test, no $p$-value, no cause, no judgement of a dataset's labels. Any association is quoted
 for all four models. \\
 \textbf{E3} (request 3): preprocessing &
@@ -647,7 +647,7 @@ in the next section.
 % src: GIT (commit times +0700); PR l.639 (notebook pinned, dry run reproduces R2); PR l.499-503 (Step 0, HF_TOKEN fix,
 % src: Session 1, Session 2 commitment; recorded in fec827e); PR CL "Session 1 done", "Session 2 done", "E1-E4 scored once"
 \item[What I need from you.] Agreement on where the E results go in the paper (Question~3), and a possible second
-rater for the E2 contact sheet (Question~5).
+rater for Phase 2 (Question~5).
 \end{parts}
 
 % ---------------------------------------------------------------------------------------
@@ -717,11 +717,12 @@ resolution is evened out (E1-L p05 = 0.023), and also when the image is only cro
 \begin{itemize}
   \item \emph{Only just.} The 5th percentile is 0.0025: five of the 100 draws are at or below 0, and a sixth would
         have failed the rule.
-  \item \emph{Not because of the copied pictures.} The 14 same-picture pairs (P10) sit inside these episodes, so I
-        added one check after the verdict (rule E1-D, pushed before its numbers, cannot change the verdict):
-        without the pairs, the 5th percentile is 0.0062 (mean 0.064). An independent recompute matched it.
-  \item \emph{The gap halved because Inception-v3 rose} (0.534 to 0.586), while MIRAGE stayed level (0.650 to
-        0.649). Inception-v3's decoder also changed, so its rise is not purely framing.
+  \item \emph{Not removed by dropping the copied pictures.} The 14 same-picture pairs and one same-case pair (P10)
+        sit inside these episodes, so I added one check after the verdict (rule E1-D, pushed before its numbers,
+        cannot change the verdict): without them, the 5th percentile is 0.0062 (mean 0.064), again with 95 of
+        100 draws above 0, so the pass stays just as thin. An independent recompute matched it.
+  \item \emph{The gap halved because Inception-v3 rose} (0.534 to 0.586), while MIRAGE stayed level on
+        development (0.650 to 0.649). Inception-v3's decoder also changed, so its rise is not purely framing.
   \item \emph{Not shown everywhere:} at $K=1$ and 2 the 5th percentile is below 0 ($-0.068$, $-0.034$), and on the
         92 queries of matched content size too ($-0.012$). These describe; they cannot change the verdict.
   \item \emph{Hold-out (direction only):} MIRAGE is ahead at $K=1$, 2, 4 and 8 in all four E1 feature sets (E1-M:
@@ -729,11 +730,11 @@ resolution is evened out (E1-L p05 = 0.023), and also when the image is only cro
 \end{itemize}
 \emph{Limits of this control} (stated with every E1 result): the centre square drops lateral retina unequally by
 source and class; MIRAGE now gets 256 pixels of detail enlarged to 512; E1-M does not remove effective resolution
-(content short side 103--496 pixels), field of view, scanner appearance, compression, intensity, black-clipped
+(content short side 103--496 pixels in the rule's text; the render measures 103--471 for the rare images), field of view, scanner appearance, compression, intensity, black-clipped
 background against speckle, or Kermany's white fill wedges. Allowed wording: the advantage ``survives this
 control''; never that size ``explains'' it, and never ``robust to framing''.
-% src: PH E1d_success.csv (fixed sentence, as in E1_comparison.md "Sentence"; E1-M p05 0.002519, 95 of 100 above 0); sixth
-% src: smallest draw +0.003 (PR CL "Phase-1 verdicts"); E1b_development.csv (MIRAGE 0.650/0.649, Inception 0.534/0.586);
+% src: PH E1d_success.csv (fixed sentence, as in E1_comparison.md "Sentence"; E1-M p05 0.002519, 95 of 100 above 0; the
+% src: sixth-draw value has no file of record and is not quoted, PR CL 22 Nov); E1b_development.csv (MIRAGE 0.650/0.649, Inception 0.534/0.586);
 % src: E1a_checks.csv (decoder change); E1c_paired.csv k=1, 2 (p05 -0.0677, -0.0342); E1e_matched.csv (92, p05 -0.012);
 % src: limitations verbatim from the E1 row, PR l.594 ("Limitations stated with every E1 result"); E1-D: PH
 % src: E1D_duplicate_sensitivity.csv (sentence row; E1-M p05 0.006200, mean 0.064257); rule b6d3f26, code 5e52ac6;
@@ -775,13 +776,14 @@ locked. E3 covers input preprocessing only; pooling and token choice are not var
         E1-M, OCTDL failures move from common disease to rare classes for MIRAGE, RETFound and Inception-v3, and
         the other way for DINOv2.
 \end{itemize}
-So I report each false-rare rate with its recipe, with NORMAL recall and R1 beside it, and give no cause. The
-blinded contact sheet (E2f), which I mark myself, is still to do.
+So I report each false-rare rate with its recipe, with NORMAL recall and R1 beside it, and give no cause. I
+dropped the blinded contact sheet (E2f) on 22 November, before marking it, under the protocol's drop order (it
+comes first), so that the numbers could be frozen.
 % src: PH E3_criteria.csv (1) (p05 0.0432-0.0753, "kept within this grid"), (2) (R-norm05 p95 0.110 "not met"; the other
 % src: five "met"), (3) (10 of 20 outside; M-crop OCTDL 329, R-pad OCTDL 332); E3_development.csv (RETFound 0.406, R-norm05
 % src: 0.578); E1g_nine_way.csv (MIRAGE OCTDL 30 -> 261, OCTID 4 -> 0); E2a_destinations.csv (OCTID failures 4-24, OCTDL
 % src: 187-306); E2b_overlap.csv (98 by all four; none of OCTID by >= 3); E2c_transitions.csv (directions); PR CL "Phase-1
-% src: verdicts" (summary: per recipe, NORMAL recall and R1, no cause); E2f pending (marks.csv not filled)
+% src: verdicts" (summary: per recipe, NORMAL recall and R1, no cause); E2f dropped: PR@00a7474 l.726 (drop order), CL 22 Nov
 \end{topic}
 
 \begin{topic}{E4: can the image sources be told apart?}{sec:e4}
@@ -821,7 +823,7 @@ II Related work & Draft & Title and DOI of Sun et al.\ 2024 not yet verified \\
 III Methods, including post hoc and Phase-1 methods & Done & -- \\
 IV Results: locked (R2 as Table~I) and post hoc (P4, P8, P10) & Done & Placement (my decision) \\
 IV Results: Phase-1 controls, inside the one dated post hoc subsection & Done & Written 21 Nov from the
-verdicts I approved; E2f contact-sheet counts after my marking \\
+verdicts I approved; E2f dropped 22 Nov \\
 V Discussion; VI Limitations (includes P10 and Phase 1) & Draft & My final read \\
 VII Next phase & Draft & Whether to name the planted-cue test; letterbox removal is partly covered by E1-C (my
 decision) \\
@@ -840,8 +842,8 @@ Supplement & Draft & Locked S1--S7; P0--P3, P5--P7, P9, G1, P10; E1--E4 tables g
 
 \smallskip
 \noindent
-What remains is mostly my approval of the wording (title, abstract, conclusion, reframing), the E2f marks, and the
-declarations.
+What remains is mostly my approval of the wording (title, abstract, conclusion, reframing), the table and wording
+fixes from the 22 November pre-freeze check, and the declarations.
 
 % ---------------------------------------------------------------------------------------
 \section{Plan: calendar to 3 December, and Phase 2}
@@ -862,8 +864,9 @@ Dates & Work & Status on 21 Nov \\
 21--23 Nov & E1 and E3 on Colab (Sessions 1 and 2); 23 Nov: review with you (positioning, Phase-1 results) &
 Sessions done 21 Nov \\
 24--26 Nov & E1--E4 scored once; E2 and E4 on the laptop; one verdict per experiment; figures and tables & Done 21
-Nov, except the E2f marks \\
-\textbf{27 Nov} & \textbf{All numbers, tables and figures frozen} & -- \\
+Nov; E2f dropped 22 Nov \\
+\textbf{27 Nov} & \textbf{All numbers, tables and figures frozen} & Files of record frozen 22 Nov; tables and
+figures by 27 Nov \\
 28--30 Nov & Paper reframed on reliability and generalisability; discussion, limitations, next phase & -- \\
 1--3 Dec & Evidence audit (1 Dec), PDF freeze (2 Dec), \textbf{delivery (3 Dec)} & -- \\
 \bottomrule
@@ -932,10 +935,11 @@ the supplement. \emph{My recommendation:} yes, because it bears on the generalis
 address.}
 % src: PR l.423-424 (one optional main-text sentence pointing to G1, labelled post hoc: Lam and the mentor decide); PR l.414-418
 
-\ask{5}{\textbf{A second rater.} Do you know a clinician or another rater who could mark the E2 contact sheet
-blind, as I will on 24--26 November? (yes, with a name / no) \emph{Context:} I alone, a non-clinician, marked the
-P10 pairs and will mark that sheet. \emph{My recommendation:} a second blind rater if you know one; otherwise it
-stays a stated limitation.}
+\ask{5}{\textbf{A second rater, for Phase 2.} Do you know a clinician or another rater who could mark images
+blind? (yes, with a name / no) \emph{Context:} I alone, a non-clinician, marked the P10 pairs. I dropped the E2
+contact sheet on 22 November, before marking it, so that the Phase-1 numbers could be frozen; a sheet of this
+kind could return in Phase 2. \emph{My recommendation:} a second blind rater if you know one; otherwise one
+rater stays a stated limitation.}
 % src: PR l.480-481 (contact sheet marked by Lam alone, as a non-clinician), l.595 ("One rater, not a clinician (Part E may
 % src: add a second)"); PAP l.494 (one non-clinician rater, P10); calendar PR l.282
 

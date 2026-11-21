@@ -49,6 +49,7 @@ from collections.abc import Callable, Mapping, Sequence  # noqa: E402
 from dataclasses import dataclass, field  # noqa: E402
 import csv  # noqa: E402
 import datetime  # noqa: E402
+import hashlib  # noqa: E402
 import io  # noqa: E402
 import json  # noqa: E402
 import math  # noqa: E402
@@ -3624,6 +3625,86 @@ def e2f_marks(marks: Path, key: Path | None, out: Path, label: str) -> list[str]
     return lines
 
 
+# --- Phase-1 number freeze (protocols.md section 8) ------------------------------------------
+# The freeze fingerprints every tracked file of record. After it, a frozen file changes only through an
+# amendment that names the reason and keeps the old and new SHA256 (the correction of a proven error, or an
+# exception the change log names); `freeze-check` (run by .agents/check) fails on any other change.
+REPO = Path(__file__).resolve().parent
+FREEZE_FILE = "results/fm_v1/phase1_freeze.json"
+# Step 1 (22 Nov) freezes the files of record; step 2 (by 27 Nov) adds the paper's tables and figures with
+# `freeze --scope docs/report/fm_v1_paper/tables docs/report/fm_v1_paper/figures --reason ...`.
+FREEZE_SCOPE = ("results/fm_v1/posthoc",)
+TEXT_SUFFIXES = {".csv", ".md", ".tex", ".json", ".txt"}
+
+
+def fingerprint(name: str, data: bytes) -> str:
+    """SHA256; text files have CRLF folded to LF so Windows and Colab checkouts agree (as build_report_evidence.py)."""
+    if Path(name).suffix.lower() in TEXT_SUFFIXES:
+        data = data.replace(b"\r\n", b"\n")
+    return hashlib.sha256(data).hexdigest()
+
+
+def freeze_diff(frozen: Mapping[str, str], now: Mapping[str, str]) -> dict[str, list[str]]:
+    """Files changed, added to or removed from the frozen set (each list sorted)."""
+    return {"changed": sorted(p for p in frozen.keys() & now.keys() if frozen[p] != now[p]),
+            "added": sorted(now.keys() - frozen.keys()), "removed": sorted(frozen.keys() - now.keys())}
+
+
+def freeze_amend(manifest: Mapping, now: Mapping[str, str], date: str, reason: str,
+                 scope: Sequence[str] | None = None) -> dict:
+    """A new manifest whose files are `now` (and scope `scope`, if given), with one amendment recording every
+    difference and its reason."""
+    diff = freeze_diff(manifest["files"], now)
+    if not any(diff.values()):
+        raise ValueError("nothing changed since the freeze: no amendment to record")
+    if not reason.strip():
+        raise ValueError("an amendment needs a reason (the change-log entry that allows it)")
+    changes = {p: [manifest["files"].get(p), now.get(p)] for kind in ("changed", "added", "removed") for p in diff[kind]}
+    amendment = {"date": date, "reason": reason, "changes": changes}
+    new = {**manifest, "files": dict(sorted(now.items()))}
+    if scope is not None and list(scope) != list(manifest["scope"]):
+        amendment["scope"], new["scope"] = list(scope), list(scope)
+    new["amendments"] = [*manifest.get("amendments", []), amendment]
+    return new
+
+
+def tracked_fingerprints(scope: Sequence[str], repo: Path = REPO) -> dict[str, str]:
+    """Fingerprint of every git-tracked file under `scope`, read from the working tree."""
+    names = subprocess.run(["git", "ls-files", "-z", "--", *scope], cwd=repo, check=True,
+                           capture_output=True).stdout.decode("utf-8").split("\0")
+    return {n: fingerprint(n, (repo / n).read_bytes()) for n in sorted(filter(None, names))}
+
+
+def freeze_report(diff: Mapping[str, Sequence[str]]) -> list[str]:
+    return [f"{kind}: {p}" for kind in ("changed", "added", "removed") for p in diff[kind]]
+
+
+def run_freeze(args: argparse.Namespace) -> list[str]:
+    path = REPO / FREEZE_FILE
+    old = json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+    if args.step == "freeze-check":
+        if old is None:
+            return ["Phase-1 freeze: not frozen yet"]
+        now = tracked_fingerprints(old["scope"])
+        problems = freeze_report(freeze_diff(old["files"], now))
+        if problems:
+            raise SystemExit("Phase-1 freeze broken (amend with `fm_posthoc.py freeze --reason ...`):\n  "
+                             + "\n  ".join(problems))
+        return [f"Phase-1 freeze: {len(now)} files unchanged"]
+    if old is None:
+        scope = list(dict.fromkeys([*FREEZE_SCOPE, *(args.scope or [])]))
+        now = tracked_fingerprints(scope)
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, check=True, capture_output=True, text=True)
+        manifest = {"frozen": args.date, "base_commit": head.stdout.strip(), "scope": scope,
+                    "rule": args.reason, "files": now, "amendments": []}
+    else:
+        scope = list(dict.fromkeys([*old["scope"], *(args.scope or [])]))
+        now = tracked_fingerprints(scope)
+        manifest = freeze_amend(old, now, args.date, args.reason, scope)
+    path.write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    return [f"wrote {path} ({len(now)} files)"]
+
+
 def add_phase1_commands(sub) -> None:
     for step in ("e1", "e2", "e3", "e4", "e1d"):
         command = sub.add_parser(step, description=f"Phase-1 {step.upper()} (protocols.md section 8, Phase-1 controls"
@@ -3653,6 +3734,12 @@ def add_phase1_commands(sub) -> None:
     command.add_argument("--marks", type=Path, required=True)
     command.add_argument("--key", type=Path)
     command.add_argument("--date", default=datetime.date.today().isoformat())
+    command = sub.add_parser("freeze", description=f"Write {FREEZE_FILE}: the SHA256 of every tracked file of record "
+                             "(first call), or one amendment that records every change since (later calls).")
+    command.add_argument("--reason", required=True, help="the protocols.md change-log entry that freezes or allows it")
+    command.add_argument("--scope", nargs="+", help=f"folders to add to the frozen scope (always: {', '.join(FREEZE_SCOPE)})")
+    command.add_argument("--date", default=datetime.date.today().isoformat())
+    sub.add_parser("freeze-check", description=f"Fail if a file of record differs from {FREEZE_FILE}.")
 
 
 def main() -> None:
@@ -3688,6 +3775,10 @@ def main() -> None:
                                       "g1-<arm>-<stamp>.zip archives and their .json receipts")
     add_phase1_commands(sub)
     args = parser.parse_args()
+    if args.step in ("freeze", "freeze-check"):
+        for line in run_freeze(args):
+            print(line)
+        return
     out = prep.writable_path(Path(__file__).resolve().parent, args.out)
     if args.step in ("e1", "e2", "e3", "e4", "e1d"):
         for path in run_phase1(args, out):

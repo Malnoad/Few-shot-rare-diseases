@@ -7,12 +7,13 @@ SHA256 `4e8df8d9…c5df`) and its dated amendments in
 [`docs/research/FM_AMENDMENTS.md`](docs/research/FM_AMENDMENTS.md) (A1, A2, A3). If this page and
 those two files ever disagree, **they win** and this page gets fixed.
 
-Status on 20 November 2026: the input lock was made on 13 November and its hashes deposited on
+Status on 22 November 2026: the input lock was made on 13 November and its hashes deposited on
 Zenodo (doi:10.5281/zenodo.24206472) before any score. **All pre-specified scores were computed
 on 14 November**; the nominee is MIRAGE. The results are summarised in
-`docs/report/2026-11-14_weekly_report.tex`. P0–P9, G1 and R2 are done; P10, the Phase-1 controls
-E1–E4 (mentor, 20 Nov) and the write-up remain, on the calendar of 20 November (section 8): freeze
-27 Nov, **delivery 3 Dec**. Fine-tuning is not part of this study.
+`docs/report/2026-11-14_weekly_report.tex`. P0–P10, G1, R2 and the Phase-1 controls E1–E4 (mentor,
+20 Nov; E2f dropped) are done, and the files of record were **frozen on 22 November**
+(`results/fm_v1/phase1_freeze.json`). Tables and figures join the freeze by 27 Nov; the write-up
+continues to **delivery 3 Dec**, and Phase 2 may start. Fine-tuning is not part of this study.
 
 ## 1. The question
 
@@ -627,6 +628,49 @@ results.
   copied images, E1-M: mean paired difference +0.069 (with them +0.096), direction only. The E1
   verdict is unchanged, as the rule fixes; the thin pass does not rest on the same-picture pairs.
   An independent recompute (GPT-6.2 Sol, own scoring code) matched every E1-D value and count exactly.
+- 22 Nov, pre-freeze double-check (Lam asked for it before the freeze; read-only; no rule, no new
+  number). Gemini 4 Neon checked every Phase-1 and E1-D rule element against its file of record and
+  the paper. GPT-6.2 Sol recomputed every number in the paper, the supplement tables, the comparison
+  pages and the 21 Nov report (1,041 numbers in the prose; all 81 tables regenerate identically;
+  2,439 page cells) and replayed E1 and E1-D from the archived features, all exact. Claude Fable 5.2
+  reviewed the argument as a hostile referee. No score or verdict was wrong. Found:
+  - Record errors, corrected in the next entry.
+  - Tables that omit elements their rules require (E1-D p95, hold-out per K, K = 16 and label; P7's
+    three-model line; P4's episodes per class; P9's argmax point, 5% share and padded table; G1's
+    size-only comparison, hold-out counts and OCTDL destinations; E3's common-disease destinations).
+    Every number is already in a CSV; the tables are completed before they are frozen (step 2 below).
+  - Wording, for Lam's approval in step 2: the uncertainty of the E1 p05 was not estimated; E1-D
+    still has 95 of 100 draws above 0; what E1-M did to the other arms and the hold-out (DINOv2 minus
+    Inception-v3 from +0.024 to −0.044; Inception-v3 at 0.586, above size-only 0.569; MIRAGE's
+    hold-out from 0.722 to 0.667); the framing left after the control; Inception-v3's whole input
+    chain changed, not only its decoder; one locked-against-controls summary; the false-rare
+    qualifier; E4's lowest cells; patient overlap already seen once; consistency across documents.
+- 22 Nov, corrections (no score or verdict changes; the hashed rule text and write-once labels stay
+  as written):
+  - The E1 rule's fixed limitation says "content short side 103–496 px". The render of record
+    measures 103–471 px for the 146 rare images (`E1a_checks.csv`; 103–586 px over all 5,927). The
+    E1 CSV labels keep the rule's text; the paper and report state the measured range beside it.
+  - The R2 row of the S5 plan table says "computed 19 Nov"; R2 was computed on 20 Nov, as its CSV
+    label and the 20 Nov entry record.
+  - P10 and E1-D speak of "same-picture pairs"; the exclusion they apply is "same picture or same
+    case": 14 same-picture pairs and one same-case pair (`P10_matched_pairs.csv`, 15 pairs). The
+    E1-D entry's closing words "the thin pass does not rest on the same-picture pairs" are too
+    strong: without the pairs 95 of 100 draws are still above 0, so the pass is just as thin. Read:
+    removing the pairs did not remove the pass.
+  - The "Phase-1 verdicts" entry quotes the sixth-smallest draw as +0.003. The value has no file of
+    record, so the paper and report no longer quote it (Lam, 22 Nov); "95 of 100 draws above 0"
+    stays.
+- 22 Nov, E2f dropped (Lam), before any mark, under the laptop drop order, where it comes first. The
+  pass-1 sheet stays unmarked outside the repository and its key was not opened. The paper and the
+  report say E2f was dropped under that rule. No other output is dropped.
+- 22 Nov, Phase-1 numbers frozen, step 1 (Lam; pulled forward from 27 Nov under the pull-forward
+  rule). Frozen: the 99 tracked files of record in `results/fm_v1/posthoc/`, fingerprinted (SHA256,
+  text with CRLF folded to LF) in `results/fm_v1/phase1_freeze.json`; the unit tests
+  (`tests/test_fm_posthoc.py`) and `fm_posthoc.py freeze-check` compare them on every run. From now on a frozen file changes only through an amendment in that
+  file whose reason names an entry here (the correction of a proven error). Mentor feedback changes
+  wording only. Step 2, by 27 Nov: the table completions above, then the paper's tables and figures
+  join the freeze as an amendment. Phase 2 work may start now; its results stay out of this paper
+  except the labelled next-phase paragraph.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 

@@ -52,13 +52,13 @@ sentence in "What the results do not show" now points to E3.
 
 ## Open (visible TODO markers in the PDF)
 
-Title, abstract, conclusion and the reliability reframing (Lam approves; the conclusion does not
-yet mention E1-E4); E2f contact-sheet marks (Lam, pass 1 then pass 2); "Next phase" still
+Title, abstract, conclusion and the reliability reframing (Lam approves; drafts with E1-E4 exist);
+"Next phase" still
 describes letterbox removal as v2 (E1-C now crops the bands; Lam decides the wording); Zenodo publication time;
 shortcut-learning citation; planted-cue wording; data and code archive locations; AI-use wording;
 ethics, funding, competing interests, acknowledgements; venue; missing bib fields (Sun 2024 title
 and DOI, TVST 2026 authors and title).
 
-Not done here: where the C2 deviation (OCTID size not constant) is recorded (`FM_DEVIATIONS.md`
-does not exist); `pre_rule/README.md` still says its files may not be quoted, while the 19 Nov
+The C2 deviation (OCTID size not constant) is recorded as D1 in `docs/research/FM_DEVIATIONS.md`.
+Not done here: `pre_rule/README.md` still says its files may not be quoted, while the 19 Nov
 default puts the 126/146 count in the supplement.
