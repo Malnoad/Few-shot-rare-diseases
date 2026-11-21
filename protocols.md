@@ -514,6 +514,15 @@ results.
   draws, always fails with six or more, and with exactly five depends on the values (five at −0.1
   and 95 at +0.001 give p05 = −0.004). The rule itself, p05 > 0, is unchanged and is what the code
   applies.
+- 21 Nov, Session 2 done (Lam's stamp `PHASE1 STAMP | 20261121T103537Z | session=2`): NVIDIA
+  A100-SXM4-40GB, commit `0578bce`; completed E1-C for all four arms and E1-L for RETFound and
+  DINOv2 (render from Session 1); missing none, dropped none. One interruption: the first run
+  stopped during E1-L-RETFound attempt 1 at image 500 of 5146, after E1-C for all four arms had been
+  saved with receipts. That was before the worker finished, so nothing from it was saved. Lam reran
+  as the notebook says; the four saved parts were verified against their receipts and reused, and
+  E1-L-RETFound (its one retry) and E1-L-DINOv2 completed. Session logs
+  `phase1-logs-s2-20261121T103537Z.zip` (SHA256 `13d7c43b…`). No E number was computed. The sessions
+  are complete; E1–E4 are scored once, after the integrity checks.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 
