@@ -234,7 +234,7 @@ The files below were computed outside any committed rule and are released under 
 \section*{S-D. Phase-1 controls E1--E4 (post hoc; rules committed 20 November 2026)}
 Methods in Section~\ref{sec:phase1}. Every E output is post hoc, outside the locked protocol, and never replaces a locked result; failed checks are released. Full per-$K$ rows are in the CSVs.
 \havetable{e1_label}\ifgen\else
-\todo{no E1--E4 result exists yet (21 Nov); the tables appear here once \texttt{make\_tables.py} has read the E CSVs.}
+\todo{no E1--E4 result exists yet; the tables appear here once \texttt{make\_tables.py} has read the E CSVs.}
 \fi
 % src: PR@fec827e l.516-525 (rules 1-2), l.603-605 (placement)
 
@@ -255,17 +255,17 @@ Mean over 100 draws (SD); mean over $K$ 1--8: mean (SD; 5th--95th percentile). S
 \havetable{e1c_paired}\ifgen
 \subsubsection*{E1c. Paired differences}
 Each foundation model minus Inception-v3 within a feature set, and each feature set minus the same model's locked features, on the same draws: mean (5th to 95th percentile).
-{\scriptsize\setlength{\tabcolsep}{3pt}\input{tables/e1c_paired.tex}}
+{\tiny\let\scriptsize\tiny\setlength{\tabcolsep}{2pt}\input{tables/e1c_paired.tex}}
 \fi
 \havetable{e1e_matched}\ifgen
 \subsubsection*{E1e. Matched subset}
 \input{tables/e1e_matched_note.tex}
-{\scriptsize\setlength{\tabcolsep}{3pt}\input{tables/e1e_matched.tex}}
+{\tiny\let\scriptsize\tiny\setlength{\tabcolsep}{2pt}\input{tables/e1e_matched.tex}}
 \fi
 \havetable{e1f_holdout}\ifgen
 \subsubsection*{E1f. Hold-out of 22}
 \input{tables/e1f_holdout_note.tex}
-{\scriptsize\setlength{\tabcolsep}{3pt}\input{tables/e1f_holdout.tex}}
+{\tiny\let\scriptsize\tiny\setlength{\tabcolsep}{2pt}\input{tables/e1f_holdout.tex}}
 \fi
 \havetable{e1h_leave_one_out}\ifgen
 \subsubsection*{E1h. Each development query left out}
@@ -295,7 +295,7 @@ Jaccard index of the failure sets and of the false-rare sets, and the share of s
 \havetable{e2d_properties}\ifgen
 \subsubsection*{E2d. Image properties, all sets}
 \input{tables/e2d_properties_note.tex}
-{\scriptsize\setlength{\tabcolsep}{2.5pt}\input{tables/e2d_properties.tex}}
+{\tiny\setlength{\tabcolsep}{2pt}\input{tables/e2d_properties.tex}}
 \fi
 \havetable{e2d_categorical}\ifgen
 \subsubsection*{E2d. OCTDL file mode and container format}
@@ -353,7 +353,7 @@ Label of every E4 row: \input{tables/e4_label.tex}. E4 does not show whether the
 \havetable{e4a_fewshot}\ifgen
 \subsubsection*{E4a. Few-shot source test (main measure)}
 \input{tables/e4a_fewshot_note.tex}
-{\scriptsize\setlength{\tabcolsep}{3pt}\input{tables/e4a_fewshot.tex}}
+{\tiny\let\scriptsize\tiny\setlength{\tabcolsep}{2pt}\input{tables/e4a_fewshot.tex}}
 \fi
 \havetable{e4b_columns}\ifgen
 \subsubsection*{E4b. Per-column separability, no fit}

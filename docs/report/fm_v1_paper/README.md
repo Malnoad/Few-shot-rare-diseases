@@ -44,10 +44,17 @@ qualifier (C9); called-NORMAL counts without intervals in Table II (C5); R1 colu
 (C6); Fig. 3 in the main text, geometry table in the supplement; Fig. 4 on all 250 Kermany normals;
 "changed after submission" restored (C11, source: Yoo et al. article history).
 
+Phase-1 E1-E4 (21 Nov): Results (Section IV-F, part "Phase-1 controls") and Discussion
+("Phase-1 controls") written from the verdicts Lam approved (protocols.md change log, 21 Nov
+"Phase-1 verdicts"); default placement (E1d, E1g, the E2 summary and the OCTDL E2d table in the
+main text, the rest in supplement S-D); a "Phase-1 controls" paragraph in Limitations; the RETFound
+sentence in "What the results do not show" now points to E3.
+
 ## Open (visible TODO markers in the PDF)
 
-Title, abstract, conclusion and the reliability reframing (Lam approves); Phase-1 controls E1-E4
-(Results and Discussion placeholders); Zenodo publication time;
+Title, abstract, conclusion and the reliability reframing (Lam approves; the conclusion does not
+yet mention E1-E4); E2f contact-sheet marks (Lam, pass 1 then pass 2); "Next phase" still
+describes letterbox removal as v2 (E1-C now crops the bands; Lam decides the wording); Zenodo publication time;
 shortcut-learning citation; planted-cue wording; data and code archive locations; AI-use wording;
 ethics, funding, competing interests, acknowledgements; venue; missing bib fields (Sun 2024 title
 and DOI, TVST 2026 authors and title).

@@ -807,7 +807,7 @@ def e1d() -> bool:
         return False
     stat = [r for r in rows if r["line"] != "fixed sentence" and not r["line"].startswith("limitations")]
     L = [r"% cells: n_draws, mean, sd, p05, draws_above_0, verdict as stored; mean and p05 are paired differences (signed).",
-         r"\begin{tabular}{@{}p{4.4cm}lp{2.6cm}ccccl@{}}", r"\toprule",
+         r"\begin{tabular}{@{}p{4.4cm}lp{2.2cm}cccccl@{}}", r"\toprule",
          r"Line & Feature set & Status & $n$ & Mean & SD & p05 & Draws $>0$ & Verdict \\", r"\midrule"]
     for r in stat:
         line = pretty(r["line"].replace(", K mean", ""))
