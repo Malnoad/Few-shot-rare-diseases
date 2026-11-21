@@ -976,6 +976,36 @@ def e1h() -> bool:
     return write_e("e1h_leave_one_out", "E1h_leave_one_out.csv", L, notes + ("." if notes else ""))
 
 
+def e1d_dup() -> bool:
+    """Rule E1-D (21 Nov, after the E1 verdict): MIRAGE minus Inception-v3, mean over K, without P10's matches."""
+    rows = read_e("E1D_duplicate_sensitivity.csv")
+    if rows is None:
+        return False
+    L = [r"\begin{tabular}{@{}llp{4.2cm}lccccc@{}}", r"\toprule",
+         r"Part & Features & Exclusion & Excluded & $n$ & Mean & SD & p05 & Draws $>0$ \\", r"\midrule"]
+    for r in rows:
+        if r["phase"] not in ("development", "hold-out") or r["k"] != "mean_k1_2_4_8":
+            continue
+        excluded = r["excluded"].replace(" query-episode exclusions per arm", " query-episodes").replace(
+            " hold-out images excluded", " images")
+        exclusion = "none" if r["exclusion"] == "locked (no exclusion)" else r["exclusion"]
+        dev = r["phase"] == "development"  # the hold-out is read for direction only: its spread is not printed
+        L.append(" & ".join([tex(r["phase"]), tex(r["feature_set"]), tex(exclusion), tex(excluded),
+                             val(r["n_draws"]), f(r["mean"], sign=True), f(r["sd"]) if dev else "--",
+                             f(r["p05"], 4, sign=True) if dev else "--",
+                             val(r["draws_above_0"]) if dev else "--"]) + r" \\")
+    L += [r"\bottomrule", r"\end{tabular}"]
+    check = next((r for r in rows if r["phase"] == "check"), None)
+    sentence = next((r for r in rows if r["phase"] == "sentence"), None)
+    note = ""
+    if check:
+        note += (f"Check: the same code on the locked features reproduces the locked P10 rows "
+                 f"(largest difference {val(check['mean'])}; {tex(check['status'])}). ")
+    if sentence:
+        note += f"Fixed sentence: ``{tex(sentence['note'])}''"
+    return write_e("e1d_duplicates", "E1D_duplicate_sensitivity.csv", L, note)
+
+
 # --- E2 ---------------------------------------------------------------------------------------
 
 def e2_summary() -> bool:
@@ -1378,7 +1408,7 @@ def e4d() -> bool:
 
 
 E_GENERATORS = (e1d, e1g, e1a, lambda: e_kmean_table("e1b_development", "E1b_development.csv", "model", False),
-                lambda: e_kmean_table("e1c_paired", "E1c_paired.csv", "comparison", True), e1e, e1f, e1h,
+                lambda: e_kmean_table("e1c_paired", "E1c_paired.csv", "comparison", True), e1e, e1f, e1h, e1d_dup,
                 e2_summary, e2a_full, e2b_pairs, e2c, e2d_main, e2d_all, e2d_cat, e2e, e2f,
                 e3_criteria_t, e3_dev, e3_hold, e3_nine, e3_checks_t, e4a, e4b, e4c, e4d)
 

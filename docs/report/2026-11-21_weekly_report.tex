@@ -717,6 +717,9 @@ resolution is evened out (E1-L p05 = 0.023), and also when the image is only cro
 \begin{itemize}
   \item \emph{Only just.} The 5th percentile is 0.0025: five of the 100 draws are at or below 0, and a sixth would
         have failed the rule.
+  \item \emph{Not because of the copied pictures.} The 14 same-picture pairs (P10) sit inside these episodes, so I
+        added one check after the verdict (rule E1-D, pushed before its numbers, cannot change the verdict):
+        without the pairs, the 5th percentile is 0.0062 (mean 0.064). An independent recompute matched it.
   \item \emph{The gap halved because Inception-v3 rose} (0.534 to 0.586), while MIRAGE stayed level (0.650 to
         0.649). Inception-v3's decoder also changed, so its rise is not purely framing.
   \item \emph{Not shown everywhere:} at $K=1$ and 2 the 5th percentile is below 0 ($-0.068$, $-0.034$), and on the
@@ -732,7 +735,9 @@ control''; never that size ``explains'' it, and never ``robust to framing''.
 % src: PH E1d_success.csv (fixed sentence, as in E1_comparison.md "Sentence"; E1-M p05 0.002519, 95 of 100 above 0); sixth
 % src: smallest draw +0.003 (PR CL "Phase-1 verdicts"); E1b_development.csv (MIRAGE 0.650/0.649, Inception 0.534/0.586);
 % src: E1a_checks.csv (decoder change); E1c_paired.csv k=1, 2 (p05 -0.0677, -0.0342); E1e_matched.csv (92, p05 -0.012);
-% src: limitations verbatim from the E1 row, PR l.594 ("Limitations stated with every E1 result");
+% src: limitations verbatim from the E1 row, PR l.594 ("Limitations stated with every E1 result"); E1-D: PH
+% src: E1D_duplicate_sensitivity.csv (sentence row; E1-M p05 0.006200, mean 0.064257); rule b6d3f26, code 5e52ac6;
+% src: PR CL "E1-D done" (independent recompute matched);
 % src: E1f_holdout.csv (all "positive"; E1-M 0.096); wording PR l.594 (E1 "Not allowed")
 \end{topic}
 

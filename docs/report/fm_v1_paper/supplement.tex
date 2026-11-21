@@ -272,6 +272,12 @@ Each foundation model minus Inception-v3 within a feature set, and each feature 
 Smallest and largest MIRAGE minus Inception-v3 mean over $K$ 1--8 with one development query left out (as P1). \input{tables/e1h_leave_one_out_note.tex}
 \begin{center}\footnotesize\input{tables/e1h_leave_one_out.tex}\end{center}
 \fi
+\havetable{e1d_duplicates}\ifgen
+\subsubsection*{E1-D. E1-M without the same-picture pairs (rule committed 21 November 2026, after the E1 verdict)}
+Post hoc, rule E1-D: P10's sensitivity (Lam's blind marks) applied unchanged to the E1-M features of MIRAGE and Inception-v3. MIRAGE minus Inception-v3, mean over $K$ 1--8: development over 100 draws; hold-out for direction only. Descriptive; it cannot change the E1 verdict. \input{tables/e1d_duplicates_note.tex}
+\begin{center}\footnotesize\input{tables/e1d_duplicates.tex}\end{center}
+\fi
+% src: tables/e1d_duplicates.tex from PH E1D_duplicate_sensitivity.csv; rule PR section 8 change log "21 Nov, rule E1-D" (b6d3f26)
 
 \havetable{e2_label}\ifgen
 \subsection*{E2. External error analysis}

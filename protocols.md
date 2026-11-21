@@ -619,6 +619,14 @@ results.
   **Output:** `results/fm_v1/posthoc/E1D_duplicate_sensitivity.csv`. **Placement:** one sentence
   beside E1 in the paper's Results and Limitations, the table in supplement S-D. No other new
   analysis is added.
+- 21 Nov, E1-D done (code `5e52ac6`, run once; `E1D_duplicate_sensitivity.csv`). Check: the locked
+  rows reproduce `P10_sensitivity.csv` exactly (largest difference 0.0). Fixed sentence: "Without the
+  same-picture pairs, MIRAGE's development lead over Inception-v3 under E1-M has mean 0.064 and 5th
+  percentile 0.0062 (with them: 0.063 and 0.0025)." (1,196 query-episode exclusions per arm; 95 of
+  100 draws above 0.) Counting "unsure" too: mean 0.0652, p05 0.0090. Hold-out without the four
+  copied images, E1-M: mean paired difference +0.069 (with them +0.096), direction only. The E1
+  verdict is unchanged, as the rule fixes; the thin pass does not rest on the same-picture pairs.
+  An independent recompute (GPT-6.2 Sol, own scoring code) matched every E1-D value and count exactly.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 
