@@ -586,6 +586,39 @@ results.
   - Generated pages kept as written (write-once): `E3_criteria.csv` prints "position changed or not
     shown for R-norm05"; `E1_comparison.md`'s closing line omits three E1 "Not allowed" items
     (they still apply); `E1f_holdout.csv` prints p05/p95 for a direction-only set (not read).
+- 21 Nov, verification after the verdicts (no rule, no new number): scoring rerun into a scratch
+  folder gave all 24 E CSVs byte-identical; a second independent recompute (GPT-6.2 Sol) matched all
+  217 further values (E1b, E1e, E1f, E1g, E1h, E2a–c, E4a); a visual sheet of the 146 rare E1-M
+  inputs (outside the repository) and `render.csv` confirm the content box and centre square (all
+  5,927 squares follow the rule); an evidence audit (Gemini 4 Neon, 74 claims) found wording and
+  source-pointer errors, fixed in `3f62b9a`.
+- 21 Nov, rule E1-D (Lam's decision after the E1 verdict; written before any E1-D number). Why: E1
+  passed with p05 0.0025, and P10 showed that removing the same-picture pairs moved the locked p05
+  by 0.005. Lam lifts the "no new analysis rule after the Phase-1 push" gate for this one check only.
+  **What:** P10 step 3's sensitivity (rule `dcbb323`, code `f6fdafd`) applied unchanged to the E1-M
+  features of MIRAGE and Inception-v3: the same review key and Lam's marks (`P10_review_marks.csv`,
+  SHA256 `15a9606f…`); the same matched pairs (same picture or same case; then also counting
+  "unsure"; synthetic copies never count); the same exclusions (development: each query that shares a
+  match with a support of its episode is dropped, and a class left with no query drops out of that
+  draw's macro recall; hold-out: each hold-out image matched to a development image is dropped); the
+  locked development and reporting episodes; cosine prototypes on the E1-M features (render
+  `f28e8cb0…`). **Statistic:** per draw, the mean over K = 1, 2, 4, 8 of MIRAGE E1-M minus
+  Inception-v3 E1-M development macro recall; n, mean, SD, p05 (`numpy.percentile`, linear), p95 and
+  draws above 0; hold-out mean paired difference per K and on the K mean, direction only, K = 16
+  shown and not read. **Check:** the same code on the locked features must reproduce the locked
+  `P10_sensitivity.csv` rows (MIRAGE minus Inception mean_k1_2_4_8: 0.112920, p05 0.064039, and the
+  "also counting unsure" row) within 1e-12; otherwise E1-D is "not interpreted". **Fixed
+  sentences:** if p05 > 0: "Without the same-picture pairs, MIRAGE's development lead over
+  Inception-v3 under E1-M has mean x and 5th percentile y (with them: 0.063 and 0.0025)." If p05 ≤ 0:
+  "Without the same-picture pairs, the 5th percentile of MIRAGE minus Inception-v3 under E1-M is y
+  (with them: 0.0025), so the E1 pass depends on episodes that contain same-picture pairs; the E1
+  verdict, fixed on the locked episodes, stands." **Reading:** descriptive only; it cannot change
+  the E1 verdict (rule 5; "never re-specified"). **Label:** "post hoc, rule E1-D timestamped by
+  commit <sha> (21 Nov 2026), written after the E1 verdict; descriptive, cannot change the E1
+  verdict; outside the locked protocol; never replaces a locked result; computed <date>".
+  **Output:** `results/fm_v1/posthoc/E1D_duplicate_sensitivity.csv`. **Placement:** one sentence
+  beside E1 in the paper's Results and Limitations, the table in supplement S-D. No other new
+  analysis is added.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 
