@@ -1,9 +1,10 @@
 """Figures for the 21 November 2026 weekly report (frozen-encoder study).
 
-Reads only post hoc CSVs that already exist in results/fm_v1/posthoc/ (R2, G1, P10). No image,
-feature or model output is opened and no score is computed here: the script reads numbers and
-plots them. Two figures are diagrams with no data (the B1 label tiers and the Phase-1 plan). No
-OCT picture is ever drawn. Writes PDF + PNG into fm_weekly_figs_1121/ next to this script.
+Reads only post hoc CSVs that already exist in results/fm_v1/posthoc/ (R2, G1, P10, and the
+Phase-1 E1b, E1c, E1g and E3 nine-way tables scored once on 21 Nov). No image, feature or model
+output is opened and no score is computed here: the script reads numbers and plots them. Two
+figures are diagrams with no data (the B1 label tiers and the Phase-1 plan). No OCT picture is
+ever drawn. Writes PDF + PNG into fm_weekly_figs_1121/ next to this script.
 
     D:/Few-shot/.venv/Scripts/python.exe -I docs/report/weekly_figures_1121.py
 """
@@ -83,6 +84,34 @@ def p10_review_counts(key: list[dict], marks: list[dict]) -> Counter:
     """(kind, mark) -> number of the 55 blind-review items; kind is pair, synthetic or decoy."""
     kind = {r["item"]: r["kind"] for r in key}
     return Counter((kind[r["item"]], r["mark"]) for r in marks)
+
+
+def e1_paired(rows: list[dict]) -> dict[str, tuple[float, float, float]]:
+    """Feature set -> MIRAGE minus Inception-v3, mean over K = 1-8: (mean, p05, p95) over the 100 draws (E1c)."""
+    return {r["feature_set"]: (float(r["mean"]), float(r["p05"]), float(r["p95"])) for r in rows
+            if r["comparison"] == "MIRAGE minus Inception" and r["k"] == "mean_k1_2_4_8"}
+
+
+def e1_kmean(rows: list[dict]) -> dict[tuple[str, str], float]:
+    """(model, feature set) -> development macro recall, mean over K = 1-8 and the 100 draws (E1b)."""
+    return {(r["model"], r["feature_set"]): float(r["mean"]) for r in rows
+            if r["model"] in ARMS and r["k"] == "mean_k1_2_4_8"}
+
+
+def false_rare_rows(e1g: list[dict], e3: list[dict], source: str) -> dict:
+    """Per model: locked and E1-M (rate, count, n, locked interval) on one source's normals, and E3 variant rates.
+
+    M-pad (G1, known before the E3 rule and not counted in criterion 3) is left out of the variants."""
+    query = f"{source} NORMAL"
+    out = {}
+    for r in e1g:
+        if r["model"] in ARMS and r["query_set"] == query and r["feature_set"] in ("locked", "E1-M"):
+            out.setdefault(r["model"], {})[r["feature_set"]] = (
+                float(r["rate_value"]), int(r["called_any_rare"]), int(r["n"]), float(r["ci95_low"]), float(r["ci95_high"]))
+    for r in e3:
+        if r["query_set"] == query and r["variant"] not in ("locked", "M-pad"):
+            out[r["arm"]].setdefault("E3", []).append(float(r["rate_value"]))
+    return out
 
 
 # ---- figures -------------------------------------------------------------------------------------
@@ -252,6 +281,86 @@ def p10_audit(paired: dict, review: Counter) -> None:
     save(fig, "fig4_p10_audit")
 
 
+def e1_result(paired: dict, kmean: dict) -> None:
+    """Left: the E1 success statistic per feature set. Right: each model's own score, locked to E1-M."""
+    fig, (left, right) = plt.subplots(1, 2, figsize=(8.0, 2.4), gridspec_kw={"width_ratios": (1.25, 1.0)})
+    rows = (("locked", "Locked inputs", LOCKED, 2.0), ("E1-M", "E1-M, main control", CHANGED, 2.8),
+            ("E1-L", "E1-L, resolution floor", "#f4b183", 2.0), ("E1-C", "E1-C, crop only", "#f4b183", 2.0))
+    for y, (key, label, color, width) in enumerate(rows):
+        mean, lo, hi = paired[key]
+        left.plot([lo, hi], [y, y], color=color, lw=width, solid_capstyle="butt")
+        left.plot(mean, y, "o", color=color, ms=6.5, mec="white", mew=0.9)
+        low = f"{lo:+.4f}" if abs(lo) < 0.01 else f"{lo:+.3f}"
+        left.text(hi + 0.008, y, f"mean {mean:+.3f}, p05 {low}" + ("  (verdict)" if key == "E1-M" else ""),
+                  va="center", fontsize=7.6, color=INK, weight="bold" if key == "E1-M" else "normal")
+    left.axvline(0, color=INK, lw=0.9)
+    left.set_yticks(range(len(rows)), [r[1] for r in rows])
+    left.invert_yaxis()
+    left.set_xlim(-0.03, 0.47)
+    left.set_xlabel("MIRAGE minus Inception-v3, mean over K")
+    left.set_title("Paired difference: mean and 5th-95th over 100 draws", fontsize=9, color=INK, loc="left")
+    left.grid(axis="x", color=GRID, lw=0.6)
+    left.spines["left"].set_visible(False)
+    left.tick_params(axis="y", length=0)
+
+    order = ("MIRAGE", "Inception", "DINOv2", "RETFound")
+    for y, arm in enumerate(order):
+        a, b = kmean[(arm, "locked")], kmean[(arm, "E1-M")]
+        if abs(b - a) > 0.006:
+            right.annotate("", xy=(b, y), xytext=(a, y),
+                           arrowprops=dict(arrowstyle="-|>", color=COLOR[arm], lw=1.5, mutation_scale=9, shrinkA=4, shrinkB=4))
+        right.plot(a, y, MARKER[arm], color="white", mec=COLOR[arm], mew=1.5, ms=6.5, ls="none")
+        right.plot(b, y, MARKER[arm], color=COLOR[arm], mec="white", mew=0.8, ms=7, ls="none")
+        right.text(max(a, b) + 0.024, y, f"{a:.3f} → {b:.3f}", va="center", fontsize=7.6, color=INK)
+    right.set_yticks(range(len(order)), [LABEL[a] for a in order])
+    right.invert_yaxis()
+    right.set_xlim(0.36, 0.80)
+    right.set_xlabel("Development macro recall, mean over K")
+    right.set_title("Each model: locked (hollow) → E1-M (filled)", fontsize=9, color=INK, loc="left")
+    right.grid(axis="x", color=GRID, lw=0.6)
+    right.spines["left"].set_visible(False)
+    right.tick_params(axis="y", length=0)
+    fig.tight_layout(w_pad=3.0)
+    save(fig, "fig6_e1_result")
+
+
+def false_rare(e1g: list[dict], e3: list[dict]) -> None:
+    """Share of external normal scans called rare: locked interval, locked, E1-M and the E3 variants."""
+    from matplotlib.lines import Line2D
+    fig, axes = plt.subplots(1, 2, figsize=(7.6, 2.5), sharey=True)
+    for ax, source in zip(axes, ("OCTID", "OCTDL")):
+        data = false_rare_rows(e1g, e3, source)
+        n = data["MIRAGE"]["locked"][2]
+        for y, arm in enumerate(ARMS):
+            locked, controlled = data[arm]["locked"], data[arm]["E1-M"]
+            ax.add_patch(Rectangle((locked[3], y - 0.24), locked[4] - locked[3], 0.48, fc="#cde2fb", ec="none", zorder=1))
+            for rate in data[arm].get("E3", []):
+                ax.plot(rate, y, "|", color=MUTED, ms=9, mew=1.3, zorder=2)
+            ax.plot(locked[0], y, "o", color=LOCKED, ms=6.5, mec="white", mew=0.9, zorder=3)
+            ax.plot(controlled[0], y, "D", color=CHANGED, ms=6, mec="white", mew=0.9, zorder=4)
+            ax.text(1.03, y, f"{locked[1]} → {controlled[1]}", transform=ax.get_yaxis_transform(),
+                    va="center", fontsize=7.6, color=INK)
+        ax.set_xlim(-0.02, 1.0)
+        ax.set_xticks([0, 0.25, 0.5, 0.75, 1.0], ["0", "25%", "50%", "75%", "100%"])
+        ax.grid(axis="x", color=GRID, lw=0.6)
+        ax.set_axisbelow(True)
+        ax.set_title(f"{source} normal scans ({n}): share called rare", fontsize=9, color=INK, loc="left")
+        ax.spines["left"].set_visible(False)
+        ax.tick_params(axis="y", length=0)
+    axes[0].set_yticks(range(len(ARMS)), [LABEL[a] for a in ARMS])
+    axes[0].invert_yaxis()
+    handles = [Rectangle((0, 0), 1, 1, fc="#cde2fb", ec="none"),
+               Line2D([], [], marker="o", color=LOCKED, ls="none", ms=6.5, mec="white"),
+               Line2D([], [], marker="D", color=CHANGED, ls="none", ms=6, mec="white"),
+               Line2D([], [], marker="|", color=MUTED, ls="none", ms=9, mew=1.3)]
+    names = ["locked 95% interval", "locked", "E1-M (size and framing control)",
+             "E3 one-step variants (MIRAGE 4, RETFound 6)"]
+    fig.subplots_adjust(left=0.12, right=0.93, top=0.86, bottom=0.30, wspace=0.22)
+    axes[0].legend(handles, names, frameon=False, fontsize=7.6, ncol=4, loc="upper left", bbox_to_anchor=(0, -0.16),
+                   handlelength=1.2, columnspacing=1.2)
+    save(fig, "fig7_false_rare")
+
+
 def phase1_plan() -> None:
     """E1-E4: which request each answers, how it is read, and the dates. A diagram, no data."""
     fig, ax = plt.subplots(figsize=(6.4, 3.6))
@@ -283,7 +392,7 @@ def phase1_plan() -> None:
     ax.text(0, 9.0, "Dates (latest dates)", fontsize=8, weight="bold", color=INK)
     ax.text(100, 9.0, "filled = done by 21 Nov", ha="right", fontsize=7, color=MUTED)
     steps = (("20 Nov", "rules pushed", True), ("21 Nov", "code, notebook,\nStep 0 passed", True),
-             ("21-23 Nov", "Colab Sessions 1\n(running) and 2", False), ("24-26 Nov", "E1-E4 scored\nonce", False),
+             ("21 Nov", "Colab Sessions\n1 and 2 done", True), ("21 Nov", "E1-E4 scored\nonce", True),
              ("27 Nov", "all numbers\nfrozen", False), ("3 Dec", "delivery", False))
     xs = [7 + i * 17.2 for i in range(len(steps))]
     ax.plot([xs[0], xs[-1]], [3.2, 3.2], color=MUTED, lw=1.0, zorder=1)
@@ -302,6 +411,8 @@ def main() -> None:
     p10_audit(p10_paired(read("P10_sensitivity.csv")),
               p10_review_counts(read("P10_review_key.csv"), read("P10_review_marks.csv")))
     phase1_plan()
+    e1_result(e1_paired(read("E1c_paired.csv")), e1_kmean(read("E1b_development.csv")))
+    false_rare(read("E1g_nine_way.csv"), read("E3_nine_way.csv"))
 
 
 if __name__ == "__main__":

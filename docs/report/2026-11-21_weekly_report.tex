@@ -1,7 +1,10 @@
 % Weekly report to the mentor, 21 November 2026: everything since 15 November (the 14 Nov report).
 % Purpose: Lam (author; they/them) keeps track of the project and updates the mentor. Post hoc results
-% only, each labelled and placed beside the locked numbers of 14 Nov. No E1-E4 number exists on 21 Nov
-% (Phase-1 Colab Session 1 is running); none is written or implied here.
+% only, each labelled and placed beside the locked numbers of 14 Nov. Updated on the evening of 21 Nov
+% with the Phase-1 results (E1-E4 scored once after Colab Sessions 1 and 2; verdicts approved by Lam),
+% for the 23 Nov review. The Phase-1 results section cites files at commit 527676c (on origin) by
+% section and row name: PR CL = protocols.md section 8 change log, 21 Nov entries ("Session 2 done",
+% "E1-E4 scored once", "Phase-1 verdicts"); PH E* = results/fm_v1/posthoc/E*.csv.
 % Build: pdflatex 2026-11-21_weekly_report.tex (twice), or tectonic. Needs the folder fm_weekly_figs_1121/
 % beside this file (made by weekly_figures_1121.py, which only reads post hoc CSVs in results/fm_v1/posthoc/
 % and computes no score; two figures are diagrams with no data). Standard packages only (same preamble as
@@ -51,7 +54,7 @@
 \newenvironment{topic}[2]{\subsection{#1}\label{#2}\begin{parts}}{\end{parts}}
 
 \title{\textbf{Frozen foundation-model encoders for few-shot recognition of rare retinal diseases on OCT}\\[2pt]
-  \large Weekly report, 15--21 November 2026: your feedback, the post hoc results and the Phase-1 controls}
+  \large Weekly report, 15--21 November 2026: your feedback, the post hoc results and the Phase-1 results}
 \author{Doan Tung Lam}
 \date{21 November 2026}
 
@@ -80,16 +83,26 @@ scored only after the model choice was sealed.
         scans to rare classes, so external results depend on input geometry.
   \item \textbf{Novelty and data.} I narrowed the novelty claim after finding Sun et al.\ \cite{sun2024}, and
         recorded that the public release (146 images) is not the paper's set (119).
-  \item \textbf{Your three controls.} The rules for E1--E4 were pushed on 20 November, before any E number;
-        Session~1 is running on Colab, and no E result exists yet.
-  \item \textbf{Paper.} A first draft was assembled on 20 November, and delivery is 3 December.
+  \item \textbf{Your three controls.} The rules for E1--E4 were pushed on 20 November, before any E number. Both
+        Colab sessions finished on 21 November, every check passed, and I scored E1--E4 once
+        (Section~\ref{sec:p1results}).
+  \item \textbf{Your critical question.} MIRAGE keeps its development lead over Inception-v3 under the size and
+        framing control, but at about half its size (0.063 against 0.116) and only just: the rule passes with
+        no draw to spare.
+  \item \textbf{External errors and preprocessing.} How many external normal scans are called rare changes a
+        lot with the input recipe (MIRAGE on OCTDL: 30 to 261 of 332 under the control). MIRAGE stays ahead
+        across its preprocessing variants; RETFound's last place depends on one normalisation constant.
+  \item \textbf{Paper.} The E1--E4 results are in the draft, with a new abstract and conclusion for my
+        approval; delivery is 3 December.
 \end{itemize}
 % src: locked numbers unchanged: PR l.229-230 (rule 2), PR l.529-532; feedback 1: ML l.10-15, PR l.353-358, l.400-402;
 % src: feedback 2: PR l.460-466; post hoc list: PR l.242-259; 14 pairs, 4 of 22, "less than 0.005": PR l.485-496;
 % src: PH P10_sensitivity.csv lines 36, 110 (0.115769 -> 0.112920); G1: PR l.411-419; Sun 2024: PR l.31-34, l.429-434;
 % src: 146 vs 119: PR l.59-63; E rules pushed 4b4e883 (GIT 20 Nov 22:10), PR l.477-484; code 0578bce, notebook a2c5da2
 % src: (GIT 21 Nov 03:13, 03:26); Step 0, Session 1: PR l.499-503; paper: PAPR l.3-6 (assembled 20 Nov; aa722b9, GIT 20 Nov
-% src: 21:21); delivery 3 Dec: PR l.189-191
+% src: 21:21); delivery 3 Dec: PR l.189-191. Phase-1 bullets: PR CL "Session 2 done", "E1-E4 scored once", "Phase-1 verdicts";
+% src: PH E1d_success.csv (E1-M 0.063136, locked 0.115770, p05 0.002519); E1g_nine_way.csv (MIRAGE OCTDL NORMAL 30 -> 261);
+% src: E3_criteria.csv (1), (2); E3_development.csv (RETFound R-norm05 0.578); paper d837f4d and the abstract commit
 
 % ---------------------------------------------------------------------------------------
 \section{How to read the numbers}
@@ -621,21 +634,157 @@ below 0.60 ``hardly''. No claim that the models use the source in the rare task.
 
 \smallskip
 \noindent
-\emph{Status on 21 November:} Session~1 is running E1-M, E1-L for MIRAGE and Inception-v3, and all of E3.
-Session~2 runs the rest of E1. E2 and E4 run on the laptop after Session~2.
+\emph{Status on 21 November (evening):} Sessions~1 and~2 are done, E2 and E4 ran on the laptop, and E1--E4 were
+scored once (Section~\ref{sec:p1results}).
 % src: E1: PR l.594 (E1-M, E1-L, E1-C, references, success rule, fixed sentences, hold-out); E2: PR l.595 (seven common
 % src: properties; Lam marks the sheet: PR l.480-481); E3: PR l.596 (variants, criteria 1-3, scope); E4: PR l.597 (sources and
 % src: sizes, main measure, readings, not allowed); M1-M3: PR l.514-519; sessions: PR l.599-603; status: PR l.499-503, l.639
 
-\item[Result so far.] Rules \hash{4b4e883} (20 Nov 22:10); code \hash{0578bce} (21 Nov 03:13); notebook
+\item[Result.] Rules \hash{4b4e883} (20 Nov 22:10); code \hash{0578bce} (21 Nov 03:13); notebook
 \file{colab\_fm\_control.ipynb} pinned to it (\hash{a2c5da2}, 03:26), whose laptop dry run reproduces R2. On 21
-November Step~0 passed: MIRAGE, RETFound and DINOv2 were reachable, after a token-access fix. Session~1 started
-(planned about 3~h); Session~2 (about 1.5~h) follows, then E1--E4 are scored once. No E number exists yet.
+November Step~0 passed after a token-access fix, both sessions ran, and E1--E4 were scored once. The results are
+in the next section.
 % src: GIT (commit times +0700); PR l.639 (notebook pinned, dry run reproduces R2); PR l.499-503 (Step 0, HF_TOKEN fix,
-% src: Session 1, Session 2 commitment; recorded in fec827e); PR l.601-603 (Session 1 about 3 h, Session 2 about 1.5 h)
+% src: Session 1, Session 2 commitment; recorded in fec827e); PR CL "Session 1 done", "Session 2 done", "E1-E4 scored once"
 \item[What I need from you.] Agreement on where the E results go in the paper (Question~3), and a possible second
 rater for the E2 contact sheet (Question~5).
 \end{parts}
+
+% ---------------------------------------------------------------------------------------
+\section{Phase-1 results (scored once on 21 November; all post hoc)}
+\label{sec:p1results}
+
+Every number here carries the label ``post hoc, Phase-1 rule timestamped by commit \hash{4b4e883} (20 Nov 2026),
+computed 21 Nov 2026; outside the locked protocol; never replaces a locked result''. Only E1-M gives a verdict.
+% src: label of every row in PH E*.csv (column posthoc); PR l.544-545 (rule 5, one verdict)
+
+\begin{topic}{How I checked the Colab results before scoring}{sec:p1checks}
+\item[The problem.] A score is only as good as its inputs. Before reading any E number I had to know that the
+Colab outputs were complete, unchanged on the way to my laptop, and produced by the same models as the locked study.
+\item[What I did.] \mbox{}
+\begin{itemize}
+  \item \emph{Complete:} Session~1 finished 19 of 19 parts and Session~2 6 of 6, each on its first attempt;
+        nothing missing or dropped.
+  \item \emph{Unchanged:} all 28 archives match their SHA-256 receipts after the copy to the laptop.
+  \item \emph{Same models:} unchanged images through the locked path gave the locked features within $10^{-4}$
+        for every new feature set (worst $2.8\times10^{-6}$); MIRAGE and RETFound also replayed their locked
+        recipe on all 5,927 images ($3\times10^{-7}$ and $2\times10^{-7}$).
+  \item \emph{Right inputs:} the two Colab renders are identical, and my laptop re-render matches all 5,146 main
+        images exactly; each E3 variant changed the features, and the crop, squash and pad variants left square
+        images unchanged.
+  \item \emph{Rules untouched:} the rule text at the 20 November commit equals the current text (hash check).
+  \item \emph{Scored once,} and the outputs committed (\hash{9fe1c11}) before anyone read them. Then a
+        cross-check: a second model recomputed the key numbers with separate code (exact match), one applied the
+        fixed rules, one read as an outside reviewer, and one attacked my draft wording (one number and five
+        over-claims corrected before I approved).
+\end{itemize}
+\item[Result.] Every check passed. Three things are disclosed rather than hidden: the Session~2 checks for MIRAGE
+and RETFound used 20 images each (their full check is the Session~1 replay); the Colab Python environment differs
+from the lock for the three foundation models (recorded; every check still matched); Inception-v3 reads the
+rendered PNG files through a different decoder from its locked inputs.
+% src: PR CL "Session 1 done", "Session 2 done" (every worker on its first attempt; 28 archives match their receipts),
+% src: "E1-E4 scored once" (controls, E3-ref 2.99e-7 and 1.91e-7, renders, laptop re-render 5,146, rule text hash
+% src: "same"); PH E1a_checks.csv (worst control 2.78e-6; decoder change 0.020-0.046); PH E3_checks.csv; GIT 9fe1c11;
+% src: PR CL "Phase-1 verdicts" (independent recompute equal; one number error and five over-claims corrected; disclosures)
+\end{topic}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fm_weekly_figs_1121/fig6_e1_result.pdf}
+  \caption{E1, your critical experiment. \emph{Left:} MIRAGE minus Inception-v3 on the same draws (mean over $K$;
+  bar = 5th to 95th percentile over 100 draws). The verdict uses E1-M only: its 5th percentile is above 0, so MIRAGE
+  keeps its lead, by a hair. \emph{Right:} each model's own score, locked (hollow) and under E1-M (filled): MIRAGE
+  stays level, Inception-v3 rises.}
+  \label{fig:e1}
+\end{figure}
+% src: FIG fig6_e1_result, plotted from PH E1c_paired.csv ("MIRAGE minus Inception", mean_k1_2_4_8: locked 0.115770,
+% src: p05 0.068949; E1-M 0.063136, p05 0.002519; E1-L 0.076742, p05 0.022859; E1-C 0.067933, p05 0.016706) and
+% src: PH E1b_development.csv (mean_k1_2_4_8 rows of the four models)
+
+\begin{topic}{E1: does MIRAGE keep its advantage once size and framing are controlled?}{sec:e1}
+\item[The problem.] Your most critical question. The rare images are letterboxed and differ in size by class, so
+MIRAGE's lead of 0.116 over Inception-v3 could rest partly on image size and framing.
+\item[What I did.] E1-M crops each scan to its content, takes the centre square and resizes it to
+$256\times256$; all four models read that same image. The rule, fixed on 20 November: MIRAGE keeps its advantage
+if the 5th percentile of the paired difference over the 100 draws is above 0.
+\item[Result.] The sentence fixed in advance, filled in: \emph{``Under the size and framing control, MIRAGE keeps a
+positive development advantage over Inception-v3 (mean 0.063, locked 0.116; p05 0.003), and also when effective
+resolution is evened out (E1-L p05 = 0.023), and also when the image is only cropped to its content box (E1-C p05 =
+0.017); it is above the pixel-only reference (mean 0.290).''} (Fig.~\ref{fig:e1}). What sits beside it:
+\begin{itemize}
+  \item \emph{Only just.} The 5th percentile is 0.0025: five of the 100 draws are at or below 0, and a sixth would
+        have failed the rule.
+  \item \emph{The gap halved because Inception-v3 rose} (0.534 to 0.586), while MIRAGE stayed level (0.650 to
+        0.649). Inception-v3's decoder also changed, so its rise is not purely framing.
+  \item \emph{Not shown everywhere:} at $K=1$ and 2 the 5th percentile is below 0 ($-0.068$, $-0.034$), and on the
+        92 queries of matched content size too ($-0.012$). These describe; they cannot change the verdict.
+  \item \emph{Hold-out (direction only):} MIRAGE is ahead at $K=1$, 2, 4 and 8 in all four E1 feature sets (E1-M:
+        $+0.096$ on the mean over $K$).
+\end{itemize}
+Allowed wording: the advantage ``survives this control''; never that size ``explains'' it, and never ``robust to
+framing''.
+% src: PH E1d_success.csv (fixed sentence, as in E1_comparison.md "Sentence"; E1-M p05 0.002519, 95 of 100 above 0); sixth
+% src: smallest draw +0.003 (PR CL "Phase-1 verdicts"); E1b_development.csv (MIRAGE 0.650/0.649, Inception 0.534/0.586);
+% src: E1a_checks.csv (decoder change); E1c_paired.csv k=1, 2 (p05 -0.0677, -0.0341); E1e_matched.csv (92, p05 -0.012);
+% src: E1f_holdout.csv (all "positive"; E1-M 0.096); wording PR l.594 (E1 "Not allowed")
+\end{topic}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fm_weekly_figs_1121/fig7_false_rare.pdf}
+  \caption{External normal scans called a rare disease, per model. Blue dot and band: locked rate and its 95\%
+  interval; orange diamond: under the E1-M control; grey ticks: the one-step E3 variants (MIRAGE and RETFound only;
+  G1's padding left out). Numbers on the right: locked $\rightarrow$ E1-M counts. No cause is given for any rate.}
+  \label{fig:falserare}
+\end{figure}
+% src: FIG fig7_false_rare, plotted from PH E1g_nine_way.csv (OCTID NORMAL and OCTDL NORMAL rows, locked and E1-M: rate,
+% src: called_any_rare, ci95_low, ci95_high) and PH E3_nine_way.csv (variants other than locked and M-pad)
+
+\begin{topic}{E2 and E3: external errors and preprocessing}{sec:e2e3}
+\item[The problem.] You asked why normal scans from OCTID and OCTDL are called diseases, and whether the
+conclusions depend on how each model's input is prepared.
+\item[What I did.] E2 follows every external normal scan through all four models, with the locked and the E1-M
+features. E3 changes one step of the MIRAGE or RETFound recipe at a time (ten variants) and keeps the other models
+locked.
+\item[Result.] \mbox{}
+\begin{itemize}
+  \item \emph{MIRAGE's lead holds across its four preprocessing variants} (5th percentile against locked
+        Inception-v3 between 0.043 and 0.075): ``kept within this grid''.
+  \item \emph{RETFound's place depends on one constant.} With mean and SD 0.5 instead of ImageNet's, its score
+        rises from 0.406 to 0.578 and it is no longer shown below Inception-v3. So ``RETFound scored lowest'' holds
+        for its locked recipe only. The other five RETFound variants met both conditions (below Inception-v3,
+        below MIRAGE).
+  \item \emph{The external false-rare counts move a lot with the recipe} (Fig.~\ref{fig:falserare}). Under E1-M,
+        MIRAGE calls 261 of 332 OCTDL normal scans rare (30 locked) but none of the 206 OCTID normals; in E3, 10 of
+        20 counts leave their locked interval, in both directions, up to 329 of 332 (MIRAGE, centre crop) and 332
+        of 332 (RETFound, black padding).
+  \item \emph{Where the failures are:} with locked features, OCTID normals fail in 4 to 24 of 206 per model and no
+        scan fails in three or more models; OCTDL normals fail in 187 to 306 of 332, and 98 fail in all four. Under
+        E1-M, OCTDL failures move from common disease to rare classes for MIRAGE, RETFound and Inception-v3, and
+        the other way for DINOv2.
+\end{itemize}
+So I report each false-rare rate with its recipe, with NORMAL recall and R1 beside it, and give no cause. The
+blinded contact sheet (E2f), which I mark myself, is still to do.
+% src: PH E3_criteria.csv (1) (p05 0.0432-0.0753, "kept within this grid"), (2) (R-norm05 p95 0.110 "not met"; the other
+% src: five "met"), (3) (10 of 20 outside; M-crop OCTDL 329, R-pad OCTDL 332); E3_development.csv (RETFound 0.406, R-norm05
+% src: 0.578); E1g_nine_way.csv (MIRAGE OCTDL 30 -> 261, OCTID 4 -> 0); E2a_destinations.csv (OCTID failures 4-24, OCTDL
+% src: 187-306); E2b_overlap.csv (98 by all four; none of OCTID by >= 3); E2c_transitions.csv (directions); PR CL "Phase-1
+% src: verdicts" (summary: per recipe, NORMAL recall and R1, no cause); E2f pending (marks.csv not filled)
+\end{topic}
+
+\begin{topic}{E4: can the image sources be told apart?}{sec:e4}
+\item[The problem.] If the sources are easy to tell apart, the source itself is a possible shortcut.
+\item[What I did.] A few-shot test on normal scans only (Kermany, OCTID, OCTDL), so that only the source differs,
+with the locked and the E1-M features.
+\item[Result.] With one to eight normal scans per source, two-way recall is 0.78 to 0.996 (chance 0.50), and
+16$\times$16 thumbnails alone reach 0.82 to 0.92. The control reduced separability in only 3 of 12 model-and-pair
+cells. The sources stay easy to tell apart after cropping and squaring; whether a model uses the source in the
+rare-disease task was not tested.
+% src: PH E4a_fewshot_source_test.csv (mean_k1_2_4_8 two-way: 0.7791-0.9964; thumbnails 0.8197-0.9230; "the control
+% src: reduced separability" for Inception Kermany vs OCTDL, Inception OCTID vs OCTDL, MIRAGE OCTID vs OCTDL); PR l.597
+\item[What I need from you.] Your reading of the narrow E1 pass (Question~6) and of the per-recipe false-rare
+rates (Question~7) at the 23 November review.
+\end{topic}
 
 % ---------------------------------------------------------------------------------------
 \section{Paper status}
@@ -654,18 +803,19 @@ with open items; \emph{TODO}: not written.
 \toprule
 Part of the paper & Status & Still open \\
 \midrule
-Title, abstract, I Introduction & Draft & My approval; the reframing sentence; a shortcut-learning citation (none
-among the tracked sources) \\
+Title, abstract, I Introduction & Draft & My approval (abstract rewritten with the E results on 21 Nov); the
+reframing sentence; a shortcut-learning citation (none among the tracked sources) \\
 II Related work & Draft & Title and DOI of Sun et al.\ 2024 not yet verified \\
 III Methods, including post hoc and Phase-1 methods & Done & -- \\
 IV Results: locked (R2 as Table~I) and post hoc (P4, P8, P10) & Done & Placement (my decision) \\
-IV Results: Phase-1 controls, inside the one dated post hoc subsection & \textbf{TODO} & After E1--E4 are
-scored; the default main-text tables (E1 success, E1 nine-way, E2 summary, E2d) appear when their files exist \\
-V Discussion; VI Limitations (includes P10) & Draft & Phase-1 parts TODO \\
-VII Next phase & Draft & Whether to name the planted-cue test (my decision) \\
-VIII Conclusion & \textbf{TODO} & Draft only, for my approval \\
+IV Results: Phase-1 controls, inside the one dated post hoc subsection & Done & Written 21 Nov from the
+verdicts I approved; E2f contact-sheet counts after my marking \\
+V Discussion; VI Limitations (includes P10 and Phase 1) & Draft & My final read \\
+VII Next phase & Draft & Whether to name the planted-cue test; letterbox removal is partly covered by E1-C (my
+decision) \\
+VIII Conclusion & Draft & Rewritten with the E results on 21 Nov, for my approval \\
 Declarations & Draft & Zenodo time; data and code archive; AI use; ethics, funding; venue not chosen \\
-Supplement & Draft & Locked S1--S7; P0--P3, P5--P7, P9, G1, P10; E1--E4 placeholders \\
+Supplement & Draft & Locked S1--S7; P0--P3, P5--P7, P9, G1, P10; E1--E4 tables generated (S-D) \\
 \bottomrule
 \end{tabularx}}
 % src: PAP section lines: title/abstract TODO l.57, l.64; I l.72 (TODOs l.85, l.100); II l.122; III l.139-251 (post hoc l.226-234,
@@ -674,9 +824,12 @@ Supplement & Draft & Locked S1--S7; P0--P3, P5--P7, P9, G1, P10; E1--E4 placehol
 % src: V l.436-490 (TODO l.489); VI l.492-519; VII l.521-522 (planted-cue TODO); VIII l.525-526 (TODO); declarations l.530-550;
 % src: PAPR l.47-53 (open items, incl. Sun 2024 bib fields); PAPS l.18-242 (S-A S1-S7, S-B P0-P10, S-D E1-E4)
 
+% src (21 Nov evening update): GIT d837f4d (Results, Discussion, Limitations), the abstract and conclusion commit; PAPR "Open"
+
 \smallskip
 \noindent
-What remains depends on E1--E4: their results, the reframed discussion and the conclusion.
+What remains is mostly my approval of the wording (title, abstract, conclusion, reframing), the E2f marks, and the
+declarations.
 
 % ---------------------------------------------------------------------------------------
 \section{Plan: calendar to 3 December, and Phase 2}
@@ -694,8 +847,10 @@ Dates & Work & Status on 21 Nov \\
 \midrule
 16--18 Nov & P0--P9, R1; G1 run on Colab and scored & Done \\
 19--21 Nov & P10; R2; paper draft; Phase-1 rules, code and notebook & Done \\
-21--23 Nov & E1 and E3 on Colab (Sessions 1 and 2); 23 Nov: review with you (positioning) & Session~1 running \\
-24--26 Nov & E1--E4 scored once; E2 and E4 on the laptop; one verdict per experiment; figures and tables & -- \\
+21--23 Nov & E1 and E3 on Colab (Sessions 1 and 2); 23 Nov: review with you (positioning, Phase-1 results) &
+Sessions done 21 Nov \\
+24--26 Nov & E1--E4 scored once; E2 and E4 on the laptop; one verdict per experiment; figures and tables & Done 21
+Nov, except the E2f marks \\
 \textbf{27 Nov} & \textbf{All numbers, tables and figures frozen} & -- \\
 28--30 Nov & Paper reframed on reliability and generalisability; discussion, limitations, next phase & -- \\
 1--3 Dec & Evidence audit (1 Dec), PDF freeze (2 Dec), \textbf{delivery (3 Dec)} & -- \\
@@ -706,7 +861,7 @@ Dates & Work & Status on 21 Nov \\
 
 \smallskip
 \noindent
-Everything due by 21 November is done; Session~1 started ahead of its 22--23 November slot. No analysis rule
+Everything due by 21 November is done, and the scoring planned for 24--26 November is done too. No analysis rule
 can be added after the Phase-1 push, and feedback after the freeze changes wording only, never a number.
 
 \smallskip
@@ -772,6 +927,20 @@ stays a stated limitation.}
 % src: PR l.480-481 (contact sheet marked by Lam alone, as a non-clinician), l.595 ("One rater, not a clinician (Part E may
 % src: add a second)"); PAP l.494 (one non-clinician rater, P10); calendar PR l.282
 
+\ask{6}{\textbf{The narrow E1 pass.} Is it the right reading to report E1 as a pass (the rule fixed in advance is
+met) and to say beside it, every time, that it passes with no draw to spare, that the gap halved, and that it is not
+shown at $K=1$--2? (yes / no) \emph{Context:} the rule cannot be changed after the numbers; what we choose now is
+only how plainly to say how thin the pass is. \emph{My recommendation:} yes, as now drafted in the paper.}
+% src: PH E1d_success.csv (E1-M p05 0.002519); E1c_paired.csv k=1, 2; PR l.523-528 (rule 1: no rule change after the
+% src: push); PAP Results and Limitations (d837f4d)
+
+\ask{7}{\textbf{External false-rare rates.} The counts move a lot with the input recipe. Should the paper keep them
+as a main result, reported per recipe with NORMAL recall and R1 beside each, or move them to a secondary role and
+lead with the development comparison and the controls? (keep, per recipe / secondary) \emph{Context:} your
+feedback called the external degradation ``results with real scientific value''; E3 shows the rates depend on
+the recipe. \emph{My recommendation:} keep, per recipe, because that dependence is itself a reliability result.}
+% src: PH E1g_nine_way.csv, E3_criteria.csv (3); mentor's feedback 2 (ML, "Said"); PR CL "Phase-1 verdicts" (summary)
+
 \medskip
 \noindent\rule{\linewidth}{0.4pt}\\
 {\footnotesize \textbf{Record.} Every rule, decision and date above is in
@@ -781,7 +950,8 @@ section~8. Commits since 15 November, all pushed to \file{t3/fm-code-prep}: post
 19 Nov decisions \hash{ca0d26d}, R2 rule \hash{65fe98c} (19 Nov); R2 \hash{24da8f3}, two-phase plan
 \hash{0b051c4}, paper \hash{aa722b9}, Phase-1 rules \hash{4b4e883} (20 Nov); Phase-1 code \hash{0578bce} and
 notebook \hash{a2c5da2}, P10 marks \hash{abb1770} and result \hash{917ab3b}, Phase-1 start \hash{fec827e},
-paper P10 and Phase-1 methods \hash{6e4175d} (21 Nov). Locked results: input lock of 13 November, hashes on Zenodo
+paper P10 and Phase-1 methods \hash{6e4175d}, Sessions 1 and 2 \hash{883f890} and \hash{fb4ef19}, E1--E4 outputs
+\hash{9fe1c11}, verdicts \hash{77d16a4}, paper results \hash{d837f4d} (21 Nov). Locked results: input lock of 13 November, hashes on Zenodo
 (\href{https://doi.org/10.5281/zenodo.24206472}{doi:10.5281/zenodo.24206472}). Every number has a source
 comment in this file. The figures are drawn from the post hoc CSVs by \file{weekly\_figures\_1121.py}. Claude
 (Anthropic) helped prepare this report.\par}
