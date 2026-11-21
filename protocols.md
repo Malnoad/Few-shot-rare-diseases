@@ -514,17 +514,18 @@ results.
   draws, always fails with six or more, and with exactly five depends on the values (five at −0.1
   and 95 at +0.001 give p05 = −0.004). The rule itself, p05 > 0, is unchanged and is what the code
   applies.
-- 21 Nov, Session 2 done (Lam's stamp `PHASE1 STAMP | 20261121T103537Z | session=2`): NVIDIA
+- 21 Nov, Session 2 done (stamp `PHASE1 STAMP | 20261121T030400Z | session=2`): NVIDIA
   A100-SXM4-40GB, commit `0578bce`; completed E1-C for all four arms and E1-L for RETFound and
-  DINOv2 (render from Session 1); missing none, dropped none. One interruption: the first run
-  stopped during E1-L-RETFound attempt 1 at image 500 of 5146, after E1-C for all four arms had been
-  saved with receipts. That was before the worker finished, so nothing from it was saved. No error
-  was shown: Lam was away from the notebook, the output stopped there and Step 10 never ran (most
-  likely an unattended Colab disconnect; not confirmed). Lam reran
-  as the notebook says; the four saved parts were verified against their receipts and reused, and
-  E1-L-RETFound (its one retry) and E1-L-DINOv2 completed. Session logs
-  `phase1-logs-s2-20261121T103537Z.zip` (SHA256 `13d7c43b…`). No E number was computed. The sessions
-  are complete; E1–E4 are scored once, after the integrity checks.
+  DINOv2 (render from Session 1), every worker on its first attempt; missing none, dropped none.
+  Session logs `phase1-logs-s2-20261121T030400Z.zip` (SHA256 `311f4863…`). While the run was
+  unattended, Lam's browser view of the notebook stopped updating during E1-L-RETFound (at image 500
+  of 5146), with no error and no Step 10 output; the runtime itself went on and finished. Not
+  knowing this, Lam ran Session 2 again on a fresh runtime: it verified the six parts on Drive
+  against their receipts, ran no worker and stamped `20261121T103537Z` (logs
+  `phase1-logs-s2-20261121T103537Z.zip`, SHA256 `13d7c43b…`, no worker logs). This entry first
+  recorded an interruption and an E1-L-RETFound retry from the stopped view; the logs, read after
+  the copy to the laptop, show neither. No E number was computed before the copy was complete and
+  every receipt matched (28 archives).
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 
