@@ -538,6 +538,54 @@ results.
   a project checkout; rerun unchanged with the sheet outside the project
   (`D:/octfsl-phase1-e2f/pass1/`), the tables rewritten byte for byte. Verdicts follow the
   cross-analysis and Lam's approval.
+- 21 Nov, Phase-1 verdicts (approved by Lam after the cross-analysis). Cross-analysis: GPT-6.2 Sol
+  recomputed E1d for all four sets, E3 criteria (1)–(2) and the E3 (3) false-rare counts with its
+  own scoring code: all equal to the committed values (E1-M p05 0.002518593492). Opus applied the
+  rules; Gemini 4 Carbon read as a reviewer; Fable rebutted the draft (one number error and five
+  over-claims corrected). No computation error was found.
+  - **E1 (verdict, E1-M): pass.** "Under the size and framing control, MIRAGE keeps a positive
+    development advantage over Inception-v3 (mean 0.063, locked 0.116; p05 0.003), and also when
+    effective resolution is evened out (E1-L p05 = 0.023), and also when the image is only cropped
+    to its content box (E1-C p05 = 0.017); it is above the pixel-only reference (mean 0.290)."
+    Beside it (description; none can change the verdict): p05 = 0.0025 with five of 100 draws at
+    or below 0 and the sixth at +0.003, so no spare draw; MIRAGE K mean 0.650 → 0.649, Inception-v3
+    0.534 → 0.586 (+0.052, p05 0.006; its E1 input also changes decoder, feature change 0.020–0.046
+    on unchanged originals, E1a); per K p05 −0.068, −0.034, +0.015, +0.016 (K = 1, 2, 4, 8; locked
+    0.001, 0.015, 0.052, 0.071); matched subset (92 queries) 0.057, p05 −0.012; hold-out mean paired
+    difference positive at K = 1, 2, 4, 8 and in the K mean in all four sets; thumbnail E1-M K mean
+    0.360 (z = 0.290 is the paired MIRAGE − thumbnail mean); the P10 duplicates sit in these
+    episodes (locked p05 0.069 → 0.064 without them), printed beside, never re-run or projected.
+    Disclosures: the per-set controls for MIRAGE and RETFound use 20 images, their 5,927-image
+    control is E3-ref (Session 1), so Session 2 sets rest on 20-image controls;
+    `environment_matches_lock` false for the three foundation models; the E1 header "When E1-L
+    disagrees" and the printed "and also" clause differ in form (code `0578bce`, before any number).
+  - **E2.** Locked: OCTID normals fail in 4–24 of 206 per arm, none failed by three or more arms;
+    OCTDL normals fail in 187–306 of 332 per arm, 98 by all four, 2 by none. Under E1-M, OCTDL
+    common-disease calls move to rare classes for MIRAGE (228 of 276), RETFound (64 of 177) and
+    Inception-v3 (72 of 255); DINOv2 moves the other way (42 of 141 rare calls to common disease);
+    Inception-v3 fails 81 of 206 OCTID normals (false rare 15 → 76). 45 of 133 E2d intervals exclude
+    0.5 (including calibration rows and constant intervals); associations are descriptive, quoted
+    for all four arms; no cause.
+  - **E3.** (1) MIRAGE: kept within this grid (p05 0.043–0.075; M-pad 0.060 beside, not counted).
+    (2) RETFound: position changed or not shown for R-norm05 (R-norm05 − Inception-v3 p95 0.110,
+    mean 0.044, p05 −0.013; MIRAGE − R-norm05 p05 0.018; RETFound K mean 0.578 against 0.406
+    locked); the other five meet both. (3) External false-rare: not all inside; 10 of 20 counted
+    cells outside the arm's locked interval, in both directions, up to 329/332 (MIRAGE M-crop,
+    OCTDL) and 332/332 (RETFound R-pad, OCTDL), listed with NORMAL recall and R1. Input preprocessing
+    only; pooling and token choice are not varied.
+  - **E4.** Few-shot source test (main), normal-only pairs: K-mean two-way recall 0.78–0.996 across
+    arms, locked and E1-M (thumbnails 0.82–0.92); the control reduced separability for Inception-v3
+    (Kermany vs OCTDL, OCTID vs OCTDL) and MIRAGE (OCTID vs OCTDL), no reduction shown elsewhere.
+    Probe (secondary): every normal-only AUROC ≥ 0.994, at ceiling, differences not read. No link
+    to the rare-disease task or to the false-rare rate.
+  - **Summary.** "MIRAGE's development advantage survives the size and framing control (mean 0.063
+    against 0.116 locked; p05 0.0025, no spare draw). External false-rare counts change under the
+    control and under single preprocessing changes within this grid (10 of 20 E3 cells outside the
+    locked interval), so they are reported per recipe with NORMAL recall and R1, with no cause
+    given."
+  - Generated pages kept as written (write-once): `E3_criteria.csv` prints "position changed or not
+    shown for R-norm05"; `E1_comparison.md`'s closing line omits three E1 "Not allowed" items
+    (they still apply); `E1f_holdout.csv` prints p05/p95 for a direction-only set (not read).
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 
