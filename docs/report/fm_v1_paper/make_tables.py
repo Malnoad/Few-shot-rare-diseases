@@ -1315,7 +1315,7 @@ def e3_checks_t() -> bool:
         return False
     body = [" & ".join([NAME.get(r["arm"], tex(r["arm"])), tex(r["variant"]), tex(r["check"]), val(r["value"]), tex(r["status"])]) + r" \\"
             for r in rows]
-    L = longtable(r"@{}llp{6cm}p{3.5cm}p{3.5cm}@{}", ["Arm", "Variant", "Check", "Value", "Status"], body)
+    L = longtable(r"@{}llp{5.8cm}p{3.7cm}p{3.5cm}@{}", ["Arm", "Variant", "Check", "Value", "Status"], body)
     return write_e("e3_checks", "E3_checks.csv", L, "Hashes are shortened to 12 characters; the full values are in the CSV.")
 
 
