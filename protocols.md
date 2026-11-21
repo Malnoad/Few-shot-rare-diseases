@@ -518,7 +518,9 @@ results.
   A100-SXM4-40GB, commit `0578bce`; completed E1-C for all four arms and E1-L for RETFound and
   DINOv2 (render from Session 1); missing none, dropped none. One interruption: the first run
   stopped during E1-L-RETFound attempt 1 at image 500 of 5146, after E1-C for all four arms had been
-  saved with receipts. That was before the worker finished, so nothing from it was saved. Lam reran
+  saved with receipts. That was before the worker finished, so nothing from it was saved. No error
+  was shown: Lam was away from the notebook, the output stopped there and Step 10 never ran (most
+  likely an unattended Colab disconnect; not confirmed). Lam reran
   as the notebook says; the four saved parts were verified against their receipts and reused, and
   E1-L-RETFound (its one retry) and E1-L-DINOv2 completed. Session logs
   `phase1-logs-s2-20261121T103537Z.zip` (SHA256 `13d7c43b…`). No E number was computed. The sessions
