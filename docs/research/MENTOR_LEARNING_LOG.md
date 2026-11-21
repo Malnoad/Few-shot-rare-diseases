@@ -31,11 +31,20 @@ dataset and get the same answer?"
 
 ## Feedback 2 (20 Nov 2026): reliability before ranking
 
-**Said.** The GAN-to-foundation-model line and the source-confounding findings have real value.
-A paper should be about the reliability and generalisability of the models, not about MIRAGE
-beating other backbones. Three things: control image size and framing and check whether MIRAGE
-keeps its advantage (most critical); error analysis of OCTID/OCTDL normals called diseases;
-preprocessing sensitivity of MIRAGE and RETFound. No new models, no GAN.
+**Said** (verbatim, as Lam relayed it on 20 Nov): "At this stage, I have a positive assessment of
+your research direction, particularly the connection between the two phases: from validating the
+effectiveness of GAN augmentation to evaluating the few-shot capabilities of foundation models. The
+findings regarding source confounding and performance degradation on external OCT datasets are
+results with real scientific value. However, if you are aiming for a research paper, the focus
+should be on the reliability and generalizability of the models, rather than merely proving that
+MIRAGE outperforms other backbones. There are three things that need to be done: Control for the
+effects of image size and framing, then check whether MIRAGE still maintains its advantage. This
+is the most critical experiment. Perform an error analysis on OCTID and OCTDL, specifically looking
+at cases where normal images are misclassified as other diseases. Test the sensitivity of MIRAGE
+and RETFound to preprocessing to ensure that the conclusions do not depend on the feature
+extraction method. You do not need to add more models or continue with GAN experiments at this
+time. If the main results still hold after these controls, this is a direction with strong
+potential to be developed into a solid research paper."
 
 **Changed.** Phase 1 (to 3 Dec) = controls E1–E4, rules pushed before any number (`4b4e883`):
 one main control (crop the black bands, centre square, 256 px), one success rule (paired
