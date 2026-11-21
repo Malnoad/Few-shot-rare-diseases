@@ -654,8 +654,9 @@ rater for the E2 contact sheet (Question~5).
 \section{Phase-1 results (scored once on 21 November; all post hoc)}
 \label{sec:p1results}
 
-Every number here carries the label ``post hoc, Phase-1 rule timestamped by commit \hash{4b4e883} (20 Nov 2026),
-computed 21 Nov 2026; outside the locked protocol; never replaces a locked result''. Only E1-M gives a verdict.
+Every number here carries the label ``post hoc, Phase-1 rule E$n$ timestamped by commit \hash{4b4e883} (20 Nov
+2026), computed 2026-11-21; outside the locked protocol; never replaces a locked result'' (E1 and E3 add their
+limitations or scope). Only E1-M gives a verdict.
 % src: label of every row in PH E*.csv (column posthoc); PR l.544-545 (rule 5, one verdict)
 
 \begin{topic}{How I checked the Colab results before scoring}{sec:p1checks}
@@ -678,12 +679,14 @@ Colab outputs were complete, unchanged on the way to my laptop, and produced by 
         fixed rules, one read as an outside reviewer, and one attacked my draft wording (one number and five
         over-claims corrected before I approved).
 \end{itemize}
-\item[Result.] Every check passed. Three things are disclosed rather than hidden: the Session~2 checks for MIRAGE
-and RETFound used 20 images each (their full check is the Session~1 replay); the Colab Python environment differs
+\item[Result.] Every check passed. Three things are disclosed rather than hidden: the per-set E1 checks for MIRAGE
+and RETFound used 20 images each, and their check on all 5,927 images is the E3 replay in Session~1, so the
+Session~2 sets rest on 20-image checks; the Colab Python environment differs
 from the lock for the three foundation models (recorded; every check still matched); Inception-v3 reads the
 rendered PNG files through a different decoder from its locked inputs.
 % src: PR CL "Session 1 done", "Session 2 done" (every worker on its first attempt; 28 archives match their receipts),
-% src: "E1-E4 scored once" (controls, E3-ref 2.99e-7 and 1.91e-7, renders, laptop re-render 5,146, rule text hash
+% src: "E1-E4 scored once" (controls, renders, laptop re-render 5,146, rule text hash; E3-ref 2.99e-7 and 1.91e-7 from
+% src: PH E1a_checks.csv "E3-ref full control" rows and PH E3_checks.csv "E3-ref against locked features"; rule text hash
 % src: "same"); PH E1a_checks.csv (worst control 2.78e-6; decoder change 0.020-0.046); PH E3_checks.csv; GIT 9fe1c11;
 % src: PR CL "Phase-1 verdicts" (independent recompute equal; one number error and five over-claims corrected; disclosures)
 \end{topic}
@@ -693,7 +696,7 @@ rendered PNG files through a different decoder from its locked inputs.
   \includegraphics[width=\linewidth]{fm_weekly_figs_1121/fig6_e1_result.pdf}
   \caption{E1, your critical experiment. \emph{Left:} MIRAGE minus Inception-v3 on the same draws (mean over $K$;
   bar = 5th to 95th percentile over 100 draws). The verdict uses E1-M only: its 5th percentile is above 0, so MIRAGE
-  keeps its lead, by a hair. \emph{Right:} each model's own score, locked (hollow) and under E1-M (filled): MIRAGE
+  keeps its lead (mean 0.063, locked 0.116), by a hair. \emph{Right:} each model's own score, locked (hollow) and under E1-M (filled): MIRAGE
   stays level, Inception-v3 rises.}
   \label{fig:e1}
 \end{figure}
@@ -721,11 +724,15 @@ resolution is evened out (E1-L p05 = 0.023), and also when the image is only cro
   \item \emph{Hold-out (direction only):} MIRAGE is ahead at $K=1$, 2, 4 and 8 in all four E1 feature sets (E1-M:
         $+0.096$ on the mean over $K$).
 \end{itemize}
-Allowed wording: the advantage ``survives this control''; never that size ``explains'' it, and never ``robust to
-framing''.
+\emph{Limits of this control} (stated with every E1 result): the centre square drops lateral retina unequally by
+source and class; MIRAGE now gets 256 pixels of detail enlarged to 512; E1-M does not remove effective resolution
+(content short side 103--496 pixels), field of view, scanner appearance, compression, intensity, black-clipped
+background against speckle, or Kermany's white fill wedges. Allowed wording: the advantage ``survives this
+control''; never that size ``explains'' it, and never ``robust to framing''.
 % src: PH E1d_success.csv (fixed sentence, as in E1_comparison.md "Sentence"; E1-M p05 0.002519, 95 of 100 above 0); sixth
 % src: smallest draw +0.003 (PR CL "Phase-1 verdicts"); E1b_development.csv (MIRAGE 0.650/0.649, Inception 0.534/0.586);
-% src: E1a_checks.csv (decoder change); E1c_paired.csv k=1, 2 (p05 -0.0677, -0.0341); E1e_matched.csv (92, p05 -0.012);
+% src: E1a_checks.csv (decoder change); E1c_paired.csv k=1, 2 (p05 -0.0677, -0.0342); E1e_matched.csv (92, p05 -0.012);
+% src: limitations verbatim from the E1 row, PR l.594 ("Limitations stated with every E1 result");
 % src: E1f_holdout.csv (all "positive"; E1-M 0.096); wording PR l.594 (E1 "Not allowed")
 \end{topic}
 
@@ -745,7 +752,7 @@ framing''.
 conclusions depend on how each model's input is prepared.
 \item[What I did.] E2 follows every external normal scan through all four models, with the locked and the E1-M
 features. E3 changes one step of the MIRAGE or RETFound recipe at a time (ten variants) and keeps the other models
-locked.
+locked. E3 covers input preprocessing only; pooling and token choice are not varied.
 \item[Result.] \mbox{}
 \begin{itemize}
   \item \emph{MIRAGE's lead holds across its four preprocessing variants} (5th percentile against locked
@@ -776,11 +783,11 @@ blinded contact sheet (E2f), which I mark myself, is still to do.
 \item[The problem.] If the sources are easy to tell apart, the source itself is a possible shortcut.
 \item[What I did.] A few-shot test on normal scans only (Kermany, OCTID, OCTDL), so that only the source differs,
 with the locked and the E1-M features.
-\item[Result.] With one to eight normal scans per source, two-way recall is 0.78 to 0.996 (chance 0.50), and
-16$\times$16 thumbnails alone reach 0.82 to 0.92. The control reduced separability in only 3 of 12 model-and-pair
+\item[Result.] With one to eight normal scans per source, two-way recall on the mean over $K$ is 0.787 to 0.996 with
+E1-M features and 0.779 to 0.991 locked (chance 0.50), and 16$\times$16 thumbnails alone reach 0.820 to 0.923. The control reduced separability in only 3 of 12 model-and-pair
 cells. The sources stay easy to tell apart after cropping and squaring; whether a model uses the source in the
 rare-disease task was not tested.
-% src: PH E4a_fewshot_source_test.csv (mean_k1_2_4_8 two-way: 0.7791-0.9964; thumbnails 0.8197-0.9230; "the control
+% src: PH E4a_fewshot_source_test.csv (mean_k1_2_4_8 two-way, models: E1-M 0.7867-0.9964, locked 0.7791-0.9908; thumbnails 0.8197-0.9230; "the control
 % src: reduced separability" for Inception Kermany vs OCTDL, Inception OCTID vs OCTDL, MIRAGE OCTID vs OCTDL); PR l.597
 \item[What I need from you.] Your reading of the narrow E1 pass (Question~6) and of the per-recipe false-rare
 rates (Question~7) at the 23 November review.
