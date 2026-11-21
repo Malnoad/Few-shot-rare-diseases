@@ -1616,6 +1616,124 @@ def p10_label(today: str) -> str:
     return f"post hoc, rule timestamped by commit {rule_commit(P10_ROW)[:7]} (18 Nov 2026), computed {today}"
 
 
+# ---------------------------------------------------------------- E1-D ---
+# Rule E1-D (protocols.md section 8 change log, 21 Nov; Lam's decision after the E1 verdict): P10 step 3's
+# sensitivity applied unchanged to the E1-M features of MIRAGE and Inception-v3. Descriptive; it cannot change
+# the E1 verdict. The same code on the locked features must reproduce the locked P10_sensitivity.csv rows.
+E1D_ROW = "- 21 Nov, rule E1-D (Lam's decision after the E1 verdict; written before any E1-D number)."
+E1D_SETS = ("locked", "E1-M")
+E1D_TOL = 1e-12
+E1D_WITH = (0.063, "0.0025")  # E1-M with the pairs (E1d_success.csv), as the fixed sentences quote them
+E1D_HEADER = ["phase", "feature_set", "status", "exclusion", "excluded", "comparison", "k", *SUMMARY,
+              "draws_above_0", "direction", "note"]
+
+
+def e1d_label(today: str) -> str:
+    return (f"post hoc, rule E1-D timestamped by commit {rule_commit(E1D_ROW)[:7]} (21 Nov 2026), written after the "
+            f"E1 verdict; descriptive, cannot change the E1 verdict; outside the locked protocol; never replaces a "
+            f"locked result; computed {today}")
+
+
+def feature_cells(episodes: Sequence[ev.Episode], select: Callable[[Sequence[str]], np.ndarray]
+                  ) -> dict[tuple[int, int, int], Cell]:
+    """Per episode, the cell a predictions.csv would hold: section 6 cosine prototypes on these features."""
+    rare = np.array(fm.RARE)
+    out = {}
+    for e in episodes:
+        predicted = rare[prototype_predict([select(p) for p in e.supports], select(e.queries))]
+        out[e.fold, e.k, e.draw] = Cell(tuple(e.queries), tuple(e.labels), tuple(str(p) for p in predicted),
+                                        tuple(fm.RARE), np.zeros((len(e.queries), 0)))
+    return out
+
+
+def fmt_small(x: float) -> str:
+    """Three decimals, or four when the value is within 0.01 of zero (as the E1 margin is quoted)."""
+    return f"{x:.4f}" if abs(x) < 0.01 else f"{x:.3f}"
+
+
+def e1d_sentence(mean: float, p05: float) -> str:
+    """The two fixed sentences of rule E1-D."""
+    with_mean, with_p05 = E1D_WITH
+    if p05 > 0:
+        return (f"Without the same-picture pairs, MIRAGE's development lead over Inception-v3 under E1-M has mean "
+                f"{fmt_small(mean)} and 5th percentile {fmt_small(p05)} (with them: {with_mean:.3f} and {with_p05}).")
+    return (f"Without the same-picture pairs, the 5th percentile of MIRAGE minus Inception-v3 under E1-M is "
+            f"{fmt_small(p05)} (with them: {with_p05}), so the E1 pass depends on episodes that contain same-picture "
+            f"pairs; the E1 verdict, fixed on the locked episodes, stands.")
+
+
+def e1d_check(rows: Sequence[Sequence], p10_rows: Sequence[Mapping[str, str]]) -> float:
+    """Largest difference between E1-D's locked development K-mean rows and the locked P10_sensitivity.csv rows."""
+    ours = {(r[3], str(r[6])): (r[8], r[10]) for r in rows
+            if r[0] == "development" and r[1] == "locked" and r[5] == "MIRAGE minus Inception"}
+    theirs = {(r["exclusion"], r["k"]): (float(r["mean"]), float(r["p05"])) for r in p10_rows
+              if r["phase"] == "development" and r["arm"] == "MIRAGE minus Inception"}
+    keys = [key for key in ours if key in theirs]
+    if not keys:
+        return math.inf
+    return max(abs(a - b) for key in keys for a, b in zip(ours[key], theirs[key]))
+
+
+def e1d_rows(dev: Mapping[str, Mapping[tuple[int, int], float | None]],
+             hold: Mapping[str, Mapping[tuple[int, int], float | None]], set_name: str, status: str, name: str,
+             dropped: int, held: int) -> list[list]:
+    """Development (per K and K mean, with draws above 0) and hold-out (direction) rows, MIRAGE minus Inception-v3."""
+    rows = []
+    for phase, vals, excluded in (("development", dev, f"{dropped} query-episode exclusions per arm"),
+                                  ("hold-out", hold, f"{held} hold-out images excluded")):
+        diff = {key: vals[NOMINEE][key] - vals[fm.REFERENCE][key] for key in vals[NOMINEE]
+                if vals[NOMINEE][key] is not None and vals[fm.REFERENCE].get(key) is not None}
+        ks = KS if phase == "development" else sorted({k for k, _ in diff})
+        for k, v in by_k(diff, ks):
+            stats = summary(v)
+            above = sum(x > 0 for x in v)
+            direction = "" if phase == "development" or k == 16 else ("positive" if stats[1] > 0 else "not positive")
+            note = "shown, not read" if k == 16 else ("direction only" if phase == "hold-out" else "")
+            rows.append([phase, set_name, status, name, excluded, "MIRAGE minus Inception", k, *stats, above,
+                         direction, note])
+    return rows
+
+
+def e1d(study: Study, p1: "Phase1", key_rows: Sequence[Mapping[str, str]], mark_rows: Sequence[Mapping[str, str]],
+        p10_rows: Sequence[Mapping[str, str]]) -> tuple[list[str], list[list]]:
+    """Rule E1-D: P10 step 3 on the locked (check) and E1-M features of MIRAGE and Inception-v3."""
+    order, labels = dev_order(study)
+    dev_eps, rep_eps = study.episodes("development"), study.episodes("reporting")
+    development = {r["path"] for r in study.roster if r["label"] in fm.RARE and r["role"] == "fitting"}
+    rows: list[list] = []
+    for set_name in E1D_SETS:
+        feats = {arm: p1.features(arm, set_name) for arm in (NOMINEE, fm.REFERENCE)}
+        if any(f is None for f in feats.values()):
+            rows.append(["development", set_name, UNAVAILABLE, "", "", "MIRAGE minus Inception", "", *[""] * 8])
+            continue
+        status = (INTERPRETED if all(p1.status(arm, set_name) == INTERPRETED for arm in feats) else NOT_INTERPRETED)
+        dev_cells = {arm: feature_cells(dev_eps, f[0].select) for arm, f in feats.items()}
+        rep_cells = {arm: feature_cells(rep_eps, f[0].select) for arm, f in feats.items()}
+        for name, with_unsure in (("locked (no exclusion)", None), *P10_SETS):
+            matched = set() if with_unsure is None else p10_matched_pairs(key_rows, mark_rows, with_unsure)
+            held = {p for pair in matched for p in pair if p not in development
+                    and any(o in development for o in pair - {p})}
+            dev, hold, dropped = {}, {}, 0
+            for arm in feats:
+                dev[arm], dropped = p10_development(dev_eps, dev_cells[arm], order, labels, matched)
+                hold[arm] = p10_holdout(rep_cells[arm], held)
+            rows += e1d_rows(dev, hold, set_name, status, name, dropped, len(held))
+    gap = e1d_check(rows, p10_rows)
+    passed = gap <= E1D_TOL
+    rows.append(["check", "locked", "pass" if passed else NOT_INTERPRETED, "", "", "locked rows against "
+                 "P10_sensitivity.csv (largest difference of mean and p05)", "", "", gap, "", "", "", "", "", ""])
+    if not passed:
+        for r in rows:
+            if r[1] == "E1-M":
+                r[2] = NOT_INTERPRETED
+    main = next((r for r in rows if r[0] == "development" and r[1] == "E1-M" and r[3] == P10_SETS[0][0]
+                 and r[6] == ev.K_MEAN_LABEL), None)
+    if main is not None and main[2] == INTERPRETED:
+        rows.append(["sentence", "E1-M", INTERPRETED, P10_SETS[0][0], "", "", "", "", "", "", "", "", "", "",
+                     e1d_sentence(main[8], main[10])])
+    return E1D_HEADER, rows
+
+
 def write(out: Path, name: str, label: str, header: list[str], rows: list[list]) -> Path:
     out.mkdir(parents=True, exist_ok=True)
     path = out / name
@@ -3414,7 +3532,15 @@ def run_phase1(args: argparse.Namespace, out: Path) -> list[Path]:
         root, receipts, rendered = phase1_root(args.phase1, Path(tmp), cache)
         p1 = Phase1(study, root, receipts, dry_run=getattr(args, "dry_run", False), partial=args.partial,
                     cached_render=rendered)
-        if args.step == "e1":
+        if args.step == "e1d":
+            names = ("P10_review_key.csv", "P10_review_marks.csv", "P10_sensitivity.csv")
+            key_rows, mark_rows, p10_rows = (_read(out, name) for name in names)
+            if not (key_rows and mark_rows and p10_rows):
+                raise SystemExit(f"{out} lacks the P10 key, marks or sensitivity CSV that rule E1-D reuses")
+            label = f"{e1d_label(args.date)}; marks SHA256 {prep.sha256(out / 'P10_review_marks.csv')[:12]}"
+            written.append(write(out, "E1D_duplicate_sensitivity.csv", label,
+                                 *e1d(study, p1, key_rows, mark_rows, p10_rows)))
+        elif args.step == "e1":
             written += write_tables(out, f"{labels['E1']}; limitations: {E1_LIMITATIONS}",
                                     e1(study, p1, section, args.data_root, drop))
         elif args.step == "e2":
@@ -3499,8 +3625,9 @@ def e2f_marks(marks: Path, key: Path | None, out: Path, label: str) -> list[str]
 
 
 def add_phase1_commands(sub) -> None:
-    for step in ("e1", "e2", "e3", "e4"):
-        command = sub.add_parser(step, description=f"Phase-1 {step.upper()} (protocols.md section 8, Phase-1 controls).")
+    for step in ("e1", "e2", "e3", "e4", "e1d"):
+        command = sub.add_parser(step, description=f"Phase-1 {step.upper()} (protocols.md section 8, Phase-1 controls"
+                                 + ("; rule E1-D, 21 Nov change log; reads the P10 CSVs in --out)." if step == "e1d" else ")."))
         command.add_argument("--out", type=Path, default=OUT)
         command.add_argument("--attempt", type=Path, required=True, help=f"the locked attempt folder ({ATTEMPT})")
         command.add_argument("--phase1", type=Path, required=True,
@@ -3562,7 +3689,7 @@ def main() -> None:
     add_phase1_commands(sub)
     args = parser.parse_args()
     out = prep.writable_path(Path(__file__).resolve().parent, args.out)
-    if args.step in ("e1", "e2", "e3", "e4"):
+    if args.step in ("e1", "e2", "e3", "e4", "e1d"):
         for path in run_phase1(args, out):
             print("wrote", path)
     elif args.step == "e-report":

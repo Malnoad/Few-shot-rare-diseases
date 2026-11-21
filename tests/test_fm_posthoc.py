@@ -389,6 +389,54 @@ class P10SensitivityRules(unittest.TestCase):
         self.assertAlmostEqual(out[1, 0], 1.0)
 
 
+class E1DRules(unittest.TestCase):
+    def test_feature_cells_apply_cosine_prototypes_per_episode(self):
+        import fm_evaluate as ev
+        rare = fm.RARE
+        vectors = {f"s{i}": np.eye(5)[i] for i in range(5)}
+        vectors.update({f"q{i}": np.eye(5)[(i + 1) % 5] + 0.01 for i in range(5)})  # each query nearest the next class
+        episode = ev.Episode(fold=2, k=1, draw=7, supports=tuple((f"s{i}",) for i in range(5)),
+                             queries=tuple(f"q{i}" for i in range(5)), labels=rare)
+        cells = ph.feature_cells([episode], lambda paths: np.stack([vectors[p] for p in paths]))
+        cell = cells[2, 1, 7]
+        self.assertEqual(cell.predicted, tuple(rare[(i + 1) % 5] for i in range(5)))
+        self.assertFalse(cell.correct.any())
+
+    def test_sentence_has_the_two_fixed_forms(self):
+        kept = ph.e1d_sentence(0.0612, 0.0031)
+        self.assertIn("has mean 0.061 and 5th percentile 0.0031 (with them: 0.063 and 0.0025)", kept)
+        lost = ph.e1d_sentence(0.05, -0.0012)
+        self.assertIn("is -0.0012 (with them: 0.0025)", lost)
+        self.assertIn("the E1 verdict, fixed on the locked episodes, stands", lost)
+        self.assertIn("stands", ph.e1d_sentence(0.05, 0.0))  # p05 = 0 is not above 0
+
+    def test_check_compares_locked_development_rows_with_p10(self):
+        name = "marked same picture or same case"
+        row = ["development", "locked", "interpreted", name, "", "MIRAGE minus Inception", "mean_k1_2_4_8",
+               100, 0.1129, 0.03, 0.0640, 0.18, 99, "", ""]
+        p10 = [{"phase": "development", "exclusion": name, "arm": "MIRAGE minus Inception", "k": "mean_k1_2_4_8",
+                "mean": "0.1129", "p05": "0.0640"},
+               {"phase": "hold-out", "exclusion": name, "arm": "MIRAGE minus Inception", "k": "mean_k1_2_4_8",
+                "mean": "9", "p05": "9"}]
+        self.assertEqual(ph.e1d_check([row], p10), 0.0)
+        shifted = row[:8] + [0.1130] + row[9:]
+        self.assertAlmostEqual(ph.e1d_check([shifted], p10), 1e-4)
+        e1m = ["development", "E1-M", *row[2:]]
+        self.assertEqual(ph.e1d_check([e1m], p10), float("inf"))  # E1-M rows are never the check
+
+    def test_rows_count_draws_above_zero_and_read_holdout_direction_only(self):
+        dev = {"MIRAGE": {(k, r): 0.6 + (0.01 if r else -0.2) for k in (1, 2, 4, 8) for r in range(3)},
+               "Inception": {(k, r): 0.6 for k in (1, 2, 4, 8) for r in range(3)}}
+        hold = {"MIRAGE": {(k, 0): 0.7 for k in (1, 2, 4, 8, 16)}, "Inception": {(k, 0): 0.5 for k in (1, 2, 4, 8, 16)}}
+        rows = ph.e1d_rows(dev, hold, "E1-M", "interpreted", "x", 3, 4)
+        kmean = next(r for r in rows if r[0] == "development" and r[6] == "mean_k1_2_4_8")
+        self.assertEqual((kmean[7], kmean[12]), (3, 2))  # n draws, draws above 0
+        k16 = next(r for r in rows if r[0] == "hold-out" and r[6] == 16)
+        self.assertEqual((k16[13], k16[14]), ("", "shown, not read"))
+        hk = next(r for r in rows if r[0] == "hold-out" and r[6] == "mean_k1_2_4_8")
+        self.assertEqual(hk[13], "positive")
+
+
 class P10Rules(unittest.TestCase):
     def test_s1_links_follow_headings_and_join_cut_lines(self):
         text = ["S1. Detailed links (contents)", "S1. Detailed links of collected", "https://data.example/set",
