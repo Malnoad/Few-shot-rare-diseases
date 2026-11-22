@@ -671,6 +671,18 @@ results.
   wording only. Step 2, by 27 Nov: the table completions above, then the paper's tables and figures
   join the freeze as an amendment. Phase 2 work may start now; its results stay out of this paper
   except the labelled next-phase paragraph.
+- 22 Nov, framing approved (Lam: "Approve framing"), after a three-model brainstorm on the paper's
+  weaker review criteria. The paper's contribution is a reusable audit: three checks any small
+  multi-source benchmark can run (a size-only baseline, false-rare rates per input recipe, a
+  few-shot source test), and the case study shows each one changing a conclusion. The title leads
+  with the finding. The model ranking becomes one cautious sentence; pre-registration is
+  presented as credibility, not as the first contribution. The wording is applied in step 2's
+  diff for Lam's review. Still open: whether a condensed 8-page version keeps A3's four
+  main-text items, and the shortcut and leakage citations (new sources, Lam).
+- 22 Nov, Phase 2 defined (Lam: "define phase 2"): section 12. Question A, same-patient leakage
+  in few-shot evaluation, first; question B, patient diversity at a fixed labelling budget, on
+  the same pools; Kermany patient IDs and cached features; laptop first. It replaces the one-line
+  Phase-2 description of 20 Nov; adaptation moves later.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 
@@ -848,3 +860,86 @@ None of these affects the run. They are settled when the final paper is written.
 - Archive the exact locked code publicly (for example on Zenodo) for the code-availability
   statement, especially if the repository is private by then.
 - Choose the venue once real results exist (deferred by Lam on 13 November).
+
+## 12. Phase 2: patients in few-shot OCT evaluation (defined 22 Nov 2026)
+
+Status: plan, defined at Lam's request on 22 November from a three-model brainstorm (Neon, Sol,
+Fable). It is not yet a rule. As in Phase 1, the rules (pools, K, draws, decision thresholds) are
+written, rebutted and pushed before any Phase-2 number. Phase-2 results stay out of the Phase-1
+paper except its labelled next-phase paragraph. The mentor's view (23 Nov review) can still change
+this plan.
+
+**Why.** Expert verification of medical images is costly, so few-shot learning and augmentation
+stand in for it, and they bring new problems. This project kept meeting one of them: patients.
+- Kermany's official test set has 633 patients, and 566 of them are also in its training set
+  (`docs/research/CONTEXT.md`, data table).
+- The web-collected rare images have no patient IDs, and the locked duplicate screen missed all
+  14 same-picture pairs (P10). The Phase-1 paper calls patient overlap across splits untested.
+- In October, augmenting a few patients' images (GAN) did not beat basic augmentation.
+
+Patient IDs turn these into measurements.
+
+**Question A (first): same-patient leakage.** How much do frozen-encoder few-shot scores rise
+when the K labelled examples include other scans of the test image's patient, and does the model
+ranking change?
+
+**Question B (second, on the same pools): patient diversity.** With a fixed budget of K labelled
+scans, does taking them from more patients raise recall on new patients?
+
+**Data.**
+- Kermany OCT2017, with patient IDs (`data/manifest.csv`, column pid): 84,484 images from 4,657
+  patients (CNV 797, DME 768, DRUSEN 716, NORMAL 3,437 patients), a median of 5 to 12 scans per
+  patient, and 896 patients filed under more than one class.
+- Planning count (exploratory, not a result): the cached features hold 5,000 Kermany scans (4,000
+  fitting, 1,000 test). Patients with at least two cached scans: CNV 223, DME 200, DRUSEN 209,
+  NORMAL 214.
+- OCTDL (patient IDs) as a second source, if its disease classes can be extracted under the
+  locked recipes. The rule decides.
+
+**Kept from Phase 1.** The four frozen encoders and their locked recipes; cosine prototypes;
+K = 1, 2, 4, 8; paired draws; rules before numbers; write-once, labelled outputs.
+
+**Design A (outline; the rule fixes the numbers).**
+- Example pools of at most 30 images per class (the few-shot tier), built from patient IDs.
+- Two arms on the same draws. In one, the examples are patient-disjoint from each query. In the
+  other, one or more examples come from the query patient's other scans of the same class (the
+  dose). Everything else is equal.
+- Estimand: per K, encoder and dose, the paired difference in recall (with the leak minus
+  without), averaged over query patients, with a patient-level bootstrap interval. Ranking shift:
+  MIRAGE's inflation minus Inception-v3's.
+- Positive control: a planted leak (the query image itself among the examples) must show
+  inflation, or the run is not read.
+- Gate: if the 5th percentile of the inflation is at or below 0 both at K = 1 and at the highest
+  dose, A is reported as null and B becomes the main question.
+
+**Design B (outline).** The same pools, with patient-disjoint queries. At a fixed K (4 and 8),
+the budget is split as P patients times M scans each (for example 4 × 1 against 1 × 4), paired on
+a shared anchor scan. Estimand: the paired difference in balanced recall on new patients, with a
+patient-level bootstrap interval.
+
+**Standard check: the Phase-1 audit on every Phase-2 result.**
+- The size-only reference in the same episodes.
+- The input recipe stated.
+- Where an external set is used, false-rare calls with NORMAL recall and R1 beside them.
+
+**Unit and statistics.**
+- The patient is the unit: splits, resampling and counts are by patient.
+- Spread over draws is reported separately from patient-level uncertainty.
+- The rule fixes the number of draws. Planning figure from Sol: about 144 draws give a Monte
+  Carlo error of 0.003 on a fixed-cohort mean at SD 0.036.
+
+**Order.**
+0. Before any number:
+   - a literature check (is leakage already measured for few-shot frozen encoders?);
+   - a check whether Kermany IDs separate eyes and visits;
+   - the rule written, rebutted (Opus, Fable, Sol, Neon) and pushed.
+1. A pilot of A on the cached features (laptop), with the positive control.
+2. A in full (one Colab extraction session at most, with the same encoders and recipes).
+3. B on the same pools.
+
+**Not in Phase 2 for now.**
+- Other modalities (blood cells, pathology): a later replication. The protocol needs only patient
+  IDs and frozen features.
+- Adaptation (LoRA or the last blocks): moved later, which replaces the one-line Phase-2
+  description of 20 Nov. Lam confirms this with the mentor.
+- New encoders and GAN.

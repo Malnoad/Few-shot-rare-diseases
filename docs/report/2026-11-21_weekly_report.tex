@@ -176,9 +176,9 @@ with published labels. \emph{Why:} anyone can apply the definition to a new data
 (\file{protocols.md} \S8, 18 Nov; \hash{39c3d73}, \hash{dcbb323}) \\
 The methods are simple &
 I added no method: the design stays as locked, and the protocol forbids changes after results. Fine-tuning
-(LoRA) moves to the next phase, on data where image size does not predict the class. Phase 2 (after 3 Dec)
-studies few-shot adaptation methods. \emph{Why:} a method change after the results would be driven by them.
-(\file{protocols.md} \S6, \S8; \hash{dcbb323}, \hash{0b051c4}) \\
+(LoRA) moves to a later phase. Phase 2 (proposed 22 Nov, Question~8) first studies patients in few-shot
+evaluation, on data with patient IDs. \emph{Why:} a method change after the results would be driven by them.
+(\file{protocols.md} \S6, \S8, \S12; \hash{dcbb323}, \hash{0b051c4}) \\
 Transparent is enough; ``no one can compare'' &
 I force no comparison: both locked sets stay, with no new split and no new number. I write ``a hold-out
 matching their class counts'', never ``their test set''. Inception-v3 is ``the backbone family of Yoo et
@@ -881,16 +881,24 @@ can be added after the Phase-1 push, and feedback after the freeze changes wordi
 
 \smallskip
 \noindent
-\textbf{Phase 2 (after 3 December)} returns to the original direction: few-shot adaptation methods across
-foundation models, datasets and rare-label tiers, with the Phase-1 shortcut audit as a standard check. It may
-start once the numbers are frozen; its results stay out of this paper except one labelled paragraph. Fine-tuning
-runs in order, under its own protocol: (1)~a test where image size does not predict the disease (patient IDs if
-possible); (2)~light adaptation (LoRA or the last blocks) of MIRAGE and RETFound in the same $K$-shot episodes;
-(3)~full fine-tuning, only if (2) gains clearly on development and holds on OCTID and OCTDL. Decided for the next
-version: remove the letterbox and rescore. Still open (my choice): a planted-cue test; DINOv3.
-% src: PR l.196-199 (gates); PR l.474-476 (Phase 2); PR l.198-200 (starts when frozen; results out of this paper);
-% src: PR l.313-320 (fine-tuning order); PR l.308-309, l.435-436 (letterbox removal, decided 19 Nov); PR l.310-311
-% src: (planted-cue, Lam's choice pending); PR l.393-394 (DINOv3: v2 or next phase decided after 3 Dec)
+\textbf{Phase 2 (proposed 22 November; your view in Question~8)} starts from a problem this project kept meeting:
+patients. Kermany's official test set shares 566 of its 633 patients with its training set, and the rare images
+have no patient IDs at all. Expert labels are costly, so few-shot learning stands in for them, and then it matters
+which scans are labelled and how the test is kept honest.
+\begin{itemize}
+  \item \emph{Question A, first: same-patient leakage.} How much do frozen-encoder few-shot scores rise when the
+        labelled examples include other scans of the test image's patient, and does the ranking change?
+  \item \emph{Question B, on the same pools: patient diversity.} With a fixed budget of $K$ labelled scans, does
+        taking them from more patients raise recall on new patients?
+\end{itemize}
+Both use Kermany's patient IDs and the cached features of the same four frozen encoders, and start on the laptop.
+The Phase-1 audit (size-only reference, input recipe) is a standard check. The rules are written before any number,
+and the results stay out of this paper except one labelled paragraph. Adaptation (LoRA, then full fine-tuning) comes
+after this; other image types (blood cells, pathology) are a later replication. Decided for the next version of
+this study: remove the letterbox and rescore. Still open (my choice): a planted-cue test; DINOv3.
+% src: PR section 12 (Phase 2, defined 22 Nov) and CL 22 Nov "Phase 2 defined"; CX data table (Kermany 633 test
+% src: patients, 566 in the official training set); PR l.196-199 (gates; starts when frozen; results out of this
+% src: paper); letterbox removal, planted-cue and DINOv3 as at 6e4175d (PR l.308-311, l.393-394, l.435-436)
 
 % ---------------------------------------------------------------------------------------
 \section*{What I learned this week}
@@ -956,6 +964,14 @@ lead with the development comparison and the controls? (keep, per recipe / secon
 feedback called the external degradation ``results with real scientific value''; E3 shows the rates depend on
 the recipe. \emph{My recommendation:} keep, per recipe, because that dependence is itself a reliability result.}
 % src: PH E1g_nine_way.csv, E3_criteria.csv (3); mentor's feedback 2 (ML, "Said"); PR CL "Phase-1 verdicts" (summary)
+
+\ask{8}{\textbf{Phase 2.} Do you agree that Phase 2 first studies patients in few-shot evaluation (same-patient
+leakage, then patient diversity at a fixed labelling budget, on Kermany's patient IDs), and that adaptation such as
+LoRA comes after it? (yes / no, adaptation first) \emph{Context:} the earlier plan went straight to adaptation, but
+the problems this project kept meeting were about patients, and a clean patient-level test is what adaptation
+would need first. \emph{My recommendation:} yes; it is simple, starts on the laptop with data we hold, and keeps
+the Phase-1 audit as a standard check.}
+% src: PR section 12; PR CL 22 Nov "Phase 2 defined"; three-model brainstorm 22 Nov (Neon, Sol, Fable)
 
 \medskip
 \noindent\rule{\linewidth}{0.4pt}\\
