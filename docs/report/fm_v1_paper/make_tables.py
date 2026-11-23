@@ -235,6 +235,31 @@ def t_p4():
     write("t5_p4_size_right_wrong", L)
 
 
+def p4_entries():
+    """P4's 'report how many episodes each class enters': one count per group, class and K. The groups come from the
+    size-only rule, so the counts are the same for every arm; the table refuses to print if they are not."""
+    rows = read_ph("P4_class_entries.csv")
+    by: dict[tuple, set] = {}
+    for r in rows:
+        by.setdefault((r["group"], r["class"], r["k"]), set()).add((r["episodes_entered"], r["episodes_planned"]))
+    if any(len(v) != 1 for v in by.values()):
+        raise SystemExit("P4_class_entries.csv: episode counts differ between arms; print them per arm")
+    planned = {p for v in by.values() for _e, p in v}
+    L = [r"% src: PH P4_class_entries.csv columns episodes_entered, episodes_planned (lines 2-161; equal for all four arms);",
+         r"%      label: " + rows[0]["posthoc"],
+         r"\begin{tabular}{@{}llcccc@{}}", r"\toprule",
+         r"Class & Queries & $K=1$ & $K=2$ & $K=4$ & $K=8$ \\", r"\midrule"]
+    for i, c in enumerate(RARE):
+        for g, gl in (("size_right", "size-right"), ("size_wrong", "size-wrong")):
+            cells = [next(iter(by[(g, c, k)]))[0] for k in KS]
+            L.append((c if g == "size_right" else "") + f" & {gl} & " + " & ".join(cells) + r" \\")
+        if i < len(RARE) - 1:
+            L.append(r"\addlinespace[2pt]")
+    L += [r"\bottomrule", r"\end{tabular}"]
+    write("p4_class_entries", L)
+    (OUT / "p4_class_entries_planned.tex").write_text(" / ".join(sorted(planned)) + "\n", encoding="utf-8")
+
+
 def t_p8():
     rows = read_ph("P8_csc_vs_mh_development.csv")
     by = {(r["arm"], r["k"]): r for r in rows}
@@ -501,44 +526,81 @@ def p6():
     write("p6_probe_vs_prototype", L)
 
 
-def p9():
-    rows = read_ph("P9_rare_vs_normal_auroc.csv")
+def p9_table(source: str, name: str) -> None:
+    """P9: beside each AUROC, the locked argmax point (rare scans called any rare; normals called rare, as in R1) and
+    the rare share above the score that only 5% of that set's normals exceed (read from the test set: an upper bound)."""
+    rows = read_ph(source)
     by = {(r["arm"], r["set"]): r for r in rows}
     sets = list(dict.fromkeys(r["set"] for r in rows))
-    L = [r"% src: PH P9_rare_vs_normal_auroc.csv lines 2-21 (auroc, boot95_low, boot95_high); label: " + rows[0]["posthoc"],
-         r"\begin{tabular}{@{}l" + "c" * 4 + r"@{}}", r"\toprule", "Set & " + " & ".join(NAME[a] for a in ARMS) + r" \\", r"\midrule"]
-    for s in sets:
+    arms = [a for a in ARMS if any(r["arm"] == a for r in rows)]
+    L = [r"% src: PH " + source + " columns auroc, boot95_low, boot95_high, argmax_rare_called_any_rare, argmax_normals_called_rare,",
+         r"%      rare_share_above_5pct_normal_cut_upper_bound (lines 2-" + str(len(rows) + 1) + "); label: " + rows[0]["posthoc"],
+         r"\begin{tabular}{@{}llcccc@{}}", r"\toprule",
+         r" & & & \multicolumn{2}{c}{Argmax point (share)} & \\ \cmidrule(lr){4-5}",
+         r"Set & Arm & AUROC (95\% interval) & \makecell{Rare scans\\called rare} & \makecell{Normals\\called rare} & \makecell{Rare share above the\\5\% normal cut (upper bound)} \\",
+         r"\midrule"]
+    for i, s in enumerate(sets):
         lab = s.replace("Legacy 22 against 169 patient-disjoint Kermany normals", r"\makecell[l]{Hold-out 22 vs 169 Kermany\\normals (source and disease mixed)}")
-        L.append(lab + " & " + " & ".join(f"{f(by[(a, s)]['auroc'])} ({rng(by[(a, s)]['boot95_low'], by[(a, s)]['boot95_high'])})" for a in ARMS) + r" \\")
+        for j, a in enumerate(arms):
+            r = by[(a, s)]
+            L.append(" & ".join([lab if j == 0 else "", NAME[a], f"{f(r['auroc'])} ({rng(r['boot95_low'], r['boot95_high'])})",
+                                 f(r["argmax_rare_called_any_rare"]), f(r["argmax_normals_called_rare"]),
+                                 f(r["rare_share_above_5pct_normal_cut_upper_bound"])]) + r" \\")
+        if i < len(sets) - 1:
+            L.append(r"\addlinespace[2pt]")
     L += [r"\bottomrule", r"\end{tabular}"]
-    write("p9_auroc", L)
+    write(name, L)
+
+
+def p9():
+    p9_table("P9_rare_vs_normal_auroc.csv", "p9_auroc")
+    p9_table("P9_G1_padded_auroc.csv", "p9_g1_padded")
 
 
 def g1():
     rows = read_ph("G1_pad_to_square.csv")
     by = {(r["arm"], r["table"], r["k"], r["quantity"]): r for r in rows}
-    L = [r"% src: PH G1_pad_to_square.csv columns locked, padded, size_only (development lines 6-10/54-58; hold-out 11-21/59-69);",
-         r"%      K = 16 omitted from any reading (protocols.md 19 Nov G1 decision). Label: " + rows[0]["posthoc"],
-         r"\begin{tabular}{@{}llcccccc@{}}", r"\toprule",
-         r" & & \multicolumn{3}{c}{MIRAGE} & \multicolumn{3}{c}{Inception-v3} \\ \cmidrule(lr){3-5}\cmidrule(l){6-8}",
-         r"Set & $K$ & Locked & Padded & Change & Locked & Padded & Change \\", r"\midrule"]
+    # Every element the G1 rule names: development macro recall, hold-out counts, the size-only comparison and the
+    # OCTDL normal destinations, beside the locked numbers. Size-only depends on no model (equal for both arms).
+    L = [r"% src: PH G1_pad_to_square.csv columns locked, padded, size_only (development lines 6-10/54-58; hold-out 11-21/59-69,",
+         r"%      mean_correct_of_22 on the even hold-out lines; nine-way lines 22-49/70-97). K = 16 omitted from any reading",
+         r"%      (protocols.md 19 Nov G1 decision). Label: " + rows[0]["posthoc"],
+         r"\begin{tabular}{@{}llccccccc@{}}", r"\toprule",
+         r" & & \multicolumn{3}{c}{MIRAGE} & \multicolumn{3}{c}{Inception-v3} & \\ \cmidrule(lr){3-5}\cmidrule(lr){6-8}",
+         r"Set & $K$ & Locked & Padded & Change & Locked & Padded & Change & Size-only \\", r"\midrule"]
     for t, tl in (("development", "Development"), ("hold-out", "Hold-out")):
         for k in ("1", "2", "4", "8", "mean_k1_2_4_8"):
             cells = []
             for a in ("MIRAGE", "Inception"):
                 r = by[(a, t, k, "macro_recall_mean")]
                 cells += [f(r["locked"]), f(r["padded"]), f(float(r["padded"]) - float(r["locked"]), sign=True)]
+            so = {by[(a, t, k, "macro_recall_mean")]["size_only"] for a in ("MIRAGE", "Inception")}
+            if len(so) != 1:
+                raise SystemExit(f"G1_pad_to_square.csv: size_only differs between arms ({t}, K={k})")
+            cells.append(f(so.pop()))
             L.append((tl if k == "1" else "") + f" & {'1--8' if k.startswith('mean') else k} & " + " & ".join(cells) + r" \\")
         L.append(r"\addlinespace[2pt]")
     L[-1] = r"\midrule"
-    L.append(r" & & \multicolumn{6}{c}{Nine-way: scans called NORMAL / called any rare (locked $\to$ padded)} \\")
+    L.append(r"\multicolumn{9}{@{}l}{Hold-out: mean number named correctly of 22 (100 draws)} \\")
+    for k in KS:
+        cells = []
+        for a in ("MIRAGE", "Inception"):
+            r = by[(a, "hold-out", k, "mean_correct_of_22")]
+            cells += [f(r["locked"], 2), f(r["padded"], 2), f(float(r["padded"]) - float(r["locked"]), 2, sign=True)]
+        L.append(f" & {k} & " + " & ".join(cells) + r" & -- \\")
+    L.append(r"\midrule")
+    L.append(r"\multicolumn{9}{@{}l}{Nine-way: called NORMAL / common disease (CNV, DME or DRUSEN) / any rare, locked $\to$ padded} \\")
     for s in ("Kermany patient-disjoint (n=169)", "OCTID NORMAL (n=206)", "OCTDL NORMAL (n=332)"):
         cells = []
         for a in ("MIRAGE", "Inception"):
-            n = by[(a, f"nine-way {s}", "", "called_NORMAL")]
-            r = by[(a, f"nine-way {s}", "", "called_any_rare")]
-            cells.append(r"\multicolumn{3}{c}{" + f"{n['locked']} $\\to$ {n['padded']} / {r['locked']} $\\to$ {r['padded']}" + "}")
-        L.append(f"\\multicolumn{{2}}{{@{{}}l}}{{{s.replace('(n=', '(').replace(')', ')')}}} & " + " & ".join(cells) + r" \\")
+            q = [by[(a, f"nine-way {s}", "", c)] for c in ("called_NORMAL", "called_CNV_DME_DRUSEN", "called_any_rare")]
+            cells.append(r"\multicolumn{3}{c}{" + "/".join(x["locked"] for x in q) + r" $\to$ " + "/".join(x["padded"] for x in q) + "}")
+        L.append(f"\\multicolumn{{2}}{{@{{}}l}}{{{s.replace('(n=', '(')}}} & " + " & ".join(cells) + r" & -- \\")
+    cells = []
+    for a in ("MIRAGE", "Inception"):
+        r = by[(a, "nine-way Legacy 22 (n=22)", "", "correct_class")]
+        cells.append(r"\multicolumn{3}{c}{" + f"{r['locked']} $\\to$ {r['padded']}" + "}")
+    L.append(r"\multicolumn{2}{@{}l}{Hold-out 22, named correctly} & " + " & ".join(cells) + r" & -- \\")
     L += [r"\bottomrule", r"\end{tabular}"]
     write("g1_pad_to_square", L)
 
@@ -839,8 +901,9 @@ def nine_cells(by: dict, count_sets=NORMALS) -> list[str]:
             continue
         iv = f"; {rng(r['ci95_low'], r['ci95_high'])}" if has(r.get("ci95_low")) else ""
         cells.append(two(f"{r['called_any_rare']}/{r['n']}", f"({f(r['rate_value'])}{iv})"))
-    nor = [by[s]["called_NORMAL"] if s in by else "--" for s in ("OCTID NORMAL", "OCTDL NORMAL")]
-    cells.append(" / ".join(nor))
+    # E0: beside the false-rare rate, the destinations (NORMAL; CNV, DME or DRUSEN; any rare): NORMAL/common per set.
+    nor = [f"{by[s]['called_NORMAL']}/{by[s]['called_CNV_DME_DRUSEN']}" if s in by else "--" for s in NORMALS]
+    cells.append("; ".join(nor))
     r1 = [by[s]["called_any_rare"] if s in by else "--" for s in RARE_EXT]
     cells.append(f"{r1[0]} / {r1[1]}; {r1[2]}")
     cells.append(by["Legacy 22"]["correct_class"] if "Legacy 22" in by else "--")
@@ -848,7 +911,8 @@ def nine_cells(by: dict, count_sets=NORMALS) -> list[str]:
 
 
 NINE_HEAD = [r"\makecell{Kermany normals\\(patient-disjoint)}", "OCTID normals", "OCTDL normals",
-             r"\makecell{Called NORMAL\\OCTID / OCTDL}", r"\makecell{R1: OCTID CSC / MH;\\OCTDL MH}", r"\makecell{Hold-out\\correct}"]
+             r"\makecell{Called NORMAL/common disease\\Kermany; OCTID; OCTDL}", r"\makecell{R1: OCTID CSC / MH;\\OCTDL MH}",
+             r"\makecell{Hold-out\\correct}"]
 
 
 def e1g() -> bool:
@@ -857,7 +921,7 @@ def e1g() -> bool:
         return False
     marks = Marks()
     groups = grouped(rows, "model", "feature_set")
-    L = [r"% cells: called_any_rare/n (rate_value; ci95_low--ci95_high) on the normal sets; called_NORMAL; R1 = called_any_rare",
+    L = [r"% cells: called_any_rare/n (rate_value; ci95_low--ci95_high) on the normal sets; called_NORMAL/called_CNV_DME_DRUSEN; R1 = called_any_rare",
          r"%        on OCTID CSC, OCTID MH, OCTDL MH; hold-out = correct_class of 'Legacy 22'.",
          r"\begin{tabular}{@{}ll" + "c" * 6 + r"@{}}", r"\toprule",
          r" & & \multicolumn{3}{c}{Normal scans called any rare class: count/$n$ (rate; 95\% interval)} & & & \\",
@@ -976,25 +1040,47 @@ def e1h() -> bool:
     return write_e("e1h_leave_one_out", "E1h_leave_one_out.csv", L, notes + ("." if notes else ""))
 
 
+def e1d_exclusion(r: dict) -> tuple[str, str]:
+    excluded = r["excluded"].replace(" query-episode exclusions per arm", " query-episodes").replace(
+        " hold-out images excluded", " images")
+    return ("none" if r["exclusion"] == "locked (no exclusion)" else r["exclusion"]), excluded
+
+
 def e1d_dup() -> bool:
-    """Rule E1-D (21 Nov, after the E1 verdict): MIRAGE minus Inception-v3, mean over K, without P10's matches."""
+    """Rule E1-D (21 Nov, after the E1 verdict): MIRAGE minus Inception-v3 without P10's matches. Every element the
+    rule names: development n, mean, SD, p05, p95 and draws above 0 on the K mean (e1d_duplicates); hold-out mean
+    paired difference per K and on the K mean, direction only, K = 16 shown and not read (e1d_holdout); the label
+    (e1d_label)."""
     rows = read_e("E1D_duplicate_sensitivity.csv")
     if rows is None:
         return False
-    L = [r"\begin{tabular}{@{}llp{4.2cm}lccccc@{}}", r"\toprule",
-         r"Part & Features & Exclusion & Excluded & $n$ & Mean & SD & p05 & Draws $>0$ \\", r"\midrule"]
+    L = [r"\begin{tabular}{@{}llp{4.2cm}lcccccc@{}}", r"\toprule",
+         r"Part & Features & Exclusion & Excluded & $n$ & Mean & SD & p05 & p95 & Draws $>0$ \\", r"\midrule"]
     for r in rows:
         if r["phase"] not in ("development", "hold-out") or r["k"] != "mean_k1_2_4_8":
             continue
-        excluded = r["excluded"].replace(" query-episode exclusions per arm", " query-episodes").replace(
-            " hold-out images excluded", " images")
-        exclusion = "none" if r["exclusion"] == "locked (no exclusion)" else r["exclusion"]
+        exclusion, excluded = e1d_exclusion(r)
         dev = r["phase"] == "development"  # the hold-out is read for direction only: its spread is not printed
         L.append(" & ".join([tex(r["phase"]), tex(r["feature_set"]), tex(exclusion), tex(excluded),
                              val(r["n_draws"]), f(r["mean"], sign=True), f(r["sd"]) if dev else "--",
-                             f(r["p05"], 4, sign=True) if dev else "--",
+                             f(r["p05"], 4, sign=True) if dev else "--", f(r["p95"], sign=True) if dev else "--",
                              val(r["draws_above_0"]) if dev else "--"]) + r" \\")
     L += [r"\bottomrule", r"\end{tabular}"]
+    hold = grouped([r for r in rows if r["phase"] == "hold-out"], "feature_set", "exclusion")
+    H = [r"% cells: mean (paired MIRAGE minus Inception-v3, hold-out); direction as stored; K = 16 shown, not read.",
+         r"\begin{tabular}{@{}lp{4.2cm}l" + "c" * 6 + r"l@{}}", r"\toprule",
+         r"Features & Exclusion & Excluded & $K=1$ & $K=2$ & $K=4$ & $K=8$ & \makecell{$K=16$\\(not read)} & Mean $K$ 1--8 & Direction \\",
+         r"\midrule"]
+    for (s, _x), g in sorted(hold.items(), key=lambda kv: set_key(kv[0][0])):
+        by = {r["k"]: r for r in g}
+        exclusion, excluded = e1d_exclusion(g[0])
+        H.append(" & ".join([tex(s), tex(exclusion), tex(excluded),
+                             *[f(by[k]["mean"], sign=True) if k in by else "--" for k in (*KS, "16", KM)],
+                             tex(by[KM]["direction"]) if KM in by else "--"]) + r" \\")
+    H += [r"\bottomrule", r"\end{tabular}"]
+    write_e("e1d_holdout", "E1D_duplicate_sensitivity.csv", H,
+            "Hold-out: mean paired difference over 100 draws, read for direction only; $K=16$ is shown, never read.")
+    OUT.joinpath("e1d_label.tex").write_text(tex(rows[0]["posthoc"]) + "\n", encoding="utf-8")
     check = next((r for r in rows if r["phase"] == "check"), None)
     sentence = next((r for r in rows if r["phase"] == "sentence"), None)
     note = ""
@@ -1407,10 +1493,57 @@ def e4d() -> bool:
                      "$^{d}$descriptive comparison. " + E4_NOTE)
 
 
+def tasks_summary() -> bool:
+    """Every K-shot task on which all four arms were scored, side by side: mean macro recall over K = 1, 2, 4, 8, with
+    the locked inputs and (where it exists) the main control E1-M, and the references that use no model. No new
+    number: each cell is the K-mean of a CSV of record. No rank and no bold: the E1 rule allows no new ranking."""
+    e1b, e1f = read_e("E1b_development.csv"), read_e("E1f_holdout.csv")
+    if e1b is None or e1f is None:
+        return False
+    dev = {(r["model"], r["feature_set"]): r["mean"] for r in e1b if r["k"] == KM}
+    hold = {(r["model"], r["feature_set"]): r["mean"] for r in e1f if r["k"] == KM and r["quantity"] == "macro_recall"}
+    r2 = {r["arm"]: r["mean"] for r in read_ph("R2_development_spread.csv") if r["k"] == KM}
+    for arm in ARMS:  # the E1 files' locked rows must be the locked development means (rule R2's gate value)
+        if abs(float(dev[arm, "locked"]) - float(r2[arm])) > 1e-9:
+            raise SystemExit(f"E1b_development.csv: locked {arm} differs from R2_development_spread.csv")
+    p8 = {r["arm"]: r for r in read_ph("P8_csc_vs_mh_development.csv") if r["k"] == KM}
+
+    def line(task, inputs, fixed, cells, size, thumb, chance):
+        return " & ".join([task, inputs, fixed, *[f(c) for c in cells], f(size) if size else "--",
+                           f(thumb) if thumb else "--", chance]) + r" \\"
+
+    def five(src, s):
+        return [src[a, s] for a in ARMS]
+
+    L = [r"% src: PH E1b_development.csv and E1f_holdout.csv, k = mean_k1_2_4_8 (feature sets locked and E1-M; references",
+         r"%      size_only raw, thumbnail raw and E1-M); the locked development cells equal R2_development_spread.csv (checked);",
+         r"%      PH P8_csc_vs_mh_development.csv mean line (mean; locked_OCTID_two_way_macro_mean = Table 4);",
+         r"%      OCTID size-only 0.500: ARC reports/external/external_two_way.csv size_only_reference (Table 4).",
+         r"%      Generated by make_tables.py; formatting only, no new number.",
+         r"\begin{tabular}{@{}lllccccccc@{}}", r"\toprule",
+         r"Task & Inputs & How the row was fixed & " + " & ".join(NAME[a] for a in ARMS)
+         + r" & Size-only & Thumbnail$^{*}$ & Chance \\", r"\midrule",
+         line("Development, five-way (124 queries)", "locked", "registered (primary)", five(dev, "locked"),
+              dev["size_only", "raw"], dev["thumbnail", "raw"], "0.20"),
+         line("", "E1-M", "post hoc, E1 (rule 20 Nov)", five(dev, "E1-M"), None, dev["thumbnail", "E1-M"], "0.20"),
+         r"\addlinespace[2pt]",
+         line("Hold-out, five-way (22 queries)", "locked", "registered (secondary; not blind)", five(hold, "locked"),
+              hold["size_only", "raw"], hold["thumbnail", "raw"], "0.20"),
+         line("", "E1-M", "post hoc, E1 (rule 20 Nov)", five(hold, "E1-M"), None, hold["thumbnail", "E1-M"], "0.20"),
+         r"\addlinespace[2pt]",
+         line("Development, CSC against MH", "locked", "post hoc, P8 (rule 16 Nov)", [p8[a]["mean"] for a in ARMS],
+              p8["size_only"]["mean"], None, "0.50"),
+         line("OCTID, CSC against MH", "locked", "registered (exploratory)",
+              [p8[a]["locked_OCTID_two_way_macro_mean"] for a in ARMS], "0.5", None, "0.50"),
+         r"\bottomrule", r"\end{tabular}"]
+    write("e1_tasks_summary", L)
+    return True
+
+
 E_GENERATORS = (e1d, e1g, e1a, lambda: e_kmean_table("e1b_development", "E1b_development.csv", "model", False),
                 lambda: e_kmean_table("e1c_paired", "E1c_paired.csv", "comparison", True), e1e, e1f, e1h, e1d_dup,
                 e2_summary, e2a_full, e2b_pairs, e2c, e2d_main, e2d_all, e2d_cat, e2e, e2f,
-                e3_criteria_t, e3_dev, e3_hold, e3_nine, e3_checks_t, e4a, e4b, e4c, e4d)
+                e3_criteria_t, e3_dev, e3_hold, e3_nine, e3_checks_t, e4a, e4b, e4c, e4d, tasks_summary)
 
 
 def e_guard() -> None:
@@ -1461,6 +1594,7 @@ def locked_and_posthoc() -> None:
         s_confusion(z)
         s_two_way(z)
     t_p4()
+    p4_entries()
     t_p8()
     p0()
     p1()

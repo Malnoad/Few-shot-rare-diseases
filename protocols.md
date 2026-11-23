@@ -683,6 +683,66 @@ results.
   in few-shot evaluation, first; question B, patient diversity at a fixed labelling budget, on
   the same pools; Kermany patient IDs and cached features; laptop first. It replaces the one-line
   Phase-2 description of 20 Nov; adaptation moves later.
+- 23 Nov, mentor's review (first of two) and step 2 started (Lam: "Start now"). The review, its
+  cross-check and rebuttal are in `docs/research/MENTOR_LEARNING_LOG.md` (Feedback 3); no number
+  changed and no rule was added. Done under the freeze, wording and formatting only:
+  - Tables completed with the elements their rules name (E1-D p95, hold-out per K, K = 16 and
+    label; P4 episodes per class; P7 three-model line; P9 argmax point, 5% share and the padded
+    table; G1 size-only, hold-out counts and destinations; common-disease destinations in the E1
+    and E3 nine-way tables). Every other table regenerates byte for byte.
+  - Paper reframed audit-first (title, abstract, introduction, contribution order, conclusion):
+    the benchmark finding leads (size-only 0.578 at K = 1, above all four models); the introduction
+    says the audit framing was adopted after the locked results. Beside the unchanged E1 verdict:
+    what the rule measures, the unpaired raw size-only comparison, MIRAGE's hold-out level (0.722
+    locked, 0.667 E1-M), Inception-v3's whole input path. "The narrow pass does not rest on the
+    same-picture pairs" replaced by "removing the pairs did not remove the pass".
+  - `fm_posthoc.py`: `.py` files join the text suffixes of the freeze fingerprint (a fresh Windows
+    checkout converts their line endings); the recorded fingerprints are unchanged.
+  - Not decided, for Lam and the mentor (24 Nov): the benchmark-against-external table and its
+    position; G1 in the main text (19 Nov decision); the Phase-2 order (section 12).
+- 24 Nov, remaining Phase-1 choices (Lam: "Fable decide what left to do except for feedbacks
+  waiting, leftover findings will be for Phase 2"; decided by Claude Fable 5.2, open to Lam's
+  objection at the 26 Nov review). No number changed and no rule was added; wording, formatting and
+  records only.
+  - Kept as drafted on 23 Nov, approval markers removed: the title, the audit-led abstract, the
+    introduction's framing sentences and the conclusion.
+  - One table added, no new number: every K-shot task on which all four arms were scored, side by
+    side on the K mean, locked and under E1-M, each row tagged registered or post hoc with its rule
+    date (`tables/e1_tasks_summary.tex`, from `E1b`, `E1f` and `P8`). It answers the pre-freeze
+    check's "one locked-against-controls summary" and the mentor's benchmark-against-external
+    table. It sits at the head of the post hoc subsection, which S5 rule 2 allows; moving it beside
+    Table I stays with Lam and the mentor. The text says "No model leads on every task" and makes
+    no new ranking (E1 rule). False-rare counts stay in the E1 nine-way table, which already
+    carries NORMAL recall, destinations and R1 as E0 requires.
+  - Provenance and P10 joined in one results paragraph under the post hoc heading (119 against 146
+    images, the RP and Stargardt counts, five development-to-hold-out pairs on four hold-out
+    images).
+  - The pre-freeze wording list, closed: the false-rare qualifier now reads "each model's locked
+    recipe on the published, frame-filling inputs"; E4 is worded at its lowest cells (0.674 at
+    K = 1; every cell above chance); what E1-M did to DINOv2 minus Inception-v3 (+0.024 to −0.044),
+    to Inception-v3 against size-only (0.586 against 0.569, unpaired) and to the hold-out nine-way
+    counts (20 and 13 to 18 and 16); the leave-one-out range (0.058 to 0.068) and the framing
+    residual (9% to 47% of rare inputs per class with a near-black edge run) in Limitations; the
+    E1-D fixed sentence verbatim in Limitations; the full E3 scope sentence; shared patients "seen
+    at least once, true number unknown". The G1 sentence keeps its one-sentence limit and gains the
+    two counts the 19 Nov decision allows.
+  - Sources: Zech et al. 2018 added to section 10 as the one shortcut-learning source (publisher
+    page read). DeGrave et al. 2021 could not be opened and is not cited. Sun 2024 and TVST 2026
+    bibliography fields filled from their Crossref and Europe PMC records.
+  - Left as they are: the 21 Nov weekly report, a dated record already sent (its lines on "no
+    analysis rule after this push", "not re-run without them" and "about the fifth-lowest" predate
+    E1-D and the 21 Nov correction; the paper is the document of record);
+    `pre_rule/README.md`, a frozen file whose 19 Nov exception note already covers the 126 of 146
+    count.
+  - Carried to Phase 2, not run in Phase 1: the RETFound read-out re-test and the Inception-v3
+    decoder re-test (kit drafted on branch `t3/draft-oct-retest-kit`, rule section 13 not
+    approved, nothing run), including the model-free pixel check on the 146 rare PNG files; why
+    outside normal scans are called rare; whether MIRAGE's macular-hole weakness is disease or
+    size; a preprocessing grid for Inception-v3; more support draws for the E1 percentile. The paper
+    words each of these as untested.
+  - Still waiting, not touched: the summary table's position, G1 in the main text, the "Next
+    phase" paragraph and section 12 (mentor's second review); Zenodo publication time, archive
+    locations, AI-use wording, ethics, funding, acknowledgements and venue (Lam).
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 
@@ -831,7 +891,7 @@ Zenodo; the proposal paper in `docs/report/fm_ieee/main.pdf`.
 
 ## 10. The sources we track
 
-The study rests on these twelve sources (the last two added 19 Nov). A claim in the paper cites
+The study rests on these thirteen sources (two added 19 Nov, the last on 24 Nov). A claim in the paper cites
 one of them or our own files; any other paper needs a reason before it is added here.
 
 | Source | What we use it for |
@@ -848,6 +908,7 @@ one of them or our own files; any other paper needs a reason before it is added 
 | Chen et al. 2026, npj Digital Medicine (EyeDiff; doi:10.1038/s41746-026-02560-2) | Same precedent: OCTID's CSR class treated as CSC |
 | Sun, Wei, Wang, Zheng 2024, Medical Image Analysis 93:103102 | Prior K-shot work on Yoo's rare images (five-way, K = 1, 3, 5, trained network, three tasks); narrows our novelty claim; not a numeric comparator (other pool and training) |
 | Tai et al. 2025, arXiv:2505.20149 | Reuses Yoo's data and compares with Yoo's 93.9 without defining its test set: the loose comparison we avoid |
+| Zech et al. 2018, PLOS Medicine 15(11):e1002683 (doi:10.1371/journal.pmed.1002683) | The one shortcut-learning source: networks trained to detect pneumonia identified the hospital system, which can confound predictions. Reason for adding: the paper is framed as a shortcut audit and its introduction needs one cited example |
 
 ## 11. Open items for the write-up
 

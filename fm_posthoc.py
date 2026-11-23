@@ -3634,7 +3634,7 @@ FREEZE_FILE = "results/fm_v1/phase1_freeze.json"
 # Step 1 (22 Nov) freezes the files of record; step 2 (by 27 Nov) adds the paper's tables and figures with
 # `freeze --scope docs/report/fm_v1_paper/tables docs/report/fm_v1_paper/figures --reason ...`.
 FREEZE_SCOPE = ("results/fm_v1/posthoc",)
-TEXT_SUFFIXES = {".csv", ".md", ".tex", ".json", ".txt"}
+TEXT_SUFFIXES = {".csv", ".md", ".tex", ".json", ".txt", ".py"}
 
 
 def fingerprint(name: str, data: bytes) -> str:

@@ -9,8 +9,9 @@ spread (`results/fm_v1/posthoc/R2_development_spread.csv`). Template: `docs/repo
 
 - `main.tex`: paper (title, abstract, Sections I-VIII, declarations); `supplement.tex`: supplement
   (locked supplement-only results S1-S7, post hoc P0-P3, P5-P7, P9, G1, P10 placeholder, pre-rule files).
-- `references.bib`: the 21 proposal entries plus Sun 2024, Tai 2025 and TVST 2026 (fields no
-  repository file holds are marked TODO).
+- `references.bib`: the 21 proposal entries plus Sun 2024, Tai 2025, TVST 2026 and Zech 2018 (the
+  one shortcut-learning source, added 24 Nov). Sun 2024 and TVST 2026 were completed on 24 Nov from
+  their Crossref and Europe PMC records.
 - `make_tables.py`: writes `tables/*.tex` from the locked results archive and the post hoc CSVs
   (formatting only; no computation on images or model outputs).
 - `make_figures.py`: writes `figures/fig1-4` from the input lock and the results archive.
@@ -52,13 +53,18 @@ sentence in "What the results do not show" now points to E3.
 
 ## Open (visible TODO markers in the PDF)
 
-Title, abstract, conclusion and the reliability reframing (Lam approves; drafts with E1-E4 exist);
-"Next phase" still
-describes letterbox removal as v2 (E1-C now crops the bands; Lam decides the wording); Zenodo publication time;
-shortcut-learning citation; planted-cue wording; data and code archive locations; AI-use wording;
-ethics, funding, competing interests, acknowledgements; venue; missing bib fields (Sun 2024 title
-and DOI, TVST 2026 authors and title).
+Waiting for the mentor's second review (24 Nov): "Next phase", which still describes letterbox
+removal as v2 and names the planted-cue test as undecided; whether the side-by-side task table
+(`tab:tasks`, now at the head of the post hoc subsection) moves beside Table I; whether G1 gets
+more than its one main-text sentence.
+
+Only Lam can supply: Zenodo publication time; data and code archive locations; AI-use wording;
+ethics, funding, competing interests, acknowledgements; venue.
+
+Settled on 24 Nov (protocols.md change log, "24 Nov, remaining Phase-1 choices"): title, abstract,
+framing sentences and conclusion kept as drafted; the audit-first order; the task table; the
+provenance and P10 paragraph; the pre-freeze wording list; one shortcut-learning citation; the
+bibliography fields.
 
 The C2 deviation (OCTID size not constant) is recorded as D1 in `docs/research/FM_DEVIATIONS.md`.
-Not done here: `pre_rule/README.md` still says its files may not be quoted, while the 19 Nov
-default puts the 126/146 count in the supplement.
+`pre_rule/README.md` carries a 19 Nov exception note for the 126/146 count in the supplement.

@@ -147,6 +147,16 @@ All gates passed: each head's class order matched; the heads reproduced 17, 18 a
 \end{table}
 % src: PH P3_clinic_to_clinic_mh.csv rows k=mean_k1_2_4_8; per-K rows and collapsed draws in the same file; rosters P3_example_rosters.csv (released, not shown); PR l.246, l.379-381
 
+\subsection*{P4. Episodes each class enters}
+\begin{table}[!htbp]
+\caption{Post hoc, rule committed 16 Nov 2026 (P4, main text Table~\ref{tab:p4}). Number of development episodes per $K$ (5 folds $\times$ 100 draws) in which each class has at least one query in the group, and so enters that group's average. The groups come from the size-only rule, so the counts are the same for all four models.}
+\label{tab:p4entries}
+\centering\footnotesize
+\input{tables/p4_class_entries.tex}
+\end{table}
+Episodes planned per $K$: \input{tables/p4_class_entries_planned.tex}
+% src: PH P4_class_entries.csv columns episodes_entered, episodes_planned (equal for all four arms); PR l.248 ("report how many episodes each class enters"); added 23 Nov (pre-freeze check)
+
 \subsection*{P5. Normal-scan destinations and a ``not sure'' cut-off}
 \begin{table}[!htbp]
 \caption{Post hoc, rule committed 16 Nov 2026. A ``not sure'' cut-off per model, set at the 9th-smallest top-two score gap of the 169 patient-disjoint Kermany normals (8 lie below it), applied unchanged to OCTID and OCTDL normal scans. ``Sure'': gap at or above the cut-off. The Kermany row is calibration only, not a result. Normal recall is shown beside the false-rare rate, never in its place.}
@@ -168,28 +178,35 @@ The same comparison for five-way output shares on OCTID CSC, OCTID MH and OCTDL 
 % src: PH P6_probe_vs_prototype.csv (development K=4; hold-out K=1-16; external rows); PR l.249, l.331-335
 
 \subsection*{P7. Ensemble (one line)}
-Post hoc, rule fixed after first look (first computed 15 Nov 2026). A z-scored MIRAGE + DINOv2 ensemble scored 0.695 against 0.650 for MIRAGE in development and 0.718 against 0.722 on the hold-out (mean over $K=1$--8). It is never called a result: the protocol forbids a classifier added to improve a model.
-% src: PH P7_ensemble.csv lines 21, 6, 60, 42 (0.6949, 0.6497, 0.7182, 0.7216); PR l.250
+Post hoc, rule fixed after first look (first computed 15 Nov 2026). A z-scored MIRAGE + DINOv2 ensemble scored 0.695 against 0.650 for MIRAGE in development and 0.718 against 0.722 on the hold-out (mean over $K=1$--8); the three-model version (MIRAGE + DINOv2 + Inception-v3) scored 0.695 and 0.709. It is never called a result: the protocol forbids a classifier added to improve a model.
+% src: PH P7_ensemble.csv lines 21, 6, 60, 42 (0.6949, 0.6497, 0.7182, 0.7216); three-model lines 26, 66 (0.6946, 0.7093); PR l.250 ("Three-model version beside it")
 
 \subsection*{P9. Rare against normal, no cut-off}
 \begin{table}[!htbp]
-\caption{Post hoc, rule committed 18 Nov 2026. Per-scan AUROC of one prototype score (the largest rare cosine minus the largest common cosine), disease scans against normal scans of the same set, with 95\% intervals from 2,000 bootstrap resamples (patients for OCTDL, images for OCTID).}
+\caption{Post hoc, rule committed 18 Nov 2026. Per-scan AUROC of one prototype score (the largest rare cosine minus the largest common cosine), disease scans against normal scans of the same set, with 95\% intervals from 2,000 bootstrap resamples (patients for OCTDL, images for OCTID). Beside it, the locked nine-way argmax point (share of disease scans called any rare class; share of normal scans called rare, as in R1) and the share of disease scans above the score that only 5\% of that set's normals exceed.}
 \label{tab:p9}
 \centering\footnotesize
 \input{tables/p9_auroc.tex}
 \end{table}
-The hold-out row mixes source and disease. An AUROC below 0.5 means this score ranks those scans the wrong way; MIRAGE's OCTDL value (0.357) says nothing about what MIRAGE's features contain. The OCTID values hold under the published input path; with black bars added, the same score ranks OCTID the other way (G1). The share of disease scans above the score that only 5\% of each set's normals exceed is read from the test set itself, so it is an upper bound, never a result; it is released in \texttt{P9\_rare\_vs\_normal\_auroc.csv} with the paired MIRAGE differences in \texttt{P9\_rare\_vs\_normal\_differences.csv}.
-% src: PH P9_rare_vs_normal_auroc.csv line 16 (0.3574); PR l.252, l.387-390, l.419-421
+The hold-out rows mix source and disease. An AUROC below 0.5 means this score ranks those scans the wrong way; MIRAGE's OCTDL value (0.357) says nothing about what MIRAGE's features contain. The OCTID values hold under the published input path; with black bars added, the same score ranks OCTID the other way (G1, Table~\ref{tab:p9g1}). The last column is read from the test set itself (the 5\% cut is set on the same normals), so it is an upper bound, never a result. The paired MIRAGE differences are in \texttt{P9\_rare\_vs\_normal\_differences.csv}.
+% src: PH P9_rare_vs_normal_auroc.csv line 16 (0.3574); all columns lines 2-21; PR l.252 ("Beside each AUROC: the locked argmax point ... and the rare share above ... If G1 runs, the same table on its padded MIRAGE and Inception-v3 features"), l.387-390, l.419-421
+\begin{table}[!htbp]
+\caption{Post hoc: P9 on G1's padded MIRAGE and Inception-v3 features (P9 rule committed 18 Nov 2026; G1 rule 16 Nov 2026, computed 18 Nov 2026); a sensitivity check outside A2 A-11 that never replaces a locked result. Columns as in Table~\ref{tab:p9}.}
+\label{tab:p9g1}
+\centering\footnotesize
+\input{tables/p9_g1_padded.tex}
+\end{table}
+% src: PH P9_G1_padded_auroc.csv lines 2-11; PR l.252
 
 \subsection*{G1. Pad-to-square input check}
 \begin{table}[!htbp]
-\caption{Post hoc sensitivity check outside A2 A-11 (rule committed 16 Nov 2026, computed 18 Nov 2026); it never replaces a locked result. MIRAGE and Inception-v3 re-extracted with every image padded with black to a square around its centre, then given each model's own locked transform; scored with the locked episodes and nine-way roster.}
+\caption{Post hoc sensitivity check outside A2 A-11 (rule committed 16 Nov 2026, computed 18 Nov 2026); it never replaces a locked result. MIRAGE and Inception-v3 re-extracted with every image padded with black to a square around its centre, then given each model's own locked transform; scored with the locked episodes and nine-way roster. Size-only: the locked size-only reference (no model; the same for both arms). Nine-way destinations: scans called NORMAL / CNV, DME or DRUSEN / any rare class.}
 \label{tab:g1}
 \centering\footnotesize
 \input{tables/g1_pad_to_square.tex}
 \end{table}
-Development and hold-out recall moved by at most 0.023 at $K=1$--8 (mean of 100 draws), a near-null test because the rare inputs are already near square. With black padding, external normal scans went almost entirely to rare classes for both models (MIRAGE: OCTID 202 $\to$ 0 and OCTDL 26 $\to$ 1 called NORMAL). The rare images are letterboxed, and padding gives wide external scans that layout. External nine-way results depend on input geometry. We draw no conclusion about cause, robustness to aspect ratio, a ranking of the two models on padded inputs, or what the features contain, and we read no $K=16$ value. Checks: unpadded controls and 1,032 square images were within $1.43\times10^{-6}$ of the locked features, and repeats were exact; the GPU differed (L4 for the lock, A100 for G1), and the MIRAGE environment differed only in the patch versions of \texttt{filelock} and \texttt{regex}. Full tables, including padded P9: \texttt{G1\_comparison.md}.
-% src: PH G1_pad_to_square.csv; G1_comparison.md sections 1-5; PR l.401-422 (allowed and forbidden claims)
+Development and hold-out recall moved by at most 0.023 at $K=1$--8 (mean of 100 draws), a near-null test because the rare inputs are already near square. With black padding, external normal scans went almost entirely to rare classes for both models (MIRAGE: OCTID 202 $\to$ 0 and OCTDL 26 $\to$ 1 called NORMAL). The rare images are letterboxed, and padding gives wide external scans that layout. External nine-way results depend on input geometry. We draw no conclusion about cause, robustness to aspect ratio, a ranking of the two models on padded inputs, or what the features contain, and we read no $K=16$ value. Checks: unpadded controls and 1,032 square images were within $1.43\times10^{-6}$ of the locked features, and repeats were exact; the GPU differed (L4 for the lock, A100 for G1), and the MIRAGE environment differed only in the patch versions of \texttt{filelock} and \texttt{regex}. Padded P9: Table~\ref{tab:p9g1}; full tables: \texttt{G1\_comparison.md}.
+% src: PH G1_pad_to_square.csv; G1_comparison.md sections 1-5; PR l.401-422 (allowed and forbidden claims); PR l.255 (G1 reports "development macro recall, hold-out counts, the size-only comparison and OCTDL normal destinations, beside the locked numbers")
 
 \subsection*{P10. Same-picture audit}
 Post hoc, rule committed 18 Nov 2026 (commit \texttt{dcbb323}); screen and review sheet computed 19 Nov 2026; the reviewer's marks (SHA256 \texttt{15a9606fce87\ldots}) committed on 21 Nov 2026 before the review key was joined; sensitivity computed 21 Nov 2026. Method in Section~\ref{sec:posthoc-methods}; summary in Section~\ref{sec:res-posthoc}. The SIFT screen scored all 10,585 pairs of the 146 rare images (median 4 inliers, largest 869); the cut-off, the largest score among 2,000 rare--Kermany pairs (1,617 Kermany images), was 18 inliers, and all 146 synthetic copies reached it. Thirty-five pairs reached the cut-off; with 10 synthetic copies and 10 decoys they made the 55 review items. The reviewer, one author who is not a clinician, marked all 10 synthetic copies ``same picture'' and all 10 decoys ``different''. Of the 35 screened pairs, 14 were marked ``same picture'', 1 ``same case, other slice'', 1 ``unsure'' and 19 ``different'' (Table~\ref{tab:p10pairs}). No pair shared a source link: the source list of Yoo et al.\ names no file. Per-pair scores are in \texttt{P10\_screen\_pairs.csv}, the review key and marks in \texttt{P10\_review\_key.csv} and \texttt{P10\_review\_marks.csv} (released; no image is released).
@@ -274,10 +291,12 @@ Smallest and largest MIRAGE minus Inception-v3 mean over $K$ 1--8 with one devel
 \fi
 \havetable{e1d_duplicates}\ifgen
 \subsubsection*{E1-D. E1-M without the same-picture pairs (rule committed 21 November 2026, after the E1 verdict)}
-Post hoc, rule E1-D: P10's sensitivity (Lam's blind marks) applied unchanged to the E1-M features of MIRAGE and Inception-v3. MIRAGE minus Inception-v3, mean over $K$ 1--8: development over 100 draws; hold-out for direction only. Descriptive; it cannot change the E1 verdict. \input{tables/e1d_duplicates_note.tex}
+Post hoc, rule E1-D: P10's sensitivity (Lam's blind marks) applied unchanged to the E1-M features of MIRAGE and Inception-v3. MIRAGE minus Inception-v3, mean over $K$ 1--8: development over 100 draws; hold-out for direction only. Descriptive; it cannot change the E1 verdict. \input{tables/e1d_duplicates_note.tex} Label: \input{tables/e1d_label.tex}.
 \begin{center}\footnotesize\input{tables/e1d_duplicates.tex}\end{center}
+Hold-out, per $K$. \input{tables/e1d_holdout_note.tex}
+\begin{center}\footnotesize\input{tables/e1d_holdout.tex}\end{center}
 \fi
-% src: tables/e1d_duplicates.tex from PH E1D_duplicate_sensitivity.csv; rule PR section 8 change log "21 Nov, rule E1-D" (b6d3f26)
+% src: tables/e1d_duplicates.tex, e1d_holdout.tex and e1d_label.tex from PH E1D_duplicate_sensitivity.csv; rule PR section 8 change log "21 Nov, rule E1-D" (b6d3f26); p95, hold-out per K, K = 16 and the label added 23 Nov (pre-freeze check, PR change log "22 Nov, pre-freeze double-check")
 
 \havetable{e2_label}\ifgen
 \subsection*{E2. External error analysis}
@@ -343,7 +362,7 @@ Label of every E3 row: \input{tables/e3_label.tex}.
 \fi
 \havetable{e3_nine_way}\ifgen
 \subsubsection*{E3. Nine-way audit per variant}
-Cells as in Table~\ref{tab:frr}. \input{tables/e3_nine_way_note.tex}
+Cells as in Table~\ref{tab:frr}; ``Called NORMAL/common disease'': normal scans called NORMAL / called CNV, DME or DRUSEN, per normal set. \input{tables/e3_nine_way_note.tex}
 {\scriptsize\setlength{\tabcolsep}{2.5pt}\input{tables/e3_nine_way.tex}}
 \fi
 \havetable{e3_checks}\ifgen
