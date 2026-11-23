@@ -1013,3 +1013,220 @@ patient-level bootstrap interval.
 - Adaptation (LoRA or the last blocks): moved later, which replaces the one-line Phase-2
   description of 20 Nov. Lam confirms this with the mentor.
 - New encoders and GAN.
+
+### 12.1 Rule A (DRAFT, not approved)
+
+Status: drafted on 23 Nov 2026 by an agent for Lam (step 0 of the order above). It becomes a rule
+only after Lam approves it, the rebuttal (Opus, Fable, Sol, Neon) is done, and it is pushed. No
+Phase-2 score exists yet. The counts below are planning counts of patients, scans and image sizes,
+made before the rule. No model was involved. Every number chosen without a source is marked L1–L12
+and listed at the end.
+
+**Step 0 findings.**
+- *Literature (sources opened 23 Nov).* Tampu et al. (Sci Data 2022) measured how much test
+  accuracy rises when OCT classifiers trained from scratch are split by image instead of by
+  patient, on Kermany v2 and v3 among others. Frozen-feature studies measure the same split
+  leakage for classifiers trained on frozen features (Albzour 2026, arXiv:2606.24944: AUROC
+  +0.039), or patient re-identification from frozen features: Nebbia et al. 2025 (frozen RETFound
+  features find the same patient's OCT B-scan first in 46.3% of searches, same-day scans
+  excluded); Engelmann et al. 2026 (a CNN never trained
+  on retinal images, and 16 × 16 pixels, also do it); Zhang et al. 2026 (pathology). Few-shot
+  benchmarks (MedFMC 2023, MedIMeta 2025) draw supports by patient or by a fixed split, but do not
+  measure what a same-patient support does. We found no study that puts other scans of the query's
+  patient into a frozen-encoder few-shot support set and measures the rise. A is therefore a new
+  measurement of a known problem, not a new problem.
+- *Kermany IDs.* The Mendeley description of versions 1–3 calls the middle field a "randomized
+  patient ID" and the last field the "image number by this patient". It says nothing about eyes or
+  visits. The Cell paper's methods could not be opened (the publisher refused automated access).
+  Tampu et al. read the field the same way and found that 92% of the v2 test images share an ID with
+  the v2 training images, and v3 none. Our manifest is v2:
+  - 914 of the 1,000 official test images share an ID with the official training set;
+  - image numbers restart at 1 in every class of an ID (all 896 multi-class IDs);
+  - 695 IDs hold both NORMAL and disease scans;
+  - one ID holds up to 817 scans;
+  - 522 of the 2,064 cached (ID, class) cells mix image sizes.
+
+  An ID therefore groups more than one acquisition. The files cannot show whether it groups both
+  eyes or several visits. **Unit: the Kermany ID, read as a patient**: it is what the sources say,
+  and it is the coarsest grouping available, so a clean arm that is disjoint by ID is disjoint
+  whatever the ID means. "Same patient" in A means "same ID". That covers neighbouring B-scans of
+  one volume, the fellow eye and other visits. A cannot separate these and says so.
+
+**Task.** Four-way, NORMAL, CNV, DME, DRUSEN, on Kermany only. The rare images have no IDs. The
+cached OCTDL features hold only NORMAL and MH, so OCTDL is left to B or later (L1). The classifier
+is the cosine prototypes of section 5 step 6, in the fixed order NORMAL, CNV, DME, DRUSEN
+(`fm_core.NINE[:4]`); an exact tie goes to the first class. There is no logistic probe.
+
+**Encoders.** RETFound, DINOv2, MIRAGE and Inception-v3, each with its locked recipe
+(`fm_extract.recipe`) and its locked weights and code. Inception-v3 stays the reference.
+RETFound was pretrained partly on Kermany images (section 10). Whether the other three saw
+Kermany in pretraining is unverified. Both facts are printed beside every result.
+
+**Patients.** A patient is eligible for class c if every manifest scan of the ID is in class c
+(3,761 of 4,657 IDs; L2). Each class has two roles, and no patient holds both. Roles are drawn
+from `fm_core.stream(42, namespace, stage, class index, …)`; the new namespaces are 21101–21106,
+and earlier work used numbers up to 14103 (L12).
+- *Pool* (support donors): 30 eligible patients per class who are not query patients, one scan
+  each. This is the "pool of at most 30 images per class" of section 12 (L3).
+- *Query patients:* eligible patients with at least 1 + d_max scans in c, where d_max is the
+  largest dose.
+
+**Two stages, both fixed now.**
+- *A-pilot (laptop, cached features).* The locked caches hold 5,000 Kermany scans (the 4,000 fitting
+  and 1,000 test scans of the locked nine-way roster). They are read through `fm_posthoc.Study`,
+  which checks every archive against its pinned SHA256 and against the input lock. The official
+  split is ignored. Doses d = 1, 2. Query patients have at least 3 cached scans in c: NORMAL 34,
+  CNV 83, DME 53, DRUSEN 60. The other eligible patients (NORMAL 681, CNV 87, DME 131,
+  DRUSEN 111) form the pool candidates.
+- *A-full (one Colab session).* A new extraction of a fixed sample from `data/manifest.csv`, under
+  the locked recipes, with doses d = 1, 2, 4, 8 (L11).
+  - Per class, 100 query patients are drawn from the eligible patients with at least 9 scans in c
+    (available: NORMAL 654, CNV 237, DME 116, DRUSEN 114), and 9 of each patient's scans are drawn
+    once. Then 30 pool patients, one scan each. In all, 4 × 930 = 3,720 scans (L4).
+  - A Phase-2 worker loads each arm through `fm_extract.load_encoder` with the spec stored in the
+    lock, as `fm_control_extract.py` does.
+  - Control: the first 20 Kermany rows of the locked inventory, plus every sampled scan that is
+    also cached, must match the locked features within 1e-4 (A2 A-6). If they do not, that arm is
+    reported as "environment differs from the lock; not interpreted".
+  - The pilot cannot change any A-full parameter. A-full runs only after the pilot's positive
+    control passes.
+  - Lam decides before the push whether A-full is part of A (L5). If it is not, the pilot is A's
+    result of record and is labelled as such.
+
+**Episodes.** There are 200 paired draws, r = 0–199 (L6; section 12's planning figure was 144).
+For each stage, class c and draw r:
+- *Support order:* a permutation of the 30 pool patients (namespace 21105). The clean K-shot
+  support of class c is the first K of them, so supports nest across K as in Phase 1.
+- *Query and leak scans:* for each query patient, ranked by sorted ID, a permutation of that
+  patient's scans in c (namespace 21106). The first scan is the query and the next d_max are the
+  leak scans, so the leak sets nest across d. Namespaces 21101–21104 draw the roles and the A-full
+  sample.
+- *Clean:* every class uses its first K pool scans. This arm is patient-disjoint by construction.
+- *Leak (K, d), d ≤ K:* only for a query of class c, the class-c prototype uses the first K − d pool
+  scans plus the first d leak scans of the query's patient. Every other class is unchanged. K stays
+  fixed: the leak scans replace pool scans rather than add to them.
+- *Planted (K), the positive control:* the leak arm with d = 1, with the query scan itself in place
+  of the leak scan.
+- *Cells:* K = 1, 2, 4, 8 with every dose d ≤ K, which gives 7 cells in the pilot and 10 in A-full,
+  plus the planted arm at each K.
+
+In every draw, each query patient is scored once in every cell, on the same supports and queries
+for the four encoders and for the size-only reference. The realised IDs are saved (v1.0 section 6:
+"Save IDs, not seeds alone").
+
+**Metric.** Macro recall over the four classes (chance 0.25), with each query patient weighted
+equally: one query per patient per draw (`fm_posthoc.patient_recall`).
+
+**Paired difference and intervals.** In each cell, the *inflation* is macro recall with the leak
+minus macro recall clean, on the same draw.
+- *Spread over draws:* n, mean, SD, and the 5th and 95th percentiles over the 200 draws
+  (`fm_posthoc.summary`). It describes how much the result varies with the support draw for these
+  query patients, and it is not a confidence interval.
+- *Patient-level interval:*
+  - For each query patient, take the mean over draws of (hit with the leak − hit clean). Δ is the
+    mean over the four classes of the class means of these values.
+  - The 95% percentile interval and the 5th percentile of Δ come from 5,000 resamples of query
+    patients, with replacement within each class, in the fixed class order
+    (`numpy.random.default_rng(0)`, the locked cluster convention).
+  - The interval is conditional on the pool.
+- *Ranking:* the named estimand is Δ(MIRAGE) − Δ(Inception-v3), with its interval from the same
+  resamples. Beside it, the order of the four encoders by mean macro recall in each cell, clean and
+  with the leak.
+
+**Positive control: the planted leak.** For each encoder and stage, the control passes if both
+hold:
+- at K = 1, planted macro recall is at least 0.99 in every draw (L7), since the query is then its
+  own class prototype and a miss means a bug or an exact duplicate in another class;
+- at every K, the patient-level 5th percentile of the planted inflation is above 0.
+
+If an encoder fails at K = 1, its A outputs are "not read": the bug fix is dated and the stage is
+rerun once. If it fails only at a larger K, the leak cells at that K are never read as null for
+that encoder ("this design cannot detect even the query itself at this K").
+
+**Null gate (section 12).** The gate cells are (K = 1, d = 1) and (K = 8, d = d_max).
+- An encoder is null for A if the patient-level 5th percentile of Δ is at or below 0 in both gate
+  cells.
+- A is reported as null, and B becomes the main question, if every encoder that passed its
+  positive control is null.
+- The gate is read on A-full if it ran, otherwise on the pilot (L8).
+
+**Standard check (section 12).**
+- *Size-only reference* (`fm_core.size_predict`, A2 N-1), on each scan's original width and
+  height. It runs in the same episodes and cells with the same statistics and is printed beside
+  every encoder. Planning count: image sizes differ by class. Of the 1,250 cached scans in each
+  class, 770 DME and 248 NORMAL scans are 512 × 512, and no CNV or DRUSEN scan is. So the reference
+  is not at chance, and a leak scan can share the query's size.
+- *Input recipe stated:* every output names each arm's locked recipe and its feature source: the
+  locked cache, or the A-full extraction with its receipt.
+- *External set:* A uses none, so the false-rare line does not apply.
+- *Option (L9):* E1's 16 × 16 grey thumbnail reference (nearest mean support), which needs the
+  raw scans. Engelmann et al. found that 16 × 16 pixels alone re-identify patients.
+
+**Outputs.** Write-once CSVs go under `results/fm_p2/A/<stage>/`, through `fm_prepare.write_once`,
+so a rerun never replaces different bytes:
+- `A0_roles.csv`: patient, class, role and the scans used.
+- `A0_checks.csv`: archive and lock checks, the A-full control, counts per class, and the planted
+  verdict per encoder.
+- `A1_recall.csv`: for each encoder and for size-only, per K, d and arm (clean, leak or planted),
+  the summary over draws and the per-class means.
+- `A2_inflation.csv`: the same rows, with the summary over draws, Δ, its 2.5th, 5th and 97.5th
+  percentiles, and the query patients per class.
+- `A3_ranking.csv`: for each cell, the order of the four encoders clean and with the leak, and
+  MIRAGE − Inception-v3 with its interval.
+- `A4_verdict.csv`: the gate cells, their 5th percentiles and the fixed sentence.
+- `A_report.md`: generated from the CSVs.
+
+Every row carries this label: "Phase 2 rule A, timestamped by commit <sha> (<date>), computed
+<date>; stage <pilot|full>; features <locked cache|A-full <receipt>>; outside the Phase-1
+protocol; never replaces a Phase-1 result". The label adds the rule-1 warning whenever the working
+subsection differs from the rule commit (`fm_posthoc.rule_commit` with this branch as the remote,
+and `rule_section_hash`). The code is a new `fm_p2.py`, with focused synthetic tests. It only
+imports `fm_core`, `fm_evaluate`, `fm_prepare` and `fm_posthoc`, and edits no hashed file.
+
+**What counts as A's answer.** For each encoder:
+- Δ at (K = 1, d = 1), and across the (K, d) grid with patient intervals, with the size-only
+  reference's Δ beside it;
+- MIRAGE − Inception-v3;
+- whether the order of the four changes;
+- the gate verdict.
+
+Fixed sentences:
+- "With d of the K examples taken from the query patient's other scans, macro recall rises by Δ
+  (patient 95% interval a to b; image size alone: z)."
+- "The order of the four encoders is unchanged / changes at <cells>; MIRAGE's inflation minus
+  Inception-v3's is x (a to b)."
+- If null: "No inflation was detected at K = 1 or at the highest dose; B becomes the main question."
+
+**Not allowed:**
+- a cause, for example that a model "recognises patients" or reads near-duplicates;
+- claims about eyes or visits;
+- any rare-disease number;
+- any change to a Phase-1 number, or any Phase-2 number in the Phase-1 paper beyond its labelled
+  next-phase paragraph;
+- a stated inflation for another paper's Kermany score.
+
+**Rule B (outline only; written after A's verdict).**
+- Same encoders, recipes, classifier, eligibility and draws, with patient-disjoint queries only.
+- At K = 4 and 8, each class's budget is split into P patients × M scans (P · M = K): 4 × 1, 2 × 2,
+  1 × 4 and 8 × 1, 4 × 2, 2 × 4, 1 × 8. The splits are paired on a shared anchor: the first pool
+  patient's first scan is in every split.
+- Pool patients need at least 8 scans, so B needs a sample like A-full's.
+- Estimand: the paired macro-recall difference (P × 1 minus 1 × K) on new patients, with the
+  patient-level interval of A and the size-only reference beside it.
+
+**Chosen without a source, needs Lam.**
+- L1: Kermany only in A; OCTDL is left to B or later.
+- L2: eligibility requires all of an ID's manifest scans to be in one class.
+- L3: the pool is 30 patients × 1 scan per class.
+- L4: the A-full sample is 100 query patients × 9 scans, plus 30 pool patients, per class.
+- L5: whether A-full is run (recommended: yes, decided before the pilot).
+- L6: 200 draws.
+- L7: the 0.99 planted threshold at K = 1.
+- L8: how the gate is read:
+  - the patient-level 5th percentile, not the spread over draws;
+  - per encoder, and null only if every encoder is null;
+  - the gate cells (K = 1, d = 1) and (K = 8, d = d_max).
+- L9: whether the thumbnail reference is added.
+- L10: no logistic probe.
+- L11: the A-full doses 1, 2, 4, 8, which mirror K.
+- L12: stream namespaces 21101–21106 (technical).
