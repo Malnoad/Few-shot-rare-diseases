@@ -724,8 +724,17 @@ results.
     counts (20 and 13 to 18 and 16); the leave-one-out range (0.058 to 0.068) and the framing
     residual (9% to 47% of rare inputs per class with a near-black edge run) in Limitations; the
     E1-D fixed sentence verbatim in Limitations; the full E3 scope sentence; shared patients "seen
-    at least once, true number unknown". The G1 sentence keeps its one-sentence limit and gains the
-    two counts the 19 Nov decision allows.
+    at least once, true number unknown". The G1 sentence is unchanged.
+  - Independent check of this entry's diff the same day (a Claude reviewer, read-only): about 120
+    numbers in changed sentences and 797 table cells against their files, no mismatch; 88 of 88
+    tables regenerate byte for byte. Seven wording and placement findings, all applied: the
+    abstract, the third contribution and the conclusion now say which results are post hoc; the
+    hold-out levels under E1-M are "shown, not read" (E0: direction only) and no longer argue why
+    the gap narrowed; the G1 sentence was put back to its 19 Nov form (two counts had been added;
+    G1 in the main text waits for Lam and the mentor); "a lead below about 0.06 would not have
+    passed" is now conditional on an equal shift, with the scaling case beside it; the Zech sentence
+    stays inside the abstract line that was read; Inception-v3 above size-only under E1-M carries
+    "unpaired"; the E3 pointer beside the locked false-rare rates names MIRAGE and RETFound only.
   - Sources: Zech et al. 2018 added to section 10 as the one shortcut-learning source (publisher
     page read). DeGrave et al. 2021 could not be opened and is not cited. Sun 2024 and TVST 2026
     bibliography fields filled from their Crossref and Europe PMC records.
@@ -908,7 +917,7 @@ one of them or our own files; any other paper needs a reason before it is added 
 | Chen et al. 2026, npj Digital Medicine (EyeDiff; doi:10.1038/s41746-026-02560-2) | Same precedent: OCTID's CSR class treated as CSC |
 | Sun, Wei, Wang, Zheng 2024, Medical Image Analysis 93:103102 | Prior K-shot work on Yoo's rare images (five-way, K = 1, 3, 5, trained network, three tasks); narrows our novelty claim; not a numeric comparator (other pool and training) |
 | Tai et al. 2025, arXiv:2505.20149 | Reuses Yoo's data and compares with Yoo's 93.9 without defining its test set: the loose comparison we avoid |
-| Zech et al. 2018, PLOS Medicine 15(11):e1002683 (doi:10.1371/journal.pmed.1002683) | The one shortcut-learning source: networks trained to detect pneumonia identified the hospital system, which can confound predictions. Reason for adding: the paper is framed as a shortcut audit and its introduction needs one cited example |
+| Zech et al. 2018, PLOS Medicine 15(11):e1002683 (doi:10.1371/journal.pmed.1002683) | The one shortcut-learning source: in chest radiography, convolutional networks identified the hospital system a film came from, which may confound predictions (abstract line read on the publisher page). Reason for adding: the paper is framed as a shortcut audit and its introduction needs one cited example |
 
 ## 11. Open items for the write-up
 
