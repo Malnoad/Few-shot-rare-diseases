@@ -1230,3 +1230,99 @@ Fixed sentences:
 - L10: no logistic probe.
 - L11: the A-full doses 1, 2, 4, 8, which mirror K.
 - L12: stream namespaces 21101–21106 (technical).
+
+## 13. Re-tests RT1–RT2 (DRAFT, not approved)
+
+Status: draft of 23 November 2026, written by an agent (Claude Fable 5.2) for Lam. It is not a rule,
+and no RT feature or number exists. Lam decides whether to run it. If Lam approves, the list
+"Chosen, needs Lam" is settled, this heading is changed to say the rule is fixed, and the section is
+committed and pushed before any RT feature is extracted. Until then `fm_posthoc.py rt` refuses to
+run, stand-in runs included, and `colab_fm_retest.ipynb` pins no commit and cannot run.
+
+**Why.** Two Phase-1 results look suspicious, and neither was tested on its own.
+
+- *RT1, RETFound.* Locked RETFound scores 0.406 on development (mean over K), below ImageNet
+  Inception-v3 (0.534), and one normalisation constant moved it to 0.578 (E3 R-norm05). The locked
+  arm takes the mean of the patch tokens and passes it through `fc_norm`, a LayerNorm at its default
+  values, because the pretraining checkpoint has no `fc_norm`; the checkpoint's trained encoder
+  `norm` is not used. The paper says no sensitivity run on this choice was made and that outputs
+  were never compared with upstream code. E3 varied preprocessing only.
+- *RT2, Inception-v3.* Under E1-M, Inception-v3 rose by 0.052 (development, mean over K), which is
+  most of why MIRAGE's lead halved. E1-M changes the decoder (PIL, RGB, PNG), the crop and the
+  resize together, and the Phase-1 decoder check covered 40 common images and no rare image.
+
+**Rules shared with E1–E4.** Rules 1–7 of "Phase-1 controls E1–E4" (section 8) apply, with this
+section in place of that subsection: rules before numbers (the scoring code checks that the commit
+fixing this heading is on `origin`, and stores the SHA256 of this section at that commit); locked
+results never change; same machinery (the locked inventories, development and reporting episodes,
+nine-way roster and cosine prototypes); failures are reported; images stay out of the repository.
+The E0 definitions apply unchanged (images, decoding, development macro recall, K mean, spread,
+paired difference, hold-out, nine-way audit, control tolerance). RT1 and RT2 draw no random number.
+Both were written knowing every locked and Phase-1 result, so both are descriptive: neither gives a
+verdict, and neither can change the E1 verdict, the nominee or any locked number. The frozen
+Phase-1 files do not change.
+
+| # | Re-test | Rule (draft; fixed before computing if approved) | Question |
+|---|---|---|---|
+| RT1 | RETFound read-out: token and normalisation choice | **Base:** the locked RETFound arm on all 5,927 images: locked preprocessing (RGB → short edge 256 bicubic → centre crop 224 → ImageNet mean and std), locked weights (pinned SHA256), built and loaded by the locked `fm_extract.load_encoder`. Only the read-out of the token sequence changes. The tokens are the output of the last transformer block (class token first, then 196 patch tokens, width 1,024), read by a forward hook while the upstream `forward_features` runs unchanged. No hashed file is edited; the two names replaced inside the worker process (`fm_extract.import_source`, wrapped only to keep a handle on the model; `model.forward_features`) are recorded by name and value in `identity.json`. **Variants:** R-ref, the locked read-out re-extracted (mean of the patch tokens, then `fc_norm` at its default values: ones, zeros, eps 1e-6; upstream `global_pool=True`); R-meanraw (mean of the patch tokens, no normalisation layer); R-clsnorm (the checkpoint's trained `norm`, a LayerNorm with eps 1e-6, applied to every token, then the class token; upstream `global_pool=False`); R-meannorm (the trained `norm` applied to every token, then the mean of the patch tokens). If the checkpoint holds no complete `norm.weight` and `norm.bias` pair, R-clsnorm and R-meannorm are "not available" and reported so; nothing is substituted. **Upstream check (not a variant):** on the first 20 rows of the main inventory and the first 20 rows of the external inventory, the pinned upstream class (`models_vit.py`, RETFound_MAE revision `ae9a9ec`, SHA256 `f5a91312…`) used directly, built with `global_pool=True` and with `global_pool=False` (checkpoint loaded with `strict=False` after dropping the head keys; only head keys may be missing and only decoder keys unexpected), beside R-ref and R-clsnorm: maximum difference ratio (`fm_extract.repeat_check`), "equals" at ≤ 1e-4, otherwise "differs from"; recomputed on the laptop from the archived 40-image caches. **Checks:** control, R-ref against the locked features on all 5,927 images, ratio ≤ 1e-4, otherwise all of RT1 is "environment differs from the lock; not interpreted"; read-out check, in every worker and on every image, the unchanged upstream output against R-ref computed from the hooked tokens, ratio ≤ 1e-4, otherwise that variant is "read-out check failed; not interpreted"; every variant must differ from the locked features on at least one image by a ratio above 1e-3, otherwise "no effect, change not applied"; repeat (5 inputs encoded twice, recorded); identity (code, environment, overrides, the trained norm's SHA256 and whether it sits at default values, recorded). **Outcomes per variant:** development macro recall per K and K mean (100 locked draws); paired differences against locked Inception-v3 and against locked RETFound; hold-out, direction only; nine-way false-rare on the three normal sets with the locked intervals, NORMAL recall and R1 beside. **Reading (fixed):** over the 100 draws of the K mean of (variant − Inception-v3 locked): "above" if p05 > 0, "below" if p95 < 0, otherwise "not separated"; n other than 100 is "not evaluable"; the same three words for (variant − RETFound locked); per normal set, the false-rare count inside or outside RETFound's locked 95% interval (as E3 criterion 3). **Fixed sentences.** If every read variant is "below": "RETFound stays below ImageNet Inception-v3 on development under every read-out tested (<variant>: mean x, p05 y, p95 z; …; locked read-out: mean, p05, p95)." Otherwise: "RETFound's development position against ImageNet Inception-v3 depends on the read-out: <variant> is above / below / not separated from Inception-v3 (mean x, p05 y, p95 z); …; the locked read-out is below it (mean, p05, p95)." A variant that is not read is listed after the sentence with its status. Upstream: "On 40 images: R-ref equals / differs from the upstream class with global_pool=True (largest difference ratio r); R-clsnorm equals / differs from the upstream class with global_pool=False (largest difference ratio r)." **Scope written into every RT1 result:** "read-out only: preprocessing, weights and trunk as locked; a read-out that scores higher is not a better recipe and replaces no locked number". **Not allowed:** a "better" or "correct" read-out; replacing the locked RETFound number; a new ranking or nomination; that RETFound is above or below Inception-v3 beyond these read-outs and this benchmark; anything about fine-tuned RETFound; "matches upstream" beyond the 40 images and the two paths checked; any reading of K = 16 | Does RETFound's low score rest on the read-out we locked? |
+| RT2 | Inception-v3, decoder only | **Base:** the locked Inception-v3 arm (`stage3_classifier.load_image`: TensorFlow decode, 256 × 256 then 299 × 299 bilinear, pixels / 127.5 − 1; locked weights). **Sets:** I-pil, every image decoded as E0 decodes it (PIL `Image.open`, `.convert("RGB")`) and saved as 8-bit RGB PNG with no crop and no resize, then read by the locked loader, which isolates the decoder; I-ref, the unchanged originals through the same locked path. **Images:** the 5,146 main images (the 146 rare images and every Kermany image the arm used: 4,000 fitting, 1,000 test), then the 781 OCTID and OCTDL images. The external images may be left out before the run if the session must be shorter (`DROP_LEVEL = 1`); RT2's nine-way table is then "not scored". **Checks:** control, I-ref against the locked features on every image extracted, ratio ≤ 1e-4, otherwise "environment differs from the lock; not interpreted"; render receipt, per image the SHA256 of the PNG and its pixel hash, and the saved PNG reopened must equal the PIL decode (the PNGs are not archived; a rebuilt PNG must match its receipt); pixel check, per image, TensorFlow's decode of the original against TensorFlow's decode of the I-pil PNG (same shape; identical or not; largest and mean absolute difference), counted per source (rare, Kermany, OCTID, OCTDL), with the largest per-image feature difference from the locked features per source. There is no "no effect" rule here: unchanged pixels are a finding. Repeat and identity as E0. **Outcomes:** for I-pil, development macro recall per K and K mean; paired difference against locked Inception-v3, which is its own locked arm; hold-out, direction only; nine-way false-rare with NORMAL recall and R1. **Reading (fixed):** "above", "below" or "not separated" as in RT1 on (I-pil − Inception-v3 locked); false-rare counts against Inception-v3's locked intervals. **Fixed sentences.** If the pixel check finds every rare image identical: "TensorFlow and PIL decode all 146 rare images to the same pixels, so the decoder cannot move Inception-v3's five-way scores (I-pil minus locked, development K mean: mean x, p05 y, p95 z; largest feature difference ratio on the rare images r); the decoder is not part of its +0.052 change under E1-M." Otherwise: "PIL decoding alone raises it above / lowers it below / does not separate it from the locked Inception-v3 development K mean (mean x, p05 y, p95 z); under E1-M, which changes the decoder, the crop, the square and the resize together, it moved by +0.052; n of 146 rare images change pixels." Nine-way: "Normal scans called rare by Inception-v3 under I-pil: <set> a/n (locked b/n, inside / outside the locked 95% interval); …", or "RT2 nine-way is not scored: OCTID and OCTDL were not extracted." **Scope written into every RT2 result:** "decoder only: no crop and no resize; descriptive, cannot change the E1 verdict". **Not allowed:** that the decoder "explains" or "does not explain" the E1-M change beyond the fixed sentences; a share of the +0.052 given to the decoder; re-reading or re-specifying E1; a cause for a false-rare rate; a "better" decoder; any reading of K = 16 | How much of Inception-v3's rise under E1-M can the decoder carry? |
+
+**Known from the file formats, not measured.** The rare images are PNG and the Kermany images are
+JPEG (`docs/research/CONTEXT.md`, data table). If TensorFlow and PIL give the same pixels for a PNG, I-pil leaves the 146 rare
+inputs unchanged, and the five-way scores, which use rare images only, cannot move; RT2 could then
+move only the nine-way audit, through the Kermany and external JPEGs. RT2's pixel check counts
+this. The same count can be made on the laptop without a model (see the list below).
+
+**Label of every row.** "post hoc, re-test rule RT<n> timestamped by commit <sha> (<date>), written
+after the Phase-1 results and the mentor's review of 23 Nov; descriptive; cannot change the E1
+verdict or any locked result; computed <date>". If the working section differs from the rule
+commit, the label says so (rule 1). A stand-in run adds "dry run using locked features as
+stand-ins", may write only outside every project checkout, and is refused by the paper's table
+builder.
+
+**Outputs.** `results/fm_v1/posthoc/RT1_checks.csv`, `RT1_development.csv`, `RT1_holdout.csv`,
+`RT1_nine_way.csv`, `RT1_reading.csv`, the same five for RT2, and `RT_comparison.md` generated from
+them; all write-once. The frozen Phase-1 files do not change. The RT outputs would join
+`results/fm_v1/phase1_freeze.json` as an amendment whose reason names this section.
+
+**Placement.** Supplement. The main text now says that no sensitivity run on the RETFound read-out
+was made and that outputs were not compared with upstream code (`main.tex`, Models). If RT1 is run,
+that sentence must change to point to the supplement table: wording, for Lam.
+
+**Colab plan.** One GPU session (A100 or L4), `colab_fm_retest.ipynb`, built by
+`fm_retest_notebook.py`; workers `fm_retest_extract.py`; scoring `fm_posthoc.py rt` once, on the
+laptop. Order: checks (the pinned commit is on `origin` and holds the approved rule; both locks and
+the weights match their pinned SHA256), RT2 inputs rendered on the CPU, RT2 (I-pil, I-ref), then
+RT1 (R-ref, upstream check, R-meanraw, R-clsnorm, R-meannorm). Every worker is archived with a
+SHA256 receipt to Drive `octfsl/fm_v1/final/<attempt>/retest/` as soon as it ends. The Hugging Face
+token is read from Colab Secrets only. A failed step may be rerun once, unchanged (rule 6).
+Estimate from the Phase-1 timings in section 8 (lock on an L4: Inception-v3 34 min and RETFound
+3.7 min for 5,927 images; Session 2 took 1 h 49 min between stamps with about 48 min of
+extraction), not measured: setup up to 1 h, RT2 about 70 min (two Inception-v3 passes), RT1 about
+20 min; about 2.5 h in all, or about 10 min less without OCTID and OCTDL.
+
+**Chosen, needs Lam.** Every number or choice below was fixed by the agent without a source.
+
+1. Whether to run RT1, RT2, both or neither.
+2. RT2 may be settled for the five-way scores without a GPU: a laptop count of the 146 rare images
+   whose pixels differ between the TensorFlow and PIL decoders (no model, no score). Run it before
+   approval, as pre-rule geometry was for E1e, or keep it inside RT2 only?
+3. The reading words and their thresholds: "above" if p05 > 0, "below" if p95 < 0, otherwise "not
+   separated", over the 100 draws of the K mean (borrowed from the E1 rule and E3 criterion 2).
+4. Every fixed sentence, word for word.
+5. The upstream check: 40 images (first 20 main rows, first 20 external rows), and "equals" at a
+   ratio ≤ 1e-4 (the A2 A-6 tolerance, used here by analogy).
+6. The read-out check (≤ 1e-4) and the "change applied" threshold (> 1e-3, from E3), applied to RT1.
+7. R-meannorm normalises each token and then takes the mean. Normalising the mean with the trained
+   `norm` instead is another read-out; it is not included.
+8. A row "MIRAGE locked minus variant" (as in E3 criterion 2) is not included.
+9. I-ref is a full set (every image, about 34 min of GPU), not the 20-row control E1 used.
+10. OCTID and OCTDL are in both re-tests by default; only RT2 can drop them, and it then loses its
+    nine-way table.
+11. The I-pil PNGs are not archived (about 2 GB, unmeasured); their SHA256 and pixel hashes are.
+12. Session order (RT2 first), the time estimate, the Drive folder `retest/` and the archive prefix.
+13. Placement in the supplement, and the changed sentence in the main text if RT1 is run.
+14. The date written in the label: the commit date of the commit that fixes this heading.
+15. Rule 1 of E1–E4 allows no new analysis rule after the Phase-1 push; E1-D was the one exception
+    Lam allowed, and the numbers were frozen on 22 Nov. Approving this section is a second
+    exception, and a change-log entry in section 8 must say so.

@@ -33,6 +33,11 @@ Score once, after the last session. Use `--partial` to explicitly score an incom
 `phase1-render.zip` is cached by receipt SHA256 in the system temporary directory.
 `--drop` applies the laptop drop order.
 
+Re-tests RT1-RT2 (protocols.md section 13; refuses while that rule is a DRAFT or its commit is not on origin):
+
+    D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py rt --attempt <attempt> --retest <Drive retest/>
+    D:/Few-shot/.venv/Scripts/python.exe -I fm_posthoc.py rt --attempt <attempt> --dry-run --out <scratch outside the checkouts>
+
 `g1 --padded` takes the Drive g1/ folder as Colab saved it (each zip checked against its receipt)
 or a folder holding the unzipped MIRAGE/ and Inception/. It needs the locked P9 tables in --out.
 """
@@ -3705,6 +3710,515 @@ def run_freeze(args: argparse.Namespace) -> list[str]:
     return [f"wrote {path} ({len(now)} files)"]
 
 
+# ============================================================== Re-tests RT1-RT2 ===
+# Rule: protocols.md section 13. While its heading says DRAFT, `rt` refuses to run (rt_heading), stand-in runs
+# included; it also refuses until the commit that fixed the heading is on origin (rule_commit). The outputs
+# RT1_*.csv, RT2_*.csv and RT_comparison.md are post hoc and descriptive: they cannot change the E1 verdict or
+# any locked result, and the frozen Phase-1 files do not change.
+# Layout read from Drive retest/ (written by fm_retest_extract.py): retest-*.zip archives, each with a .zip.json
+# receipt {"sha256": ...}; retest-logs-* archives are not read. Every folder has complete.json and identity.json
+# (keys step, retest, variant, available, lock_sha256, external_lock_sha256, registry_sha256, script_sha256).
+# RT1 read-outs hold features.npz and features_external.npz; the upstream check holds four 40-image caches.
+# RT2 sets hold features.npz, features_external.npz unless OCTID and OCTDL were dropped, and I-pil also
+# decoder_pixels.csv; the render folder holds the I-pil receipts only (the PNGs are not archived).
+RT_HEADING = "## 13. Re-tests RT1"  # the section-13 heading starts with this; the rest of the line carries its state
+RT_ARM = {"RT1": "RETFound", "RT2": fm.REFERENCE}
+RT_REF = {"RT1": "R-ref", "RT2": "I-ref"}  # the control of each re-test: the locked path, re-extracted
+RT_VARIANTS = {"RT1": ("R-meanraw", "R-clsnorm", "R-meannorm"), "RT2": ("I-pil",)}
+RT_UPSTREAM = "upstream-check"
+RT_UPSTREAM_PAIRS = (("upstream_global_pool_true", "R-ref"), ("upstream_global_pool_false", "R-clsnorm"))
+RT_RENDER = "render"
+RT_NOT_AVAILABLE = "not available"
+RT_CONTROL = "control"
+RT_DRY = "dry run using locked features as stand-ins"
+RT_E1M_SHIFT = "+0.052"  # Inception-v3 E1-M minus locked, development K mean (frozen E1c_paired.csv; 21 Nov verdict entry)
+RT_SCOPE = {"RT1": "read-out only: preprocessing, weights and trunk as locked; a read-out that scores higher is not a "
+                   "better recipe and replaces no locked number",
+            "RT2": "decoder only: no crop and no resize; descriptive, cannot change the E1 verdict"}
+RT_NAMES = {"RETFound": "RETFound", fm.REFERENCE: "Inception-v3"}
+RT_CHECK_HEADER = ["retest", "variant", "check", "value", "status"]
+RT_DEV_HEADER = ["retest", "arm", "variant", "status", "quantity", "k", *SUMMARY]
+RT_HOLD_HEADER = ["retest", "arm", "variant", "status", "quantity", "k", "n_draws", "mean", "direction"]
+RT_READ_HEADER = ["retest", "item", "variant", "statistic", "n", "mean", "p05", "p95", "result"]
+RT_TABLES = ("checks", "development", "holdout", "nine_way", "reading")
+
+
+def rt_heading(text: str) -> str:
+    """The heading line of section 13; refuses while the rule is missing or still a draft."""
+    lines = [line for line in text.replace("\r\n", "\n").split("\n") if line.startswith(RT_HEADING)]
+    if len(lines) != 1:
+        raise SystemExit("re-test rule: protocols.md must hold exactly one section-13 heading")
+    if "DRAFT" in lines[0].upper():
+        raise SystemExit("re-test rule: section 13 is still a DRAFT. Nothing is scored, stand-ins included, until Lam "
+                         "approves it, its heading says so, and that commit is pushed.")
+    return lines[0]
+
+
+def rt_label(n: int, commit: str, committed: str, today: str, section: Mapping, dry_run: bool = False) -> str:
+    """The label of every RT row (section 13); a stand-in run says 'dry run', which the paper's table builder refuses."""
+    label = (f"post hoc, re-test rule RT{n} timestamped by commit {commit[:7]} ({committed}), written after the Phase-1 "
+             "results and the mentor's review of 23 Nov; descriptive; cannot change the E1 verdict or any locked "
+             f"result; computed {today}")
+    if not section["same"]:
+        label += (f"; WARNING: the working section 13 differs from commit {commit[:7]} "
+                  f"(SHA256 {section['working_sha256'][:12]} against {section['commit_sha256'][:12]})")
+    return label + (f"; {RT_DRY}" if dry_run else "")
+
+
+def rt_rule(today: str, dry_run: bool, remote: str = "origin/t3/fm-code-prep") -> tuple[dict[str, str], dict]:
+    """Rules before numbers: the approved heading, the pushed commit that added it and the section hash, then the labels."""
+    heading = rt_heading((REPO / "protocols.md").read_text(encoding="utf-8"))
+    commit = rule_commit(heading, remote)
+    section = rule_section_hash(commit, heading)
+    date = subprocess.check_output(["git", "show", "-s", "--format=%cs", commit], cwd=REPO, text=True).strip()
+    return {f"RT{n}": rt_label(n, commit, long_date(date), today, section, dry_run) for n in (1, 2)}, section
+
+
+def rt_shift(d: Sequence[float]) -> dict:
+    """Section 13's fixed reading of a paired K-mean difference over the 100 draws: 'above' if p05 > 0, 'below'
+    if p95 < 0, otherwise 'not separated'; n other than 100 or a non-finite value is 'not evaluable'."""
+    rule = success_rule(d)
+    if rule["verdict"] == "not evaluable":
+        return dict(n=rule["n"], mean=rule["mean"], p05=rule["p05"], p95=None, reading="not evaluable")
+    p95 = float(np.percentile(np.asarray(list(d), dtype=np.float64), 95))
+    return dict(n=rule["n"], mean=rule["mean"], p05=rule["p05"], p95=p95,
+                reading="above" if rule["p05"] > 0 else "below" if p95 < 0 else "not separated")
+
+
+def _rt_numbers(shift: Mapping) -> str:
+    return f"mean {_fmt(shift['mean'], sign=True)}, p05 {_fmt(shift['p05'], sign=True)}, p95 {_fmt(shift['p95'], sign=True)}"
+
+
+def rt1_sentences(locked: Mapping, variants: Mapping[str, Mapping], left_out: Mapping[str, str],
+                  upstream: Mapping[str, Mapping | None] | None) -> list[str]:
+    """RT1's fixed sentences. `locked` and `variants[v]` are rt_shift of (RETFound - Inception-v3 locked);
+    `left_out[v]` is the status of a variant that is not read; `upstream` maps each pair to its repeat check."""
+    out = []
+    readable = {v: s for v, s in variants.items() if s["reading"] != "not evaluable"}
+    aside = "".join(f"; {v}: {state}" for v, state in left_out.items())
+    if not readable or locked["reading"] == "not evaluable":
+        out.append(f"RT1 is not evaluable{aside}.")
+    elif all(s["reading"] == "below" for s in readable.values()):
+        listed = "; ".join(f"{v}: {_rt_numbers(s)}" for v, s in readable.items())
+        out.append("RETFound stays below ImageNet Inception-v3 on development under every read-out tested "
+                   f"({listed}; locked read-out: {_rt_numbers(locked)}){aside}.")
+    else:
+        words = {"above": "above", "below": "below", "not separated": "not separated from"}
+        listed = "; ".join(f"{v} is {words[s['reading']]} Inception-v3 ({_rt_numbers(s)})" for v, s in readable.items())
+        out.append("RETFound's development position against ImageNet Inception-v3 depends on the read-out: "
+                   f"{listed}; the locked read-out is {words[locked['reading']]} it ({_rt_numbers(locked)}){aside}.")
+    if upstream is None:
+        out.append("The upstream check is unavailable.")
+    else:
+        parts = []
+        for (theirs, ours), label in zip(RT_UPSTREAM_PAIRS, ("global_pool=True", "global_pool=False")):
+            check = upstream.get(f"{theirs} vs {ours}")
+            if check is None:
+                parts.append(f"{ours} against the upstream class with {label}: not available")
+            else:
+                verb = "equals" if check["max_difference_ratio"] <= CONTROL_TOL else "differs from"
+                parts.append(f"{ours} {verb} the upstream class with {label} (largest difference ratio "
+                             f"{check['max_difference_ratio']:.2e})")
+        out.append(f"On {upstream['images']} images: {'; '.join(parts)}.")
+    return out
+
+
+def rt2_sentences(shift: Mapping | None, rare: tuple[int, int] | None, rare_ratio: float | None,
+                  nine: Sequence[Sequence] | None, state: str) -> list[str]:
+    """RT2's fixed sentences. `shift` is rt_shift of (I-pil - Inception-v3 locked); `rare` is (rare images whose
+    pixels PIL decoding leaves unchanged, rare images); `nine` rows are (set, count, n, locked count, inside)."""
+    if shift is None or shift["reading"] == "not evaluable":
+        return [f"RT2 is not evaluable ({state})."]
+    out = []
+    if rare is not None and rare[0] == rare[1]:
+        out.append(f"TensorFlow and PIL decode all {rare[1]} rare images to the same pixels, so the decoder cannot move "
+                   f"Inception-v3's five-way scores (I-pil minus locked, development K mean: {_rt_numbers(shift)}; largest "
+                   f"feature difference ratio on the rare images {_fmt(rare_ratio, 6)}); the decoder is not part of its "
+                   f"{RT_E1M_SHIFT} change under E1-M.")
+    else:
+        words = {"above": "raises it above", "below": "lowers it below", "not separated": "does not separate it from"}
+        changed = "the pixel check is unavailable" if rare is None else f"{rare[1] - rare[0]} of {rare[1]} rare images change pixels"
+        out.append(f"PIL decoding alone {words[shift['reading']]} the locked Inception-v3 development K mean "
+                   f"({_rt_numbers(shift)}); under E1-M, which changes the decoder, the crop, the square and the resize "
+                   f"together, it moved by {RT_E1M_SHIFT}; {changed}.")
+    if nine is None:
+        out.append("RT2 nine-way is not scored: OCTID and OCTDL were not extracted.")
+    else:
+        listed = "; ".join(f"{name} {count}/{n} (locked {locked}/{n}, {'inside' if inside else 'outside'} the locked "
+                           "95% interval)" for name, count, n, locked, inside in nine)
+        out.append(f"Normal scans called rare by Inception-v3 under I-pil: {listed}.")
+    return out
+
+
+def rt_root(folder: Path, work: Path) -> tuple[Path, list[list]]:
+    """The folder holding the re-test outputs: given unzipped, or the Drive retest/ folder as Colab saved it, where
+    every retest-*.zip except retest-logs-* must match the SHA256 in its .zip.json receipt."""
+    archives = sorted(p for p in folder.glob("retest-*.zip") if not p.name.startswith("retest-logs-"))
+    if not archives:
+        return folder, []
+    out, rows = work / "retest", []
+    for archive in archives:
+        receipt = archive.with_name(archive.name + ".json")
+        if not receipt.exists():
+            raise ValueError(f"{archive.name} has no .json receipt")
+        digest = prep.sha256(archive)
+        if digest != prep.read_json(receipt)["sha256"]:
+            raise ValueError(f"{archive.name} differs from the SHA256 in its .json receipt")
+        safe_unzip(archive, out / archive.stem)
+        rows.append([archive.name, digest])
+    return out, rows
+
+
+@dataclass(frozen=True)
+class RetestOutput:
+    retest: str
+    variant: str
+    folder: Path | None  # None: a dry-run stand-in
+    identity: Mapping
+
+
+def rt_outputs(root: Path, study: Study) -> dict[tuple[str, str], RetestOutput]:
+    """Every completed re-test folder under root, keyed (re-test, variant), bound to the locked study and to the
+    laptop's fm_retest_extract.py; the RT2 render receipts are keyed (RT2, render)."""
+    import fm_retest_extract as retest
+    expected = {"script_sha256": prep.text_hash(Path(retest.__file__)), "registry_sha256": retest.registry_hash(),
+                "lock_sha256": prep.sha256(study.lock / "input_lock.json"),
+                "external_lock_sha256": prep.sha256(study.external / "external_lock.json")}
+    allowed = {(name, v) for name in RT_ARM for v in (RT_REF[name], *RT_VARIANTS[name])}
+    allowed |= {("RT1", RT_UPSTREAM), ("RT2", RT_RENDER)}
+    found: dict[tuple[str, str], RetestOutput] = {}
+    for marker in sorted(root.rglob("complete.json")):
+        folder = marker.parent
+        prep.verify_complete(folder)
+        identity = prep.read_json(folder / "identity.json")
+        step = identity.get("step")
+        key = (identity.get("retest"), RT_RENDER if step == "retest_render" else identity.get("variant"))
+        if step not in ("retest_extract", "retest_render") or key not in allowed:
+            raise ValueError(f"{folder}: not a re-test output ({step}, {key})")
+        if key in found:
+            raise ValueError(f"two re-test folders for {key}")
+        for name, digest in expected.items():
+            if identity.get(name) != digest:
+                raise ValueError(f"{folder}: {name} differs from the laptop re-test runner or the locked study")
+        found[key] = RetestOutput(*key, folder, identity)
+    return found
+
+
+class Retest:
+    """The re-test outputs of one attempt, verified against the locked study before use. With root None it is a
+    dry run: every variant holds the arm's locked features as stand-ins, and every label says so."""
+
+    def __init__(self, study: Study, root: Path | None, receipts: Sequence[Sequence] = (), partial: bool = False):
+        self.study, self.receipts, self.dry_run = study, [list(r) for r in receipts], root is None
+        self.main_inv = prep.read_csv(study.lock / "extraction_inventory.csv")
+        self.ext_inv = prep.read_csv(study.external / "external_extraction_inventory.csv")
+        self._feats: dict = {}
+        if root is None:
+            self.outputs = {(name, v): RetestOutput(name, v, None, {"dry_run": True})
+                            for name in RT_ARM for v in (RT_REF[name], *RT_VARIANTS[name])}
+            return
+        self.outputs = rt_outputs(root, study)
+        missing = [RT_REF[name] for name in RT_ARM if (name, RT_REF[name]) not in self.outputs]
+        if missing and not partial:
+            raise ValueError(f"Partial re-test delivery (no {', '.join(missing)}). Score after the session or use --partial.")
+        pil, render = self.outputs.get(("RT2", "I-pil")), self.outputs.get(("RT2", RT_RENDER))
+        if pil is not None and (render is None or pil.identity.get("render_identity_sha256")
+                                != prep.sha256(render.folder / "identity.json")):
+            raise ValueError("I-pil was extracted from a render whose receipts are not in this delivery")
+
+    def get(self, name: str, variant: str) -> RetestOutput | None:
+        return self.outputs.get((name, variant))
+
+    def features(self, name: str, variant: str) -> tuple[ev.Features, ev.Features | None] | None:
+        """Main and external features of a variant (external None when RT2 dropped OCTID and OCTDL)."""
+        out, arm = self.get(name, variant), RT_ARM[name]
+        if out is None or out.identity.get("available") is False:
+            return None
+        if out.folder is None:
+            return self.study.features(arm), self.study.external_features(arm)
+        if out.folder not in self._feats:
+            dim, loaded = extract.DIMENSIONS[arm], []
+            for file, inventory in (("features.npz", self.main_inv), ("features_external.npz", self.ext_inv)):
+                loaded.append(ev.Features(extract.load_features(out.folder / file, inventory, dim),
+                                          {r["path"]: i for i, r in enumerate(inventory)})
+                              if (out.folder / file).exists() else None)
+            if loaded[0] is None or (name == "RT1" and loaded[1] is None):
+                raise ValueError(f"{out.folder}: feature cache missing")
+            self._feats[out.folder] = tuple(loaded)
+        return self._feats[out.folder]
+
+    def difference(self, name: str, variant: str, paths: Sequence[str] | None = None) -> dict:
+        """A variant's features against the arm's locked features on `paths` (default: every image it holds)."""
+        main, ext = self.features(name, variant)
+        locked = fx.merge(self.study.features(RT_ARM[name]), self.study.external_features(RT_ARM[name]))
+        new = main if ext is None else fx.merge(main, ext)
+        return feature_difference(locked, new, list(new.index) if paths is None else paths)
+
+    def control(self, name: str) -> dict | None:
+        """The re-extracted locked path against the locked features (ratio <= 1e-4, the A2 A-6 tolerance)."""
+        if self.features(name, RT_REF[name]) is None:
+            return None
+        check = self.difference(name, RT_REF[name])
+        check["passed"] = check["max_difference_ratio"] <= CONTROL_TOL
+        return check
+
+    def upstream(self) -> dict[str, dict | None] | None:
+        """RT1 upstream check, recomputed from the archived 40-image caches."""
+        import fm_retest_extract as retest
+        out = self.get("RT1", RT_UPSTREAM)
+        if out is None or out.folder is None:
+            return None
+        rows = [*self.main_inv[:retest.UPSTREAM_ROWS], *self.ext_inv[:retest.UPSTREAM_ROWS]]
+
+        def load(name: str) -> np.ndarray | None:
+            path = out.folder / f"{name}.npz"
+            return extract.load_features(path, rows, extract.DIMENSIONS["RETFound"]) if path.exists() else None
+
+        result: dict[str, dict | None] = {"images": len(rows)}
+        for theirs, ours in RT_UPSTREAM_PAIRS:
+            a, b = load(theirs), load(ours)
+            result[f"{theirs} vs {ours}"] = extract.repeat_check([a], [b]) if a is not None and b is not None else None
+        return result
+
+    def pixels(self) -> list[dict[str, str]]:
+        """RT2 pixel check rows of I-pil (decoder_pixels.csv), or nothing for a stand-in."""
+        out = self.get("RT2", "I-pil")
+        if out is None or out.folder is None or not (out.folder / "decoder_pixels.csv").exists():
+            return []
+        return prep.read_csv(out.folder / "decoder_pixels.csv")
+
+
+def rt_scored(study: Study, main: ev.Features, ext: ev.Features | None) -> Scored:
+    """Locked episodes on one feature set; the nine-way roster needs the external features and is left out without them."""
+    dev, rep = score_episodes(study, main.select, prototype_predict)
+    return Scored(dev, rep, nine_way_cells(study, main, ext) if ext is not None else None)
+
+
+def rt_tables(study: Study, rt: Retest, name: str, section: Mapping) -> dict[str, tuple[list[str], list[list]]]:
+    """One re-test: checks, development, hold-out, nine-way and the fixed reading (section 13)."""
+    import fm_control_extract as control
+    arm, ref, inc = RT_ARM[name], RT_REF[name], fm.REFERENCE
+    bases = {"minus Inception-v3 locked": inc} if arm == inc else {
+        "minus Inception-v3 locked": inc, f"minus {RT_NAMES[arm]} locked": arm}
+    checks = [[name, "", "section 13, working text against the rule commit", section["working_sha256"][:12],
+               "same" if section["same"] else "differs (see the label)"]]
+    checks += [[name, "", f"archive {archive}", digest, "equals its receipt"] for archive, digest in rt.receipts
+               if archive.startswith((f"retest-{name}-", "retest-render") if name == "RT2" else f"retest-{name}-")]
+    if rt.dry_run:
+        checks.append([name, "", "features", None, RT_DRY])
+    check = rt.control(name)
+    passed = bool(check and check["passed"])
+    checks.append([name, ref, f"{ref} against the locked features" + (f" ({check['images']} images)" if check else ""),
+                   check["max_difference_ratio"] if check else None,
+                   UNAVAILABLE if check is None else "pass" if passed else NOT_INTERPRETED])
+    with_external = check is not None and rt.features(name, ref)[1] is not None
+    locked = {a: rt_scored(study, study.features(a), study.external_features(a)) for a in dict.fromkeys((arm, inc))}
+    scored, status = {"locked": locked[arm]}, {"locked": INTERPRETED}
+    rare, rare_ratio = None, None
+    for v in (ref, *RT_VARIANTS[name]):
+        out = rt.get(name, v)
+        if out is None:
+            if v != ref:
+                checks.append([name, v, "variant", None, UNAVAILABLE])
+            continue
+        if out.identity.get("available") is False:
+            status[v] = RT_NOT_AVAILABLE
+            checks.append([name, v, "variant", out.identity.get("reason"), RT_NOT_AVAILABLE + "; never substituted"])
+            continue
+        for key in ("overrides", "norm", "code_matches_lock", "environment_matches_lock", "main_only"):
+            if out.identity.get(key) is not None:
+                checks.append([name, v, key, json.dumps(out.identity[key], sort_keys=True), "recorded"])
+        repeat = out.identity.get("repeat_check") or {}
+        checks.append([name, v, "repeat (recorded)", repeat.get("max_difference_ratio"), f"{repeat.get('images')} images"])
+        state = RT_CONTROL if v == ref else INTERPRETED if passed else NOT_INTERPRETED
+        main, ext = rt.features(name, v)
+        if name == "RT1" and not rt.dry_run:
+            hook = (out.identity.get("hook_check") or {}).get("max_difference_ratio")
+            hook_ok = hook is not None and hook <= CONTROL_TOL
+            checks.append([name, v, "read-out check: upstream output against R-ref from the hooked tokens", hook,
+                           "pass" if hook_ok else "fail; not interpreted"])
+            if v != ref:
+                effect = rt.difference(name, v)
+                applied = effect["worst_image_difference_ratio"] > EFFECT_MIN
+                checks.append([name, v, f"largest per-image difference from the locked features ({effect['images']} images)",
+                               effect["worst_image_difference_ratio"],
+                               "change applied" if applied else "no effect, change not applied"])
+                if state == INTERPRETED:
+                    state = ("read-out check failed; not interpreted" if not hook_ok else INTERPRETED if applied else
+                             "no effect, change not applied; not interpreted")
+        if name == "RT2" and v != ref:
+            pixels = rt.pixels()
+            held = [*main.index, *(ext.index if ext is not None else ())]
+            for source in ("rare", "Kermany", "OCTID", "OCTDL"):
+                paths = [p for p in held if control.source_of(p) == source]
+                if not paths:
+                    continue
+                effect = rt.difference(name, v, paths)
+                checks.append([name, v, f"{source}: largest per-image feature difference from locked ({effect['images']} images)",
+                               effect["worst_image_difference_ratio"], "recorded"])
+                rows = [r for r in pixels if r["source"] == source]
+                same = sum(r["identical"] == "True" for r in rows)
+                if rows:
+                    largest = max((int(r["max_abs_difference"]) for r in rows if r["max_abs_difference"] != ""), default=None)
+                    checks.append([name, v, f"{source}: images whose pixels PIL decoding leaves unchanged, of {len(rows)}",
+                                   same, f"largest pixel difference {largest}"])
+                if source == "rare":
+                    rare, rare_ratio = ((same, len(rows)) if rows else None), effect["worst_image_difference_ratio"]
+        scored[v], status[v] = rt_scored(study, main, ext if with_external else None), state
+    if name == "RT1":
+        upstream = rt.upstream()
+        for key, value in (upstream or {}).items():
+            if key != "images":
+                ratio = value["max_difference_ratio"] if value else None
+                checks.append([name, RT_UPSTREAM, f"{key} ({upstream['images']} images)", ratio, RT_NOT_AVAILABLE if value is None
+                               else "equal within 1e-4" if ratio <= CONTROL_TOL else "differs"])
+        if upstream is None:
+            checks.append([name, RT_UPSTREAM, "upstream check", None, UNAVAILABLE])
+    dev = {v: dev_macro(study, sc) for v, sc in scored.items()}
+    rep = {v: rep_macro(study, sc) for v, sc in scored.items()}
+    base_dev = {inc: dev_macro(study, locked[inc]), arm: dev["locked"]}
+    base_rep = {inc: rep_macro(study, locked[inc]), arm: rep["locked"]}
+    rows, hold, shifts = [], [], {}
+    if arm != inc:
+        rows += [[name, inc, "locked", INTERPRETED, "macro_recall", k, *summary(x)] for k, x in by_k(base_dev[inc], KS)]
+    for v, d in dev.items():
+        rows += [[name, arm, v, status[v], "macro_recall", k, *summary(x)] for k, x in by_k(d, KS)]
+        hold += [[name, arm, v, status[v], "macro_recall", k, len(x), float(np.mean(x)), "shown, never read" if k == 16 else ""]
+                 for k, x in by_k(rep[v], sorted({k for k, _ in rep[v]}))]
+        for quantity, base in bases.items():
+            if v == "locked" and base == arm:
+                continue
+            rows += [[name, arm, v, status[v], quantity, k, *summary(x)] for k, x in by_k(paired(d, base_dev[base]), KS)]
+            for k, x in by_k(paired(rep[v], base_rep[base]), sorted({k for k, _ in rep[v]})):
+                m = float(np.mean(x))
+                direction = ("positive" if m > 0 else "negative" if m < 0 else "zero") if status[v] in (
+                    INTERPRETED, RT_CONTROL) else ""
+                hold.append([name, arm, v, status[v], quantity, k, len(x), m, "shown, never read" if k == 16 else direction])
+            if v == "locked" or status[v] == INTERPRETED:
+                shifts[v, base] = rt_shift(k_mean(paired(d, base_dev[base])))
+    nine, reading, false_rare = [], [], None
+    locked_nine = {r[0]: r for r in nine_way_rows(study, locked[arm].nine)}
+    for v, sc in scored.items():
+        if sc.nine is None:
+            checks.append([name, v, "nine-way", None, "not scored: OCTID and OCTDL were not extracted"])
+            continue
+        got = nine_way_rows(study, sc.nine)
+        nine += [[name, arm, v, status[v], *r] for r in got]
+        if v not in RT_VARIANTS[name] or status[v] != INTERPRETED:
+            continue
+        got, false_rare = {r[0]: r for r in got}, false_rare or []
+        for set_name in NORMAL_SETS:
+            g, lk = got[set_name], locked_nine[set_name]
+            inside = e3_interval_check(g[5], g[1], (lk[8], lk[9]))
+            source = set_name.split()[0]
+            r1 = ", ".join(f"{r[0]} {r[5]}/{r[1]}" for r in got.values()
+                           if (r[0] in RARE_EXTERNAL and r[0].split()[0] == source) or (source == "Kermany" and r[0] == "Legacy 22"))
+            reading.append([name, f"false-rare count against {RT_NAMES[arm]}'s locked 95% interval", v, set_name, g[1], None,
+                            None, None, f"{g[5]}/{g[1]} (locked {lk[5]}/{lk[1]}); {'inside' if inside else 'outside'} "
+                            f"[{lk[8]:.3f}, {lk[9]:.3f}] as a rate; NORMAL recall {g[3] / g[1]:.3f} (locked "
+                            f"{lk[3] / lk[1]:.3f}); R1 {r1}"])
+            false_rare.append((set_name, g[5], g[1], lk[5], inside))
+    for (v, base), s in shifts.items():
+        quantity = next(q for q, b in bases.items() if b == base)
+        reading.append([name, "development K mean over the 100 draws", v, quantity, s["n"], s["mean"], s["p05"], s["p95"],
+                        s["reading"]])
+    left_out = {v: status.get(v, UNAVAILABLE) for v in RT_VARIANTS[name] if status.get(v) != INTERPRETED}
+    for v, state in left_out.items():
+        reading.append([name, "not read", v, "", None, None, None, None, state])
+    if name == "RT1":
+        sentences = rt1_sentences(shifts["locked", inc], {v: shifts[v, inc] for v in RT_VARIANTS[name] if (v, inc) in shifts},
+                                  left_out, upstream)
+    else:
+        sentences = rt2_sentences(shifts.get(("I-pil", inc)), rare, rare_ratio, false_rare, left_out.get("I-pil", ""))
+    reading += [[name, "fixed sentence", "", "", None, None, None, None, text] for text in sentences]
+    reading.append([name, "scope", "", "", None, None, None, None, RT_SCOPE[name]])
+    return {f"{name}_checks.csv": (RT_CHECK_HEADER, checks), f"{name}_development.csv": (RT_DEV_HEADER, rows),
+            f"{name}_holdout.csv": (RT_HOLD_HEADER, hold),
+            f"{name}_nine_way.csv": (["retest", "arm", "variant", "status", *NINE_HEADER], nine),
+            f"{name}_reading.csv": (RT_READ_HEADER, reading)}
+
+
+def rt_report(tables: Mapping[str, Sequence[Mapping[str, str]]]) -> str:
+    """RT_comparison.md from the RT CSVs (rows as csv.DictReader gives them); nothing is computed."""
+    out = ["# Re-tests RT1 and RT2 (post hoc, descriptive)", "",
+           "Neither re-test can change the E1 verdict or any locked result. The frozen Phase-1 files are unchanged. "
+           "The development spread is over support draws on 124 fixed queries, not a confidence interval; the hold-out "
+           "is read for direction only and K = 16 is shown, never read.", ""]
+    titles = {"RT1": "RT1: RETFound read-out (token and normalisation choice)", "RT2": "RT2: Inception-v3 decoder only"}
+    for name, title in titles.items():
+        reading = tables.get(f"{name}_reading.csv") or []
+        if not reading:
+            out += [f"## {title}", "", "Not scored.", ""]
+            continue
+        out += [f"## {title}", "", f"Label of every row: {reading[0]['posthoc']}.", ""]
+        out += [f"**Sentence.** {r['result']}" for r in reading if r["item"] == "fixed sentence"]
+        out += [f"**Scope.** {r['result']}." for r in reading if r["item"] == "scope"]
+        out += ["", "### Reading", "", "| Item | Variant | Statistic | n | Mean | p05 | p95 | Result |", "|---|---|---|---|---|---|---|---|"]
+        out += [f"| {r['item']} | {r['variant']} | {r['statistic']} | {r['n']} | {_num(r['mean'])} | {_num(r['p05'])} | "
+                f"{_num(r['p95'])} | {r['result']} |" for r in reading if r["item"] not in ("fixed sentence", "scope")]
+        out += ["", "### Checks", "", "| Variant | Check | Value | Status |", "|---|---|---|---|"]
+        out += [f"| {r['variant']} | {r['check']} | {r['value']} | {r['status']} |" for r in tables[f"{name}_checks.csv"]]
+        out += ["", "### Development, K mean (per K in the CSV)", "", "| Arm | Variant | Status | Quantity | Mean | SD | p05 | p95 |",
+                "|---|---|---|---|---|---|---|---|"]
+        out += [f"| {r['arm']} | {r['variant']} | {r['status']} | {r['quantity']} | {_num(r['mean'])} | {_num(r['sd'])} | "
+                f"{_num(r['p05'])} | {_num(r['p95'])} |" for r in tables[f"{name}_development.csv"] if r["k"] == ev.K_MEAN_LABEL]
+        out += ["", "### Hold-out, legacy 22 (direction only)", "", "| Variant | Status | Quantity | k | Mean | Direction |",
+                "|---|---|---|---|---|---|"]
+        out += [f"| {r['variant']} | {r['status']} | {r['quantity']} | {r['k']} | {_num(r['mean'])} | {r['direction']} |"
+                for r in tables[f"{name}_holdout.csv"] if r["quantity"] != "macro_recall"]
+        out += ["", "### Nine-way audit", "",
+                "| Variant | Status | Query set | n | Correct | NORMAL | CNV, DME or DRUSEN | Any rare | NORMAL recall | Rate | 95% (locked method) |",
+                "|---|---|---|---|---|---|---|---|---|---|---|"]
+        for r in tables[f"{name}_nine_way.csv"]:
+            interval = f"{_num(r['ci95_low'])} to {_num(r['ci95_high'])}" if r["ci95_low"] else ""
+            out.append(f"| {r['variant']} | {r['status']} | {r['query_set']} | {r['n']} | {r['correct_class']} | "
+                       f"{r['called_NORMAL']} | {r['called_CNV_DME_DRUSEN']} | {r['called_any_rare']} | "
+                       f"{_num(r['NORMAL_recall'])} | {r['rate']} {_num(r['rate_value'])} | {interval} |")
+        out.append("")
+    out.append("Not allowed: a \"better\" read-out or decoder; replacing a locked number; a new ranking or nomination; "
+               "any change to the E1 verdict; a cause for a false-rare rate; any reading of K = 16.")
+    return "\n".join(out) + "\n"
+
+
+def run_retest(args: argparse.Namespace, out: Path) -> list[Path]:
+    """Step rt: the rule gate first (approved heading, pushed commit, section hash), then read, score and write once."""
+    labels, section = rt_rule(args.date, args.dry_run, args.remote)
+    if args.dry_run:
+        prep.experiment_out(out)
+        if args.retest is not None:
+            raise SystemExit("--dry-run scores the locked features as stand-ins and takes no --retest folder")
+    elif args.retest is None:
+        raise SystemExit("--retest is required (the Drive retest/ folder), or use --dry-run with a scratch --out")
+    with tempfile.TemporaryDirectory() as tmp:
+        study = Study(args.attempt, Path(tmp))
+        if args.dry_run:
+            rt = Retest(study, None)
+        else:
+            root, receipts = rt_root(args.retest, Path(tmp))
+            rt = Retest(study, root, receipts, partial=args.partial)
+        written = []
+        for name in RT_ARM:
+            written += write_tables(out, labels[name], rt_tables(study, rt, name, section))
+    page = out / "RT_comparison.md"
+    prep.write_once(page, rt_report({f"{name}_{table}.csv": _read(out, f"{name}_{table}.csv")
+                                     for name in RT_ARM for table in RT_TABLES}).encode("utf-8"))
+    return [*written, page]
+
+
+def add_retest_command(sub) -> None:
+    command = sub.add_parser("rt", description="Re-tests RT1 and RT2 (protocols.md section 13). Refuses while the rule "
+                             "is a DRAFT or its commit is not on origin.")
+    command.add_argument("--out", type=Path, default=OUT)
+    command.add_argument("--attempt", type=Path, required=True, help=f"the locked attempt folder ({ATTEMPT})")
+    command.add_argument("--retest", type=Path,
+                         help="Drive retest/ folder with the retest-*.zip archives and receipts, or the unzipped root")
+    command.add_argument("--date", default=datetime.date.today().isoformat())
+    command.add_argument("--remote", default="origin/t3/fm-code-prep", help="the pushed branch that must hold the rule commit")
+    command.add_argument("--partial", action="store_true", help="allow a delivery that lacks R-ref or I-ref")
+    command.add_argument("--dry-run", action="store_true",
+                         help="score the locked features as stand-ins, labelled 'dry run'; needs a scratch --out")
+
+
 def add_phase1_commands(sub) -> None:
     for step in ("e1", "e2", "e3", "e4", "e1d"):
         command = sub.add_parser(step, description=f"Phase-1 {step.upper()} (protocols.md section 8, Phase-1 controls"
@@ -3774,6 +4288,7 @@ def main() -> None:
                                  help="folder holding MIRAGE/ and Inception/ from G1, or the Drive g1/ folder with the "
                                       "g1-<arm>-<stamp>.zip archives and their .json receipts")
     add_phase1_commands(sub)
+    add_retest_command(sub)
     args = parser.parse_args()
     if args.step in ("freeze", "freeze-check"):
         for line in run_freeze(args):
@@ -3782,6 +4297,9 @@ def main() -> None:
     out = prep.writable_path(Path(__file__).resolve().parent, args.out)
     if args.step in ("e1", "e2", "e3", "e4", "e1d"):
         for path in run_phase1(args, out):
+            print("wrote", path)
+    elif args.step == "rt":
+        for path in run_retest(args, out):
             print("wrote", path)
     elif args.step == "e-report":
         print("wrote", write_e1_report(out))
