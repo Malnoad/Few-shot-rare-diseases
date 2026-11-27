@@ -90,7 +90,7 @@ inside `results_gan_run/`, and the image folders `work/gan/{out,accepted,normalA
 `https://colab.research.google.com/github/Malnoad/Few-shot-rare-diseases/blob/main/colab_setup.ipynb`.
 Until then, use File → Upload notebook in Colab.
 
-**2. Raw data (only for Part 3 and CAM).** On the PC that has the cleaned raw data (README,
+**2. Raw data (only for Part 3 and CAM).** On the PC that has the cleaned raw data (README at commit `6116f93`,
 *Cleanup pitfalls*: no `__MACOSX`, folders named exactly `MacTel` and `Stargardt`), make two
 zips with Windows' built-in `tar`, which writes forward-slash paths:
 
@@ -336,7 +336,7 @@ confounding, patient leakage and legacy base feature provenance stay limitations
 | `cache ... is stale -> re-extracting` in Part 2 | placeholder names differ from the cache | stop; the cache and accepted images are out of sync |
 | `MISMATCH` or missing paths from Stage 0 | raw zip layout or folder names | check `data/raw/OCT2017/{train,test}` and the exact class folder names |
 | Stage 1/2 decode errors on 0-byte files | Part 2 placeholders still present | restart the runtime, or run 3.1, which removes them |
-| `WARNING <class>: only N accepted GAN images` | fewer than 3,000 passed QC (MH, MacTel, Stargardt, RP) | expected; documented in the README |
+| `WARNING <class>: only N accepted GAN images` | fewer than 3,000 passed QC (MH, MacTel, Stargardt, RP) | expected; documented in `docs/research/REPLICATION.md` (Paper vs repo) |
 | Drive storage full | checkpoints, duplicates, trash | clean up (below), then empty the trash |
 | Disconnected mid-run | Colab session limit | rerun Part 1, then the same cell; Stage 2 resumes from the Drive checkpoint |
 

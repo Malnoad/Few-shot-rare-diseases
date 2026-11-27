@@ -809,6 +809,13 @@ results.
       has a source comment.
     - Side note, applied: section 12's "Note of 26 Nov" was reworded on 27 Nov. It now says that the
       review took question B off the line, rather than "changed the order, not the content".
+  - After the merge (PR #25, main `6116f93`), records and metadata only, no number changed:
+    - Tai et al. 2025 has its full author list from its arXiv page, which removes the PDF's
+      bibliography TODO.
+    - The PDF's document title now matches the printed title.
+    - At Lam's request, the root README is shortened to brief results, where to start, and a
+      code map that groups every code file by project and role, with no file moved. The previous
+      README stays at commit `6116f93`.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 
