@@ -146,6 +146,16 @@ Yoo's headline number into comparison tables incorrectly.
 | Devi & Grace 2026, J Appl Clin Med Phys, doi:10.1002/acm2.70573 | FT | Misquote | Lists Yoo as "GAN, 4 classes, 0.912". Yoo reports 9-class results; I found no 4-class experiment in the text I extracted | n/a | n/a |
 | You, Kim, Ryu, Yoo 2022, Eye Vis, doi:10.1186/s40662-022-00277-3 | FT | Review (Yoo is a co-author) | Summarises Yoo 2021 as GAN augmentation that "increased the accuracy of diagnosing rare retinal diseases" | n/a | n/a |
 
+**Correction (19 Nov 2026).** This scan missed Sun, Wei, Wang, Zheng 2024 (Medical Image
+Analysis 93:103102; authors' copy on GitHub, jinghanSunn/Hybrid-Representation-Learning-Approach-for-Rare-Disease-Classification).
+It **re-uses Yoo's rare images** for five-way K-shot tasks (K = 1, 3, 5; all remaining images as
+queries; three random tasks; trained ResNet-12-type network; best 5-shot 77.96 ± 1.49%, Table 6),
+reporting CSC 30, MacTel 30, MH 30, Stargardt 16, RP 19. Yoo is cited as the data source only; no
+comparison with Yoo's 92.1 or 93.9. Found in an 18 Nov forward-citation check of 153 OpenAlex
+works; it narrows the FM study's novelty claim (`protocols.md`, sections 1 and 10). The
+Pasupuleti counts above equal Mendeley version 1 (119 images, 27 Mar 2020); our manifest uses
+version 2 (146 images, 29 Oct 2020), which resolves that *unverified* note.
+
 Of the 37 open-access full texts, the 28 not listed above cite Yoo only as background
 (few-shot learning, GANs in ophthalmology, rare diseases). For 3 of them, no in-text
 citation sentence could be extracted. None questions the gan-vs-basic result, and none

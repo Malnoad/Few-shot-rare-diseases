@@ -1,0 +1,33 @@
+% src: PH P9_rare_vs_normal_auroc.csv columns auroc, boot95_low, boot95_high, argmax_rare_called_any_rare, argmax_normals_called_rare,
+%      rare_share_above_5pct_normal_cut_upper_bound (lines 2-21); label: post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+ & & & \multicolumn{2}{c}{Argmax point (share)} & \\ \cmidrule(lr){4-5}
+Set & Arm & AUROC (95\% interval) & \makecell{Disease scans\\called rare} & \makecell{Normals\\called rare} & \makecell{Rare share above the\\5\% normal cut (upper bound)} \\
+\midrule
+OCTID CSC against OCTID NORMAL & MIRAGE & 0.878 (0.832--0.919) & 0.402 & 0.019 & 0.500 \\
+ & DINOv2 & 0.856 (0.801--0.901) & 0.676 & 0.083 & 0.618 \\
+ & Inception-v3 & 0.805 (0.749--0.854) & 0.451 & 0.073 & 0.333 \\
+ & RETFound & 0.756 (0.679--0.825) & 0.000 & 0.000 & 0.588 \\
+\addlinespace[2pt]
+OCTID MH against OCTID NORMAL & MIRAGE & 0.684 (0.618--0.748) & 0.108 & 0.019 & 0.127 \\
+ & DINOv2 & 0.918 (0.876--0.954) & 0.833 & 0.083 & 0.824 \\
+ & Inception-v3 & 0.784 (0.724--0.838) & 0.431 & 0.073 & 0.255 \\
+ & RETFound & 0.550 (0.472--0.637) & 0.000 & 0.000 & 0.353 \\
+\addlinespace[2pt]
+OCTID CSC+MH against OCTID NORMAL & MIRAGE & 0.781 (0.733--0.824) & 0.255 & 0.019 & 0.314 \\
+ & DINOv2 & 0.887 (0.854--0.919) & 0.755 & 0.083 & 0.721 \\
+ & Inception-v3 & 0.795 (0.749--0.835) & 0.441 & 0.073 & 0.294 \\
+ & RETFound & 0.653 (0.589--0.715) & 0.000 & 0.000 & 0.471 \\
+\addlinespace[2pt]
+OCTDL MH against OCTDL NORMAL & MIRAGE & 0.357 (0.261--0.468) & 0.077 & 0.090 & 0.026 \\
+ & DINOv2 & 0.978 (0.949--0.998) & 1.000 & 0.425 & 0.923 \\
+ & Inception-v3 & 0.634 (0.543--0.717) & 0.026 & 0.033 & 0.026 \\
+ & RETFound & 0.456 (0.358--0.562) & 0.077 & 0.054 & 0.077 \\
+\addlinespace[2pt]
+\makecell[l]{Hold-out 22 vs 169 Kermany\\normals (source and disease mixed)} & MIRAGE & 1.000 (1.000--1.000) & 1.000 & 0.000 & 1.000 \\
+ & DINOv2 & 0.995 (0.986--1.000) & 0.955 & 0.036 & 0.955 \\
+ & Inception-v3 & 0.989 (0.967--1.000) & 0.909 & 0.024 & 0.909 \\
+ & RETFound & 0.958 (0.872--1.000) & 0.864 & 0.006 & 0.955 \\
+\bottomrule
+\end{tabular}

@@ -2,8 +2,9 @@
 
 develop uses held-out development queries only. nominate scores complete prototype
 arms and binds one decision beside input_lock.json; later calls only copy it.
-report verifies that binding before opening legacy query features. These commands
-never load an encoder or historical cache.
+report verifies that binding before opening legacy query features. summarize adds the
+amendment A2 rows (K mean, size-only reference); geometry writes the score-free geometry
+and padding table. These commands never load an encoder or historical cache.
 No real scores are produced during code preparation: tests use synthetic arrays.
 """
 from __future__ import annotations
@@ -448,6 +449,63 @@ def nomination_decision(folder: Path, out: Path) -> dict:
     return decision
 
 
+CLUSTER_METHOD = "95% percentile of 5,000 whole-cluster resamples, seed 0; conditional on the fitted head"
+EXACT_METHOD = "exact Clopper-Pearson 95%; image-level and conditional (no patient IDs)"
+
+
+def kermany_pid(path: str) -> str:
+    """Manifest pid of a Kermany image: the second field of its file name (A2 A-5)."""
+    parts = Path(path).name.split("-")
+    if len(parts) != 3 or not parts[1]:
+        raise ValueError(f"not a Kermany file name: {path}")
+    return parts[1]
+
+
+def nine_way_intervals(labels: Sequence[str], predicted: Sequence[str], clusters: Sequence[str] | None) -> dict:
+    """A2 B-3: FRR and per-class recall intervals; clusters=None means exact image-level intervals."""
+    def interval(rows: list[int], hits: list[int]) -> list[float] | None:
+        if not rows:
+            return None
+        if clusters is None:
+            return list(fm.clopper_pearson(sum(hits), len(hits)))
+        return list(fm.cluster_interval(hits, [clusters[i] for i in rows]))
+
+    normal = [i for i, label in enumerate(labels) if label == "NORMAL"]
+    recall = {}
+    for c in fm.NINE:
+        rows = [i for i, label in enumerate(labels) if label == c]
+        if rows:
+            recall[c] = interval(rows, [int(predicted[i] == c) for i in rows])
+    return dict(method=EXACT_METHOD if clusters is None else CLUSTER_METHOD,
+                false_rare=interval(normal, [int(predicted[i] in fm.RARE) for i in normal]), recall=recall)
+
+
+def kermany_audit(fitting: Sequence[dict], queries: Sequence[dict], predicted: Sequence[str]) -> dict:
+    """Kermany FRR on all NORMAL test images and on the patient-disjoint headline set (A2 A-5).
+
+    Patient-disjoint: the pid appears in no common fitting row of any class. Intervals cluster
+    by pid; rare queries have no patient IDs, so each is its own cluster.
+    """
+    fitted = {kermany_pid(r["path"]) for r in fitting if r["label"] in prep.COMMON}
+    labels = [r["label"] for r in queries]
+    clusters = [kermany_pid(r["path"]) if r["label"] in prep.COMMON else r["path"] for r in queries]
+    numerator, denominator = fm.false_rare_rate(labels, predicted)
+    disjoint = [i for i, r in enumerate(queries) if r["label"] == "NORMAL" and clusters[i] not in fitted]
+    hits = [int(predicted[i] in fm.RARE) for i in disjoint]
+    return dict(source="Kermany", false_rare_n=numerator, normal_n=denominator,
+                false_rare_rate=numerator/denominator if denominator else None,
+                intervals=nine_way_intervals(labels, predicted, clusters),
+                patient_disjoint=dict(
+                    role="headline Kermany FRR (A2 A-5); the all-image FRR above is secondary",
+                    definition="NORMAL test images whose pid (file-name field 2) is in no common fitting row",
+                    false_rare_n=sum(hits), normal_n=len(disjoint), patients=len({clusters[i] for i in disjoint}),
+                    false_rare_rate=sum(hits)/len(disjoint) if disjoint else None,
+                    interval=list(fm.cluster_interval(hits, [clusters[i] for i in disjoint])) if disjoint else None),
+                external_status="not run by this legacy-only command; separate screened query lock required",
+                limitation="patient overlap remains in the all-image FRR; RETFound pretraining exposure to Kermany "
+                           "is not addressed; no patient independence claimed")
+
+
 def nine_way(folder: Path, features: Features, out: Path, identity_hash: str) -> None:
     """One deterministic head using the complete fixed real fitting roster, never K-shot FRR."""
     out.mkdir(parents=True, exist_ok=True)
@@ -472,11 +530,7 @@ def nine_way(folder: Path, features: Features, out: Path, identity_hash: str) ->
     start = time.perf_counter()
     write_predictions(out, [r["path"] for r in queries], labels, scores, fm.NINE, "cosine")
     predicted = [fm.NINE[i] for i in scores.argmax(axis=1)]
-    numerator, denominator = fm.false_rare_rate(labels, predicted)
-    prep.write_json(out / "source_audit.json", dict(source="Kermany", false_rare_n=numerator, normal_n=denominator,
-                    false_rare_rate=numerator/denominator if denominator else None,
-                    external_status="not run by this legacy-only command; separate screened query lock required",
-                    limitation="legacy Kermany patient overlap remains; no patient independence claimed"))
+    prep.write_json(out / "source_audit.json", kermany_audit(fitting, queries, predicted))
     if not (out / "costs.json").exists():
         prep.write_json(out / "costs.json", dict(classifier_seconds=classifier_seconds,
             serialization_seconds=time.perf_counter()-start,
@@ -540,8 +594,63 @@ def reporting_metrics(folder: Path, out: Path, planned: Sequence[Episode], arm: 
     return result
 
 
+K_MEAN = (1, 2, 4, 8)  # A2 B-1: no K is primary; the single number is the mean over these K
+K_MEAN_LABEL = "mean_k1_2_4_8"
+
+
+def k_mean(scored: dict, n: int) -> dict:
+    """Per-draw mean over K = 1, 2, 4, 8 of one arm's macro recalls; a draw missing any K is absent."""
+    return {r: float(np.mean([scored[k, r] for k in K_MEAN])) for r in range(n) if all((k, r) in scored for k in K_MEAN)}
+
+
+def image_sizes(folder: Path) -> dict[str, tuple[int, int]]:
+    """Original (width, height) of every rare benchmark image, from the locked screen inventory."""
+    return {r["path"]: (int(r["width"]), int(r["height"])) for r in prep.read_csv(folder / "image_inventory.csv")}
+
+
+def size_hits(episode: Episode, sizes: dict[str, tuple[int, int]], classes: Sequence[str] = fm.RARE) -> np.ndarray:
+    """Correct counts per class of the size-only reference (A2 N-1) for one locked episode."""
+    picked = [episode.supports[fm.RARE.index(c)] for c in classes]
+    rows = [i for i, label in enumerate(episode.labels) if label in classes]
+    predicted = fm.size_predict([np.array([sizes[p] for p in paths]) for paths in picked],
+                                np.array([sizes[episode.queries[i]] for i in rows]))
+    hits = np.zeros(len(classes), dtype=np.int64)
+    for i, chosen in zip(rows, predicted):
+        hits[classes.index(episode.labels[i])] += classes[chosen] == episode.labels[i]
+    return hits
+
+
+def size_reference_rows(folder: Path) -> list[list]:
+    """Size-only macro recall per K, development (pooled over folds, as nomination) and reporting.
+
+    A diagnostic of the benchmark: no pixel or encoder is used, and it is never nominated.
+    """
+    sizes, rows = image_sizes(folder), []
+    development = episodes(folder, "development")
+    totals = {fold: np.array([next(e for e in development if e.fold == fold).labels.count(c) for c in fm.RARE])
+              for fold in range(fm.N_FOLDS)}
+    pooled: dict[tuple[int, int], np.ndarray] = {}
+    for episode in development:
+        pooled[episode.k, episode.draw] = pooled.get((episode.k, episode.draw), 0) + size_hits(episode, sizes)
+    queries = sum(totals.values())
+    dev_scores = {key: float(np.mean(value / queries)) for key, value in pooled.items()}
+    reporting = {(e.k, e.draw): fm.macro_recall(size_hits(e, sizes), np.array([e.labels.count(c) for c in fm.RARE]))
+                 for e in episodes(folder, "reporting")}
+    for phase, scores in (("development", dev_scores), ("reporting", reporting)):
+        for k in sorted({k for k, _ in scores}):
+            draws = [scores[k, r] for r in range(fm.N_DRAWS) if (k, r) in scores]
+            rows.append([phase, k, len(draws), fm.N_DRAWS, *draw_summary(draws)])
+        means = list(k_mean(scores, fm.N_DRAWS).values())
+        rows.append([phase, K_MEAN_LABEL, len(means), fm.N_DRAWS, *draw_summary(means)])
+    return rows
+
+
 def summarize(folder: Path, runs: Path, nomination: Path, out: Path) -> None:
-    """Legacy support-draw summaries and all paired contrasts, in recall fractions."""
+    """Legacy support-draw summaries and all paired contrasts, in recall fractions.
+
+    Adds the A2 rows: the K-mean single number per arm and contrast (B-1) and the size-only
+    reference (N-1) for development and reporting episodes.
+    """
     out=prep.experiment_out(out)
     lock=prep.load_lock(folder)
     if lock["evaluation_environment"] != prep.math_environment():
@@ -563,15 +672,22 @@ def summarize(folder: Path, runs: Path, nomination: Path, out: Path) -> None:
             for k in ks:
                 draws=[scored[k,r] for r in range(n) if (k,r) in scored]
                 summaries.append([arm,classifier,k,len(draws),n,*draw_summary(draws)])
+            means=list(k_mean(scored,n).values())
+            summaries.append([arm,classifier,K_MEAN_LABEL,len(means),n,*draw_summary(means)])
     for arm_a,arm_b in combinations(values,2):
         for classifier in ("prototype","logistic"):
             n=100 if classifier == "prototype" else 25
+            left,right=values[arm_a][classifier],values[arm_b][classifier]
+            primary=classifier == "prototype" and arm_a == decision["nominee"] and arm_b == fm.REFERENCE
             for k in ks:
-                left,right=values[arm_a][classifier],values[arm_b][classifier]
                 differences=[left[k,r]-right[k,r] for r in range(n) if (k,r) in left and (k,r) in right]
-                primary=classifier == "prototype" and arm_a == decision["nominee"] and arm_b == fm.REFERENCE
                 contrasts.append([arm_a,arm_b,"primary" if primary else "secondary",classifier,k,
                                   len(differences),n,*draw_summary(differences)])
+            mean_left,mean_right=k_mean(left,n),k_mean(right,n)
+            differences=[mean_left[r]-mean_right[r] for r in mean_left if r in mean_right]
+            contrasts.append([arm_a,arm_b,"primary" if primary else "secondary",classifier,K_MEAN_LABEL,
+                              len(differences),n,*draw_summary(differences)])
+    size_rows=size_reference_rows(folder)
     with prep.writer_lock(out):
         prep.write_json(out / "nomination.json", decision)
         prep.write_json(out / "nomination_binding.json", read_nomination_binding(folder))
@@ -579,15 +695,63 @@ def summarize(folder: Path, runs: Path, nomination: Path, out: Path) -> None:
                        "mean","sd","p05","p95"],summaries)
         prep.write_csv(out/"paired_differences.csv",["arm_a","arm_b","role","classifier","k","available_pairs",
                        "planned_pairs","mean_a_minus_b","sd","p05","p95"],contrasts)
+        prep.write_csv(out/"size_only_reference.csv",["phase","k","available","planned","mean","sd","p05","p95"],size_rows)
         prep.write_json(out/"interpretation.json",dict(lock_sha256=prep.sha256(folder/"input_lock.json"),
             nomination_sha256=nomination_hash,nominee=decision["nominee"],units="recall fractions (0..1)",
             reporting_scope=decision["reporting_scope"],
+            k=f"no K is primary (A2 B-1); the single number is {K_MEAN_LABEL}, per draw then summarized",
+            size_only_reference="nearest mean support (width, height); a benchmark diagnostic, never an arm (A2 N-1)",
             variability="conditional on these images and support draws; not new-patient confidence intervals",
             paired="shared completed support/query episodes; failed/missing cells are never imputed",
             external="not run here; legacy-only summaries do not complete the required external source component",
             unavailable={arm:spec["reason"] for arm,spec in lock["arms"].items() if spec["status"] == "unavailable"}))
         prep.complete(out,["nomination.json","nomination_binding.json","support_draw_summary.csv",
-                           "paired_differences.csv","interpretation.json"])
+                           "paired_differences.csv","size_only_reference.csv","interpretation.json"])
+
+
+GEOMETRY_METRICS = ("width", "height", "retained_fraction", "border_share", "near_white_share")
+
+
+def geometry_summary(rows: Sequence[dict]) -> list[list]:
+    """Count, median, min and max of each geometry metric by (source, class, role) (A2, A1 rule 4)."""
+    groups: dict[tuple[str, str, str], list[dict]] = {}
+    for row in rows:
+        groups.setdefault((row["source"], row["class"], row["role"]), []).append(row)
+    table = []
+    for key in sorted(groups):
+        stats = []
+        for metric in GEOMETRY_METRICS:
+            values = np.array([float(r[metric]) for r in groups[key]])
+            stats += [float(np.median(values)), float(values.min()), float(values.max())]
+        table.append([*key, len(groups[key]), *stats])
+    return table
+
+
+def geometry(folder: Path, cache: Path, arm: str, out: Path, external: Path | None = None,
+             external_cache: Path | None = None) -> None:
+    """Score-free geometry table for one arm's verified caches; labels group rows, no output is read."""
+    out = prep.experiment_out(out)
+    open_features(folder, cache, arm)  # verifies the bundle against the lock before reading geometry
+    roster = {r["path"]: r for r in prep.read_csv(folder / "nine_way_roster.csv")}
+    rows = [dict(r, source="benchmark" if roster[r["path"]]["label"] in fm.RARE else "Kermany",
+                 role=roster[r["path"]]["role"], **{"class": roster[r["path"]]["label"]})
+            for r in prep.read_csv(cache / "geometry.csv")]
+    if external is not None:
+        from fm_external import external_features  # fm_external imports this module
+        if external_cache is None:
+            raise ValueError("external geometry needs the external feature cache")
+        external_features(folder, external_cache, external, arm)
+        queries = {r["path"]: r for r in prep.read_csv(external / "external_queries.csv")}
+        rows += [dict(r, source=queries[r["path"]]["source"], role="query", **{"class": queries[r["path"]]["label"]})
+                 for r in prep.read_csv(external_cache / "geometry.csv")]
+    header = ["source", "class", "role", "n", *[f"{m}_{s}" for m in GEOMETRY_METRICS for s in ("median", "min", "max")]]
+    with prep.writer_lock(out):
+        prep.write_csv(out / "geometry_summary.csv", header, geometry_summary(rows))
+        prep.write_json(out / "geometry_identity.json", dict(arm=arm, lock_sha256=prep.sha256(folder / "input_lock.json"),
+            cache_complete_sha256=prep.sha256(cache / "complete.json"),
+            external_cache_complete_sha256=prep.sha256(external_cache / "complete.json") if external else None,
+            note="descriptive; gates nothing (A2). Retained fraction is per arm; the other metrics are image properties"))
+        prep.complete(out, ["geometry_summary.csv", "geometry_identity.json"])
 
 
 def main() -> None:
@@ -607,11 +771,19 @@ def main() -> None:
     summary_parser=sub.add_parser("summarize")
     for name in ("lock","runs","nomination","out"):
         summary_parser.add_argument("--"+name,type=Path,required=True)
+    shape = sub.add_parser("geometry", help="score-free geometry and padding table by source, class and role")
+    for name in ("lock", "cache", "out"):
+        shape.add_argument("--" + name, type=Path, required=True)
+    shape.add_argument("--arm", choices=extract.REPOSITORIES, required=True)
+    shape.add_argument("--external", type=Path, help="external query-lock folder (fm_external.py freeze)")
+    shape.add_argument("--external-cache", type=Path, help="external feature cache for the same arm")
     args = parser.parse_args()
     if args.step == "nominate":
         print(json.dumps(nominate(args.lock, args.runs, args.out), indent=2))
     elif args.step == "summarize":
         summarize(args.lock,args.runs,args.nomination,args.out)
+    elif args.step == "geometry":
+        geometry(args.lock, args.cache, args.arm, args.out, args.external, args.external_cache)
     else:
         run_arm(args.lock, args.cache, args.arm, args.out, "development" if args.step == "develop" else "reporting",
                 args.omit_logistic_reason, getattr(args, "nomination", None))

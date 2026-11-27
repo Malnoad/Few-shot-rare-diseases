@@ -88,9 +88,11 @@ def recipe(arm: str) -> dict:
         "DINOv2": dict(channels="RGB (alpha dropped)", resize="preprocessor_config.json", crop=224,
                        normalization="preprocessor_config.json", pooling="pooler_output (normalized CLS)",
                        source="facebook/dinov2-base preprocessor_config.json; transformers Dinov2Model"),
+        # A2 A-11: the published frozen-probe input path (fm_cls_config.py MIRAGEFM), not the HF demo.
         "MIRAGE": dict(channels="native PIL resize, then L (alpha dropped)", resize="512x512 bilinear", crop=None,
-                       normalization="divide by 255", pooling="LayerNorm(eps=1e-6) per token, patch-token mean; global excluded",
-                       source="hf/mirage_hf.py; mirage_wrapper.py:MIRAGEClsGlobal.forward/pool"),
+                       normalization="divide by 255, then per-image min-max to [0, 1]",
+                       pooling="LayerNorm(eps=1e-6) per token, patch-token mean; global excluded",
+                       source="fm_cls_config.py:MIRAGEFM (MinMaxNormChannel); mirage_wrapper.py:MIRAGEClsGlobal.forward/pool"),
         "BioMedCLIP": dict(channels="native eval RGB conversion after resize/crop (alpha dropped)", resize="open_clip native eval transform", crop=224,
                            normalization="open_clip_config.json", pooling="projected image feature, normalize=False",
                            source="open_clip_config.json; open_clip image_transform_v2; model.visual"),
@@ -212,10 +214,27 @@ def load_features(path: Path, inventory: prep.Rows, dimension: int) -> np.ndarra
     return values
 
 
+def mirage_input(image: Image.Image) -> np.ndarray:
+    """MIRAGE frozen-probe input (A2 A-11): 512x512 bilinear, L, /255, per-image min-max.
+
+    Matches fm_cls_config.py MIRAGEFM at the pinned commit; a constant image stops the arm
+    instead of dividing by zero.
+    """
+    pixels = np.array(image.resize((512, 512), Image.Resampling.BILINEAR).convert("L"), dtype=np.float32) / 255
+    low, high = pixels.min(), pixels.max()
+    if not high > low:
+        raise ValueError("MIRAGE min-max input needs a nonconstant image")
+    return (pixels - low) / (high - low)
+
+
 def geometry(arm: str, path: str, image: Image.Image) -> list:
-    """Log resize/crop geometry and retained original field; full-field warp retains 1."""
+    """Log resize/crop geometry, retained original field and the A2 padding shares.
+
+    Full-field warps retain 1. Padding is measured on the decoded 8-bit grayscale original.
+    """
     if arm not in REPOSITORIES:
         raise ValueError("unknown encoder geometry")
+    gray = np.asarray(image.convert("RGB").convert("L"))
     w, h = image.size
     if arm in ("MIRAGE", "Inception"):
         rw, rh = (512, 512) if arm == "MIRAGE" else (299, 299)
@@ -231,7 +250,7 @@ def geometry(arm: str, path: str, image: Image.Image) -> list:
         else:
             left, top = int(round((rw - 224) / 2)), int(round((rh - 224) / 2))
     retained = (cw * ch) / (rw * rh)
-    return [path, w, h, rw, rh, left, top, cw, ch, retained]
+    return [path, w, h, rw, rh, left, top, cw, ch, retained, fm.border_share(gray), fm.near_white_share(gray)]
 
 
 @dataclass
@@ -392,8 +411,7 @@ def load_encoder(spec: dict, assets: Path) -> Encoder:
             raise ValueError("MIRAGE state keys differ from both exact upstream layouts")
         norm = torch.nn.LayerNorm(768, eps=1e-6).float().cuda().eval().requires_grad_(False)
         report["default_norm"] = "classification-wrapper LayerNorm ones/zeros, eps=1e-6, not in checkpoint"
-        prepare = lambda images: torch.stack([torch.from_numpy(np.array(im.resize(
-            (512,512), Image.Resampling.BILINEAR).convert("L"), dtype=np.float32) / 255)[None] for im in images])
+        prepare = lambda images: torch.stack([torch.from_numpy(mirage_input(im))[None] for im in images])
 
         def forward(x):
             values = model({"bscan": x})
@@ -436,12 +454,57 @@ def load_encoder(spec: dict, assets: Path) -> Encoder:
                    lambda: dict(peak_vram_bytes=torch.cuda.max_memory_allocated()))
 
 
+REPEAT_TOLERANCE = 1e-4  # R3 (approved 11 Nov) and A2 A-6: largest |a - b| over largest |a|
+REPEAT_COSINE = 0.9999  # A2 A-6: per real timing image, first versus last timed pass
+
+
+def synthetic_images() -> list[Image.Image]:
+    """R3's five fixed synthetic RGB images, in benchmark crop and Kermany scan sizes."""
+    rng = fm.stream(fm.SEED, 9201)
+    sizes = ((512, 496), (768, 496), (1536, 496), (414, 413), (327, 326))
+    return [Image.fromarray(rng.integers(0, 256, (h, w, 3), dtype=np.uint8), "RGB") for w, h in sizes]
+
+
+def repeat_check(first: Sequence[np.ndarray], second: Sequence[np.ndarray]) -> dict:
+    """Agreement of two passes over the same images: whole-set and per-image ratios, cosines."""
+    a = np.concatenate(first).astype(np.float64)
+    b = np.concatenate(second).astype(np.float64)
+    if a.ndim != 2 or a.shape != b.shape or not len(a):
+        raise ValueError("repeat check needs two aligned nonempty output sets")
+    difference = np.abs(a - b)
+    cosine = (a * b).sum(axis=1) / (np.linalg.norm(a, axis=1) * np.linalg.norm(b, axis=1))
+    return dict(images=len(a), max_difference_ratio=float(difference.max() / np.abs(a).max()),
+                worst_image_difference_ratio=float((difference.max(axis=1) / np.abs(a).max(axis=1)).max()),
+                min_cosine=float(cosine.min()))
+
+
+def check_numerical(numerical: dict) -> None:
+    """R3 on the synthetic set; A2 A-6 on every real timing image. Failure stops the pilot."""
+    try:
+        real, synthetic = numerical["real"], numerical["synthetic"]
+        valid = numerical["tolerance"] == REPEAT_TOLERANCE and numerical["min_cosine"] == REPEAT_COSINE and \
+            real["images"] == 100 and synthetic["images"] == 5
+        passed = real["worst_image_difference_ratio"] <= REPEAT_TOLERANCE and real["min_cosine"] >= REPEAT_COSINE and \
+            synthetic["max_difference_ratio"] <= REPEAT_TOLERANCE
+    except (KeyError, TypeError):
+        raise ValueError("pilot lacks the numerical repeat record") from None
+    if not valid:
+        raise ValueError("pilot numerical record does not implement the fixed R3/A-6 rule")
+    if not passed:
+        raise ValueError(f"numerical repeat check failed (R3/A2 A-6); report the arm unavailable: "
+                         f"{json.dumps(numerical, sort_keys=True)}")
+
+
 def warm_timing(encoder: Encoder, images: Sequence[Image.Image]) -> dict:
-    """One warm pass + five timed passes; validate outputs outside every interval."""
+    """One warm pass + five timed passes, then the R3/A-6 repeat checks; validation is untimed.
+
+    The first and last timed passes are compared on all 100 images (A2 A-6); five synthetic
+    images are encoded twice after the timed passes (R3).
+    """
     if len(images) != 100:
         raise ValueError("the timing inventory must contain exactly 100 realized IDs")
     started = time.monotonic_ns()
-    per_pass = []
+    per_pass, kept = [], {}
     validation_seconds = 0.
     for pass_index in range(6):
         outputs = []
@@ -457,11 +520,23 @@ def warm_timing(encoder: Encoder, images: Sequence[Image.Image]) -> dict:
         validation_seconds += time.perf_counter() - validation_start
         if pass_index:
             per_pass.append(elapsed / len(images))
+        if pass_index in (1, 5):
+            kept[pass_index] = outputs
+    check_start = time.perf_counter()
+    synthetic = synthetic_images()
+    repeats = [[encoder.encode([image]) for image in synthetic] for _ in range(2)]
+    for values in (*repeats[0], *repeats[1]):
+        validate_features(values, 1, DIMENSIONS[encoder.arm])
+    numerical = dict(rule="R3 synthetic repeat; A2 A-6 first-versus-last timed pass", tolerance=REPEAT_TOLERANCE,
+                     min_cosine=REPEAT_COSINE, real=repeat_check(kept[1], kept[5]), synthetic=repeat_check(*repeats))
+    validation_seconds += time.perf_counter() - check_start
+    check_numerical(numerical)
     return dict(batch_size=1, images=100, warm_passes=1, timed_passes=5,
                 seconds_per_image=per_pass, median_seconds_per_image=float(np.median(per_pass)),
                 started_monotonic_ns=started, finished_monotonic_ns=time.monotonic_ns(),
-                process_id=os.getpid(), validation_seconds=validation_seconds,
-                includes="preprocessing, inference and host output transfer; excludes validation/decoding/disk/download")
+                process_id=os.getpid(), validation_seconds=validation_seconds, numerical=numerical,
+                includes="preprocessing, inference and host output transfer; excludes validation, "
+                         "repeat checks, decoding, disk and download")
 
 
 def validate_timing(timing: dict) -> None:
@@ -475,6 +550,7 @@ def validate_timing(timing: dict) -> None:
         raise ValueError("invalid pilot timing")
     if not 0 < timing["started_monotonic_ns"] < timing["finished_monotonic_ns"] or timing["process_id"] <= 0:
         raise ValueError("pilot needs a positive monotonic measurement window and process ID")
+    check_numerical(timing.get("numerical"))
 
 
 def peak_ram_bytes() -> int | None:
@@ -485,7 +561,7 @@ def peak_ram_bytes() -> int | None:
 
 
 GEOMETRY_HEADER = ["path", "width", "height", "resize_width", "resize_height", "crop_left", "crop_top",
-                   "crop_width", "crop_height", "retained_fraction"]
+                   "crop_width", "crop_height", "retained_fraction", "border_share", "near_white_share"]
 
 
 def operation_files(step: str) -> list[str]:

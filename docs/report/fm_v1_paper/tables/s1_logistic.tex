@@ -1,0 +1,15 @@
+% src: ARC reports/legacy/support_draw_summary.csv classifier=logistic; reports/legacy/paired_differences.csv classifier=logistic.
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Arm & $K=1$ & $K=2$ & $K=4$ & $K=8$ & $K=16$ & \makecell{Mean $K$ 1--8\\(SD; 5th--95th)} \\
+\midrule
+MIRAGE & 0.564 & 0.670 & 0.801 & 0.873 & 0.913 & 0.727 (0.068; 0.600--0.815) \\
+DINOv2 & 0.417 & 0.522 & 0.630 & 0.716 & 0.744 & 0.571 (0.059; 0.465--0.670) \\
+Inception-v3 & 0.416 & 0.498 & 0.586 & 0.662 & 0.687 & 0.541 (0.064; 0.466--0.652) \\
+RETFound & 0.258 & 0.312 & 0.372 & 0.424 & 0.501 & 0.341 (0.063; 0.235--0.426) \\
+\midrule
+MIRAGE $-$ Inception-v3 & +0.148 & +0.172 & +0.216 & +0.210 & +0.226 & +0.187 (0.080; +0.073 to +0.309) \\
+DINOv2 $-$ Inception-v3 & +0.001 & +0.024 & +0.044 & +0.054 & +0.056 & +0.031 (0.076; $-$0.096 to +0.126) \\
+RETFound $-$ Inception-v3 & $-$0.158 & $-$0.186 & $-$0.213 & $-$0.239 & $-$0.186 & $-$0.199 (0.075; $-$0.315 to $-$0.097) \\
+\bottomrule
+\end{tabular}

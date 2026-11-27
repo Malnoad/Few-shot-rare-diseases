@@ -1,0 +1,15 @@
+% src: ARC reports/external/external_source_audit.csv (numerator, value, interval_low, interval_high);
+%      Kermany 169 = false_rare_rate_patient_disjoint, Kermany 250 = false_rare_rate_all, OCTID/OCTDL = false_rare_rate;
+%      called NORMAL = recall_NORMAL numerators; R1 (post hoc) = PH R1_rare_beside_false_rare.csv rare_called_any_rare.
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+ & \multicolumn{4}{c}{Normal scans called any rare class: count (rate; 95\% interval)} & Called NORMAL & R1$^\ddagger$: disease images called any rare \\
+\cmidrule(lr){2-5}
+Arm & \makecell{Kermany, of 169\\(headline)} & \makecell{Kermany, of 250\\(secondary)} & OCTID, of 206 & OCTDL, of 332 & OCTID / OCTDL & \makecell{OCTID CSC / MH (of 102);\\OCTDL MH (of 39)} \\
+\midrule
+MIRAGE & \makecell{0\\{\scriptsize (0.000; 0.000--0.000)}} & \makecell{0\\{\scriptsize (0.000; 0.000--0.000)}} & \makecell{4\\{\scriptsize (0.019; 0.005--0.049)}} & \makecell{30\\{\scriptsize (0.090; 0.055--0.136)}} & 202 / 26 & 41 / 11; 3 \\
+DINOv2 & \makecell{6\\{\scriptsize (0.036; 0.012--0.065)}} & \makecell{10\\{\scriptsize (0.040; 0.017--0.066)}} & \makecell{17\\{\scriptsize (0.083; 0.049--0.129)}} & \makecell{141\\{\scriptsize (0.425; 0.372--0.472)}} & 188 / 145 & 69 / 85; 39 \\
+Inception-v3 & \makecell{4\\{\scriptsize (0.024; 0.006--0.049)}} & \makecell{7\\{\scriptsize (0.028; 0.008--0.053)}} & \makecell{15\\{\scriptsize (0.073; 0.041--0.117)}} & \makecell{11\\{\scriptsize (0.033; 0.012--0.059)}} & 182 / 66 & 46 / 44; 1 \\
+RETFound & \makecell{1\\{\scriptsize (0.006; 0.000--0.019)}} & \makecell{1\\{\scriptsize (0.004; 0.000--0.013)}} & \makecell{0\\{\scriptsize (0.000; 0.000--0.018)}} & \makecell{18\\{\scriptsize (0.054; 0.029--0.087)}} & 189 / 137 & 0 / 0; 3 \\
+\bottomrule
+\end{tabular}

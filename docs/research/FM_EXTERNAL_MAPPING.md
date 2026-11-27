@@ -1,5 +1,7 @@
 # External rare-class mapping: data balance, MH/CSC evidence and working definitions
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`.
+
 Prepared 12 November 2026 for Lam, pending the mentor's feedback. The label decision is now
 amendment A1 (`FM_AMENDMENTS.md`, 12 Nov); this note is its evidence. Otherwise nothing here changes
 protocol v1.0; options B (documented-label amendment) and C (clinician check) are deferred
@@ -37,7 +39,7 @@ Consequences:
 
 | Source | MH | CSC / CSR | Who labelled |
 |---|---|---|---|
-| Benchmark (Mendeley btv6yrdbmv, released with Yoo et al. 2021) | Definition unverified | Definition unverified | Unverified |
+| Benchmark (Mendeley btv6yrdbmv, released with Yoo et al. 2021) | Definition unverified | Definition unverified | Yoo et al. (PMC7829497, open access; read 13 Nov): images "extracted from Google Images and Google search engine", "manually classified by two board-certified ophthalmologists with prior knowledge about data sources and related documents"; source links in their supplement. No disease definitions given |
 | OCTID (Gholami et al., arXiv:1812.07056, PDF shipped with each Borealis dataset) | "MH retinal defects can vary from small hypoflective breaks to full-thickness intra-retinal spaces" (broad) | Listed as "Central Serous Retinopathy", described under the heading "Central Serous Chorioretinopathy (CSC)": "focal detachments of the retina and the RPE layer ... hypo reflective spaces at the sub-retinal and sub-RPE levels" | "image class labeling was done based on the diagnosis of retinal clinical experts at SN hospital"; one Cirrus HD-OCT, Sankara Nethralaya, Chennai; fovea-centred B-scan picked by an optometrist; resized to 500x750 |
 | OCTDL (Kulyabin et al., Sci Data 2024, PMC11009408) | "a complete defect in the inner layers of the retina that extends to the RPE"; lamellar tear treated as a separate variant (`subcategory` LH) | none | Seven trained medical students, then two clinical specialists independently with consensus; head of clinic confirmed every diagnosis; Optovue RTVue XR |
 | IVTS classification (Duker et al., Ophthalmology 2013, doi:10.1016/j.ophtha.2013.07.042) | "Full-thickness macular hole (FTMH) is defined as a foveal lesion with interruption of all retinal layers from the internal limiting membrane to the retinal pigment epithelium" | — | Expert panel consensus |
@@ -109,6 +111,8 @@ What does help, all before any score:
   the third (MH: benchmark, OCTID, OCTDL).
 - **A source probe as a diagnostic:** how well frozen features predict the source alone. The
   old C0 audit already found near-perfect rare-versus-common separation (AUC about 0.995).
+  (Withdrawn by amendment A2 on 13 Nov; replaced by the geometry table and the size-only
+  reference.)
 - Geometry harmonization (cropping the OCTID icon, fixed aspect) reduces the cues, but the C0
   audit found that format and framing normalization did not remove the separation (0.995 to
   0.991).

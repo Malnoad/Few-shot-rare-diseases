@@ -582,6 +582,10 @@ class InputLocks(SyntheticInputs):
                     process_id=100+slot,started_monotonic_ns=started+10,finished_monotonic_ns=started+20,
                     operation_started_monotonic_ns=started,operation_finished_monotonic_ns=started+30,
                     image_ids=[r["path"] for r in self.read("timing_inventory.csv")],
+                    numerical=dict(rule="synthetic", tolerance=self.extract.REPEAT_TOLERANCE,
+                                   min_cosine=self.extract.REPEAT_COSINE,
+                                   real=dict(images=100, max_difference_ratio=0., worst_image_difference_ratio=0., min_cosine=1.),
+                                   synthetic=dict(images=5, max_difference_ratio=0., worst_image_difference_ratio=0., min_cosine=1.)),
                     costs={**{key:0. for key in ("model_loading_seconds","staging_seconds","extraction_seconds",
                         "validation_seconds","serialization_seconds","input_verification_seconds","wall_seconds")},
                         "image_count":100})
@@ -589,8 +593,7 @@ class InputLocks(SyntheticInputs):
         self.json_fixture(folder / "load_report.json", dict(arm=arm, synthetic=True))
         with (folder / "geometry.csv").open("w", newline="", encoding="utf-8") as stream:
             writer = csv.writer(stream)
-            writer.writerow(["path", "width", "height", "resize_width", "resize_height", "crop_left", "crop_top",
-                             "crop_width", "crop_height", "retained_fraction"])
+            writer.writerow(self.extract.GEOMETRY_HEADER)
             for row in self.read("timing_inventory.csv"):
                 with Image.open(self.root / row["path"]) as image:
                     writer.writerow(self.extract.geometry(arm, row["path"], image))

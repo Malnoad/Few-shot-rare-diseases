@@ -1,0 +1,28 @@
+% src: PH P10_matched_pairs.csv (pairs, sets); mark and screen inliers: PH P10_review_key.csv joined with
+%      PH P10_review_marks.csv on item (synthetic copies excluded, as in fm_posthoc.p10_matched_pairs);
+%      label: post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-21; marks SHA256 15a9606fce87
+\begin{tabular}{@{}rllllr@{}}
+\toprule
+ & Image & Set & Image & Set & Inliers \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{Same picture (14)}} \\
+1 & MH/01.PNG & development & MH/08.PNG & development & 182 \\
+2 & MH/01.PNG & development & MH/14.PNG & development & 193 \\
+3 & MH/08.PNG & development & MH/14.PNG & development & 196 \\
+4 & MH/12.PNG & development & MH/25.PNG & development & 288 \\
+5 & MacTel/01.PNG & development & MacTel/19.PNG & \textbf{hold-out} & 265 \\
+6 & MacTel/04.PNG & development & MacTel/06.PNG & development & 869 \\
+7 & MacTel/07.PNG & development & MacTel/22.PNG & development & 369 \\
+8 & RP/03.PNG & development & RP/20.PNG & \textbf{hold-out} & 203 \\
+9 & RP/06.PNG & development & RP/30.PNG & development & 202 \\
+10 & RP/11.PNG & development & RP/17.PNG & \textbf{hold-out} & 104 \\
+11 & Stargardt/03.PNG & \textbf{hold-out} & Stargardt/08.PNG & development & 208 \\
+12 & Stargardt/03.PNG & \textbf{hold-out} & Stargardt/14.PNG & development & 234 \\
+13 & Stargardt/08.PNG & development & Stargardt/14.PNG & development & 276 \\
+14 & Stargardt/09.PNG & development & Stargardt/18.PNG & development & 342 \\
+\multicolumn{6}{@{}l}{\emph{Same case, other slice (1)}} \\
+15 & MacTel/09.PNG & development & MacTel/23.PNG & development & 18 \\
+\multicolumn{6}{@{}l}{\emph{Unsure (counted only in the second exclusion set) (1)}} \\
+16 & CSC/26.PNG & development & CSC/27.PNG & development & 18 \\
+\bottomrule
+\end{tabular}

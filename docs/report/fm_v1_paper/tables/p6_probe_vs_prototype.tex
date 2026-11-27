@@ -1,0 +1,12 @@
+% src: PH P6_probe_vs_prototype.csv (diff_mean, diff_p05, diff_p95; logistic minus prototype, first 25 draws); label: post hoc, computed before the rules were timestamped (first computed 16 Nov 2026), recomputed 2026-11-16
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+ & Development & \multicolumn{5}{c}{Hold-out} \\ \cmidrule(lr){2-2}\cmidrule(l){3-7}
+Arm & $K=4$ & $K=1$ & $K=2$ & $K=4$ & $K=8$ & $K=16$ \\
+\midrule
+MIRAGE & \makecell{+0.012\\{\scriptsize ($-$0.015 to +0.038)}} & \makecell{+0.006\\{\scriptsize ($-$0.050 to +0.088)}} & \makecell{+0.016\\{\scriptsize ($-$0.074 to +0.100)}} & \makecell{+0.016\\{\scriptsize ($-$0.040 to +0.082)}} & \makecell{+0.014\\{\scriptsize ($-$0.032 to +0.082)}} & \makecell{+0.020\\{\scriptsize (0.000 to +0.050)}} \\
+DINOv2 & \makecell{+0.029\\{\scriptsize ($-$0.026 to +0.066)}} & \makecell{+0.019\\{\scriptsize ($-$0.048 to +0.098)}} & \makecell{+0.036\\{\scriptsize ($-$0.042 to +0.128)}} & \makecell{+0.041\\{\scriptsize ($-$0.050 to +0.164)}} & \makecell{+0.064\\{\scriptsize (0.000 to +0.140)}} & \makecell{+0.055\\{\scriptsize ($-$0.008 to +0.138)}} \\
+Inception-v3 & \makecell{+0.030\\{\scriptsize (+0.003 to +0.068)}} & \makecell{+0.006\\{\scriptsize ($-$0.050 to +0.074)}} & \makecell{+0.030\\{\scriptsize ($-$0.050 to +0.122)}} & \makecell{+0.044\\{\scriptsize ($-$0.036 to +0.140)}} & \makecell{+0.060\\{\scriptsize ($-$0.032 to +0.148)}} & \makecell{+0.072\\{\scriptsize (0.000 to +0.188)}} \\
+RETFound & \makecell{+0.001\\{\scriptsize ($-$0.022 to +0.029)}} & \makecell{$-$0.003\\{\scriptsize ($-$0.098 to +0.132)}} & \makecell{+0.004\\{\scriptsize ($-$0.050 to +0.050)}} & \makecell{+0.011\\{\scriptsize ($-$0.082 to +0.090)}} & \makecell{+0.012\\{\scriptsize ($-$0.050 to +0.098)}} & \makecell{+0.018\\{\scriptsize ($-$0.034 to +0.050)}} \\
+\bottomrule
+\end{tabular}

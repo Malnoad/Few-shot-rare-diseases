@@ -1,0 +1,13 @@
+posthoc,quantity,value
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",rare pairs scored,10585
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19","negative pairs (rare, Kermany)",2000
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",Kermany images in negatives,1617
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",cut-off (largest negative score),18
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",rare pairs at or above cut-off,35
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",rare pairs shown for that reason,35
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",synthetic positives,146
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",synthetic recall at cut-off,1.000
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",rare pair score median,4.0
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",rare pair score max,869
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",pairs sharing a source link,0 (S1 names no file)
+"post hoc, rule timestamped by commit dcbb323 (18 Nov 2026), computed 2026-11-19",review items,55

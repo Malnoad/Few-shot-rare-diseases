@@ -1,5 +1,7 @@
 # FM code preparation: review and verification record
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`.
+
 9 November 2026. Lam authorized autonomous code preparation until 05:00
 Asia/Bangkok and requested subagents plus repeated rebuttal rounds. This record
 concerns draft code, not scientific results, an input lock or model feasibility.

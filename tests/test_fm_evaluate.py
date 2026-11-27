@@ -18,6 +18,11 @@ import fm_prepare as prep
 import fm_extract as extract
 
 
+def kermany(label, pid, image=0):
+    """A Kermany-style path: the patient is the second field of the file name."""
+    return f"fit/{label}/{label}-{pid}-{image}.jpeg"
+
+
 def replace_json(path, value):
     """Deliberately alter a synthetic artifact to exercise fail-closed readers."""
     path.write_text(json.dumps(value), encoding="utf-8")
@@ -160,9 +165,10 @@ class Predictions(unittest.TestCase):
         self.assertEqual(metric["confusion"][0],[1,0,0,0,1])
 
     def test_nine_way_normal_false_rare_rate_uses_nine_outputs(self):
-        fitting=[[f"fit/{c}",c,"fitting"] for c in fm.NINE]
-        queries=[["q/rp","NORMAL","query"],["q/cnv","NORMAL","query"],["q/normal","NORMAL","query"],
-                 ["q/rare","CSC","query"]]
+        fitting=[[kermany(c,i) if c in prep.COMMON else f"fit/{c}",c,"fitting"] for i,c in enumerate(fm.NINE)]
+        # pid 1 (the CNV fitting patient) also has a NORMAL test image: excluded from the headline.
+        queries=[["q/NORMAL-1-9.jpeg","NORMAL","query"],["q/NORMAL-20-1.jpeg","NORMAL","query"],
+                 ["q/NORMAL-21-1.jpeg","NORMAL","query"],["q/rare","CSC","query"]]
         plan=self.out/"plan"; plan.mkdir()
         prep.write_csv(plan/"nine_way_roster.csv",["path","label","role"],fitting+queries)
         values=np.vstack((np.eye(9),np.eye(9)[[8,1,0,4]])).astype(np.float32)
@@ -171,8 +177,29 @@ class Predictions(unittest.TestCase):
         ev.nine_way(plan,features,result,"synthetic")
         source=prep.read_json(result/"source_audit.json")
         self.assertEqual((source["false_rare_n"],source["normal_n"]),(1,3))
+        disjoint=source["patient_disjoint"]
+        self.assertEqual((disjoint["false_rare_n"],disjoint["normal_n"],disjoint["patients"]),(0,2,2))
+        self.assertEqual(source["intervals"]["method"],ev.CLUSTER_METHOD)
+        low,high=source["intervals"]["false_rare"]
+        self.assertTrue(0<=low<=1/3<=high<=1)
         self.assertEqual(prep.read_json(result/"metrics.json")["per_class_recall"]["NORMAL"],1/3)
         self.assertEqual(len(prep.read_json(result/"metrics.json")["confusion"]),9)
+
+    def test_geometry_summary_groups_by_source_class_and_role(self):
+        row = lambda source, c, role, width, border: dict(source=source, role=role, width=width, height=496,
+                                                         retained_fraction=.5, border_share=border, near_white_share=0,
+                                                         **{"class": c})
+        table = ev.geometry_summary([row("Kermany", "NORMAL", "query", 512, 0), row("Kermany", "NORMAL", "query", 1536, .2),
+                                     row("benchmark", "CSC", "fitting", 414, .4)])
+        self.assertEqual([r[:4] for r in table], [["Kermany", "NORMAL", "query", 2], ["benchmark", "CSC", "fitting", 1]])
+        self.assertEqual(table[0][4:7], [1024., 512., 1536.])  # width median, min, max
+        self.assertEqual(table[0][13:16], [.1, 0., .2])  # border share
+        self.assertEqual(len(table[0]), 4 + 3 * len(ev.GEOMETRY_METRICS))
+
+    def test_non_kermany_common_name_stops_instead_of_guessing_a_patient(self):
+        with self.assertRaisesRegex(ValueError,"not a Kermany file name"):
+            ev.kermany_pid("fit/NORMAL/0")
+        self.assertEqual(ev.kermany_pid("data/raw/OCT2017/test/NORMAL/NORMAL-1016042-1.jpeg"),"1016042")
 
     def test_reporting_gate_precedes_feature_access(self):
         with patch.object(prep,"load_lock",return_value={}), patch.object(ev,"open_features") as load:
@@ -201,7 +228,7 @@ class Predictions(unittest.TestCase):
                       preparation_sha256=prep.sha256(folder/"freeze_summary.json"))
         prep.write_json(cache/"identity.json",identity)
         prep.write_json(cache/"load_report.json",dict(synthetic=True))
-        prep.write_csv(cache/"geometry.csv",extract.GEOMETRY_HEADER,[["synthetic.png",32,32,256,256,16,16,224,224,.765625]])
+        prep.write_csv(cache/"geometry.csv",extract.GEOMETRY_HEADER,[["synthetic.png",32,32,256,256,16,16,224,224,.765625,0.,0.]])
         extract.save_features(cache/"features.npz",["synthetic.png"],["a"*64],np.full((1,768),3,dtype=np.float32))
         payload=dict(image_count=1,**{key:0. for key in ("model_loading_seconds","staging_seconds","extraction_seconds",
                      "validation_seconds","serialization_seconds","input_verification_seconds","wall_seconds")})
@@ -295,8 +322,9 @@ class SyntheticArtifacts(unittest.TestCase):
         return out
 
     def nine_way_features(self):
-        fitting = [[f"fit/{c}/0", c, "fitting"] for c in fm.NINE]
-        queries = [[f"query/{c}", c, "query"] for c in fm.NINE]
+        fitting = [[kermany(c, i) if c in prep.COMMON else f"fit/{c}/0", c, "fitting"] for i, c in enumerate(fm.NINE)]
+        queries = [[kermany(c, 50 + i).replace("fit/", "query/") if c in prep.COMMON else f"query/{c}", c, "query"]
+                   for i, c in enumerate(fm.NINE)]
         prep.write_csv(self.plan / "nine_way_roster.csv", ["path", "label", "role"], fitting + queries)
         return ev.Features(np.tile(np.eye(9, dtype=np.float32), (2, 1)),
                            {r[0]: i for i, r in enumerate(fitting + queries)})
@@ -335,6 +363,13 @@ class NominationAndSummaries(SyntheticArtifacts):
                             self.development if phase == "development" else self.reporting)
         plan.start()
         self.addCleanup(plan.stop)
+        # Original file sizes for the size-only reference: one size per class, except MacTel's
+        # queries, which take CSC's size, so the reference misses MacTel only.
+        paths = {p for e in self.development + self.reporting for p in (*e.queries, *(q for s in e.supports for q in s))}
+        size = lambda p: (100 + 10 * fm.RARE.index("CSC" if "/MacTel" in p and not p.startswith("fit/") else
+                                                     next(c for c in fm.RARE if f"/{c}" in p)), 100)
+        prep.write_csv(self.plan / "image_inventory.csv", ["path", "width", "height"],
+                       [[p, *size(p)] for p in sorted(paths)])
 
     def complete_development(self, arm, totals, missing=False):
         run = self.make_run(arm, "development")
@@ -381,24 +416,30 @@ class NominationAndSummaries(SyntheticArtifacts):
             self.save_cell(reference, episode, [1, 0, 0, 0, 0], "logistic", failed=episode.draw == 0)
         out = self.root / "summary"
         ev.summarize(self.plan, self.runs, self.nomination, out)
-        summaries = {(r["arm"], r["classifier"], int(r["k"])): r
+        summaries = {(r["arm"], r["classifier"], r["k"]): r
                      for r in prep.read_csv(out / "support_draw_summary.csv")}
-        dino_proto = summaries["DINOv2", "prototype", 1]
+        dino_proto = summaries["DINOv2", "prototype", "1"]
         self.assertEqual((dino_proto["available"], dino_proto["planned"]), ("3", "100"))
         self.assertAlmostEqual(float(dino_proto["mean"]), (1. + .4 + .8) / 3)
-        self.assertEqual(summaries["DINOv2", "logistic", 1]["available"], "2")
-        self.assertEqual(summaries["DINOv2", "logistic", 1]["planned"], "25")
+        self.assertEqual(summaries["DINOv2", "logistic", "1"]["available"], "2")
+        self.assertEqual(summaries["DINOv2", "logistic", "1"]["planned"], "25")
         for classifier, planned in (("prototype", "100"), ("logistic", "25")):
-            for arm, k in (("MIRAGE", 1), ("DINOv2", 4)):
+            for arm, k in (("MIRAGE", "1"), ("DINOv2", "4"), ("DINOv2", ev.K_MEAN_LABEL)):
                 row = summaries[arm, classifier, k]
                 self.assertEqual((row["available"], row["planned"], row["mean"]), ("0", planned, ""))
-        contrasts = {(r["arm_a"], r["arm_b"], r["classifier"], int(r["k"])): r
+        contrasts = {(r["arm_a"], r["arm_b"], r["classifier"], r["k"]): r
                      for r in prep.read_csv(out / "paired_differences.csv")}
-        primary = contrasts["DINOv2", "Inception", "prototype", 1]
+        primary = contrasts["DINOv2", "Inception", "prototype", "1"]
         self.assertEqual((primary["role"], primary["available_pairs"], primary["planned_pairs"]),
                          ("primary", "2", "100"))
         self.assertAlmostEqual(float(primary["mean_a_minus_b"]), .6)
-        logistic = contrasts["DINOv2", "Inception", "logistic", 1]
+        # A2 N-1: size alone gets every class but MacTel (its queries have CSC's size) right.
+        size = {(r["phase"], r["k"]): r for r in prep.read_csv(out / "size_only_reference.csv")}
+        for k in ("1", "8", ev.K_MEAN_LABEL):
+            self.assertEqual(size["development", k]["available"], "2")
+            self.assertAlmostEqual(float(size["development", k]["mean"]), .8)
+        self.assertEqual((size["reporting", "4"]["available"], size["reporting", ev.K_MEAN_LABEL]["available"]), ("2", "0"))
+        logistic = contrasts["DINOv2", "Inception", "logistic", "1"]
         self.assertEqual((logistic["role"], logistic["available_pairs"], logistic["planned_pairs"]),
                          ("secondary", "1", "25"))
         self.assertAlmostEqual(float(logistic["mean_a_minus_b"]), .2)

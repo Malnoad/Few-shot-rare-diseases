@@ -1,0 +1,23 @@
+% src: PH P3_clinic_to_clinic_mh.csv rows k=mean_k1_2_4_8 (mean, sd, p05, p95, recall_NORMAL_mean, recall_MH_mean);
+%      label: post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-16; outside the locked study (rule 4): OCTDL MH used as examples although A1 makes it query-only
+\begin{tabular}{@{}lllccc@{}}
+\toprule
+Arm & Direction & Unit & \makecell{Two-way macro recall\\(SD; 5th--95th)} & NORMAL recall & MH recall \\
+\midrule
+RETFound & OCTID examples $\to$ OCTDL queries & image & 0.675 (0.063; 0.564--0.773) & 0.512 & 0.837 \\
+ & OCTID examples $\to$ OCTDL queries & patient & 0.676 (0.059; 0.574--0.767) & 0.519 & 0.833 \\
+ & OCTDL examples $\to$ OCTID queries & image & 0.699 (0.107; 0.520--0.861) & 0.838 & 0.561 \\
+\addlinespace[2pt]
+DINOv2 & OCTID examples $\to$ OCTDL queries & image & 0.858 (0.076; 0.710--0.964) & 0.854 & 0.863 \\
+ & OCTID examples $\to$ OCTDL queries & patient & 0.860 (0.076; 0.706--0.965) & 0.849 & 0.872 \\
+ & OCTDL examples $\to$ OCTID queries & image & 0.787 (0.057; 0.674--0.861) & 0.976 & 0.598 \\
+\addlinespace[2pt]
+MIRAGE & OCTID examples $\to$ OCTDL queries & image & 0.550 (0.038; 0.507--0.612) & 0.130 & 0.971 \\
+ & OCTID examples $\to$ OCTDL queries & patient & 0.559 (0.036; 0.514--0.614) & 0.146 & 0.972 \\
+ & OCTDL examples $\to$ OCTID queries & image & 0.691 (0.093; 0.550--0.853) & 0.825 & 0.558 \\
+\addlinespace[2pt]
+Inception-v3 & OCTID examples $\to$ OCTDL queries & image & 0.500 (0.027; 0.461--0.539) & 0.095 & 0.904 \\
+ & OCTID examples $\to$ OCTDL queries & patient & 0.506 (0.028; 0.467--0.549) & 0.106 & 0.905 \\
+ & OCTDL examples $\to$ OCTID queries & image & 0.507 (0.076; 0.398--0.623) & 0.466 & 0.548 \\
+\bottomrule
+\end{tabular}

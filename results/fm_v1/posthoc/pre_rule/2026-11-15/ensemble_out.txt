@@ -1,0 +1,130 @@
+
+== Development (124 images, K-shot prototype) | draws per K: 100
+  MIRAGE             K1  0.495 K2  0.615 K4  0.712 K8  0.777 | mean(all K) 0.650 | mean(K<=8) 0.650
+  DINOv2             K1  0.407 K2  0.497 K4  0.616 K8  0.711 | mean(all K) 0.558 | mean(K<=8) 0.558
+  Inception          K1  0.409 K2  0.499 K4  0.581 K8  0.647 | mean(all K) 0.534 | mean(K<=8) 0.534
+  RETFound           K1  0.318 K2  0.375 K4  0.442 K8  0.489 | mean(all K) 0.406 | mean(K<=8) 0.406
+  E2 MIRAGE+DINOv2   K1  0.512 K2  0.647 K4  0.767 K8  0.853 | mean(all K) 0.695 | mean(K<=8) 0.695
+  E3 +Inception      K1  0.511 K2  0.649 K4  0.765 K8  0.853 | mean(all K) 0.695 | mean(K<=8) 0.695
+  E2 MIRAGE+DINOv2 minus MIRAGE, mean over K<=8: +0.045 (p05 +0.011, p95 +0.079)
+      K=1  +0.018 (p05 -0.043, p95 +0.086)
+      K=2  +0.032 (p05 -0.038, p95 +0.092)
+      K=4  +0.055 (p05 +0.000, p95 +0.110)
+      K=8  +0.076 (p05 +0.034, p95 +0.126)
+  E3 +Inception minus MIRAGE, mean over K<=8: +0.045 (p05 +0.010, p95 +0.083)
+      K=1  +0.017 (p05 -0.044, p95 +0.093)
+      K=2  +0.035 (p05 -0.039, p95 +0.104)
+      K=4  +0.053 (p05 -0.007, p95 +0.116)
+      K=8  +0.076 (p05 +0.019, p95 +0.137)
+  per-class recall, mean over K<=8:
+    MIRAGE             CSC 0.705  MH 0.540  MacTel 0.684  Stargardt 0.591  RP 0.728
+    DINOv2             CSC 0.494  MH 0.612  MacTel 0.628  Stargardt 0.592  RP 0.462
+    Inception          CSC 0.607  MH 0.623  MacTel 0.509  Stargardt 0.576  RP 0.355
+    RETFound           CSC 0.407  MH 0.302  MacTel 0.643  Stargardt 0.346  RP 0.333
+    E2 MIRAGE+DINOv2   CSC 0.711  MH 0.656  MacTel 0.735  Stargardt 0.674  RP 0.700
+    E3 +Inception      CSC 0.729  MH 0.710  MacTel 0.718  Stargardt 0.682  RP 0.635
+
+== Hold-out (22 images) | draws per K: 100
+  MIRAGE             K1  0.536 K2  0.685 K4  0.799 K8  0.867 K16 0.894 | mean(all K) 0.756 | mean(K<=8) 0.722
+  DINOv2             K1  0.395 K2  0.477 K4  0.577 K8  0.657 K16 0.679 | mean(all K) 0.557 | mean(K<=8) 0.526
+  Inception          K1  0.430 K2  0.497 K4  0.556 K8  0.614 K16 0.621 | mean(all K) 0.544 | mean(K<=8) 0.524
+  RETFound           K1  0.255 K2  0.308 K4  0.368 K8  0.422 K16 0.476 | mean(all K) 0.366 | mean(K<=8) 0.338
+  E2 MIRAGE+DINOv2   K1  0.532 K2  0.675 K4  0.801 K8  0.865 K16 0.879 | mean(all K) 0.750 | mean(K<=8) 0.718
+  E3 +Inception      K1  0.526 K2  0.661 K4  0.783 K8  0.867 K16 0.893 | mean(all K) 0.746 | mean(K<=8) 0.709
+  E2 MIRAGE+DINOv2 minus MIRAGE, mean over K<=8: -0.003 (p05 -0.098, p95 +0.078)
+      K=1  -0.004 (p05 -0.180, p95 +0.150)
+      K=2  -0.010 (p05 -0.151, p95 +0.171)
+      K=4  +0.002 (p05 -0.150, p95 +0.150)
+      K=8  -0.002 (p05 -0.100, p95 +0.090)
+      K=16 -0.015 (p05 -0.050, p95 +0.050)
+  E3 +Inception minus MIRAGE, mean over K<=8: -0.012 (p05 -0.095, p95 +0.082)
+      K=1  -0.010 (p05 -0.201, p95 +0.171)
+      K=2  -0.024 (p05 -0.181, p95 +0.131)
+      K=4  -0.016 (p05 -0.141, p95 +0.130)
+      K=8  +0.001 (p05 -0.100, p95 +0.101)
+      K=16 -0.002 (p05 -0.050, p95 +0.050)
+  per-class recall, mean over K<=8:
+    MIRAGE             CSC 0.745  MH 0.787  MacTel 0.502  Stargardt 0.760  RP 0.813
+    DINOv2             CSC 0.498  MH 0.599  MacTel 0.593  Stargardt 0.595  RP 0.348
+    Inception          CSC 0.763  MH 0.645  MacTel 0.339  Stargardt 0.569  RP 0.304
+    RETFound           CSC 0.245  MH 0.237  MacTel 0.464  Stargardt 0.255  RP 0.489
+    E2 MIRAGE+DINOv2   CSC 0.741  MH 0.784  MacTel 0.562  Stargardt 0.776  RP 0.728
+    E3 +Inception      CSC 0.814  MH 0.827  MacTel 0.536  Stargardt 0.742  RP 0.628
+
+== OCTID two-way | draws per K: 100
+  MIRAGE             K1  0.417 K2  0.456 K4  0.534 K8  0.638 K16 0.693 | mean(all K) 0.547 | mean(K<=8) 0.511
+  DINOv2             K1  0.203 K2  0.218 K4  0.259 K8  0.307 K16 0.355 | mean(all K) 0.268 | mean(K<=8) 0.247
+  Inception          K1  0.291 K2  0.328 K4  0.380 K8  0.431 K16 0.462 | mean(all K) 0.378 | mean(K<=8) 0.358
+  RETFound           K1  0.126 K2  0.117 K4  0.099 K8  0.083 K16 0.006 | mean(all K) 0.086 | mean(K<=8) 0.106
+  E2 MIRAGE+DINOv2   K1  0.342 K2  0.366 K4  0.429 K8  0.513 K16 0.547 | mean(all K) 0.439 | mean(K<=8) 0.412
+  E3 +Inception      K1  0.342 K2  0.386 K4  0.459 K8  0.529 K16 0.558 | mean(all K) 0.455 | mean(K<=8) 0.429
+  E2 MIRAGE+DINOv2 minus MIRAGE, mean over K<=8: -0.099 (p05 -0.225, p95 +0.014)
+      K=1  -0.074 (p05 -0.314, p95 +0.163)
+      K=2  -0.090 (p05 -0.304, p95 +0.085)
+      K=4  -0.105 (p05 -0.276, p95 +0.054)
+      K=8  -0.125 (p05 -0.240, p95 -0.014)
+      K=16 -0.146 (p05 -0.206, p95 -0.073)
+  E3 +Inception minus MIRAGE, mean over K<=8: -0.082 (p05 -0.195, p95 +0.048)
+      K=1  -0.075 (p05 -0.275, p95 +0.154)
+      K=2  -0.069 (p05 -0.245, p95 +0.138)
+      K=4  -0.075 (p05 -0.231, p95 +0.104)
+      K=8  -0.109 (p05 -0.231, p95 +0.015)
+      K=16 -0.135 (p05 -0.211, p95 -0.069)
+  per-class recall, mean over K<=8:
+    MIRAGE             CSC 0.492  MH 0.529
+    DINOv2             CSC 0.193  MH 0.300
+    Inception          CSC 0.327  MH 0.388
+    RETFound           CSC 0.069  MH 0.143
+    E2 MIRAGE+DINOv2   CSC 0.360  MH 0.464
+    E3 +Inception      CSC 0.379  MH 0.479
+
+== OCTDL MH | draws per K: 100
+  MIRAGE             K1  0.195 K2  0.228 K4  0.223 K8  0.252 K16 0.256 | mean(all K) 0.231 | mean(K<=8) 0.225
+  DINOv2             K1  0.379 K2  0.453 K4  0.543 K8  0.671 K16 0.695 | mean(all K) 0.548 | mean(K<=8) 0.511
+  Inception          K1  0.239 K2  0.260 K4  0.302 K8  0.378 K16 0.390 | mean(all K) 0.314 | mean(K<=8) 0.295
+  RETFound           K1  0.178 K2  0.179 K4  0.212 K8  0.176 K16 0.027 | mean(all K) 0.154 | mean(K<=8) 0.186
+  E2 MIRAGE+DINOv2   K1  0.310 K2  0.340 K4  0.397 K8  0.471 K16 0.485 | mean(all K) 0.401 | mean(K<=8) 0.379
+  E3 +Inception      K1  0.293 K2  0.327 K4  0.414 K8  0.538 K16 0.600 | mean(all K) 0.434 | mean(K<=8) 0.393
+  E2 MIRAGE+DINOv2 minus MIRAGE, mean over K<=8: +0.155 (p05 -0.040, p95 +0.392)
+      K=1  +0.115 (p05 -0.181, p95 +0.540)
+      K=2  +0.112 (p05 -0.236, p95 +0.467)
+      K=4  +0.174 (p05 -0.104, p95 +0.591)
+      K=8  +0.218 (p05 -0.028, p95 +0.490)
+      K=16 +0.229 (p05 +0.026, p95 +0.386)
+  E3 +Inception minus MIRAGE, mean over K<=8: +0.169 (p05 -0.058, p95 +0.430)
+      K=1  +0.098 (p05 -0.181, p95 +0.513)
+      K=2  +0.099 (p05 -0.309, p95 +0.488)
+      K=4  +0.191 (p05 -0.155, p95 +0.615)
+      K=8  +0.285 (p05 -0.028, p95 +0.617)
+      K=16 +0.344 (p05 +0.103, p95 +0.564)
+  per-class recall, mean over K<=8:
+    MIRAGE             MH 0.225
+    DINOv2             MH 0.511
+    Inception          MH 0.295
+    RETFound           MH 0.186
+    E2 MIRAGE+DINOv2   MH 0.379
+    E3 +Inception      MH 0.393
+
+== Nine-class audit: Kermany test + 22 hold-out
+  MIRAGE             normal: 250/250 called normal, 0 called rare | rare: 20/22 correct (CSC 5/5, MH 5/5, MacTel 2/4, Stargardt 4/4, RP 4/4)
+  DINOv2             normal: 218/250 called normal, 10 called rare | rare: 15/22 correct (CSC 4/5, MH 4/5, MacTel 4/4, Stargardt 2/4, RP 1/4)
+  Inception          normal: 223/250 called normal, 7 called rare | rare: 13/22 correct (CSC 4/5, MH 4/5, MacTel 1/4, Stargardt 3/4, RP 1/4)
+  RETFound           normal: 215/250 called normal, 1 called rare | rare: 9/22 correct (CSC 1/5, MH 1/5, MacTel 2/4, Stargardt 1/4, RP 4/4)
+  E2 MIRAGE+DINOv2   normal: 245/250 called normal, 0 called rare | rare: 21/22 correct (CSC 5/5, MH 5/5, MacTel 4/4, Stargardt 4/4, RP 3/4)
+  E3 +Inception      normal: 245/250 called normal, 0 called rare | rare: 21/22 correct (CSC 5/5, MH 5/5, MacTel 4/4, Stargardt 4/4, RP 3/4)
+
+== Nine-class audit: OCTID
+  MIRAGE             normal: 202/206 called normal, 4 called rare | rare: 33/204 correct (CSC 23/102, MH 10/102)
+  DINOv2             normal: 188/206 called normal, 17 called rare | rare: 78/204 correct (CSC 30/102, MH 48/102)
+  Inception          normal: 182/206 called normal, 15 called rare | rare: 49/204 correct (CSC 22/102, MH 27/102)
+  RETFound           normal: 189/206 called normal, 0 called rare | rare: 0/204 correct (CSC 0/102, MH 0/102)
+  E2 MIRAGE+DINOv2   normal: 205/206 called normal, 1 called rare | rare: 78/204 correct (CSC 27/102, MH 51/102)
+  E3 +Inception      normal: 205/206 called normal, 1 called rare | rare: 69/204 correct (CSC 25/102, MH 44/102)
+
+== Nine-class audit: OCTDL
+  MIRAGE             normal: 26/332 called normal, 30 called rare | rare: 3/39 correct (MH 3/39)
+  DINOv2             normal: 145/332 called normal, 141 called rare | rare: 26/39 correct (MH 26/39)
+  Inception          normal: 66/332 called normal, 11 called rare | rare: 0/39 correct (MH 0/39)
+  RETFound           normal: 137/332 called normal, 18 called rare | rare: 0/39 correct (MH 0/39)
+  E2 MIRAGE+DINOv2   normal: 106/332 called normal, 33 called rare | rare: 16/39 correct (MH 16/39)
+  E3 +Inception      normal: 89/332 called normal, 8 called rare | rare: 6/39 correct (MH 6/39)

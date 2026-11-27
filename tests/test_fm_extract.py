@@ -42,7 +42,7 @@ class CacheAndGeometry(unittest.TestCase):
         self.assertEqual(extract.geometry("DINOv2", "x", image)[3:9], [259, 256, 17, 16, 224, 224])
         biomed = extract.geometry("BioMedCLIP", "x", Image.new("RGB", (227, 224)))
         self.assertEqual(biomed[3:9], [227, 224, 2, 0, 224, 224])
-        self.assertAlmostEqual(biomed[-1], 224 / 227)
+        self.assertAlmostEqual(biomed[9], 224 / 227)
 
     def test_resize_truncation_and_full_field_fractions(self):
         image = Image.new("RGBA", (400, 301))
@@ -50,7 +50,24 @@ class CacheAndGeometry(unittest.TestCase):
         for arm, size in (("MIRAGE", 512), ("Inception", 299)):
             row = extract.geometry(arm, "x", image)
             self.assertEqual(row[1:9], [400, 301, size, size, 0, 0, size, size])
-            self.assertEqual(row[-1], 1)
+            self.assertEqual(row[9], 1)
+        self.assertEqual(len(extract.GEOMETRY_HEADER), len(row))
+
+    def test_padding_shares_peel_flat_edges_and_count_near_white_pixels(self):
+        # A 10x20 scan: 2 black rows on top and 3 near-black columns on the right (range 7 is
+        # still flat); content varies along both axes. Lines are full length (the review's rule).
+        pixels = (np.arange(20)[None, :] * 5 + np.arange(10)[:, None] * 9).astype(np.uint8)
+        pixels[:2] = 0
+        pixels[:, -3:] = 0
+        pixels[5, -1] = 7
+        pixels[5, 5], pixels[6, 6] = 255, 251
+        row = extract.geometry("MIRAGE", "x", Image.fromarray(pixels, "L"))
+        self.assertAlmostEqual(row[10], 1 - (8 * 17) / 200)
+        self.assertAlmostEqual(row[11], 2 / 200)
+        # A full-height white band on the right makes the black top rows non-flat: only the band peels.
+        pixels[:, -3:] = 252
+        self.assertAlmostEqual(extract.geometry("MIRAGE", "x", Image.fromarray(pixels, "L"))[10], 30 / 200)
+        self.assertEqual(extract.geometry("MIRAGE", "x", Image.new("L", (4, 4), 9))[10], 1)
 
     def test_raw_float32_roundtrip_preserves_magnitude_and_order(self):
         values = np.array([[3, 4], [10, -7]], dtype=np.float32)
@@ -121,11 +138,11 @@ class Timing(unittest.TestCase):
     def test_fixed_order_batch_one_validation_outside_synchronized_intervals(self):
         clock, seen, synchronizations = [0.], [], []
         images = [Image.new("L", (1, 1), i) for i in range(100)]
-        pass_seconds = [9, 1, 2, 5, 3, 4]
+        pass_seconds = [9, 1, 2, 5, 3, 4, 50, 50]  # the last two: untimed R3 synthetic repeats
 
         def encode(batch):
             self.assertEqual(len(batch), 1)
-            clock[0] += pass_seconds[len(seen) // 100]
+            clock[0] += pass_seconds[min(len(seen) // 100, 6 + (len(seen) - 600) // 5 if len(seen) >= 600 else 5)]
             seen.append(batch[0].getpixel((0, 0)))
             return np.ones((1, 768), dtype=np.float32)
 
@@ -141,12 +158,42 @@ class Timing(unittest.TestCase):
                 patch.object(extract.time, "monotonic_ns", side_effect=lambda: int(clock[0] * 1e9) + 1), \
                 patch.object(extract, "validate_features", side_effect=validate):
             timing = extract.warm_timing(encoder, images)
-        self.assertEqual(seen, list(range(100)) * 6)
+        self.assertEqual(seen[:600], list(range(100)) * 6)
+        self.assertEqual(len(seen), 610)  # R3: five synthetic images, twice, after the timed passes
         self.assertEqual(synchronizations, [0, 100, 100, 200, 200, 300, 300, 400, 400, 500, 500, 600])
         self.assertEqual(timing["seconds_per_image"], [1, 2, 5, 3, 4])
         self.assertEqual(timing["median_seconds_per_image"], 3)
-        self.assertEqual(timing["validation_seconds"], 600000)
+        # 600 timed-pass validations, 10 synthetic validations, and the untimed synthetic encodes.
+        self.assertEqual(timing["validation_seconds"], 610000 + 10 * 50)
+        self.assertAlmostEqual(timing["numerical"]["real"]["min_cosine"], 1)
         extract.validate_timing(timing)
+
+    def test_repeat_checks_stop_a_nondeterministic_encoder_with_its_values(self):
+        calls = count()
+
+        def drifting(batch):  # stable warm/timed passes 0-4, a different last pass
+            n = next(calls)
+            values = np.ones((1, 768), dtype=np.float32)
+            if 500 <= n < 600:
+                values[0, :384] = -1
+            return values
+
+        encoder = extract.Encoder("DINOv2", drifting, lambda: None, {}, lambda: {})
+        with self.assertRaisesRegex(ValueError, "numerical repeat check failed.*min_cosine"):
+            extract.warm_timing(encoder, [Image.new("L", (1, 1))] * 100)
+        stable = extract.Encoder("DINOv2", MagicMock(return_value=np.ones((1, 768), dtype=np.float32)),
+                                 lambda: None, {}, lambda: {})
+        timing = extract.warm_timing(stable, [Image.new("L", (1, 1))] * 100)
+        for change in ({"tolerance": 1e-3}, {"real": {**timing["numerical"]["real"], "images": 5}}):
+            with self.subTest(change=change), self.assertRaisesRegex(ValueError, "fixed R3/A-6 rule"):
+                extract.validate_timing({**timing, "numerical": {**timing["numerical"], **change}})
+        with self.assertRaisesRegex(ValueError, "lacks the numerical"):
+            extract.validate_timing({k: v for k, v in timing.items() if k != "numerical"})
+
+    def test_synthetic_repeat_images_are_fixed(self):
+        first, second = extract.synthetic_images(), extract.synthetic_images()
+        self.assertEqual([im.size for im in first], [(512, 496), (768, 496), (1536, 496), (414, 413), (327, 326)])
+        self.assertTrue(all(a.tobytes() == b.tobytes() for a, b in zip(first, second)))
 
     def test_bad_warm_output_stops_before_timed_passes(self):
         encode = MagicMock(return_value=np.zeros((1, 768), dtype=np.float32))
@@ -292,7 +339,7 @@ class Operations(unittest.TestCase):
             self.run_operation("pilot", "synthetic-session")
         timing = prep.read_json(self.out / "timing.json")
         self.assertEqual(timing["image_ids"], [r["path"] for r in self.rows] * 50)
-        self.assertEqual(self.encode.call_count, 600)
+        self.assertEqual(self.encode.call_count, 610)  # 600 timing calls + 10 R3 synthetic repeats
         extract.verify_operation(self.out, "pilot", prep.read_csv(self.folder / "timing_inventory.csv"), "DINOv2")
         self.assertEqual(timing["costs"]["image_count"], 100)
 
@@ -442,8 +489,17 @@ class MockedLoaders(unittest.TestCase):
         np.testing.assert_allclose(result, expected, atol=1e-6)
         actual_input = self.model.call_args.args[0]
         self.assertEqual(set(actual_input), {"bscan"})
-        expected_pixels = np.asarray(image.resize((512, 512), Image.Resampling.BILINEAR).convert("L"), dtype=np.float32) / 255
+        # A2 A-11: /255, then per-image min-max, as MIRAGE's published frozen probe.
+        scaled = np.asarray(image.resize((512, 512), Image.Resampling.BILINEAR).convert("L"), dtype=np.float32) / 255
+        expected_pixels = (scaled - scaled.min()) / (scaled.max() - scaled.min())
         np.testing.assert_array_equal(actual_input["bscan"].values[0, 0], expected_pixels)
+        dim = Image.fromarray(np.tile(np.arange(50, 150, dtype=np.uint8), (8, 1)), "L")  # never reaches 0 or 255
+        stretched = extract.mirage_input(dim)
+        self.assertEqual((stretched.min(), stretched.max()), (0, 1))
+        self.assertGreater(np.abs(stretched - np.asarray(dim.resize((512, 512), Image.Resampling.BILINEAR),
+                                                          dtype=np.float32) / 255).max(), .1)
+        with self.assertRaisesRegex(ValueError, "nonconstant"):
+            encoder.encode([Image.new("L", (8, 8), 77)])
         self.torch.nn.LayerNorm.assert_called_once_with(768, eps=1e-6)
         self.model.model.load_state_dict.assert_called_once_with({"weight": "pinned"}, strict=True)
         load_file.return_value = {"unexpected": "weights"}

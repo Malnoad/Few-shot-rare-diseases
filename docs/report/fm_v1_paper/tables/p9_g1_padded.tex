@@ -1,0 +1,23 @@
+% src: PH P9_G1_padded_auroc.csv columns auroc, boot95_low, boot95_high, argmax_rare_called_any_rare, argmax_normals_called_rare,
+%      rare_share_above_5pct_normal_cut_upper_bound (lines 2-11); label: post hoc, rule timestamped by commit 39c3d73 (18 Nov 2026), computed 2026-11-18; on G1's padded features, post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-18; sensitivity check outside A2 A-11, never replaces a locked result
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+ & & & \multicolumn{2}{c}{Argmax point (share)} & \\ \cmidrule(lr){4-5}
+Set & Arm & AUROC (95\% interval) & \makecell{Disease scans\\called rare} & \makecell{Normals\\called rare} & \makecell{Rare share above the\\5\% normal cut (upper bound)} \\
+\midrule
+OCTID CSC against OCTID NORMAL & MIRAGE & 0.305 (0.241--0.375) & 0.961 & 1.000 & 0.069 \\
+ & Inception-v3 & 0.501 (0.424--0.575) & 0.814 & 0.961 & 0.167 \\
+\addlinespace[2pt]
+OCTID MH against OCTID NORMAL & MIRAGE & 0.090 (0.059--0.131) & 0.794 & 1.000 & 0.000 \\
+ & Inception-v3 & 0.525 (0.450--0.602) & 0.863 & 0.961 & 0.196 \\
+\addlinespace[2pt]
+OCTID CSC+MH against OCTID NORMAL & MIRAGE & 0.198 (0.154--0.240) & 0.877 & 1.000 & 0.034 \\
+ & Inception-v3 & 0.513 (0.454--0.570) & 0.838 & 0.961 & 0.181 \\
+\addlinespace[2pt]
+OCTDL MH against OCTDL NORMAL & MIRAGE & 0.320 (0.241--0.406) & 0.846 & 0.922 & 0.000 \\
+ & Inception-v3 & 0.656 (0.550--0.746) & 0.974 & 0.910 & 0.282 \\
+\addlinespace[2pt]
+\makecell[l]{Hold-out 22 vs 169 Kermany\\normals (source and disease mixed)} & MIRAGE & 1.000 (0.998--1.000) & 1.000 & 0.012 & 1.000 \\
+ & Inception-v3 & 0.989 (0.973--0.999) & 0.909 & 0.024 & 0.955 \\
+\bottomrule
+\end{tabular}

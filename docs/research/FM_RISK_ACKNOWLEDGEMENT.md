@@ -1,5 +1,7 @@
 # FM pre-run risks and acknowledgement
 
+> **Closed record (13 November 2026).** Kept as evidence of how decisions were reached; no longer updated. The study as it stands is in [`protocols.md`](../../protocols.md); the binding texts are `FM_PROTOCOL.md` and `FM_AMENDMENTS.md`. Its open acknowledgement slots are replaced by section 7 of that page and by the stops built into the two notebooks.
+
 9 November 2026. Scope: the transition from code preparation to real checkpoint
 staging/loading, score-free Colab pilots, the S2 input lock and external queries.
 Lam remains the research author and decision maker.
@@ -110,6 +112,10 @@ or sufficient RAM/VRAM. Actual published models have not been executed here.
 embeddings. A timing pilot validates these outputs but discards them; it does not
 perform or save a repeat-output comparison. A pilot pass establishes loadability
 and valid output, not equivalence to the intended upstream embedding.
+
+**Update 13 November:** the repeat checks are now coded in `pilot` (A2 A-6: R3 synthetic repeat
+and first-versus-last timed pass; one retry under A3 S-3), so the two paragraphs around this
+note describe the state before A2.
 
 The proposed repeat-numerics check is manual: write its acceptance rule before
 execution, use synthetic inputs with each actual encoder in a separate process,
@@ -264,9 +270,16 @@ new dimensions/modes against native processors without outcome-driven tuning:
 DINO's one-pixel-height rejection was outside the current selected image domain,
 but that says nothing about future external images. **Manual stop:** absent
 implemented query-lock/inference support, unsupported input
-handling or unresolved mappings. CSR-to-CSC and OCTDL MH subcategories require
-clinical evidence; omit unsupported rare-transfer claims. If NORMAL access fails,
-report the required source component as not run, not a completed shift study.
+handling or unresolved mappings. Amendment A1 (12 Nov) replaced the clinical-evidence
+requirement: the OCTID CSR/MH and OCTDL VID/MH cohorts are evaluated against their
+published labels only, are fixed in code (A2 N-3), and support an agreement claim, not a
+clinically validated transfer claim. If NORMAL access fails for one source, report that
+source as not run; the study is rare-only only if both fail (A2 A-4).
+
+**Size shortcut (A2 N-1, 13 Nov).** File width and height alone separate the five rare
+benchmark classes (leave-one-out macro recall 0.66 on the 124 development images). Every
+five-way result is reported beside the size-only reference; the OCTID two-way test is the
+only test with constant image size.
 
 ### R10. Successful software does not establish clinical validity — claim limit
 
