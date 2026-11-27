@@ -839,6 +839,13 @@ results.
       - "keeps" with its mean;
       - the A1 rule 7 sentence;
       - the E1-D sentence with its label.
+    - 28 Nov, at Lam's request:
+      - The code line names the repository (github.com/Malnoad/Few-shot-rare-diseases).
+      - The pipeline figure was redrawn with the diagram-design skill: a swimlane by where each
+        step ran, split into locked and post hoc, with the input lock highlighted. It uses the
+        default skin on white, and the skill's self-check and geometry check pass.
+      - To keep 5 pages, the recall-against-K figure was taken out; its numbers are in Table I and
+        the hold-out table.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 

@@ -12,8 +12,6 @@
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx,booktabs,array,makecell}
 \usepackage{xurl}
-\usepackage{tikz}
-\usetikzlibrary{positioning,arrows.meta}
 \usepackage[hidelinks]{hyperref}
 \hypersetup{pdftitle={Image Size Alone Beats Frozen Foundation Models at One Shot: A Pre-Registered Audit of a Rare Retinal OCT Benchmark (5-page report)},pdfauthor={Doan Tung Lam, Ha Quang Minh, Pham Duc Anh, Ngo Hoang Phuc}}
 \newcommand{\todo}[1]{\textbf{[TODO: #1]}}
@@ -27,6 +25,9 @@
     \if@filesw\immediate\write\csname #1\endcsname{\string\citation{\@citeb}}\fi}%
   \@esphack}
 \makeatother
+% Float placement: up to three top floats and 85% of a page for them (two-column floats included).
+\renewcommand{\topfraction}{0.85}\renewcommand{\dbltopfraction}{0.85}\renewcommand{\textfraction}{0.12}
+\setcounter{topnumber}{3}\setcounter{dbltopnumber}{3}
 \begin{document}
 \bstctlcite{IEEEcontrol}
 \title{Image Size Alone Beats Frozen Foundation Models at One Shot: A Pre-Registered Audit of a Rare Retinal OCT Benchmark}
@@ -52,6 +53,15 @@ We ask whether few-shot scores on this benchmark measure the disease or the imag
 An extended version with every table and a supplement accompanies this report.
 % src: 5,927 images per encoder ML l.237 (GPU check: "all 5,927 images"); = 146 rare + 4,000 Kermany fitting + 1,000 Kermany test + 781 external (ML l.166-170)
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{diagrams/pipeline.pdf}
+\caption{How the study ran. Lanes: where each step ran; left of the dashed line, the locked study (13--14 November 2026); right of it, the post hoc work, each rule committed before its numbers. Highlighted: the input lock, hashed before any score. P10's blind review was done by hand; every other step is a script or a notebook generated from one.}
+\label{fig:pipeline}
+% src: diagrams/pipeline.html (diagram-design skill, swimlane; exported by diagrams/export_pdf.py); counts ML l.166-170 and l.237;
+%      dates ML l.142-144 and PR section 8 (S2-S4 rows); controls ML l.237-249; evaluation location PR l.150-151
+\end{figure*}
+
 \section{Background and Phase 0}
 \subsection{Frozen encoders and few-shot classification}
 We compare four frozen encoders that differ in architecture, pretraining data and objective. \emph{Inception-v3} \cite{Szegedy2016} is a convolutional network trained with labels on ImageNet (2048-d features), the backbone family of Yoo et al. \emph{DINOv2} \cite{DINOv2} is a self-supervised vision transformer (ViT-B/14, 768-d) trained on natural images. \emph{RETFound} \cite{RETFound2023} is a ViT-L/16 pretrained on retinal images as a masked autoencoder \cite{He2022}, which learns by reconstructing hidden image patches; we use its OCT weights (1024-d). \emph{MIRAGE} \cite{MIRAGE2025} is a multimodal OCT foundation model pretrained with a masking objective on OCT, scanning-laser (SLO) and retinal-layer images; we use its Base model on OCT input only ($512\times512$ input, 768-d).
@@ -73,6 +83,15 @@ Image sizes differ by class (Fig.~\ref{fig:sizes}). Every encoder resizes its in
 % src: LOCK image_inventory.csv columns label, split, width, height (as ML fig:sizes)
 \end{figure}
 
+\begin{table*}[t]
+\caption{Development five-way macro recall (primary, locked): 124 queries, five folds pooled; mean over 100 support draws per $K$, every model on the same supports and queries.}
+\label{tab:dev}
+\centering\footnotesize
+\resizebox{\textwidth}{!}{\input{tables/t1_development.tex}}
+\par\smallskip
+\parbox{\textwidth}{\footnotesize Cells: mean; below it, SD and 5th--95th percentiles over draws (rule R2). These describe variation over support draws for these images; they are not confidence intervals. Paired rows: difference from Inception-v3 on the same draws. $^\dagger$Pre-specified quantity computed after the results were known (rule R2, 19--20 November 2026); every mean equals the locked value. Chance is 0.20. MIRAGE was nominated; no other model was within 0.02.}
+\end{table*}
+
 \subsection{Phase 0: replication of Yoo et al.}
 We first rebuilt the pipeline of Yoo et al.\ from the public data: a fixed split manifest; basic augmentation; one CycleGAN \cite{Zhu2017} per rare disease that translates normal B-scans into that disease (100 epochs, 4,000 images generated per disease); an automatic quality filter in Inception-v3 feature space in place of the paper's ophthalmologists, which kept 832 to 3,000 images per class; and a nine-class Inception-v3 with frozen convolutional layers and a trained softmax layer. At seed 42 the CycleGAN variant reached 92.95\% accuracy on our 1,022 test images (the paper reports 92.1\% on its own test, whose images are not public: context, not a like-for-like comparison), against 90.31\% with real images only and 88.85\% with basic augmentation. Over five training seeds, however, CycleGAN ($92.59\pm1.29$\%) and basic augmentation ($92.93\pm1.85$\%) were not separated; both named 17--19 of the 22 rare test images correctly, against 11--17 with real images only. Rare and common images were also almost linearly separable in frozen Inception-v3 features, so disease and source were confounded. These results motivated Phase~1: no generated images, frozen encoders, and controls for the source.
 % src: README at 6116f93 (Results; results/stage4/metrics.csv, results/seed_check.csv); QC kept counts docs/research/REPLICATION.md l.286 (3,000/2,610/1,248/2,199/832); 100 epochs, 4,000 generated each README Status table; context ML l.123; separability ML l.91 (C0, AUC 0.995 to 0.991 README Status)
@@ -86,42 +105,6 @@ Fig.~\ref{fig:pipeline} shows the pipeline. \textbf{Data.} The 146 rare images; 
 % src: RETFound keys supplement S5 note (DRV step11_pilots.txt) and ML l.182; duplicate screen ML l.163 and P10 ML l.375
 \textbf{Software.} 17 Python modules for the two pipelines (11,227 lines) and 318 unit tests in the repository; the Colab notebooks are generated from the scripts and pinned to commits; every table and figure is generated from the result files.
 % src: evaluation location PR l.150-151 (steps 6-8 in colab_fm_evaluate.ipynb, CPU), laptop post hoc ML l.227; data ML l.166-170; lock and Zenodo ML l.142-144; transforms ML l.180; timings and repeat check supplement S5 tab:pilot (DRV step11_pilots.txt: 13.57, 14.03, 323.66, 23.91 ms) and ML l.186; control check ML l.237; software: wc -l fm_*.py stage*.py (17 files, 11,227 lines) and 318 "def test_" in tests/*.py and test_analysis_cluster.py, at commit a9ad899
-
-\begin{table*}[t]
-\caption{Development five-way macro recall (primary, locked): 124 queries, five folds pooled; mean over 100 support draws per $K$, every model on the same supports and queries.}
-\label{tab:dev}
-\centering\footnotesize
-\resizebox{\textwidth}{!}{\input{tables/t1_development.tex}}
-\par\smallskip
-\parbox{\textwidth}{\footnotesize Cells: mean; below it, SD and 5th--95th percentiles over draws (rule R2). These describe variation over support draws for these images; they are not confidence intervals. Paired rows: difference from Inception-v3 on the same draws. $^\dagger$Pre-specified quantity computed after the results were known (rule R2, 19--20 November 2026); every mean equals the locked value. Chance is 0.20. MIRAGE was nominated; no other model was within 0.02.}
-\end{table*}
-
-\begin{figure}[t]
-\centering
-\begin{tikzpicture}[node distance=1.2mm, every node/.style={font=\scriptsize, align=center},
-  box/.style={draw, rounded corners=1pt, text width=0.92\columnwidth, inner sep=1.4pt},
-  arr/.style={-{Stealth[length=1.6mm]}, thick}]
-\node[box] (data) {Public images: 146 rare (Yoo et al.), 5,000 Kermany, OCTID 410, OCTDL 371};
-\node[box, below=of data] (lock) {Input lock, 13 Nov: rosters, episodes, models, code, rules (SHA256) $\rightarrow$ Zenodo};
-\node[box, below=of lock] (gpu) {Colab GPU (L4): 4 frozen encoders $\rightarrow$ 5,927 feature vectors each};
-\node[box, below=of gpu] (cpu) {Colab CPU, from cached features: locked episodes (5 folds $\times$ $K\in\{1,2,4,8\}$ $\times$ 100 paired draws); cosine prototypes; size-only reference};
-\node[box, below=of cpu] (res) {Locked results, 14 Nov: nomination, hold-out, nine-way false-rare audit, OCTID two-way};
-\node[box, below=of res] (ph) {Post hoc, rules committed first: re-render and re-extract (E1, E3, G1), error analysis (E2), source test (E4), same-picture audit (P10)};
-\node[box, below=of ph] (frz) {Frozen results (SHA256 manifest) $\rightarrow$ generated tables and figures};
-\foreach \a/\b in {data/lock, lock/gpu, gpu/cpu, cpu/res, res/ph, ph/frz} \draw[arr] (\a) -- (\b);
-\end{tikzpicture}
-\caption{The pipeline: locked steps (top five boxes), then post hoc steps. Each step is a script or a notebook generated from one; P10's blind review was done by hand.}
-\label{fig:pipeline}
-% src: counts ML l.166-170 and l.237; dates ML l.142-144 and PR section 8 (S2-S4 rows); controls ML l.237-249
-\end{figure}
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.92\textwidth]{figures/fig2_recall_vs_k.pdf}
-\caption{Five-way macro recall against the number of labelled examples per class ($K$), locked. Left: development, 124 queries with the five folds pooled (primary). Right: the 22 hold-out images, inspected in earlier work. Lines: mean over 100 support draws per $K$; every model sees the same supports and queries. Dashed line and grey band: size-only reference (nearest mean image width and height), mean and 5th--95th percentile over draws. Dotted line: chance (0.20). Model spreads are in Tables~\ref{tab:dev} and~\ref{tab:holdout}.}
-\label{fig:recall}
-% src: frozen figures/fig2_recall_vs_k.pdf (ARC nomination.json k_scores; support_draw_summary.csv; size_only_reference.csv), caption as ML fig:recall
-\end{figure*}
 
 \section{Experimental Design and Controls}
 \textbf{Development.} The 124 development images (CSC 27, MH 26, MacTel 25, Stargardt 19, RP 27) were dealt into five fixed folds; the images carry no patient IDs, so folds are image-level. For each held-out fold, $K=1$, 2, 4 and 8 supports per class were drawn from the other folds, 100 times, nested across $K$. Every model saw exactly the same supports and queries, so differences between models are paired by draw. Where one number is needed it is the mean over $K=1$, 2, 4, 8.
@@ -184,7 +167,7 @@ Size-only & -- & -- & -- & -- & -- & -- & 0.618 (0.101) & 0.500 (0.000) \\
 
 \section{Results}
 \subsection{Locked results}
-Table~\ref{tab:dev} and Fig.~\ref{fig:recall} give the primary result. MIRAGE was nominated: its development macro recall was the highest at every $K$, 0.650 on the mean over $K$, against 0.534 for Inception-v3; on the same draws it led by $+0.116$ (5th--95th percentile $+0.069$ to $+0.185$). But image size alone scored 0.578 at $K=1$, a higher mean than every model; MIRAGE's mean was higher only from $K=2$ (unpaired means). RETFound stayed below the size-only reference at every $K$; DINOv2 and Inception-v3 passed it only at $K=4$ and 8.
+Table~\ref{tab:dev} gives the primary result. MIRAGE was nominated: its development macro recall was the highest at every $K$, 0.650 on the mean over $K$, against 0.534 for Inception-v3; on the same draws it led by $+0.116$ (5th--95th percentile $+0.069$ to $+0.185$). But image size alone scored 0.578 at $K=1$, a higher mean than every model; MIRAGE's mean was higher only from $K=2$ (unpaired means). RETFound stayed below the size-only reference at every $K$; DINOv2 and Inception-v3 passed it only at $K=4$ and 8.
 % src: ML l.114 and l.470 (Table I, ARC nomination.json, R2, size_only_reference.csv)
 
 Table~\ref{tab:frr} counts false rares. With its locked recipe on the published, frame-filling inputs, MIRAGE called 0 of 169 patient-disjoint Kermany normal scans rare, 4 of 206 OCTID and 30 of 332 OCTDL; DINOv2 called 141 of the 332 OCTDL scans rare. A low false-rare rate can also mean that the head rarely says ``rare'': MIRAGE called only 26 of the 332 OCTDL normal scans normal, and 41 of 102 OCTID CSC, 11 of 102 OCTID MH and 3 of 39 OCTDL MH images any rare class (R1, post hoc).
@@ -211,7 +194,7 @@ The images are web-collected and the labels are the published ones, not re-read 
 % src: ML l.150-156, l.163, l.405, l.556 and tables/e1_limitations.tex; Phase 0 patients README at 6116f93 (results/analysis/cluster_summary.csv)
 
 \section{Reproducibility}
-The protocol, its three dated amendments and the input-lock hashes are on Zenodo (doi:10.5281/zenodo.24206472); all were hashed before any score. The locked code is commit \texttt{2f48654}, and the Colab notebooks are generated from the scripts and pinned to commits. 194 result, table and figure files are frozen in a SHA256 manifest that the unit tests check; rebuilding every table and figure reproduces them byte for byte. Code: \todo{repository or public archive}. The data are public and not redistributed \cite{Kermany2018,Yoo2021,OCTID2020,OCTDL2024}.
+The protocol, its three dated amendments and the input-lock hashes are on Zenodo (doi:10.5281/zenodo.24206472); all were hashed before any score. The locked code is commit \texttt{2f48654}, and the Colab notebooks are generated from the scripts and pinned to commits. 194 result, table and figure files are frozen in a SHA256 manifest that the unit tests check; rebuilding every table and figure reproduces them byte for byte. Code: \url{https://github.com/Malnoad/Few-shot-rare-diseases}. The data are public and not redistributed \cite{Kermany2018,Yoo2021,OCTID2020,OCTDL2024}.
 % src: ML l.571-579 (data and code availability); freeze: results/fm_v1/phase1_freeze.json (194 files), protocols.md change log 26-27 Nov
 
 \section{Conclusion}

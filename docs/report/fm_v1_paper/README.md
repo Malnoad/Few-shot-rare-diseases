@@ -11,6 +11,10 @@ spread (`results/fm_v1/posthoc/R2_development_spread.csv`). Template: `docs/repo
   condenses `main.tex`, adds a short Phase-0 replication section, and adds no number. It reuses the
   frozen tables and figures, and each typed number has a `% src:` comment. Build it with
   `tectonic -X compile report5.tex`.
+- `diagrams/pipeline.html`: the report's pipeline swimlane (Fig. 1), drawn with the diagram-design
+  skill (github.com/cathrynlavery/diagram-design, v2.6). `diagrams/export_pdf.py` turns it into
+  `diagrams/pipeline.pdf` with headless Chrome. The PDF is tracked despite `.gitignore`; the folder
+  is outside the freeze.
 - `main.tex`: paper (title, abstract, Sections I-VIII, declarations); `supplement.tex`: supplement
   (locked supplement-only results S1-S7, post hoc P0-P3, P5-P7, P9, G1, P10 placeholder, pre-rule files).
 - `references.bib`: the 21 proposal entries plus Sun 2024, Tai 2025, TVST 2026 and Zech 2018 (the
