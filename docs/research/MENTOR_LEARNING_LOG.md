@@ -231,6 +231,22 @@ the frozen files, a Claude Opus cold read of the summary; read-only, no new numb
   controls. It is step 3 of the Phase-2 line.
 Lesson: a single striking cell (0.000) is a lead, not a finding, until its denominator is read.
 
+**26 Nov: this review was the last one.** Lam: "The last feedback was the final one, so we will
+settle and freeze today". The second review planned for 24 Nov did not come, so the items left
+"for Lam and the mentor" were decided by Lam alone on 26 Nov, each from a recommendation with its
+alternative beside it:
+- *Task table:* stays at the head of the post hoc subsection. The mentor's wish (beside Table I) and
+  the rebuttal's (Table II) would move post hoc rows out of the dated post hoc heading; the locked
+  spread stays Table I (A3).
+- *G1:* one main-text sentence, now with the two plain counts (MIRAGE: 202 → 0 of 206 OCTID normals
+  and 26 → 1 of 332 OCTDL normals called NORMAL). No cause is named; the table stays in the
+  supplement (19 Nov decision).
+- *Next phase:* the paper's paragraph now states the one-line plan above (a fixed audit; a planted
+  cue; same-patient leakage; a second source), with "rules not yet approved".
+Lesson for the working habit: a planned review that does not arrive is not a reason to leave an
+item open. Write the default and its alternative when the item is parked, so the author can decide
+in one step.
+
 ## Working habits these feedbacks point to
 
 - One main question per phase; extra ideas go to a list, not into the current plan.

@@ -1,23 +1,34 @@
-% src: ARC reports/external/external_transfer_summary.csv column mean (share of queries given their own class).
-\begin{tabular}{@{}llcccccccccc@{}}
+% src: ARC reports/external/external_transfer_summary.csv columns mean, sd, p05, p95 (share of queries given their
+%      own class; over the available draws: prototype 100, logistic probe 25).
+\begin{tabular}{@{}lll*{5}{c}@{}}
 \toprule
- & & \multicolumn{5}{c}{Prototype (100 draws)} & \multicolumn{5}{c}{Logistic probe (25 draws)} \\
-\cmidrule(lr){3-7}\cmidrule(l){8-12}
-Images & Arm & 1 & 2 & 4 & 8 & 16 & 1 & 2 & 4 & 8 & 16 \\
+Images & Arm & Head & $K=1$ & $K=2$ & $K=4$ & $K=8$ & $K=16$ \\
 \midrule
-OCTID CSC (102) & MIRAGE & 0.441 & 0.460 & 0.495 & 0.573 & 0.611 & 0.346 & 0.378 & 0.425 & 0.505 & 0.504 \\
- & DINOv2 & 0.165 & 0.162 & 0.199 & 0.246 & 0.290 & 0.238 & 0.175 & 0.258 & 0.328 & 0.384 \\
- & Inception-v3 & 0.268 & 0.293 & 0.339 & 0.407 & 0.452 & 0.289 & 0.300 & 0.345 & 0.400 & 0.416 \\
- & RETFound & 0.115 & 0.094 & 0.048 & 0.020 & 0.004 & 0.120 & 0.033 & 0.067 & 0.024 & 0.003 \\
+OCTID CSC (102) & MIRAGE & prototype & \makecell{0.441\\{\scriptsize (0.231; 0.068--0.845)}} & \makecell{0.460\\{\scriptsize (0.235; 0.107--0.883)}} & \makecell{0.495\\{\scriptsize (0.193; 0.175--0.795)}} & \makecell{0.573\\{\scriptsize (0.144; 0.343--0.794)}} & \makecell{0.611\\{\scriptsize (0.079; 0.480--0.735)}} \\
+ &  & logistic & \makecell{0.346\\{\scriptsize (0.208; 0.053--0.676)}} & \makecell{0.378\\{\scriptsize (0.261; 0.029--0.782)}} & \makecell{0.425\\{\scriptsize (0.175; 0.133--0.659)}} & \makecell{0.505\\{\scriptsize (0.104; 0.373--0.625)}} & \makecell{0.504\\{\scriptsize (0.075; 0.375--0.606)}} \\
+ & DINOv2 & prototype & \makecell{0.165\\{\scriptsize (0.195; 0.000--0.551)}} & \makecell{0.162\\{\scriptsize (0.138; 0.010--0.471)}} & \makecell{0.199\\{\scriptsize (0.136; 0.039--0.461)}} & \makecell{0.246\\{\scriptsize (0.101; 0.098--0.403)}} & \makecell{0.290\\{\scriptsize (0.069; 0.176--0.402)}} \\
+ &  & logistic & \makecell{0.238\\{\scriptsize (0.239; 0.000--0.655)}} & \makecell{0.175\\{\scriptsize (0.131; 0.041--0.369)}} & \makecell{0.258\\{\scriptsize (0.157; 0.094--0.573)}} & \makecell{0.328\\{\scriptsize (0.100; 0.180--0.494)}} & \makecell{0.384\\{\scriptsize (0.055; 0.278--0.451)}} \\
+ & Inception-v3 & prototype & \makecell{0.268\\{\scriptsize (0.208; 0.048--0.677)}} & \makecell{0.293\\{\scriptsize (0.167; 0.078--0.599)}} & \makecell{0.339\\{\scriptsize (0.144; 0.157--0.608)}} & \makecell{0.407\\{\scriptsize (0.114; 0.255--0.609)}} & \makecell{0.452\\{\scriptsize (0.068; 0.333--0.550)}} \\
+ &  & logistic & \makecell{0.289\\{\scriptsize (0.195; 0.055--0.675)}} & \makecell{0.300\\{\scriptsize (0.126; 0.139--0.537)}} & \makecell{0.345\\{\scriptsize (0.126; 0.182--0.557)}} & \makecell{0.400\\{\scriptsize (0.099; 0.288--0.573)}} & \makecell{0.416\\{\scriptsize (0.063; 0.337--0.518)}} \\
+ & RETFound & prototype & \makecell{0.115\\{\scriptsize (0.275; 0.000--0.952)}} & \makecell{0.094\\{\scriptsize (0.246; 0.000--0.853)}} & \makecell{0.048\\{\scriptsize (0.161; 0.000--0.272)}} & \makecell{0.020\\{\scriptsize (0.072; 0.000--0.148)}} & \makecell{0.004\\{\scriptsize (0.013; 0.000--0.040)}} \\
+ &  & logistic & \makecell{0.120\\{\scriptsize (0.285; 0.000--0.892)}} & \makecell{0.033\\{\scriptsize (0.099; 0.000--0.298)}} & \makecell{0.067\\{\scriptsize (0.222; 0.000--0.549)}} & \makecell{0.024\\{\scriptsize (0.087; 0.000--0.106)}} & \makecell{0.003\\{\scriptsize (0.014; 0.000--0.000)}} \\
 \addlinespace[2pt]
-OCTID MH (102) & MIRAGE & 0.392 & 0.451 & 0.572 & 0.702 & 0.774 & 0.465 & 0.524 & 0.570 & 0.689 & 0.711 \\
- & DINOv2 & 0.242 & 0.274 & 0.319 & 0.367 & 0.421 & 0.304 & 0.347 & 0.415 & 0.507 & 0.561 \\
- & Inception-v3 & 0.314 & 0.363 & 0.422 & 0.455 & 0.471 & 0.404 & 0.446 & 0.500 & 0.541 & 0.563 \\
- & RETFound & 0.137 & 0.141 & 0.150 & 0.145 & 0.008 & 0.159 & 0.280 & 0.255 & 0.138 & 0.034 \\
+OCTID MH (102) & MIRAGE & prototype & \makecell{0.392\\{\scriptsize (0.292; 0.000--0.883)}} & \makecell{0.451\\{\scriptsize (0.300; 0.000--0.912)}} & \makecell{0.572\\{\scriptsize (0.256; 0.097--0.912)}} & \makecell{0.702\\{\scriptsize (0.184; 0.362--0.942)}} & \makecell{0.774\\{\scriptsize (0.096; 0.607--0.892)}} \\
+ &  & logistic & \makecell{0.465\\{\scriptsize (0.308; 0.000--0.963)}} & \makecell{0.524\\{\scriptsize (0.318; 0.006--0.941)}} & \makecell{0.570\\{\scriptsize (0.274; 0.120--0.910)}} & \makecell{0.689\\{\scriptsize (0.161; 0.467--0.900)}} & \makecell{0.711\\{\scriptsize (0.094; 0.524--0.812)}} \\
+ & DINOv2 & prototype & \makecell{0.242\\{\scriptsize (0.197; 0.000--0.578)}} & \makecell{0.274\\{\scriptsize (0.182; 0.020--0.549)}} & \makecell{0.319\\{\scriptsize (0.177; 0.049--0.559)}} & \makecell{0.367\\{\scriptsize (0.132; 0.127--0.550)}} & \makecell{0.421\\{\scriptsize (0.079; 0.275--0.549)}} \\
+ &  & logistic & \makecell{0.304\\{\scriptsize (0.227; 0.012--0.622)}} & \makecell{0.347\\{\scriptsize (0.198; 0.033--0.563)}} & \makecell{0.415\\{\scriptsize (0.157; 0.139--0.608)}} & \makecell{0.507\\{\scriptsize (0.087; 0.380--0.606)}} & \makecell{0.561\\{\scriptsize (0.048; 0.476--0.618)}} \\
+ & Inception-v3 & prototype & \makecell{0.314\\{\scriptsize (0.219; 0.039--0.717)}} & \makecell{0.363\\{\scriptsize (0.176; 0.087--0.657)}} & \makecell{0.422\\{\scriptsize (0.142; 0.186--0.627)}} & \makecell{0.455\\{\scriptsize (0.110; 0.302--0.647)}} & \makecell{0.471\\{\scriptsize (0.056; 0.382--0.569)}} \\
+ &  & logistic & \makecell{0.404\\{\scriptsize (0.212; 0.082--0.763)}} & \makecell{0.446\\{\scriptsize (0.153; 0.222--0.688)}} & \makecell{0.500\\{\scriptsize (0.135; 0.241--0.675)}} & \makecell{0.541\\{\scriptsize (0.089; 0.431--0.694)}} & \makecell{0.563\\{\scriptsize (0.047; 0.504--0.643)}} \\
+ & RETFound & prototype & \makecell{0.137\\{\scriptsize (0.297; 0.000--0.972)}} & \makecell{0.141\\{\scriptsize (0.313; 0.000--0.991)}} & \makecell{0.150\\{\scriptsize (0.307; 0.000--1.000)}} & \makecell{0.145\\{\scriptsize (0.314; 0.000--0.980)}} & \makecell{0.008\\{\scriptsize (0.033; 0.000--0.041)}} \\
+ &  & logistic & \makecell{0.159\\{\scriptsize (0.317; 0.000--0.865)}} & \makecell{0.280\\{\scriptsize (0.420; 0.000--1.000)}} & \makecell{0.255\\{\scriptsize (0.407; 0.000--1.000)}} & \makecell{0.138\\{\scriptsize (0.303; 0.000--0.927)}} & \makecell{0.034\\{\scriptsize (0.082; 0.000--0.165)}} \\
 \addlinespace[2pt]
-OCTDL MH (39) & MIRAGE & 0.195 & 0.228 & 0.223 & 0.252 & 0.256 & 0.281 & 0.281 & 0.278 & 0.237 & 0.222 \\
- & DINOv2 & 0.379 & 0.453 & 0.543 & 0.671 & 0.695 & 0.479 & 0.552 & 0.714 & 0.819 & 0.890 \\
- & Inception-v3 & 0.239 & 0.260 & 0.302 & 0.378 & 0.390 & 0.333 & 0.314 & 0.359 & 0.383 & 0.430 \\
- & RETFound & 0.178 & 0.179 & 0.212 & 0.176 & 0.027 & 0.255 & 0.320 & 0.337 & 0.195 & 0.059 \\
+OCTDL MH (39) & MIRAGE & prototype & \makecell{0.195\\{\scriptsize (0.248; 0.000--0.771)}} & \makecell{0.228\\{\scriptsize (0.288; 0.000--0.923)}} & \makecell{0.223\\{\scriptsize (0.271; 0.000--0.897)}} & \makecell{0.252\\{\scriptsize (0.255; 0.026--0.774)}} & \makecell{0.256\\{\scriptsize (0.164; 0.077--0.590)}} \\
+ &  & logistic & \makecell{0.281\\{\scriptsize (0.332; 0.000--0.933)}} & \makecell{0.281\\{\scriptsize (0.338; 0.000--0.944)}} & \makecell{0.278\\{\scriptsize (0.305; 0.000--0.928)}} & \makecell{0.237\\{\scriptsize (0.245; 0.010--0.754)}} & \makecell{0.222\\{\scriptsize (0.149; 0.056--0.508)}} \\
+ & DINOv2 & prototype & \makecell{0.379\\{\scriptsize (0.251; 0.000--0.769)}} & \makecell{0.453\\{\scriptsize (0.226; 0.101--0.822)}} & \makecell{0.543\\{\scriptsize (0.189; 0.205--0.846)}} & \makecell{0.671\\{\scriptsize (0.116; 0.486--0.847)}} & \makecell{0.695\\{\scriptsize (0.063; 0.615--0.821)}} \\
+ &  & logistic & \makecell{0.479\\{\scriptsize (0.293; 0.051--0.867)}} & \makecell{0.552\\{\scriptsize (0.221; 0.149--0.913)}} & \makecell{0.714\\{\scriptsize (0.153; 0.415--0.892)}} & \makecell{0.819\\{\scriptsize (0.104; 0.621--0.923)}} & \makecell{0.890\\{\scriptsize (0.071; 0.749--0.949)}} \\
+ & Inception-v3 & prototype & \makecell{0.239\\{\scriptsize (0.273; 0.000--0.797)}} & \makecell{0.260\\{\scriptsize (0.241; 0.000--0.721)}} & \makecell{0.302\\{\scriptsize (0.275; 0.000--0.773)}} & \makecell{0.378\\{\scriptsize (0.253; 0.026--0.822)}} & \makecell{0.390\\{\scriptsize (0.182; 0.127--0.694)}} \\
+ &  & logistic & \makecell{0.333\\{\scriptsize (0.332; 0.000--0.862)}} & \makecell{0.314\\{\scriptsize (0.292; 0.026--0.836)}} & \makecell{0.359\\{\scriptsize (0.281; 0.031--0.872)}} & \makecell{0.383\\{\scriptsize (0.233; 0.051--0.764)}} & \makecell{0.430\\{\scriptsize (0.209; 0.164--0.718)}} \\
+ & RETFound & prototype & \makecell{0.178\\{\scriptsize (0.307; 0.000--0.874)}} & \makecell{0.179\\{\scriptsize (0.329; 0.000--1.000)}} & \makecell{0.212\\{\scriptsize (0.352; 0.000--1.000)}} & \makecell{0.176\\{\scriptsize (0.338; 0.000--0.976)}} & \makecell{0.027\\{\scriptsize (0.095; 0.000--0.208)}} \\
+ &  & logistic & \makecell{0.255\\{\scriptsize (0.354; 0.000--0.821)}} & \makecell{0.320\\{\scriptsize (0.434; 0.000--1.000)}} & \makecell{0.337\\{\scriptsize (0.429; 0.000--1.000)}} & \makecell{0.195\\{\scriptsize (0.331; 0.000--0.918)}} & \makecell{0.059\\{\scriptsize (0.156; 0.000--0.256)}} \\
 \bottomrule
 \end{tabular}

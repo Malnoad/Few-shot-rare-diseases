@@ -2,10 +2,107 @@
  "frozen": "2026-11-22",
  "base_commit": "5206f7bc2f97992cc2c7bc09f5ea8eef04b20cd4",
  "scope": [
-  "results/fm_v1/posthoc"
+  "results/fm_v1/posthoc",
+  "docs/report/fm_v1_paper/tables",
+  "docs/report/fm_v1_paper/figures"
  ],
  "rule": "protocols.md section 8 change log, 22 Nov: Phase-1 numbers frozen, step 1 (Lam; pulled forward from 27 Nov)",
  "files": {
+  "docs/report/fm_v1_paper/figures/fig2_recall_vs_k.pdf": "bd9d9e107ff8c3980c482e6608c6dcee849cffa0e3dc750f9ca244f6d6a59ea3",
+  "docs/report/fm_v1_paper/figures/fig2_recall_vs_k.png": "cace0ac69bd08f4418fc377a82fbbb98376ef7450b6b2d5685a0d4e75bf9266a",
+  "docs/report/fm_v1_paper/figures/fig3_image_sizes.pdf": "7a0414ceea2f3f8ab20169177f360f4762189ac0c134686d2b1148b6ccec88af",
+  "docs/report/fm_v1_paper/figures/fig3_image_sizes.png": "394c2dccbceb28ca4ca86947158dad718734eecb20901903e2c8030d6a2fa32d",
+  "docs/report/fm_v1_paper/figures/fig4_normal_scans.pdf": "a8c347370bfd60ef26802de0c30817f906e397ed4194afb4fc09a065e276ec6f",
+  "docs/report/fm_v1_paper/figures/fig4_normal_scans.png": "625757aeb5b383fc08e2a76af3324dfd0f38af54706c3e22677c6b5fd0a75677",
+  "docs/report/fm_v1_paper/tables/e1_label.tex": "09c5035c8e8a5a490bca19bfcb6cfea59736265e7b554976991294e4eb4e3997",
+  "docs/report/fm_v1_paper/tables/e1_limitations.tex": "743c17a7396245dae158631371332f736e59bd4cdb1350609d45723609a23adc",
+  "docs/report/fm_v1_paper/tables/e1_tasks_summary.tex": "cdd872d39fe9925cab0b245d9e308c9c2db5c4ac219e97ec12f3d3509fa81089",
+  "docs/report/fm_v1_paper/tables/e1a_checks.tex": "d08f5b754676125281958bf60c01c397d60272a3ff1af155193c28e8e1f9b77a",
+  "docs/report/fm_v1_paper/tables/e1a_checks_note.tex": "964585dc05c3128cf99bea7a754e9f99765d094855152ca505e2fbc589b612b3",
+  "docs/report/fm_v1_paper/tables/e1b_development.tex": "6507a319079acf6b0f7beb4c2455d5906ee8d8587e53103e15f9771b6bcb2555",
+  "docs/report/fm_v1_paper/tables/e1b_development_note.tex": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+  "docs/report/fm_v1_paper/tables/e1c_paired.tex": "ffd8aba81f5b595f6bbb7886008fc9f1ef32e0f654ec39d2a4276cb132b3a1ec",
+  "docs/report/fm_v1_paper/tables/e1c_paired_note.tex": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+  "docs/report/fm_v1_paper/tables/e1d_duplicates.tex": "43e01d386a00c8ee50f73376cdad9de4617874730072a25b49c31905a8db793c",
+  "docs/report/fm_v1_paper/tables/e1d_duplicates_note.tex": "b25930a735360fdd663dba4812a5abf14d8d637c562ec0adf131f2dffbdbd868",
+  "docs/report/fm_v1_paper/tables/e1d_holdout.tex": "e9de886a7dfa8756d6c6f2cf9c62e981758491f6a97e52e6eb411b08f41196eb",
+  "docs/report/fm_v1_paper/tables/e1d_holdout_note.tex": "eae8f1c5367156bc2283ccdd240babb4c7f60763780ec4fa8475f0ee038e6210",
+  "docs/report/fm_v1_paper/tables/e1d_label.tex": "5fb702d541e991a6c48e1ef677a87728245415434f2f3ecaa09db4a711fad6a6",
+  "docs/report/fm_v1_paper/tables/e1d_success.tex": "e253eb58567516797a887eb456893639b509cb80adb0ecfaf2a5136008612a52",
+  "docs/report/fm_v1_paper/tables/e1d_success_note.tex": "8fcaf0aaa205e40be43d9f1a120642f000521bd3f2986af6d2252fbc3f919c8c",
+  "docs/report/fm_v1_paper/tables/e1e_matched.tex": "80f2db4fe10e33ea340ba28e02928fbaace48db718d19e2d552dac625da30ef6",
+  "docs/report/fm_v1_paper/tables/e1e_matched_note.tex": "e9ca0304be0193967cbabc53c21e092f08d8f64700459ebee69440e8794fa8ad",
+  "docs/report/fm_v1_paper/tables/e1f_holdout.tex": "45a45b43ba400f08a98defe59e13f4ccadc151981d6df4620ca206c5879f9d2b",
+  "docs/report/fm_v1_paper/tables/e1f_holdout_note.tex": "d48589bd4e279cc0957be059f953f3ccfc92029335b1b718e4088f76495bfaf6",
+  "docs/report/fm_v1_paper/tables/e1g_nine_way.tex": "b8593256de13324c6d0cbfc637275fa936b61c62d52278b7362e68b62fa54787",
+  "docs/report/fm_v1_paper/tables/e1g_nine_way_note.tex": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+  "docs/report/fm_v1_paper/tables/e1h_leave_one_out.tex": "70b3971cb4e730e7b97de4c0b7487c4145d83fa49054600679ecfe0dc713a0ff",
+  "docs/report/fm_v1_paper/tables/e1h_leave_one_out_note.tex": "834e15aa7b0ec7848081f7e8169d950a5a762d736be9018fb2383a0a0c0f075d",
+  "docs/report/fm_v1_paper/tables/e2_destinations_summary.tex": "db4086348a6e5dcefb7a953d6bd276170b82d3d30f28320af7d434911b2f157c",
+  "docs/report/fm_v1_paper/tables/e2_destinations_summary_note.tex": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+  "docs/report/fm_v1_paper/tables/e2_label.tex": "88875f3ca00d28ebc3adb7fa6597311cac03d3e1bd5f80515f7c2adf9734a1af",
+  "docs/report/fm_v1_paper/tables/e2_overlap_summary.tex": "f51f58a0ad122f2a620b2158f80d4423f41bd319dab0eb5b427026076d012ef7",
+  "docs/report/fm_v1_paper/tables/e2_overlap_summary_note.tex": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+  "docs/report/fm_v1_paper/tables/e2a_destinations.tex": "a0fba2c8ce22e880fcf7e79d5275c5b755139a7c585e27a8c182ee115bdde2c0",
+  "docs/report/fm_v1_paper/tables/e2a_destinations_note.tex": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+  "docs/report/fm_v1_paper/tables/e2b_pairs.tex": "614fe8320c183a48dc350201f90c41b2e1313ac162af4b6a6c06b9b30bf0a7c0",
+  "docs/report/fm_v1_paper/tables/e2b_pairs_note.tex": "e81bcb42563a2dd9704c7e9de6101313ac0a6220bc1e032109136422f8955ef6",
+  "docs/report/fm_v1_paper/tables/e2c_transitions.tex": "52847bf230986b0c0f41aafa05b1ef5076c89f57cfef0d853f87175b7f008485",
+  "docs/report/fm_v1_paper/tables/e2c_transitions_note.tex": "980a97f4ea00fef08b2e45079f85eb6e3e10b8f501032324d85473ee760fbe78",
+  "docs/report/fm_v1_paper/tables/e2d_categorical.tex": "4bbb67a20188fd98c8420b5311dae5b8040d7334bee89abae546d387807fffb3",
+  "docs/report/fm_v1_paper/tables/e2d_categorical_note.tex": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+  "docs/report/fm_v1_paper/tables/e2d_octdl_locked.tex": "0df67a7288b39bff015981e5253be0182676fe893842996a2177870b68e77bcc",
+  "docs/report/fm_v1_paper/tables/e2d_octdl_locked_note.tex": "fda4a0e6be00ac2725b546a7b75ba69a3d5c1e1da2c19fac02ce7c2c43a00c86",
+  "docs/report/fm_v1_paper/tables/e2d_properties.tex": "b49819c5b21ee2fee7bce669777f25b4591e8b4f2fe3a7e88d8a01a2fa7e3e02",
+  "docs/report/fm_v1_paper/tables/e2d_properties_note.tex": "281fcb7cbb8e0bdcd4d5cc50fc1eede84da92ff38bd7ddda145bd7b73c95d925",
+  "docs/report/fm_v1_paper/tables/e2e_patients.tex": "b42bb081a5a54d0860984314aaf4259312bfa8c072702b0b8155aeb504ba452a",
+  "docs/report/fm_v1_paper/tables/e2e_patients_note.tex": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+  "docs/report/fm_v1_paper/tables/e3_checks.tex": "f4c2d372bf140461386f5f0836602849e7d65abd663be3ee42fb898fe1fd3f19",
+  "docs/report/fm_v1_paper/tables/e3_checks_note.tex": "964585dc05c3128cf99bea7a754e9f99765d094855152ca505e2fbc589b612b3",
+  "docs/report/fm_v1_paper/tables/e3_criteria.tex": "99f1e45ddff18eac57fc6d6b71b0c91b0be807317d670f7e5a34b4ed83d88ac0",
+  "docs/report/fm_v1_paper/tables/e3_criteria_note.tex": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+  "docs/report/fm_v1_paper/tables/e3_development.tex": "226fa765524794a68d188bac6ea97b8160dd5ae8c9ea16a906c7531671fecccf",
+  "docs/report/fm_v1_paper/tables/e3_development_note.tex": "95616d9bbf4f608917d11897986081f66b087d17be55236089153a6b2aff72f3",
+  "docs/report/fm_v1_paper/tables/e3_holdout.tex": "97000d00497a54fc27b629411ce9a4bb19a71bb9ad78d5fcdce1850a739266e3",
+  "docs/report/fm_v1_paper/tables/e3_holdout_note.tex": "7e02bc7cb69322b927294c5326d837b43469f1539772fc0533073b02471a007b",
+  "docs/report/fm_v1_paper/tables/e3_label.tex": "8572e570a5dfe1c9e0d8ea508927564111f0abc2f0894e378346240a0023ac1c",
+  "docs/report/fm_v1_paper/tables/e3_nine_way.tex": "0ed1ec47c9c35cb4f9f2500740c6675bcb1a0bb458b6b4d0ae3c4c5705ba1ee4",
+  "docs/report/fm_v1_paper/tables/e3_nine_way_note.tex": "2358e47bc5251daa1dd8a7232b18703757094b190a8c3afc111d082044047c1c",
+  "docs/report/fm_v1_paper/tables/e4_label.tex": "0feb788be934bdce8dafb173ea8e8bcd17393aa43b9c609db5be707254a4844a",
+  "docs/report/fm_v1_paper/tables/e4a_fewshot.tex": "f53be08d95d238285873b460fad7e6b24f726c71fed9436ea99683faff3fac08",
+  "docs/report/fm_v1_paper/tables/e4a_fewshot_note.tex": "c1780a2945f57b74228f5e1bc6e726640f973d7265a83a83854f135a9166982b",
+  "docs/report/fm_v1_paper/tables/e4b_columns.tex": "b2f76247918e4ba97a245a2c7673a005b17a85cda6444029a979c01eb213d2fb",
+  "docs/report/fm_v1_paper/tables/e4b_columns_note.tex": "64a981a711f7fd62c69d693e6577d137ce26e12cf4e6d3019189eec8ec2c5a2e",
+  "docs/report/fm_v1_paper/tables/e4c_probe.tex": "c6b7892e473f712e5f1c5f5af8f1ae5fb962706801fcab96b5ca48af6ffcb7a1",
+  "docs/report/fm_v1_paper/tables/e4c_probe_note.tex": "0d31555a7b0d8ecfa5aedaf224d7f32f3c45ab3ff146c4799f60082ef41b83eb",
+  "docs/report/fm_v1_paper/tables/e4d_probe_diff.tex": "b5e67c42d1884b82b3d53ad9a9a264863d2122e0141af1115ea39ce07ebf5385",
+  "docs/report/fm_v1_paper/tables/e4d_probe_diff_note.tex": "8ee9d3a80888734dedef2f2325b715c31b9113bcbfee42a1d175f7093572f26c",
+  "docs/report/fm_v1_paper/tables/g1_pad_to_square.tex": "ac3755259c756852c9aff916d0b9b5c39ef7f074d3333626048a8c91e13e27b8",
+  "docs/report/fm_v1_paper/tables/p0_per_class.tex": "686bb61992c78b742e30c0574e54e5f95b713e4b505823036cbd7f957e309b4c",
+  "docs/report/fm_v1_paper/tables/p10_pairs.tex": "479f49fcbdb0a9ac85aae7e3e77b295e331c1b76943696b59c6a4066eb0692ec",
+  "docs/report/fm_v1_paper/tables/p10_sensitivity.tex": "3055d421fe8678a549d69c484ada31dc5ad1bdb20d3d34e8bb09e8de530df21f",
+  "docs/report/fm_v1_paper/tables/p1_exact_bounds.tex": "6be7f6075cdd403b70e2fe2345bcd56e39415b6f616fbe58e9289411217ec65c",
+  "docs/report/fm_v1_paper/tables/p2_october_heads.tex": "d0e5880fbf3f22156120b791dcc19ec05db84e180cb13615371c04948b27e9d6",
+  "docs/report/fm_v1_paper/tables/p3_clinic_to_clinic.tex": "cce76e320bb7d1fece3866e7ebe5963e6886c1521c9972c10fd633f2df3da776",
+  "docs/report/fm_v1_paper/tables/p4_class_entries.tex": "46c165f8a81b057c745f0a4219506a675ded0d7c8ef4cbf202f5315f3188f347",
+  "docs/report/fm_v1_paper/tables/p4_class_entries_planned.tex": "792376c209f338959be4cf00c54dbf82662b90516082e23106faec4c43c69e49",
+  "docs/report/fm_v1_paper/tables/p5_not_sure.tex": "cf1e398f11aca840dc016cb3023cbc6fa8f36e42728fe5f3abb9eb0697f01379",
+  "docs/report/fm_v1_paper/tables/p6_probe_vs_prototype.tex": "cfa94045c92fc6fde366f8775eeeb945c4eef0fec6b6c7f7f1473bc5e349c693",
+  "docs/report/fm_v1_paper/tables/p9_auroc.tex": "892b59903dfbe99b3a0c797b49c65afe86bfb9e448762db5f8634602e2ac5422",
+  "docs/report/fm_v1_paper/tables/p9_g1_padded.tex": "228de98618a323f9526f6ddde8efe76368bca05703454e81dd3d8b4d4bf93b4e",
+  "docs/report/fm_v1_paper/tables/s1_logistic.tex": "1d7bd8bbb2cf526c77caa5a8fa340a02cdc50bc86daa8fc1205794d41361a774",
+  "docs/report/fm_v1_paper/tables/s2_transfer.tex": "f1a5d146c50e6fe4854e05c7cd73dd323ba25407e1d269277c82c4b5d7233b84",
+  "docs/report/fm_v1_paper/tables/s2b_transfer_outputs.tex": "021c263084fc179fa6a7b75e0f1290c3f612a9529eac1915a5db2391c6f504b6",
+  "docs/report/fm_v1_paper/tables/s3_perclass.tex": "2fa577b1375da46013c95c83d90607ddfdb5cfb5e84b1ba0fb3243749bb36d0f",
+  "docs/report/fm_v1_paper/tables/s4_confusion.tex": "8a054233cfc41e3b1961f72c132850e16ea5af0cfe6552aa9430d52f16434b26",
+  "docs/report/fm_v1_paper/tables/s7_two_way.tex": "7ebd6eee70544aff2a1cb3d48380871ebba4b76e45d0fbf1042f8bc3d8ccd421",
+  "docs/report/fm_v1_paper/tables/s_geometry.tex": "07e8990f0620555d3fe523ac3a82bd5ae163bf30af1708810e16a5ff6166686f",
+  "docs/report/fm_v1_paper/tables/t1_development.tex": "2f0832ac70eb62b7fa329fd33c6334361fb95975f9e395c985b6bdfc6dc60b26",
+  "docs/report/fm_v1_paper/tables/t2_false_rare.tex": "321702f21d09252bad144ca01de66b659f0dc6d117c1825d7da687133c9714e8",
+  "docs/report/fm_v1_paper/tables/t3_holdout.tex": "69074f9ea2735b16f15325e78b4b5f4699afb6d0b2c26b56ac3b27406760b23c",
+  "docs/report/fm_v1_paper/tables/t4_octid_two_way.tex": "e74c785f2b466dae1883299c5994bce10014226120852f8fa800ae558b9c4c61",
+  "docs/report/fm_v1_paper/tables/t5_p4_size_right_wrong.tex": "aeb35abbcc9f730aa3f4de88d839dd1535fd892d8be669e413da1ec4b556109f",
+  "docs/report/fm_v1_paper/tables/t6_p8_csc_mh_development.tex": "5237d66e0a12086b81468d4f367a0a6ec13b3207e23431fa3c1712051f214707",
   "results/fm_v1/posthoc/E1D_duplicate_sensitivity.csv": "4c2fa96e3e42e4180893f07fd3ddd571ee2348074a543b272d7c6d4fd43d6e58",
   "results/fm_v1/posthoc/E1_comparison.md": "29b47df51bd1c8ef9ba29c6aa8f955079d92e87c0715bb57cc7a112b60f02f31",
   "results/fm_v1/posthoc/E1a_checks.csv": "e103754b9049d0cb6b725fde925f10dc89fe947ebd899a6b64c37404d539a3c7",
@@ -106,5 +203,397 @@
   "results/fm_v1/posthoc/pre_rule/2026-11-18/v1_to_ours.csv": "3d6155374f0108a6fb562e64e22ec6643eae151d36a655b8aa7ce2d49a835c76",
   "results/fm_v1/posthoc/pre_rule/README.md": "75e643d118d766cc2a67969b4d1612c3ddc17292de2a6e0e57f20173d9947917"
  },
- "amendments": []
+ "amendments": [
+  {
+   "date": "2026-11-27",
+   "reason": "protocols.md section 8 change log, 26–27 Nov: Phase-1 settled and frozen, step 2 (Lam: \"The last feedback was the final one, so we will settle and freeze today\"). The paper's tables and figures join the freeze after the pre-freeze check (Neon, Fable; Sol recompute: no mismatch); no number of record changed",
+   "changes": {
+    "docs/report/fm_v1_paper/figures/fig2_recall_vs_k.pdf": [
+     null,
+     "bd9d9e107ff8c3980c482e6608c6dcee849cffa0e3dc750f9ca244f6d6a59ea3"
+    ],
+    "docs/report/fm_v1_paper/figures/fig2_recall_vs_k.png": [
+     null,
+     "cace0ac69bd08f4418fc377a82fbbb98376ef7450b6b2d5685a0d4e75bf9266a"
+    ],
+    "docs/report/fm_v1_paper/figures/fig3_image_sizes.pdf": [
+     null,
+     "7a0414ceea2f3f8ab20169177f360f4762189ac0c134686d2b1148b6ccec88af"
+    ],
+    "docs/report/fm_v1_paper/figures/fig3_image_sizes.png": [
+     null,
+     "394c2dccbceb28ca4ca86947158dad718734eecb20901903e2c8030d6a2fa32d"
+    ],
+    "docs/report/fm_v1_paper/figures/fig4_normal_scans.pdf": [
+     null,
+     "a8c347370bfd60ef26802de0c30817f906e397ed4194afb4fc09a065e276ec6f"
+    ],
+    "docs/report/fm_v1_paper/figures/fig4_normal_scans.png": [
+     null,
+     "625757aeb5b383fc08e2a76af3324dfd0f38af54706c3e22677c6b5fd0a75677"
+    ],
+    "docs/report/fm_v1_paper/tables/e1_label.tex": [
+     null,
+     "09c5035c8e8a5a490bca19bfcb6cfea59736265e7b554976991294e4eb4e3997"
+    ],
+    "docs/report/fm_v1_paper/tables/e1_limitations.tex": [
+     null,
+     "743c17a7396245dae158631371332f736e59bd4cdb1350609d45723609a23adc"
+    ],
+    "docs/report/fm_v1_paper/tables/e1_tasks_summary.tex": [
+     null,
+     "cdd872d39fe9925cab0b245d9e308c9c2db5c4ac219e97ec12f3d3509fa81089"
+    ],
+    "docs/report/fm_v1_paper/tables/e1a_checks.tex": [
+     null,
+     "d08f5b754676125281958bf60c01c397d60272a3ff1af155193c28e8e1f9b77a"
+    ],
+    "docs/report/fm_v1_paper/tables/e1a_checks_note.tex": [
+     null,
+     "964585dc05c3128cf99bea7a754e9f99765d094855152ca505e2fbc589b612b3"
+    ],
+    "docs/report/fm_v1_paper/tables/e1b_development.tex": [
+     null,
+     "6507a319079acf6b0f7beb4c2455d5906ee8d8587e53103e15f9771b6bcb2555"
+    ],
+    "docs/report/fm_v1_paper/tables/e1b_development_note.tex": [
+     null,
+     "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    ],
+    "docs/report/fm_v1_paper/tables/e1c_paired.tex": [
+     null,
+     "ffd8aba81f5b595f6bbb7886008fc9f1ef32e0f654ec39d2a4276cb132b3a1ec"
+    ],
+    "docs/report/fm_v1_paper/tables/e1c_paired_note.tex": [
+     null,
+     "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    ],
+    "docs/report/fm_v1_paper/tables/e1d_duplicates.tex": [
+     null,
+     "43e01d386a00c8ee50f73376cdad9de4617874730072a25b49c31905a8db793c"
+    ],
+    "docs/report/fm_v1_paper/tables/e1d_duplicates_note.tex": [
+     null,
+     "b25930a735360fdd663dba4812a5abf14d8d637c562ec0adf131f2dffbdbd868"
+    ],
+    "docs/report/fm_v1_paper/tables/e1d_holdout.tex": [
+     null,
+     "e9de886a7dfa8756d6c6f2cf9c62e981758491f6a97e52e6eb411b08f41196eb"
+    ],
+    "docs/report/fm_v1_paper/tables/e1d_holdout_note.tex": [
+     null,
+     "eae8f1c5367156bc2283ccdd240babb4c7f60763780ec4fa8475f0ee038e6210"
+    ],
+    "docs/report/fm_v1_paper/tables/e1d_label.tex": [
+     null,
+     "5fb702d541e991a6c48e1ef677a87728245415434f2f3ecaa09db4a711fad6a6"
+    ],
+    "docs/report/fm_v1_paper/tables/e1d_success.tex": [
+     null,
+     "e253eb58567516797a887eb456893639b509cb80adb0ecfaf2a5136008612a52"
+    ],
+    "docs/report/fm_v1_paper/tables/e1d_success_note.tex": [
+     null,
+     "8fcaf0aaa205e40be43d9f1a120642f000521bd3f2986af6d2252fbc3f919c8c"
+    ],
+    "docs/report/fm_v1_paper/tables/e1e_matched.tex": [
+     null,
+     "80f2db4fe10e33ea340ba28e02928fbaace48db718d19e2d552dac625da30ef6"
+    ],
+    "docs/report/fm_v1_paper/tables/e1e_matched_note.tex": [
+     null,
+     "e9ca0304be0193967cbabc53c21e092f08d8f64700459ebee69440e8794fa8ad"
+    ],
+    "docs/report/fm_v1_paper/tables/e1f_holdout.tex": [
+     null,
+     "45a45b43ba400f08a98defe59e13f4ccadc151981d6df4620ca206c5879f9d2b"
+    ],
+    "docs/report/fm_v1_paper/tables/e1f_holdout_note.tex": [
+     null,
+     "d48589bd4e279cc0957be059f953f3ccfc92029335b1b718e4088f76495bfaf6"
+    ],
+    "docs/report/fm_v1_paper/tables/e1g_nine_way.tex": [
+     null,
+     "b8593256de13324c6d0cbfc637275fa936b61c62d52278b7362e68b62fa54787"
+    ],
+    "docs/report/fm_v1_paper/tables/e1g_nine_way_note.tex": [
+     null,
+     "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    ],
+    "docs/report/fm_v1_paper/tables/e1h_leave_one_out.tex": [
+     null,
+     "70b3971cb4e730e7b97de4c0b7487c4145d83fa49054600679ecfe0dc713a0ff"
+    ],
+    "docs/report/fm_v1_paper/tables/e1h_leave_one_out_note.tex": [
+     null,
+     "834e15aa7b0ec7848081f7e8169d950a5a762d736be9018fb2383a0a0c0f075d"
+    ],
+    "docs/report/fm_v1_paper/tables/e2_destinations_summary.tex": [
+     null,
+     "db4086348a6e5dcefb7a953d6bd276170b82d3d30f28320af7d434911b2f157c"
+    ],
+    "docs/report/fm_v1_paper/tables/e2_destinations_summary_note.tex": [
+     null,
+     "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    ],
+    "docs/report/fm_v1_paper/tables/e2_label.tex": [
+     null,
+     "88875f3ca00d28ebc3adb7fa6597311cac03d3e1bd5f80515f7c2adf9734a1af"
+    ],
+    "docs/report/fm_v1_paper/tables/e2_overlap_summary.tex": [
+     null,
+     "f51f58a0ad122f2a620b2158f80d4423f41bd319dab0eb5b427026076d012ef7"
+    ],
+    "docs/report/fm_v1_paper/tables/e2_overlap_summary_note.tex": [
+     null,
+     "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    ],
+    "docs/report/fm_v1_paper/tables/e2a_destinations.tex": [
+     null,
+     "a0fba2c8ce22e880fcf7e79d5275c5b755139a7c585e27a8c182ee115bdde2c0"
+    ],
+    "docs/report/fm_v1_paper/tables/e2a_destinations_note.tex": [
+     null,
+     "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    ],
+    "docs/report/fm_v1_paper/tables/e2b_pairs.tex": [
+     null,
+     "614fe8320c183a48dc350201f90c41b2e1313ac162af4b6a6c06b9b30bf0a7c0"
+    ],
+    "docs/report/fm_v1_paper/tables/e2b_pairs_note.tex": [
+     null,
+     "e81bcb42563a2dd9704c7e9de6101313ac0a6220bc1e032109136422f8955ef6"
+    ],
+    "docs/report/fm_v1_paper/tables/e2c_transitions.tex": [
+     null,
+     "52847bf230986b0c0f41aafa05b1ef5076c89f57cfef0d853f87175b7f008485"
+    ],
+    "docs/report/fm_v1_paper/tables/e2c_transitions_note.tex": [
+     null,
+     "980a97f4ea00fef08b2e45079f85eb6e3e10b8f501032324d85473ee760fbe78"
+    ],
+    "docs/report/fm_v1_paper/tables/e2d_categorical.tex": [
+     null,
+     "4bbb67a20188fd98c8420b5311dae5b8040d7334bee89abae546d387807fffb3"
+    ],
+    "docs/report/fm_v1_paper/tables/e2d_categorical_note.tex": [
+     null,
+     "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    ],
+    "docs/report/fm_v1_paper/tables/e2d_octdl_locked.tex": [
+     null,
+     "0df67a7288b39bff015981e5253be0182676fe893842996a2177870b68e77bcc"
+    ],
+    "docs/report/fm_v1_paper/tables/e2d_octdl_locked_note.tex": [
+     null,
+     "fda4a0e6be00ac2725b546a7b75ba69a3d5c1e1da2c19fac02ce7c2c43a00c86"
+    ],
+    "docs/report/fm_v1_paper/tables/e2d_properties.tex": [
+     null,
+     "b49819c5b21ee2fee7bce669777f25b4591e8b4f2fe3a7e88d8a01a2fa7e3e02"
+    ],
+    "docs/report/fm_v1_paper/tables/e2d_properties_note.tex": [
+     null,
+     "281fcb7cbb8e0bdcd4d5cc50fc1eede84da92ff38bd7ddda145bd7b73c95d925"
+    ],
+    "docs/report/fm_v1_paper/tables/e2e_patients.tex": [
+     null,
+     "b42bb081a5a54d0860984314aaf4259312bfa8c072702b0b8155aeb504ba452a"
+    ],
+    "docs/report/fm_v1_paper/tables/e2e_patients_note.tex": [
+     null,
+     "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    ],
+    "docs/report/fm_v1_paper/tables/e3_checks.tex": [
+     null,
+     "f4c2d372bf140461386f5f0836602849e7d65abd663be3ee42fb898fe1fd3f19"
+    ],
+    "docs/report/fm_v1_paper/tables/e3_checks_note.tex": [
+     null,
+     "964585dc05c3128cf99bea7a754e9f99765d094855152ca505e2fbc589b612b3"
+    ],
+    "docs/report/fm_v1_paper/tables/e3_criteria.tex": [
+     null,
+     "99f1e45ddff18eac57fc6d6b71b0c91b0be807317d670f7e5a34b4ed83d88ac0"
+    ],
+    "docs/report/fm_v1_paper/tables/e3_criteria_note.tex": [
+     null,
+     "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    ],
+    "docs/report/fm_v1_paper/tables/e3_development.tex": [
+     null,
+     "226fa765524794a68d188bac6ea97b8160dd5ae8c9ea16a906c7531671fecccf"
+    ],
+    "docs/report/fm_v1_paper/tables/e3_development_note.tex": [
+     null,
+     "95616d9bbf4f608917d11897986081f66b087d17be55236089153a6b2aff72f3"
+    ],
+    "docs/report/fm_v1_paper/tables/e3_holdout.tex": [
+     null,
+     "97000d00497a54fc27b629411ce9a4bb19a71bb9ad78d5fcdce1850a739266e3"
+    ],
+    "docs/report/fm_v1_paper/tables/e3_holdout_note.tex": [
+     null,
+     "7e02bc7cb69322b927294c5326d837b43469f1539772fc0533073b02471a007b"
+    ],
+    "docs/report/fm_v1_paper/tables/e3_label.tex": [
+     null,
+     "8572e570a5dfe1c9e0d8ea508927564111f0abc2f0894e378346240a0023ac1c"
+    ],
+    "docs/report/fm_v1_paper/tables/e3_nine_way.tex": [
+     null,
+     "0ed1ec47c9c35cb4f9f2500740c6675bcb1a0bb458b6b4d0ae3c4c5705ba1ee4"
+    ],
+    "docs/report/fm_v1_paper/tables/e3_nine_way_note.tex": [
+     null,
+     "2358e47bc5251daa1dd8a7232b18703757094b190a8c3afc111d082044047c1c"
+    ],
+    "docs/report/fm_v1_paper/tables/e4_label.tex": [
+     null,
+     "0feb788be934bdce8dafb173ea8e8bcd17393aa43b9c609db5be707254a4844a"
+    ],
+    "docs/report/fm_v1_paper/tables/e4a_fewshot.tex": [
+     null,
+     "f53be08d95d238285873b460fad7e6b24f726c71fed9436ea99683faff3fac08"
+    ],
+    "docs/report/fm_v1_paper/tables/e4a_fewshot_note.tex": [
+     null,
+     "c1780a2945f57b74228f5e1bc6e726640f973d7265a83a83854f135a9166982b"
+    ],
+    "docs/report/fm_v1_paper/tables/e4b_columns.tex": [
+     null,
+     "b2f76247918e4ba97a245a2c7673a005b17a85cda6444029a979c01eb213d2fb"
+    ],
+    "docs/report/fm_v1_paper/tables/e4b_columns_note.tex": [
+     null,
+     "64a981a711f7fd62c69d693e6577d137ce26e12cf4e6d3019189eec8ec2c5a2e"
+    ],
+    "docs/report/fm_v1_paper/tables/e4c_probe.tex": [
+     null,
+     "c6b7892e473f712e5f1c5f5af8f1ae5fb962706801fcab96b5ca48af6ffcb7a1"
+    ],
+    "docs/report/fm_v1_paper/tables/e4c_probe_note.tex": [
+     null,
+     "0d31555a7b0d8ecfa5aedaf224d7f32f3c45ab3ff146c4799f60082ef41b83eb"
+    ],
+    "docs/report/fm_v1_paper/tables/e4d_probe_diff.tex": [
+     null,
+     "b5e67c42d1884b82b3d53ad9a9a264863d2122e0141af1115ea39ce07ebf5385"
+    ],
+    "docs/report/fm_v1_paper/tables/e4d_probe_diff_note.tex": [
+     null,
+     "8ee9d3a80888734dedef2f2325b715c31b9113bcbfee42a1d175f7093572f26c"
+    ],
+    "docs/report/fm_v1_paper/tables/g1_pad_to_square.tex": [
+     null,
+     "ac3755259c756852c9aff916d0b9b5c39ef7f074d3333626048a8c91e13e27b8"
+    ],
+    "docs/report/fm_v1_paper/tables/p0_per_class.tex": [
+     null,
+     "686bb61992c78b742e30c0574e54e5f95b713e4b505823036cbd7f957e309b4c"
+    ],
+    "docs/report/fm_v1_paper/tables/p10_pairs.tex": [
+     null,
+     "479f49fcbdb0a9ac85aae7e3e77b295e331c1b76943696b59c6a4066eb0692ec"
+    ],
+    "docs/report/fm_v1_paper/tables/p10_sensitivity.tex": [
+     null,
+     "3055d421fe8678a549d69c484ada31dc5ad1bdb20d3d34e8bb09e8de530df21f"
+    ],
+    "docs/report/fm_v1_paper/tables/p1_exact_bounds.tex": [
+     null,
+     "6be7f6075cdd403b70e2fe2345bcd56e39415b6f616fbe58e9289411217ec65c"
+    ],
+    "docs/report/fm_v1_paper/tables/p2_october_heads.tex": [
+     null,
+     "d0e5880fbf3f22156120b791dcc19ec05db84e180cb13615371c04948b27e9d6"
+    ],
+    "docs/report/fm_v1_paper/tables/p3_clinic_to_clinic.tex": [
+     null,
+     "cce76e320bb7d1fece3866e7ebe5963e6886c1521c9972c10fd633f2df3da776"
+    ],
+    "docs/report/fm_v1_paper/tables/p4_class_entries.tex": [
+     null,
+     "46c165f8a81b057c745f0a4219506a675ded0d7c8ef4cbf202f5315f3188f347"
+    ],
+    "docs/report/fm_v1_paper/tables/p4_class_entries_planned.tex": [
+     null,
+     "792376c209f338959be4cf00c54dbf82662b90516082e23106faec4c43c69e49"
+    ],
+    "docs/report/fm_v1_paper/tables/p5_not_sure.tex": [
+     null,
+     "cf1e398f11aca840dc016cb3023cbc6fa8f36e42728fe5f3abb9eb0697f01379"
+    ],
+    "docs/report/fm_v1_paper/tables/p6_probe_vs_prototype.tex": [
+     null,
+     "cfa94045c92fc6fde366f8775eeeb945c4eef0fec6b6c7f7f1473bc5e349c693"
+    ],
+    "docs/report/fm_v1_paper/tables/p9_auroc.tex": [
+     null,
+     "892b59903dfbe99b3a0c797b49c65afe86bfb9e448762db5f8634602e2ac5422"
+    ],
+    "docs/report/fm_v1_paper/tables/p9_g1_padded.tex": [
+     null,
+     "228de98618a323f9526f6ddde8efe76368bca05703454e81dd3d8b4d4bf93b4e"
+    ],
+    "docs/report/fm_v1_paper/tables/s1_logistic.tex": [
+     null,
+     "1d7bd8bbb2cf526c77caa5a8fa340a02cdc50bc86daa8fc1205794d41361a774"
+    ],
+    "docs/report/fm_v1_paper/tables/s2_transfer.tex": [
+     null,
+     "f1a5d146c50e6fe4854e05c7cd73dd323ba25407e1d269277c82c4b5d7233b84"
+    ],
+    "docs/report/fm_v1_paper/tables/s2b_transfer_outputs.tex": [
+     null,
+     "021c263084fc179fa6a7b75e0f1290c3f612a9529eac1915a5db2391c6f504b6"
+    ],
+    "docs/report/fm_v1_paper/tables/s3_perclass.tex": [
+     null,
+     "2fa577b1375da46013c95c83d90607ddfdb5cfb5e84b1ba0fb3243749bb36d0f"
+    ],
+    "docs/report/fm_v1_paper/tables/s4_confusion.tex": [
+     null,
+     "8a054233cfc41e3b1961f72c132850e16ea5af0cfe6552aa9430d52f16434b26"
+    ],
+    "docs/report/fm_v1_paper/tables/s7_two_way.tex": [
+     null,
+     "7ebd6eee70544aff2a1cb3d48380871ebba4b76e45d0fbf1042f8bc3d8ccd421"
+    ],
+    "docs/report/fm_v1_paper/tables/s_geometry.tex": [
+     null,
+     "07e8990f0620555d3fe523ac3a82bd5ae163bf30af1708810e16a5ff6166686f"
+    ],
+    "docs/report/fm_v1_paper/tables/t1_development.tex": [
+     null,
+     "2f0832ac70eb62b7fa329fd33c6334361fb95975f9e395c985b6bdfc6dc60b26"
+    ],
+    "docs/report/fm_v1_paper/tables/t2_false_rare.tex": [
+     null,
+     "321702f21d09252bad144ca01de66b659f0dc6d117c1825d7da687133c9714e8"
+    ],
+    "docs/report/fm_v1_paper/tables/t3_holdout.tex": [
+     null,
+     "69074f9ea2735b16f15325e78b4b5f4699afb6d0b2c26b56ac3b27406760b23c"
+    ],
+    "docs/report/fm_v1_paper/tables/t4_octid_two_way.tex": [
+     null,
+     "e74c785f2b466dae1883299c5994bce10014226120852f8fa800ae558b9c4c61"
+    ],
+    "docs/report/fm_v1_paper/tables/t5_p4_size_right_wrong.tex": [
+     null,
+     "aeb35abbcc9f730aa3f4de88d839dd1535fd892d8be669e413da1ec4b556109f"
+    ],
+    "docs/report/fm_v1_paper/tables/t6_p8_csc_mh_development.tex": [
+     null,
+     "5237d66e0a12086b81468d4f367a0a6ec13b3207e23431fa3c1712051f214707"
+    ]
+   },
+   "scope": [
+    "results/fm_v1/posthoc",
+    "docs/report/fm_v1_paper/tables",
+    "docs/report/fm_v1_paper/figures"
+   ]
+  }
+ ]
 }

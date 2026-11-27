@@ -32,12 +32,14 @@ Table~\ref{tab:logistic} gives five-way macro recall with the fixed L2-regularis
 
 \subsection*{S2. Five-way output shares on external disease images}
 \begin{table}[!htbp]
-\caption{Five-way head on external images labelled CSC/CSR or MH by OCTID or OCTDL: share of queries given their own class, mean over draws, by $K$. Supports are benchmark images only. These measure agreement with the datasets' published labels (OCTID CSC and MH: common classes in OCTID, tier D; OCTDL MH: tier B). MacTel, Stargardt and RP receive no external claim. Mean counts per predicted class are in \texttt{external\_transfer\_outputs.csv} (released).}
+\caption{Five-way head on external images labelled CSC/CSR or MH by OCTID or OCTDL: share of queries given their own class by $K$: mean over draws, and below it SD and 5th--95th percentiles over draws (prototype: 100 draws; logistic probe: 25). Supports are benchmark images only. These measure agreement with the datasets' published labels (OCTID CSC and MH: common classes in OCTID, tier D; OCTDL MH: tier B). MacTel, Stargardt and RP receive no external claim. All five output counts of the prototype head follow this table; those of the logistic probe are in \texttt{external\_transfer\_outputs.csv} (released).}
 \label{tab:transfer}
 \centering\footnotesize
-\input{tables/s2_transfer.tex}
+\resizebox{\textwidth}{!}{\input{tables/s2_transfer.tex}}
 \end{table}
-% src: ARC reports/external/external_transfer_summary.csv; AM l.32-40 (A1 rules 1-3)
+{\footnotesize Five-way prototype head on the same external images: mean count over the 100 draws of queries given each of the five rare classes, by $K$ (each row sums to its $n$). Protocol section on external rare outputs: ``report each present class's recall and all five output counts''. \fnRS The folder labels for RP and Stargardt disagree with the counts in the original paper.\par}
+{\footnotesize\input{tables/s2b_transfer_outputs.tex}}
+% src: ARC reports/external/external_transfer_summary.csv (mean, sd, p05, p95); external_transfer_outputs.csv (mean_count, prototype); AM l.32-40 (A1 rules 1-3); A3 clarification (spread for output shares); FM_PROTOCOL external section ("all five output counts"). Spread and output counts added 26 Nov (pre-freeze check)
 
 \subsection*{S3. Nine-way per-class recall with 95\% intervals}
 \begin{table}[!htbp]
@@ -57,6 +59,8 @@ Table~\ref{tab:logistic} gives five-way macro recall with the fixed L2-regularis
 \centering\scriptsize
 \setlength{\tabcolsep}{3.5pt}
 \input{tables/s4_confusion.tex}
+\par\smallskip
+\parbox{\textwidth}{\footnotesize \fnRS The folder labels for RP and Stargardt disagree with the counts in the original paper.}
 \end{table}
 % src: ARC runs/<arm>/{reporting,external/OCTID,external/OCTDL}/nine_way/metrics.json
 
@@ -92,7 +96,7 @@ RETFound & 23.91 & 22.0 & 1.24 & 0 & 1.000000 \\
 
 \subsection*{S7. Image geometry by source, class and role (diagnostic)}
 \begin{table}[!htbp]
-\caption{Image geometry by source, class and role, from the original files: median (min--max). Border share: the share of image area in complete edge rows and columns whose grey range is at most 8. Near-white share: pixels at 250 or above (median). Retained fraction: the share of the image each input transform keeps (MIRAGE and Inception-v3 resize the whole image; DINOv2 and RETFound resize and centre-crop). Descriptive; it gates nothing.}
+\caption{Image geometry by source, class and role, from the original files: median (min--max). Border share: the share of image area in complete edge rows and columns whose grey range is at most 8. Near-white share: the share of pixels at 250 or above. Retained fraction: the share of the image each input transform keeps (MIRAGE and Inception-v3 resize the whole image; DINOv2 and RETFound resize and centre-crop). Descriptive; it gates nothing.}
 \label{tab:geometry}
 \centering\scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -120,7 +124,7 @@ MIRAGE's macular-hole recall (0.540) was below that of DINOv2 (0.612) and Incept
 
 \subsection*{P1. Exact bounds and leave-one-image-out}
 \begin{table}[!htbp]
-\caption{Post hoc, rule committed 16 Nov 2026. Clopper--Pearson 95\% bounds for nine-way counts of scans called any rare class. OCTDL counts are clustered (332 normal images from 110 patients; 39 MH images from 28 patients), and the exact bound treats images as independent.}
+\caption{Post hoc, rule committed 16 Nov 2026. Clopper--Pearson 95\% bounds for nine-way counts of scans called any rare class. OCTDL counts are clustered (332 normal images from 110 patients; 39 MH images from 28 patients), and the exact bound treats images as independent. Every other nine-way count (correct class, called NORMAL, called a common disease) has its bounds in \texttt{P1\_nine\_way\_exact\_bounds.csv} (released).}
 \label{tab:p1}
 \centering\footnotesize
 \input{tables/p1_exact_bounds.tex}
@@ -140,7 +144,7 @@ All gates passed: each head's class order matched; the heads reproduced 17, 18 a
 
 \subsection*{P3. Clinic-to-clinic macular-hole agreement (outside the locked study)}
 \begin{table}[!htbp]
-\caption{Post hoc, rule committed 16 Nov 2026; outside the locked study (rule 4): OCTDL macular holes used as examples although A1 makes them query-only. Agreement between two macular-hole labels, never transfer. Two-way (NORMAL against MH) macro recall, mean over $K=1$--8 and 100 draws, chance 0.50; OCTDL examples at most one image per patient per class; OCTDL queries scored per image and per patient.}
+\caption{Post hoc, rule committed 16 Nov 2026; outside the locked study (rule 4): OCTDL macular holes used as examples although A1 makes them query-only. Agreement between two macular-hole labels, never transfer. Two-way (NORMAL against MH) macro recall, mean over $K=1$--8 and 100 draws, chance 0.50; OCTDL examples at most one image per patient per class; OCTDL queries scored per image and per patient. Per-$K$ rows and the number of draws in which every query went to one class are in \texttt{P3\_clinic\_to\_clinic\_mh.csv} (released).}
 \label{tab:p3}
 \centering\footnotesize
 \input{tables/p3_clinic_to_clinic.tex}
@@ -153,6 +157,8 @@ All gates passed: each head's class order matched; the heads reproduced 17, 18 a
 \label{tab:p4entries}
 \centering\footnotesize
 \input{tables/p4_class_entries.tex}
+\par\smallskip
+{\footnotesize \fnRS The folder labels for RP and Stargardt disagree with the counts in the original paper.\par}
 \end{table}
 Episodes planned per $K$: \input{tables/p4_class_entries_planned.tex}
 % src: PH P4_class_entries.csv columns episodes_entered, episodes_planned (equal for all four arms); PR l.248 ("report how many episodes each class enters"); added 23 Nov (pre-freeze check)
@@ -200,7 +206,7 @@ The hold-out rows mix source and disease. An AUROC below 0.5 means this score ra
 
 \subsection*{G1. Pad-to-square input check}
 \begin{table}[!htbp]
-\caption{Post hoc sensitivity check outside A2 A-11 (rule committed 16 Nov 2026, computed 18 Nov 2026); it never replaces a locked result. MIRAGE and Inception-v3 re-extracted with every image padded with black to a square around its centre, then given each model's own locked transform; scored with the locked episodes and nine-way roster. Size-only: the locked size-only reference (no model; the same for both arms). Nine-way destinations: scans called NORMAL / CNV, DME or DRUSEN / any rare class.}
+\caption{Post hoc sensitivity check outside A2 A-11 (rule committed 16 Nov 2026, computed 18 Nov 2026); it never replaces a locked result. MIRAGE and Inception-v3 re-extracted with every image padded with black to a square around its centre, then given each model's own locked transform; scored with the locked episodes and nine-way roster. Size-only: the locked size-only reference (no model; the same for both arms). Nine-way destinations: scans called NORMAL / CNV, DME or DRUSEN / any rare class; R1 rows give the same for the disease images of the same sources (published labels), as the R1 rule requires beside every false-rare count.}
 \label{tab:g1}
 \centering\footnotesize
 \input{tables/g1_pad_to_square.tex}
@@ -249,7 +255,7 @@ The files below were computed outside any committed rule and are released under 
 % part "Phase-1 controls E1--E4"); the rest here. The OCTDL locked-feature E2d table, which the E2 rule (l.588)
 % fixes as main text, is in main.tex (tab:e2d), placed there by Lam on 21 Nov (agent-loop round 1, finding 3).
 \section*{S-D. Phase-1 controls E1--E4 (post hoc; rules committed 20 November 2026)}
-Methods in Section~\ref{sec:phase1}. Every E output is post hoc, outside the locked protocol, and never replaces a locked result; failed checks are released. Full per-$K$ rows are in the CSVs.
+Methods in Section~\ref{sec:phase1}. A row's status ``interpreted'' means that its feature control passed, so the row may be described under its rule; on the hold-out, E0 still reads only the sign of the paired difference. Every E output is post hoc, outside the locked protocol, and never replaces a locked result; failed checks are released. Full per-$K$ rows are in the CSVs.
 \havetable{e1_label}\ifgen\else
 \todo{no E1--E4 result exists yet; the tables appear here once \texttt{make\_tables.py} has read the E CSVs.}
 \fi
@@ -257,12 +263,12 @@ Methods in Section~\ref{sec:phase1}. Every E output is post hoc, outside the loc
 
 \havetable{e1_label}\ifgen
 \subsection*{E1. Size and framing control}
-Label of every E1 row: \input{tables/e1_label.tex}. Limitations stated with every E1 result: \input{tables/e1_limitations.tex}
+Label of every E1 row: \input{tables/e1_label.tex}. Limitations stated with every E1 result: \input{tables/e1_limitations.tex} (Correction: the measured content short side of the 146 rare images is 103--471\,px; the rule's text says 103--496\,px.)
 \fi
 \havetable{e1a_checks}\ifgen
 \subsubsection*{E1a. Checks}
 {\scriptsize\setlength{\tabcolsep}{3pt}\input{tables/e1a_checks.tex}}
-\input{tables/e1a_checks_note.tex}
+\input{tables/e1a_checks_note.tex} \fnRS The folder labels for RP and Stargardt disagree with the counts in the original paper.
 \fi
 \havetable{e1b_development}\ifgen
 \subsubsection*{E1b. Development macro recall per model and feature set, references beside}
@@ -304,7 +310,7 @@ Label of every E2 row: \input{tables/e2_label.tex}. A failure is a normal scan g
 \fi
 \havetable{e2a_destinations}\ifgen
 \subsubsection*{E2a. Destinations}
-Counts in each of the nine classes and the three groups. External disease images are shown here only. \input{tables/e2a_destinations_note.tex}
+Counts in each of the nine classes and the three groups. External disease images are shown here only. \fnRS The folder labels for RP and Stargardt disagree with the counts in the original paper. \input{tables/e2a_destinations_note.tex}
 {\scriptsize\setlength{\tabcolsep}{2.5pt}\input{tables/e2a_destinations.tex}}
 \fi
 \havetable{e2b_pairs}\ifgen

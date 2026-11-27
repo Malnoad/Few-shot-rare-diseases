@@ -1,9 +1,15 @@
-"""Figures 1-4 of the v1 paper, adapted from docs/report/weekly_figures.py (15 Nov weekly report).
+"""Figures 2-4 of the v1 paper, adapted from docs/report/weekly_figures.py (15 Nov weekly report).
+
+Figure 1 (the weekly method schematic) was removed on 26 Nov before the step-2 freeze: the paper never
+included it, and its "nominee = best mean over K" omitted the 0.02 speed tie and Inception-v3's ineligibility.
 
 Reads the input lock and the locked results archive in place; plots stored values only, computes
 no score. Changes from the weekly versions follow methods_results_v2.md section 8.1: the hold-out
 box reads "Hold-out: 22 images (inspected before)"; panel titles say "hold-out", not "test set";
 Fig. 4 reads its three destinations from the confusion cells instead of subtracting.
+26 Nov (pre-freeze check): Fig. 4's Kermany panel uses the 169 patient-disjoint normals, as A2 A-5 requires
+for any comparison with external false-rare rates (read from each arm's predictions.csv, gated against the
+archive's false_rare_rate_patient_disjoint); Fig. 3's legend marks RP and Stargardt with footnote a.
 
     D:/Few-shot/.venv/Scripts/python.exe docs/report/fm_v1_paper/make_figures.py
 """
@@ -19,7 +25,6 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
 ATTEMPT = Path("D:/Few-shot/drive/fm_v1/final/final-20261113T170804Z")
 LOCK = ATTEMPT / "input-lock.zip"
@@ -43,45 +48,11 @@ def rows(archive: zipfile.ZipFile, name: str) -> list[dict]:
 
 def save(fig, name: str) -> None:
     OUT.mkdir(exist_ok=True)
-    for ext in ("pdf", "png"):
-        fig.savefig(OUT / f"{name}.{ext}", dpi=200, bbox_inches="tight")
+    # No creation date in the PDF, so a rerun gives the same bytes and the step-2 freeze can fingerprint it.
+    fig.savefig(OUT / f"{name}.pdf", dpi=200, bbox_inches="tight", metadata={"CreationDate": None})
+    fig.savefig(OUT / f"{name}.png", dpi=200, bbox_inches="tight")
     plt.close(fig)
     print("wrote", name)
-
-
-def episode_schematic() -> None:
-    fig, ax = plt.subplots(figsize=(7.6, 3.3))
-    ax.set_xlim(0, 100), ax.set_ylim(0, 42), ax.axis("off")
-
-    def box(x, y, w, h, text, fill="#f3f2ee", edge=MUTED):
-        ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.4,rounding_size=1.2", fc=fill, ec=edge, lw=0.8))
-        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=6.6, color=INK, linespacing=1.25)
-
-    def arrow(x0, y0, x1, y1):
-        ax.add_patch(FancyArrowPatch((x0, y0), (x1, y1), arrowstyle="-|>", mutation_scale=8, color=MUTED, lw=0.8))
-
-    ax.text(0, 40.5, "Development (primary): 124 images, 5 classes", fontsize=8, color=INK, weight="bold")
-    for i in range(5):
-        held = i == 0
-        ax.add_patch(FancyBboxPatch((1 + i * 3.6, 25), 3.0, 11, boxstyle="round,pad=0.2,rounding_size=0.6",
-                                    fc="#cde2fb" if held else "#f3f2ee", ec=COLOR["MIRAGE"] if held else MUTED, lw=0.8))
-        ax.text(2.5 + i * 3.6, 30.5, f"F{i}", ha="center", va="center", fontsize=6.8, color=INK)
-    ax.text(9.6, 22.3, "5 folds per class\n(F0 = queries here)", ha="center", va="top", fontsize=6.8, color=MUTED)
-    arrow(19.5, 30.5, 23.5, 30.5)
-    box(24, 25, 17, 11, "Draw K per class\nfrom F1-F4\nK = 1, 2, 4, 8\n(nested), 100 draws")
-    arrow(41.8, 30.5, 45.3, 30.5)
-    box(46, 25, 17, 11, "Frozen encoder\n(no training):\none feature\nper image")
-    arrow(63.8, 30.5, 67.3, 30.5)
-    box(68, 25, 14.5, 11, "Prototype\nper class =\nnormalised mean\nof K features")
-    arrow(83.3, 30.5, 86.3, 30.5)
-    box(87, 25, 12.5, 11, "Query takes\nthe closest\nprototype\n(cosine)", fill="#cde2fb", edge=COLOR["MIRAGE"])
-    ax.text(99, 21.6, "Repeat for F0-F4 → macro recall (mean of 5 class recalls),\naveraged over 100 draws; nominee = best mean over K",
-            ha="right", va="top", fontsize=6.8, color=MUTED)
-    box(1, 2, 30, 10, "Hold-out: 22 images (inspected before)\nsupports from all 124\nK = 1-16, 100 draws")
-    box(35, 2, 30, 10, "Normal-scan audit: 9 prototypes\n(1,000 per common class + 124 rare)\n→ false-rare rate on 3 sources")
-    box(69, 2, 30, 10, "External: OCTID CSC/MH, OCTDL MH\nwith benchmark supports\n(vs published labels)")
-    ax.text(0, 14.5, "Same encoders and features, other evaluations", fontsize=8, color=INK, weight="bold")
-    save(fig, "fig1_method")
 
 
 def _declutter(axes) -> None:
@@ -141,7 +112,7 @@ def image_sizes(lock: zipfile.ZipFile) -> None:
             pts = [(int(r["width"]), int(r["height"])) for r in inventory if r["label"] == label and r["split"] == split]
             ax.scatter([p[0] for p in pts], [p[1] for p in pts], s=18 if filled else 40, marker=markers[label],
                        c=colors[label] if filled else "none", edgecolors=colors[label] if not filled else "white",
-                       linewidths=1.2 if not filled else 0.5, label=label if split == "train" else None, zorder=3)
+                       linewidths=1.2 if not filled else 0.5, label=(label + ("$^{a}$" if label in ("RP", "Stargardt") else "")) if split == "train" else None, zorder=3)
     ax.set_xlabel("Image width (pixels)")
     ax.set_ylabel("Image height (pixels)")
     ax.grid(color=GRID, lw=0.6)
@@ -149,16 +120,47 @@ def image_sizes(lock: zipfile.ZipFile) -> None:
     save(fig, "fig3_image_sizes")
 
 
-def normal_routing(results: zipfile.ZipFile) -> None:
-    sources = (("Kermany", "runs/{arm}/reporting/nine_way/metrics.json", "Kermany normal (all 250)"),
+COMMON = ("NORMAL", "CNV", "DME", "DRUSEN")
+
+
+def kermany_pid(path: str) -> str:
+    """Manifest pid of a Kermany image: the second field of its file name (A2 A-5; as fm_evaluate.kermany_pid)."""
+    parts = Path(path).name.split("-")
+    if len(parts) != 3 or not parts[1]:
+        raise ValueError(f"not a Kermany file name: {path}")
+    return parts[1]
+
+
+def kermany_disjoint_row(lock: zipfile.ZipFile, results: zipfile.ZipFile, arm: str) -> list[int]:
+    """NORMAL row of the nine-way head on the Kermany normals whose pid is in no common fitting row of the pinned
+    roster (A2 A-5: 169 images), as counts in the order of metrics.json classes. Gated against the archive."""
+    roster = rows(lock, "nine_way_roster.csv")
+    fitted = {kermany_pid(r["path"]) for r in roster if r["role"] == "fitting" and r["label"] in COMMON}
+    disjoint = {r["path"] for r in roster if r["role"] == "query" and r["label"] == "NORMAL"
+                and kermany_pid(r["path"]) not in fitted}
+    classes = json.load(results.open(f"runs/{arm}/reporting/nine_way/metrics.json"))["classes"]
+    called = [r["predicted_label"] for r in rows(results, f"runs/{arm}/reporting/nine_way/predictions.csv")
+              if r["query_id"] in disjoint]
+    audit = json.load(results.open(f"runs/{arm}/reporting/nine_way/source_audit.json"))["patient_disjoint"]
+    rare = sum(c in RARE for c in called)
+    if len(called) != audit["normal_n"] or len(called) != 169 or rare != audit["false_rare_n"]:
+        raise SystemExit(f"{arm}: patient-disjoint Kermany normals disagree with source_audit.json")
+    return [called.count(c) for c in classes]
+
+
+def normal_routing(lock: zipfile.ZipFile, results: zipfile.ZipFile) -> None:
+    sources = (("Kermany", None, "Kermany normal (169)"),
                ("OCTID", "runs/{arm}/external/OCTID/nine_way/metrics.json", "OCTID normal (206)"),
                ("OCTDL", "runs/{arm}/external/OCTDL/nine_way/metrics.json", "OCTDL normal (332)"))
     fig, axes = plt.subplots(1, 3, figsize=(7.2, 2.2), sharey=True)
     shades = (("called normal", "#86b6ef"), ("called a common disease", "#c9c8c1"), ("called rare", "#e34948"))
     for ax, (source, path, title) in zip(axes, sources):
         for i, arm in enumerate(ARMS):
-            m = json.load(results.open(path.format(arm=arm)))
-            row = m["confusion"][m["classes"].index("NORMAL")]
+            if path is None:
+                row = kermany_disjoint_row(lock, results, arm)
+            else:
+                m = json.load(results.open(path.format(arm=arm)))
+                row = m["confusion"][m["classes"].index("NORMAL")]
             normal, common, rare = row[0], sum(row[1:4]), sum(row[4:9])
             n = sum(row)
             left = 0.0
@@ -184,10 +186,9 @@ def normal_routing(results: zipfile.ZipFile) -> None:
 
 def main() -> None:
     with zipfile.ZipFile(LOCK) as lock, zipfile.ZipFile(ARC) as results:
-        episode_schematic()
         recall_vs_k(results)
         image_sizes(lock)
-        normal_routing(results)
+        normal_routing(lock, results)
 
 
 if __name__ == "__main__":

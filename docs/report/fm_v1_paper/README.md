@@ -14,7 +14,11 @@ spread (`results/fm_v1/posthoc/R2_development_spread.csv`). Template: `docs/repo
   their Crossref and Europe PMC records.
 - `make_tables.py`: writes `tables/*.tex` from the locked results archive and the post hoc CSVs
   (formatting only; no computation on images or model outputs).
-- `make_figures.py`: writes `figures/fig1-4` from the input lock and the results archive.
+- `make_figures.py`: writes `figures/fig2-4` (`.pdf` for the paper, `.png` for viewing) from the
+  input lock and the results archive. Fig. 1, the weekly method schematic, was removed on 26 Nov.
+- Tables and figures are frozen (step 2, 27 Nov; `results/fm_v1/phase1_freeze.json`). The figure
+  PDFs are tracked despite `.gitignore`; they are written without a creation date, so a rerun
+  reproduces every file byte for byte.
 - Every numeric sentence in the `.tex` files has a `% src:` comment.
 
 ## Build
@@ -42,8 +46,9 @@ qualifier wherever false-rare rates are generalised; one optional G1 sentence (R
 
 Further defaults taken from the drafts, open to Lam's objection: 4,146 denominator with its
 qualifier (C9); called-NORMAL counts without intervals in Table II (C5); R1 column beside the FRR
-(C6); Fig. 3 in the main text, geometry table in the supplement; Fig. 4 on all 250 Kermany normals;
-"changed after submission" restored (C11, source: Yoo et al. article history).
+(C6); Fig. 3 in the main text, geometry table in the supplement; Fig. 4 on all 250 Kermany normals
+(replaced on 26 Nov by the 169 patient-disjoint normals, as A2 A-5 requires); "changed after
+submission" restored (C11, source: Yoo et al. article history).
 
 Phase-1 E1-E4 (21 Nov): Results (Section IV-F, part "Phase-1 controls") and Discussion
 ("Phase-1 controls") written from the verdicts Lam approved (protocols.md change log, 21 Nov
@@ -53,13 +58,13 @@ sentence in "What the results do not show" now points to E3.
 
 ## Open (visible TODO markers in the PDF)
 
-Waiting for the mentor's second review (24 Nov): "Next phase", which still describes letterbox
-removal as v2 and names the planted-cue test as undecided; whether the side-by-side task table
-(`tab:tasks`, now at the head of the post hoc subsection) moves beside Table I; whether G1 gets
-more than its one main-text sentence.
-
 Only Lam can supply: Zenodo publication time; data and code archive locations; AI-use wording;
 ethics, funding, competing interests, acknowledgements; venue.
+
+Settled by Lam on 26 Nov, with no second mentor review (protocols.md change log, 26–27 Nov): the
+side-by-side task table (`tab:tasks`) stays at the head of the post hoc subsection; G1 keeps one
+main-text sentence, now with its two plain counts; "Next phase" states the one-line plan (fixed
+audit, planted cue, same-patient leakage, second source) with its rules marked not yet approved.
 
 Settled on 24 Nov (protocols.md change log, "24 Nov, remaining Phase-1 choices"): title, abstract,
 framing sentences and conclusion kept as drafted; the audit-first order; the task table; the

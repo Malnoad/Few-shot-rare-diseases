@@ -72,6 +72,11 @@ def rng(lo, hi, sign=False) -> str:
     return f"{f(lo, sign=sign)} to {f(hi, sign=sign)}" if sign else f"{f(lo)}--{f(hi)}"
 
 
+def spread(r, mean_key="mean", sd_key="sd", lo="p05", hi="p95", sign=False) -> str:
+    """Mean over SD and 5th-95th over draws, as one two-line cell (A2 B-3; rule R2: every K, not only the K mean)."""
+    return two(f(r[mean_key], sign=sign), f"({f(r[sd_key])}; {rng(r[lo], r[hi], sign=sign)})")
+
+
 def two(top: str, bottom: str) -> str:
     return r"\makecell{" + top + r"\\{\scriptsize " + bottom + "}}"
 
@@ -109,7 +114,8 @@ def t_development(z):
         for k in ks:
             m = nom[arm]["k_scores"][k]
             assert abs(m - float(r2[(arm, k)]["mean"])) < 1e-9
-            cells.append(two(f(m), f"({f(r2[(arm, k)]['sd'])})" + r"$^\dagger$"))
+            r = r2[(arm, k)]
+            cells.append(two(f(m), f"({f(r['sd'])}; {rng(r['p05'], r['p95'])})" + r"$^\dagger$"))
         s = r2[(arm, "mean_k1_2_4_8")]
         assert abs(nom[arm]["score"] - float(s["mean"])) < 1e-9
         cells.append(two(f(nom[arm]["score"]), f"({f(s['sd'])}; {rng(s['p05'], s['p95'])})" + r"$^\dagger$"))
@@ -123,9 +129,7 @@ def t_development(z):
                              f"({f(r['sd'])}; {rng(r['p05'], r['p95'], sign=True)})" + r"$^\dagger$"))
         L.append(r"\makecell[l]{" + f"{NAME[arm]} $-$" + r"\\Inception-v3 (paired)} & " + " & ".join(cells) + r" \\")
     L.append(r"\midrule")
-    cells = [two(f(size[k]["mean"]), f"({f(size[k]['sd'])})") for k in ks]
-    s = size["mean_k1_2_4_8"]
-    cells.append(two(f(s["mean"]), f"({f(s['sd'])}; {rng(s['p05'], s['p95'])})"))
+    cells = [spread(size[k]) for k in ks + ("mean_k1_2_4_8",)]
     L.append("Size-only reference & " + " & ".join(cells) + r" \\")
     L.append(r"Chance & 0.200 & 0.200 & 0.200 & 0.200 & 0.200 \\")
     L += [r"\bottomrule", r"\end{tabular}"]
@@ -179,21 +183,14 @@ def t_holdout(z):
          r"\midrule"]
     for arm in ARMS:
         counts = [int(audit[(arm, "Kermany", f"recall_{c}")]["numerator"]) for c in RARE]
-        five = [f(sds[(arm, k)]["mean"]) for k in ks]
-        s = sds[(arm, "mean_k1_2_4_8")]
-        five.append(two(f(s["mean"]), f"({f(s['sd'])}; {rng(s['p05'], s['p95'])})"))
+        five = [spread(sds[(arm, k)]) for k in ks + ("mean_k1_2_4_8",)]
         L.append(ROLE[arm] + " & " + " & ".join(str(c) for c in counts) + f" & {sum(counts)} & " + " & ".join(five) + r" \\")
     L.append(r"\midrule")
     for arm in ("MIRAGE", "DINOv2", "RETFound"):
-        cells = [two(f(pd[(arm, "Inception", k)]["mean_a_minus_b"], sign=True),
-                     f"({rng(pd[(arm, 'Inception', k)]['p05'], pd[(arm, 'Inception', k)]['p95'], sign=True)})") for k in ks]
-        r = pd[(arm, "Inception", "mean_k1_2_4_8")]
-        cells.append(two(f(r["mean_a_minus_b"], sign=True), f"({f(r['sd'])}; {rng(r['p05'], r['p95'], sign=True)})"))
+        cells = [spread(pd[(arm, "Inception", k)], mean_key="mean_a_minus_b", sign=True) for k in ks + ("mean_k1_2_4_8",)]
         L.append(r"\makecell[l]{" + f"{NAME[arm]} $-$" + r"\\Inception-v3 (paired)} & \multicolumn{6}{c}{} & " + " & ".join(cells) + r" \\")
     L.append(r"\midrule")
-    cells = [f(size[k]["mean"]) for k in ks]
-    s = size["mean_k1_2_4_8"]
-    cells.append(two(f(s["mean"]), f"({f(s['sd'])}; {rng(s['p05'], s['p95'])})"))
+    cells = [spread(size[k]) for k in ks + ("mean_k1_2_4_8",)]
     L.append(r"Size-only reference & \multicolumn{6}{c}{} & " + " & ".join(cells) + r" \\")
     L += [r"\bottomrule", r"\end{tabular}"]
     write("t3_holdout", L)
@@ -252,7 +249,8 @@ def p4_entries():
     for i, c in enumerate(RARE):
         for g, gl in (("size_right", "size-right"), ("size_wrong", "size-wrong")):
             cells = [next(iter(by[(g, c, k)]))[0] for k in KS]
-            L.append((c if g == "size_right" else "") + f" & {gl} & " + " & ".join(cells) + r" \\")
+            L.append((c + (FN if c in ("RP", "Stargardt") else "") if g == "size_right" else "") + f" & {gl} & "
+                     + " & ".join(cells) + r" \\")
         if i < len(RARE) - 1:
             L.append(r"\addlinespace[2pt]")
     L += [r"\bottomrule", r"\end{tabular}"]
@@ -311,7 +309,7 @@ def s_geometry(z):
             f"{int(float(r['width_median']))} ({int(float(r['width_min']))}--{int(float(r['width_max']))})" if float(r['width_median']).is_integer() else f"{r['width_median']} ({int(float(r['width_min']))}--{int(float(r['width_max']))})",
             f"{float(r['height_median']):g} ({int(float(r['height_min']))}--{int(float(r['height_max']))})",
             f"{f(r['border_share_median'])} ({f(r['border_share_min'])}--{f(r['border_share_max'])})",
-            f(r["near_white_share_median"]),
+            f"{f(r['near_white_share_median'])} ({f(r['near_white_share_min'])}--{f(r['near_white_share_max'])})",
             f(r["retained_fraction_median"]),
             f"{f(d['retained_fraction_median'])} ({f(d['retained_fraction_min'])}--{f(d['retained_fraction_max'])})",
         ]) + r" \\")
@@ -345,19 +343,42 @@ def s_transfer(z):
     rows = read_arc_csv(z, "reports/external/external_transfer_summary.csv")
     by = {(r["arm"], r["source"], r["classifier"], r["k"], r["class"]): r for r in rows}
     ks = ("1", "2", "4", "8", "16")
-    L = [r"% src: ARC reports/external/external_transfer_summary.csv column mean (share of queries given their own class).",
-         r"\begin{tabular}{@{}llcccccccccc@{}}", r"\toprule",
-         r" & & \multicolumn{5}{c}{Prototype (100 draws)} & \multicolumn{5}{c}{Logistic probe (25 draws)} \\",
-         r"\cmidrule(lr){3-7}\cmidrule(l){8-12}",
-         r"Images & Arm & 1 & 2 & 4 & 8 & 16 & 1 & 2 & 4 & 8 & 16 \\", r"\midrule"]
+    L = [r"% src: ARC reports/external/external_transfer_summary.csv columns mean, sd, p05, p95 (share of queries given their",
+         r"%      own class; over the available draws: prototype 100, logistic probe 25).",
+         r"\begin{tabular}{@{}lll*{5}{c}@{}}", r"\toprule",
+         r"Images & Arm & Head & $K=1$ & $K=2$ & $K=4$ & $K=8$ & $K=16$ \\", r"\midrule"]
     for src, c, lab in (("OCTID", "CSC", "OCTID CSC (102)"), ("OCTID", "MH", "OCTID MH (102)"), ("OCTDL", "MH", "OCTDL MH (39)")):
         for i, arm in enumerate(ARMS):
-            cells = [f(by[(arm, src, cl, k, c)]["mean"]) for cl in ("prototype", "logistic") for k in ks]
-            L.append((lab if i == 0 else "") + f" & {NAME[arm]} & " + " & ".join(cells) + r" \\")
+            for j, (cl, cll) in enumerate((("prototype", "prototype"), ("logistic", "logistic"))):
+                cells = [spread(by[(arm, src, cl, k, c)]) for k in ks]
+                L.append((lab if i == 0 and j == 0 else "") + f" & {NAME[arm] if j == 0 else ''} & {cll} & "
+                         + " & ".join(cells) + r" \\")
         L.append(r"\addlinespace[2pt]")
     L[-1] = r"\bottomrule"
     L.append(r"\end{tabular}")
     write("s2_transfer", L)
+
+
+def s_transfer_outputs(z):
+    """All five output counts of the five-way prototype head on the external rare images (FM_PROTOCOL: 'report each
+    present class's recall and all five output counts'): mean count per predicted class over the 100 draws."""
+    rows = read_arc_csv(z, "reports/external/external_transfer_outputs.csv")
+    by = {(r["arm"], r["source"], r["classifier"], r["k"], r["true_class"], r["predicted_class"]): r["mean_count"] for r in rows}
+    body = []
+    for src, c, n, lab in (("OCTID", "CSC", 102, "OCTID CSC (102)"), ("OCTID", "MH", 102, "OCTID MH (102)"),
+                           ("OCTDL", "MH", 39, "OCTDL MH (39)")):
+        for i, arm in enumerate(ARMS):
+            for j, k in enumerate(("1", "2", "4", "8", "16")):
+                counts = [float(by[(arm, src, "prototype", k, c, p)]) for p in RARE]
+                if abs(sum(counts) - n) > 1e-6:
+                    raise SystemExit(f"external_transfer_outputs.csv: {arm} {src} {c} K={k} counts sum to {sum(counts)}, not {n}")
+                body.append(" & ".join([lab if i == 0 and j == 0 else "", NAME[arm] if j == 0 else "", k,
+                                        *[f(x, 2) for x in counts]]) + r" \\")
+            body.append(r"\addlinespace[1pt]")
+    L = [r"% src: ARC reports/external/external_transfer_outputs.csv column mean_count, classifier = prototype (each row sums",
+         r"%      to its n, checked); the logistic-probe rows (25 draws) are in the same file."]
+    L += longtable(r"@{}lllccccc@{}", ["Images", "Arm", "$K$", "CSC", "MH", "MacTel", "Stargardt" + FN, "RP" + FN], body)
+    write("s2b_transfer_outputs", L)
 
 
 def s_perclass(z):
@@ -389,13 +410,15 @@ def s_confusion(z):
                                          ("OCTDL", f"runs/{arm}/external/OCTDL/nine_way/metrics.json"))):
             m = json.load(z.open(path))
             if i == 0 and j == 0:
-                L.append(r"Arm & Source & True & " + " & ".join(short[c] for c in m["classes"]) + r" \\")
+                L.append(r"Arm & Source & True & " + " & ".join(short[c] + (FN if c in ("RP", "Stargardt") else "")
+                                                                 for c in m["classes"]) + r" \\")
                 L.append(r"\midrule")
             first = True
             for c, row in zip(m["classes"], m["confusion"]):
                 if sum(row) == 0:
                     continue
-                L.append((NAME[arm] if (j == 0 and first) else "") + " & " + (src if first else "") + f" & {short[c]} & "
+                L.append((NAME[arm] if (j == 0 and first) else "") + " & " + (src if first else "")
+                         + f" & {short[c]}{FN if c in ('RP', 'Stargardt') else ''} & "
                          + " & ".join(str(v) for v in row) + r" \\")
                 first = False
             L.append(r"\addlinespace[1pt]")
@@ -537,7 +560,7 @@ def p9_table(source: str, name: str) -> None:
          r"%      rare_share_above_5pct_normal_cut_upper_bound (lines 2-" + str(len(rows) + 1) + "); label: " + rows[0]["posthoc"],
          r"\begin{tabular}{@{}llcccc@{}}", r"\toprule",
          r" & & & \multicolumn{2}{c}{Argmax point (share)} & \\ \cmidrule(lr){4-5}",
-         r"Set & Arm & AUROC (95\% interval) & \makecell{Rare scans\\called rare} & \makecell{Normals\\called rare} & \makecell{Rare share above the\\5\% normal cut (upper bound)} \\",
+         r"Set & Arm & AUROC (95\% interval) & \makecell{Disease scans\\called rare} & \makecell{Normals\\called rare} & \makecell{Rare share above the\\5\% normal cut (upper bound)} \\",
          r"\midrule"]
     for i, s in enumerate(sets):
         lab = s.replace("Legacy 22 against 169 patient-disjoint Kermany normals", r"\makecell[l]{Hold-out 22 vs 169 Kermany\\normals (source and disease mixed)}")
@@ -563,7 +586,8 @@ def g1():
     # Every element the G1 rule names: development macro recall, hold-out counts, the size-only comparison and the
     # OCTDL normal destinations, beside the locked numbers. Size-only depends on no model (equal for both arms).
     L = [r"% src: PH G1_pad_to_square.csv columns locked, padded, size_only (development lines 6-10/54-58; hold-out 11-21/59-69,",
-         r"%      mean_correct_of_22 on the even hold-out lines; nine-way lines 22-49/70-97). K = 16 omitted from any reading",
+         r"%      mean_correct_of_22 on the even hold-out lines; nine-way lines 22-49/70-97, R1 rows OCTID CSC/MH and OCTDL MH).",
+         r"%      K = 16 omitted from any reading",
          r"%      (protocols.md 19 Nov G1 decision). Label: " + rows[0]["posthoc"],
          r"\begin{tabular}{@{}llccccccc@{}}", r"\toprule",
          r" & & \multicolumn{3}{c}{MIRAGE} & \multicolumn{3}{c}{Inception-v3} & \\ \cmidrule(lr){3-5}\cmidrule(lr){6-8}",
@@ -591,6 +615,13 @@ def g1():
     L.append(r"\midrule")
     L.append(r"\multicolumn{9}{@{}l}{Nine-way: called NORMAL / common disease (CNV, DME or DRUSEN) / any rare, locked $\to$ padded} \\")
     for s in ("Kermany patient-disjoint (n=169)", "OCTID NORMAL (n=206)", "OCTDL NORMAL (n=332)"):
+        cells = []
+        for a in ("MIRAGE", "Inception"):
+            q = [by[(a, f"nine-way {s}", "", c)] for c in ("called_NORMAL", "called_CNV_DME_DRUSEN", "called_any_rare")]
+            cells.append(r"\multicolumn{3}{c}{" + "/".join(x["locked"] for x in q) + r" $\to$ " + "/".join(x["padded"] for x in q) + "}")
+        L.append(f"\\multicolumn{{2}}{{@{{}}l}}{{{s.replace('(n=', '(')}}} & " + " & ".join(cells) + r" & -- \\")
+    L.append(r"\multicolumn{9}{@{}l}{R1, disease scans from the same sources: called NORMAL / common disease / any rare, locked $\to$ padded} \\")
+    for s in ("OCTID CSC (n=102)", "OCTID MH (n=102)", "OCTDL MH (n=39)"):
         cells = []
         for a in ("MIRAGE", "Inception"):
             q = [by[(a, f"nine-way {s}", "", c)] for c in ("called_NORMAL", "called_CNV_DME_DRUSEN", "called_any_rare")]
@@ -868,14 +899,14 @@ def e1d() -> bool:
     if rows is None:
         return False
     stat = [r for r in rows if r["line"] != "fixed sentence" and not r["line"].startswith("limitations")]
-    L = [r"% cells: n_draws, mean, sd, p05, draws_above_0, verdict as stored; mean and p05 are paired differences (signed).",
+    L = [r"% cells: n_draws, mean, sd, p05 (four decimals), draws_above_0, verdict as stored; mean and p05 are paired differences.",
          r"\begin{tabular}{@{}p{4.4cm}lp{2.2cm}cccccl@{}}", r"\toprule",
          r"Line & Feature set & Status & $n$ & Mean & SD & p05 & Draws $>0$ & Verdict \\", r"\midrule"]
     for r in stat:
         line = pretty(r["line"].replace(", K mean", ""))
-        signed = (lambda x: f(x, sign=True) if has(x) else "--")  # noqa: E731
+        signed = (lambda x, nd=3: f(x, nd, sign=True) if has(x) else "--")  # noqa: E731
         L.append(" & ".join([line, tex(r["feature_set"]), tex(r["status"]) or "--", val(r["n_draws"]), signed(r["mean"]),
-                             val(r["sd"]), signed(r["p05"]), val(r["draws_above_0"]), tex(r["verdict"])]) + r" \\")
+                             val(r["sd"]), signed(r["p05"], 4), val(r["draws_above_0"]), tex(r["verdict"])]) + r" \\")
     L += [r"\bottomrule", r"\end{tabular}"]
     sentence = next((r for r in rows if r["line"] == "fixed sentence"), None)
     limits = next((r for r in rows if r["line"].startswith("limitations")), None)
@@ -911,8 +942,8 @@ def nine_cells(by: dict, count_sets=NORMALS) -> list[str]:
 
 
 NINE_HEAD = [r"\makecell{Kermany normals\\(patient-disjoint)}", "OCTID normals", "OCTDL normals",
-             r"\makecell{Called NORMAL/common disease\\Kermany; OCTID; OCTDL}", r"\makecell{R1: OCTID CSC / MH;\\OCTDL MH}",
-             r"\makecell{Hold-out\\correct}"]
+             r"\makecell{Called NORMAL/common disease\\Kermany; OCTID; OCTDL}", r"\makecell{R1: OCTID\\CSC / MH (102 each);\\OCTDL MH (39)}",
+             r"\makecell{Hold-out correct\\(of 22)}"]
 
 
 def e1g() -> bool:
@@ -942,7 +973,8 @@ def e1a() -> bool:
     rows = read_e("E1a_checks.csv")
     if rows is None:
         return False
-    body = [" & ".join([tex(r["check"]), pretty(r["arm"]) if r["arm"] else "", tex(r["feature_set"]), tex(r["quantity"]),
+    body = [" & ".join([tex(r["check"]), (pretty(r["arm"]) + (FN if r["arm"] in ("RP", "Stargardt") else "")) if r["arm"] else "",
+                        tex(r["feature_set"]), tex(r["quantity"]),
                         val(r["value"]), tex(r["status"]), tex(r["note"])]) + r" \\" for r in rows]
     L = longtable(r"@{}p{3.3cm}lp{1.5cm}p{3.6cm}p{2.2cm}p{1.6cm}p{3.2cm}@{}",
                   ["Check", "Arm", "Set", "Quantity", "Value", "Status", "Note"], body)
@@ -1515,35 +1547,38 @@ def tasks_summary() -> bool:
             raise SystemExit(f"E1b_development.csv: locked {arm} differs from R2_development_spread.csv")
     p8 = {r["arm"]: r for r in read_ph("P8_csc_vs_mh_development.csv") if r["k"] == KM}
 
-    def line(task, inputs, fixed, cells, size, thumb, chance):
+    def line(task, inputs, fixed, cells, size, content, thumb, chance):
         return " & ".join([task, inputs, fixed, *[f(c) for c in cells], f(size) if size else "--",
-                           f(thumb) if thumb else "--", chance]) + r" \\"
+                           f(content) if content else "--", f(thumb) if thumb else "--", chance]) + r" \\"
 
     def five(src, s):
         return [src[a, s] for a in ARMS]
 
     L = [r"% src: PH E1b_development.csv and E1f_holdout.csv, k = mean_k1_2_4_8 (feature sets locked and E1-M; references",
-         r"%      size_only raw, thumbnail raw and E1-M); the locked development cells equal R2_development_spread.csv (checked);",
+         r"%      size_only raw, content_size raw content box, thumbnail raw and E1-M); the locked development cells equal",
+         r"%      R2_development_spread.csv (checked);",
          r"%      PH P8_csc_vs_mh_development.csv mean line (mean; locked_OCTID_two_way_macro_mean = Table 4);",
          r"%      OCTID size-only 0.500: ARC reports/external/external_two_way.csv size_only_reference (Table 4); typed here,",
          r"%      as in t6, because P8's CSV leaves that cell empty. Hold-out and OCTID locked cells are copies held by the",
          r"%      E1f and P8 files; they were compared with the archive on 24 Nov 2026 (equal).",
          r"%      Generated by make_tables.py; formatting only, no new number.",
-         r"\begin{tabular}{@{}lllccccccc@{}}", r"\toprule",
+         r"\begin{tabular}{@{}lllcccccccc@{}}", r"\toprule",
          r"Task & Inputs & How the row was fixed & " + " & ".join(NAME[a] for a in ARMS)
-         + r" & Size-only & Thumbnail$^{*}$ & Chance \\", r"\midrule",
+         + r" & Size-only & Content-size$^{\dagger}$ & Thumbnail$^{*}$ & Chance \\", r"\midrule",
          line("Development, five-way (124 queries)", "locked", "registered (primary)", five(dev, "locked"),
-              dev["size_only", "raw"], dev["thumbnail", "raw"], "0.20"),
-         line("", "E1-M", "post hoc, E1 (rule 20 Nov)", five(dev, "E1-M"), None, dev["thumbnail", "E1-M"], "0.20"),
+              dev["size_only", "raw"], dev["content_size", "raw content box"], dev["thumbnail", "raw"], "0.20"),
+         line("", "E1-M", "post hoc, E1 (rule 20 Nov)", five(dev, "E1-M"), None, dev["content_size", "raw content box"],
+              dev["thumbnail", "E1-M"], "0.20"),
          r"\addlinespace[2pt]",
          line("Hold-out, five-way (22 queries)", "locked", "registered (secondary; not blind)", five(hold, "locked"),
-              hold["size_only", "raw"], hold["thumbnail", "raw"], "0.20"),
-         line("", "E1-M", "post hoc, E1 (rule 20 Nov)", five(hold, "E1-M"), None, hold["thumbnail", "E1-M"], "0.20"),
+              hold["size_only", "raw"], hold["content_size", "raw content box"], hold["thumbnail", "raw"], "0.20"),
+         line("", "E1-M", "post hoc, E1 (rule 20 Nov)", five(hold, "E1-M"), None, hold["content_size", "raw content box"],
+              hold["thumbnail", "E1-M"], "0.20"),
          r"\addlinespace[2pt]",
          line("Development, CSC against MH", "locked", "post hoc, P8 (rule 16 Nov)", [p8[a]["mean"] for a in ARMS],
-              p8["size_only"]["mean"], None, "0.50"),
+              p8["size_only"]["mean"], None, None, "0.50"),
          line("OCTID, CSC against MH", "locked", "registered (exploratory)",
-              [p8[a]["locked_OCTID_two_way_macro_mean"] for a in ARMS], "0.5", None, "0.50"),
+              [p8[a]["locked_OCTID_two_way_macro_mean"] for a in ARMS], "0.5", None, None, "0.50"),
          r"\bottomrule", r"\end{tabular}"]
     write("e1_tasks_summary", L)
     return True
@@ -1599,6 +1634,7 @@ def locked_and_posthoc() -> None:
         s_geometry(z)
         s_logistic(z)
         s_transfer(z)
+        s_transfer_outputs(z)
         s_perclass(z)
         s_confusion(z)
         s_two_way(z)

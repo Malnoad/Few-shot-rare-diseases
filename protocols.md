@@ -7,13 +7,13 @@ SHA256 `4e8df8d9…c5df`) and its dated amendments in
 [`docs/research/FM_AMENDMENTS.md`](docs/research/FM_AMENDMENTS.md) (A1, A2, A3). If this page and
 those two files ever disagree, **they win** and this page gets fixed.
 
-Status on 22 November 2026: the input lock was made on 13 November and its hashes deposited on
+Status on 27 November 2026: the input lock was made on 13 November and its hashes deposited on
 Zenodo (doi:10.5281/zenodo.24206472) before any score. **All pre-specified scores were computed
 on 14 November**; the nominee is MIRAGE. The results are summarised in
 `docs/report/2026-11-14_weekly_report.tex`. P0–P10, G1, R2 and the Phase-1 controls E1–E4 (mentor,
 20 Nov; E2f dropped) are done, and the files of record were **frozen on 22 November**
-(`results/fm_v1/phase1_freeze.json`). Tables and figures join the freeze by 27 Nov; the write-up
-continues to **delivery 3 Dec**, and Phase 2 may start. Fine-tuning is not part of this study.
+(`results/fm_v1/phase1_freeze.json`). The paper's tables and figures joined the freeze on
+**27 November** (step 2); the write-up continues to **delivery 3 Dec**, and Phase 2 may start. Fine-tuning is not part of this study.
 
 ## 1. The question
 
@@ -184,7 +184,7 @@ Steps 1 to 5 run in `colab_fm.ipynb` (one GPU session, no labels read). Steps 6 
 | S2 | 12–14 Nov | Final pilots, input lock, extraction (`colab_fm.ipynb`) | Done 13 Nov: attempt `final-20261113T170804Z`, run by Lam on an L4, code `2f48654`; input-lock SHA256 `239838279b77bb37211398a016c1c766273a35f5a06649b31f5cd97f562c001c`; four arms available, every repeat check exact on the first sequence; OCTID 410 and OCTDL 371 external queries, none excluded. Checked on the laptop 14 Nov. Hashes deposited on Zenodo (doi:10.5281/zenodo.24206472, created 13 Nov 19:53 UTC); Lam's approval recorded 14 Nov 09:11 UTC, before the first score |
 | S3 | 15–19 Nov | Development runs; **nominee sealed by 19 Nov** | Done 14 Nov: nominee **MIRAGE** (SHA256 of the file `nomination_binding.json`: `1738f7dec61526651511221a6d6723cd37e76e8accd0f05e09bba45569b1d82e`; the `binding_sha256` written inside it: `00891271d84e44dfd807ccd540742d046b27483337b50e83cab4dbd8a18406f7`). Evaluate notebook needed the locked Python 3.13.16 (commit `56fcb52`) |
 | S4 | 20–23 Nov | Legacy and external reporting | Done 14 Nov: `evaluation/results-20261114T093033Z.zip` on Drive (SHA256 `c963b1d7298c28f8151769d8d29cf98538ce0897582f57ff2ee867c76351b25f`). Summary in the 14 Nov weekly report |
-| S5 | 15–27 Nov | Figures, tables, agreed post-hoc analyses (labelled) and the Phase-1 controls E1–E4; everything frozen 27 Nov | Started 15 Nov: P0–P9, G1 done 18 Nov; R2 done 20 Nov; plan below |
+| S5 | 15–27 Nov | Figures, tables, agreed post-hoc analyses (labelled) and the Phase-1 controls E1–E4; everything frozen 27 Nov | Started 15 Nov: P0–P9, G1 done 18 Nov; R2 done 20 Nov; numbers frozen 22 Nov, tables and figures 27 Nov (change log) |
 | S6 | 28 Nov–3 Dec | Final write-up; evidence audit 1 Dec, PDF freeze 2 Dec, delivery 3 Dec | Draft sections exist (19 Nov) |
 
 On 19 November Lam brought delivery forward to 30 November; on 20 November, after the mentor's
@@ -752,6 +752,52 @@ results.
   - Still waiting, not touched: the summary table's position, G1 in the main text, the "Next
     phase" paragraph and section 12 (mentor's second review); Zenodo publication time, archive
     locations, AI-use wording, ethics, funding, acknowledgements and venue (Lam).
+- 26–27 Nov, Phase-1 settled and frozen, step 2 (Lam: "The last feedback was the final one, so we
+  will settle and freeze today"). The 23 Nov review was the mentor's last; there is no second
+  review (learning log, Feedback 3). No number of record changed and no rule was added.
+  - Lam settled the three choices that waited for that review, each the recommended option: the
+    side-by-side task table stays at the head of the post hoc subsection; G1 keeps one main-text
+    sentence, now with its counts (MIRAGE padded called 0 of the 206 OCTID normal scans NORMAL,
+    against 202 unpadded, and 1 of the 332 OCTDL normal scans, against 26); "Next phase" states the
+    one-line plan of section 12 (note of 26 Nov), its rules marked not yet approved.
+  - Pre-freeze check in three lenses (read-only): Gemini 4 Neon for completeness against the
+    rules, Claude Fable 5.2 as hostile reviewer, GPT-6.2 Sol for the recompute. No wrong score or
+    verdict was found. The findings were places where a table or figure did not yet show what a
+    rule names. Fixed, formatting and selection from files of record only:
+    - Fig. 4's Kermany panel now holds the 169 patient-disjoint normals that A2 A-5 fixes for any
+      comparison with external false-rare rates (it held all 250); its counts equal E2a's locked
+      rows, and its caption points to R1 in the nine-way audit table (`tab:frr`).
+    - Fig. 1 (the weekly method schematic) removed: the paper never included it, and its
+      "nominee = best mean over K" left out the 0.02 speed tie and Inception-v3's ineligibility.
+    - R2: Table I and the hold-out table give SD and 5th–95th percentiles at every K, not only on
+      the mean over K. A2: the geometry table gives the near-white share as median (min–max).
+      A3 clarification: S2 gives each external share with its spread over draws. FM_PROTOCOL
+      ("all five output counts"): new table S2b, the prototype head's mean count per predicted
+      class (each row sums to its n). R1 beside every false-rare count: the G1 table gains rows
+      for OCTID CSC, OCTID MH and OCTDL MH.
+    - Smaller: the size-only content-box reference (E1) is a column of the task table; the E1-M
+      p05 prints as 0.0025, as in the text; the nine-way tables name their denominators; the
+      RP and Stargardt names carry footnote a wherever they appear.
+    - Text that goes with them: the size-only comparisons say "unpaired means" (abstract and
+      results), with the reference's 5th–95th range at K = 2 (0.466–0.629); the hold-out table
+      note gives the size-only rule's 17 of 22 (E1 reference row); the task table says it holds
+      disease tasks with benchmark supports and names P3 and E4a as outside it; the E1 limitations
+      and the 103–471 px correction sit beside the main-text E1 table.
+    - Left as caption pointers to the released CSVs: P1's other nine-way bounds, P3's per-K rows.
+      Not changed: the per-K percentiles of S1, the OCTID two-way table and E1b (their means
+      carry SD).
+  - Recompute of every table and figure changed above (GPT-6.2 Sol, read-only, 27 Nov), from the
+    archive, the input lock and the post hoc files: no mismatch. It covered the 88 spread cells of
+    the development and hold-out tables, 23 geometry rows, 120 transfer cells, 300 output counts,
+    the G1 and P9 rows, 35 nine-way rows, Fig. 4's 36 bar segments and Fig. 3's 146 points (PNG and
+    PDF identical to an independent render), and the six numbers in the new text. Two wording points,
+    applied: E1-M squares the content box on its short side, so only the short side still reaches
+    the model; the P3 file holds the number of draws in which every query went to one class.
+  - Frozen (step 2, amendment in `results/fm_v1/phase1_freeze.json`): the 89 tracked files in
+    `docs/report/fm_v1_paper/tables/` and the six in `figures/`. The figure PDFs, which the paper
+    includes, are now tracked (forced past `.gitignore`); `make_figures.py` writes them without a
+    creation date, so a rerun reproduces them byte for byte. As for step 1, these files now change
+    only through an amendment whose reason names an entry here (the correction of a proven error).
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 
@@ -938,6 +984,13 @@ Fable). It is not yet a rule. As in Phase 1, the rules (pools, K, draws, decisio
 written, rebutted and pushed before any Phase-2 number. Phase-2 results stay out of the Phase-1
 paper except its labelled next-phase paragraph. The mentor's view (23 Nov review) can still change
 this plan.
+
+Note of 26 Nov: the 23 Nov review and its rebuttal changed the order, not the content. Phase 2 is
+one line: the Phase-1 controls become a fixed audit; a planted cue with known truth calibrates it;
+same-patient leakage (question A) is a second known-truth cue; then a second source. Patient
+diversity (question B) is off the line (`docs/research/MENTOR_LEARNING_LOG.md`, Feedback 3,
+"Rebuttal outcome"). The Phase-1 paper's next-phase paragraph states this line (Lam, 26 Nov). The
+text below keeps the order of 22 Nov until it is rewritten on branch `t3/phase2-prep`.
 
 **Why.** Expert verification of medical images is costly, so few-shot learning and augmentation
 stand in for it, and they bring new problems. This project kept meeting one of them: patients.

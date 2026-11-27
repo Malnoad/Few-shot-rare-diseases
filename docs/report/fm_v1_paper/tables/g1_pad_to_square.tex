@@ -1,5 +1,6 @@
 % src: PH G1_pad_to_square.csv columns locked, padded, size_only (development lines 6-10/54-58; hold-out 11-21/59-69,
-%      mean_correct_of_22 on the even hold-out lines; nine-way lines 22-49/70-97). K = 16 omitted from any reading
+%      mean_correct_of_22 on the even hold-out lines; nine-way lines 22-49/70-97, R1 rows OCTID CSC/MH and OCTDL MH).
+%      K = 16 omitted from any reading
 %      (protocols.md 19 Nov G1 decision). Label: post hoc, rule timestamped by commit 1eb3964 (16 Nov 2026), computed 2026-11-18; sensitivity check outside A2 A-11, never replaces a locked result
 \begin{tabular}{@{}llccccccc@{}}
 \toprule
@@ -28,6 +29,10 @@ Hold-out & 1 & 0.536 & 0.518 & $-$0.018 & 0.430 & 0.427 & $-$0.003 & 0.645 \\
 \multicolumn{2}{@{}l}{Kermany patient-disjoint (169)} & \multicolumn{3}{c}{169/0/0 $\to$ 166/1/2} & \multicolumn{3}{c}{150/15/4 $\to$ 157/8/4} & -- \\
 \multicolumn{2}{@{}l}{OCTID NORMAL (206)} & \multicolumn{3}{c}{202/0/4 $\to$ 0/0/206} & \multicolumn{3}{c}{182/9/15 $\to$ 8/0/198} & -- \\
 \multicolumn{2}{@{}l}{OCTDL NORMAL (332)} & \multicolumn{3}{c}{26/276/30 $\to$ 1/25/306} & \multicolumn{3}{c}{66/255/11 $\to$ 13/17/302} & -- \\
+\multicolumn{9}{@{}l}{R1, disease scans from the same sources: called NORMAL / common disease / any rare, locked $\to$ padded} \\
+\multicolumn{2}{@{}l}{OCTID CSC (102)} & \multicolumn{3}{c}{8/53/41 $\to$ 0/4/98} & \multicolumn{3}{c}{3/53/46 $\to$ 1/18/83} & -- \\
+\multicolumn{2}{@{}l}{OCTID MH (102)} & \multicolumn{3}{c}{8/83/11 $\to$ 0/21/81} & \multicolumn{3}{c}{6/52/44 $\to$ 2/12/88} & -- \\
+\multicolumn{2}{@{}l}{OCTDL MH (39)} & \multicolumn{3}{c}{0/36/3 $\to$ 0/6/33} & \multicolumn{3}{c}{2/36/1 $\to$ 0/1/38} & -- \\
 \multicolumn{2}{@{}l}{Hold-out 22, named correctly} & \multicolumn{3}{c}{20 $\to$ 21} & \multicolumn{3}{c}{13 $\to$ 14} & -- \\
 \bottomrule
 \end{tabular}
