@@ -798,6 +798,17 @@ results.
     includes, are now tracked (forced past `.gitignore`); `make_figures.py` writes them without a
     creation date, so a rerun reproduces them byte for byte. As for step 1, these files now change
     only through an amendment whose reason names an entry here (the correction of a proven error).
+  - Review of the Phase-1 pull request (agent-loop, Claude Opus 5.5, read-only, 27 Nov). It made
+    three findings, all applied:
+    - 28 frozen tables carried this checkout's absolute path in their first source comment, so a
+      rerun from another checkout would have rewritten them. The comment now gives the path from
+      the repository root. A second amendment the same day changes only that comment line.
+    - The E1 fixed sentence in the main text is quoted word for word again (p05 0.003); the table
+      and the conclusion keep 0.0025.
+    - The S2 external transfer is named among the tasks outside the task table, and the P3 order
+      has a source comment.
+    - Side note, applied: section 12's "Note of 26 Nov" was reworded on 27 Nov. It now says that the
+      review took question B off the line, rather than "changed the order, not the content".
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 
@@ -985,7 +996,8 @@ written, rebutted and pushed before any Phase-2 number. Phase-2 results stay out
 paper except its labelled next-phase paragraph. The mentor's view (23 Nov review) can still change
 this plan.
 
-Note of 26 Nov: the 23 Nov review and its rebuttal changed the order, not the content. Phase 2 is
+Note of 26 Nov: the 23 Nov review and its rebuttal changed the order and took question B off the
+line; the questions' text below is unchanged. Phase 2 is
 one line: the Phase-1 controls become a fixed audit; a planted cue with known truth calibrates it;
 same-patient leakage (question A) is a second known-truth cue; then a second source. Patient
 diversity (question B) is off the line (`docs/research/MENTOR_LEARNING_LOG.md`, Feedback 3,
