@@ -816,6 +816,29 @@ results.
     - At Lam's request, the root README is shortened to brief results, where to start, and a
       code map that groups every code file by project and role, with no file moved. The previous
       README stays at commit `6116f93`.
+  - 27 Nov, a 5-page course report (Lam: "Rework the paper: 5 pages only"), from Lam's choices:
+    the FM study plus a short Phase-0 replication section; 5 pages plus references; IEEE
+    two-column; a live few-shot notebook as the demo, not yet built. The structure follows the
+    course rubric: CV knowledge, implementation, design and controls, analysis and limitations,
+    reproducibility.
+    - The report is `docs/report/fm_v1_paper/report5.tex`, beside the long paper, whose fate Lam
+      decides later. It adds no number: it reuses the frozen tables and figures, and each typed
+      number names its source.
+    - It keeps the four locked results that A3 places in the main text, and the E1 fixed sentence,
+      limitations and E1-D sentence. The E2d table and the other post hoc tables stay in the
+      extended version.
+    - Three bibliography entries were added from their Crossref records: Inception-v3, CycleGAN
+      and masked autoencoders.
+    - The AI note is one sentence in the Acknowledgment (Lam: a small note, after precedent). Its
+      place follows IEEE's author policy and its wording Elsevier's declaration template.
+    - An independent read-only review (Claude Opus 5.5) found every number right, including the 40
+      hand-typed cells. Its wording findings were all applied:
+      - where the evaluation ran;
+      - what was registered and what was post hoc;
+      - no causal reading of the source test;
+      - "keeps" with its mean;
+      - the A1 rule 7 sentence;
+      - the E1-D sentence with its label.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 

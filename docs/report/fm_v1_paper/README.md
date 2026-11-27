@@ -7,6 +7,10 @@ spread (`results/fm_v1/posthoc/R2_development_spread.csv`). Template: `docs/repo
 
 ## Files
 
+- `report5.tex`: the 5-page course report (27 Nov; 5 pages plus references, IEEE two-column). It
+  condenses `main.tex`, adds a short Phase-0 replication section, and adds no number. It reuses the
+  frozen tables and figures, and each typed number has a `% src:` comment. Build it with
+  `tectonic -X compile report5.tex`.
 - `main.tex`: paper (title, abstract, Sections I-VIII, declarations); `supplement.tex`: supplement
   (locked supplement-only results S1-S7, post hoc P0-P3, P5-P7, P9, G1, P10 placeholder, pre-rule files).
 - `references.bib`: the 21 proposal entries plus Sun 2024, Tai 2025, TVST 2026 and Zech 2018 (the
