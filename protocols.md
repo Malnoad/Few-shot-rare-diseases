@@ -809,6 +809,51 @@ results.
       has a source comment.
     - Side note, applied: section 12's "Note of 26 Nov" was reworded on 27 Nov. It now says that the
       review took question B off the line, rather than "changed the order, not the content".
+  - After the merge (PR #25, main `6116f93`), records and metadata only, no number changed:
+    - Tai et al. 2025 has its full author list from its arXiv page, which removes the PDF's
+      bibliography TODO.
+    - The PDF's document title now matches the printed title.
+    - At Lam's request, the root README is shortened to brief results, where to start, and a
+      code map that groups every code file by project and role, with no file moved. The previous
+      README stays at commit `6116f93`.
+  - 27 Nov, a 5-page course report (Lam: "Rework the paper: 5 pages only"), from Lam's choices:
+    the FM study plus a short Phase-0 replication section; 5 pages plus references; IEEE
+    two-column; a live few-shot notebook as the demo, not yet built. The structure follows the
+    course rubric: CV knowledge, implementation, design and controls, analysis and limitations,
+    reproducibility.
+    - The report is `docs/report/fm_v1_paper/report5.tex`, beside the long paper, whose fate Lam
+      decides later. It adds no number: it reuses the frozen tables and figures, and each typed
+      number names its source.
+    - It keeps the four locked results that A3 places in the main text, and the E1 fixed sentence,
+      limitations and E1-D sentence. The E2d table and the other post hoc tables stay in the
+      extended version.
+    - Three bibliography entries were added from their Crossref records: Inception-v3, CycleGAN
+      and masked autoencoders.
+    - The AI note is one sentence in the Acknowledgment (Lam: a small note, after precedent). Its
+      place follows IEEE's author policy and its wording Elsevier's declaration template.
+    - An independent read-only review (Claude Opus 5.5) found every number right, including the 40
+      hand-typed cells. Its wording findings were all applied:
+      - where the evaluation ran;
+      - what was registered and what was post hoc;
+      - no causal reading of the source test;
+      - "keeps" with its mean;
+      - the A1 rule 7 sentence;
+      - the E1-D sentence with its label.
+    - 28 Nov, at Lam's request:
+      - The code line names the repository (github.com/Malnoad/Few-shot-rare-diseases).
+      - The pipeline figure was redrawn with the diagram-design skill: a swimlane by where each
+        step ran, split into locked and post hoc, with the input lock highlighted. It uses the
+        default skin on white, and the skill's self-check and geometry check pass.
+      - To keep 5 pages, the recall-against-K figure was taken out. Its development values are in
+        Table I and its hold-out means in the hold-out table. The hold-out values per K (for
+        example size-only 0.645 against MIRAGE's 0.536 at K = 1) are in the extended version only.
+      - Pre-merge review (Claude Opus 5.5, read-only) of the README, the report and the diagram:
+        - fixed: the diagram and code map no longer say every post hoc rule came before its
+          numbers (P0, P6 and P7 were computed first);
+        - fixed: 23–32 images per rare class;
+        - fixed: the binding texts are marked never edited;
+        - fixed: the E1 bullet gives its 5th percentile;
+        - fixed: smaller wording, a bibliography case and figure order.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 

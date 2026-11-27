@@ -7,11 +7,20 @@ spread (`results/fm_v1/posthoc/R2_development_spread.csv`). Template: `docs/repo
 
 ## Files
 
+- `report5.tex`: the 5-page course report (27 Nov; 5 pages plus references, IEEE two-column). It
+  condenses `main.tex`, adds a short Phase-0 replication section, and adds no number. It reuses the
+  frozen tables and figures, and each typed number has a `% src:` comment. Build it with
+  `tectonic -X compile report5.tex`.
+- `diagrams/pipeline.html`: the report's pipeline swimlane (Fig. 1), drawn with the diagram-design
+  skill (github.com/cathrynlavery/diagram-design, v2.6). `diagrams/export_pdf.py` turns it into
+  `diagrams/pipeline.pdf` with headless Chrome. The PDF is tracked despite `.gitignore`; the folder
+  is outside the freeze.
 - `main.tex`: paper (title, abstract, Sections I-VIII, declarations); `supplement.tex`: supplement
   (locked supplement-only results S1-S7, post hoc P0-P3, P5-P7, P9, G1, P10 placeholder, pre-rule files).
 - `references.bib`: the 21 proposal entries plus Sun 2024, Tai 2025, TVST 2026 and Zech 2018 (the
   one shortcut-learning source, added 24 Nov). Sun 2024 and TVST 2026 were completed on 24 Nov from
-  their Crossref and Europe PMC records.
+  their Crossref and Europe PMC records. Szegedy 2016, Zhu 2017 and He 2022 were added on 27 Nov from
+  their Crossref records; only the 5-page report cites them.
 - `make_tables.py`: writes `tables/*.tex` from the locked results archive and the post hoc CSVs
   (formatting only; no computation on images or model outputs).
 - `make_figures.py`: writes `figures/fig2-4` (`.pdf` for the paper, `.png` for viewing) from the
