@@ -1,8 +1,8 @@
 # Few-shot classification of rare retinal diseases in OCT
 
 In the public benchmark of Yoo et al. 2021, five rare retinal diseases (CSC, MH, MacTel,
-Stargardt, RP) have only 19–27 labelled OCT images each. The four common Kermany OCT2017 classes
-(CNV, DME, DRUSEN, NORMAL) have tens of thousands. This repository holds two studies on that
+Stargardt, RP) have only 23–32 labelled OCT images each. The four common Kermany OCT2017 classes
+(CNV, DME, DRUSEN, NORMAL) have 8,866 to 37,455 each. This repository holds two studies on that
 benchmark:
 
 1. **Replication of Yoo et al. 2021** (closed 6 Nov 2026). A CycleGAN per rare disease adds
@@ -22,7 +22,8 @@ Shot*, in [`docs/report/fm_v1_paper/`](docs/report/fm_v1_paper/).
   It was the pre-registered nominee.
 - The results below are post hoc, each under a rule committed before its numbers:
   - Under a size and framing control, MIRAGE keeps a positive lead over Inception-v3, but the
-    lead shrinks from 0.116 to 0.063.
+    lead shrinks from 0.116 to 0.063. Its 5th percentile over draws is 0.0025 (95 of 100 draws
+    above 0). This is one control, and the paper lists its limitations.
   - How many outside normal scans are called rare depends on the input recipe.
   - A few-shot test tells normal scans from three sources apart, above chance.
   - 4 of the 22 hold-out images have a copy among the development images.
@@ -72,7 +73,8 @@ Shot*, in [`docs/report/fm_v1_paper/`](docs/report/fm_v1_paper/).
 1. `data/raw/` is read-only; every transformation is a script.
 2. `data/manifest.csv` (committed) defines every split. Never run `stage0_manifest.py --force`:
    it re-samples the rare hold-out.
-3. Files marked `[lock]` below are never edited.
+3. Files marked `[lock]` below are never edited. This includes the binding texts `FM_PROTOCOL.md` and
+   `FM_AMENDMENTS.md`.
 4. The frozen results in `results/fm_v1/phase1_freeze.json` change only through a recorded
    amendment. `python fm_posthoc.py freeze-check` verifies them.
 
@@ -82,9 +84,9 @@ Only code and small result files are tracked. Data, caches and checkpoints are g
 
 The code files sit in the repository root, or beside the document they build. They are not
 split into folders, because the notebooks and the FM input lock refer to these exact paths.
-Files marked `[lock]` are hashed into the FM input lock (`CODE_FILES` in `fm_prepare.py`).
-`stage3_classifier.py` belongs to Group 1, but the locked `fm_prepare.py` and `fm_extract.py`
-import it as the Inception-v3 input path.
+Files marked `[lock]` are hashed into the FM input lock (`CODE_FILES` and the protocol hash in
+`fm_prepare.py`). `stage3_classifier.py` belongs to Group 1, but the locked study imports it:
+`fm_extract.py` for the Inception-v3 input path, `fm_prepare.py` for one helper.
 
 **Group 1. Replication of Yoo et al. 2021 (closed, 6 November)**
 
@@ -126,11 +128,12 @@ figures 27 Nov 2026)
 ├── colab_fm_evaluate.ipynb     Colab, CPU: development, nomination and reports
 ├── fm_notebook.py              builds both notebooks
 ├── requirements-fm.txt         pinned PyTorch environment for Colab [lock]
-└── docs/research/FM_PROTOCOL.md, FM_AMENDMENTS.md   the binding texts (hashed into the lock)
+└── docs/research/FM_PROTOCOL.md, FM_AMENDMENTS.md   the binding texts (never edited) [lock]
 ```
 
-*2b. Post hoc analyses and Phase-1 controls* (each rule committed before its numbers;
-protocols.md section 8):
+*2b. Post hoc analyses and Phase-1 controls* (each labelled post hoc with its rule's date; every
+rule was committed before its numbers except P0, P6 and P7, computed first; protocols.md
+section 8):
 
 ```
 ├── fm_posthoc.py               P0-P10, R1, R2, G1 (laptop half), E1-E4 and E1-D, E1 report,
@@ -151,6 +154,7 @@ protocols.md section 8):
 ├── docs/report/fm_v1_paper/make_tables.py, make_figures.py   the v1 paper's tables and figures
 ├── docs/report/fm_ieee/        the proposal paper and its 8 build, evidence and verification scripts
 ├── docs/report/weekly_figures_1121.py   figures of the 21 Nov weekly report
+├── docs/report/fm_v1_paper/diagrams/export_pdf.py   the 5-page report's pipeline diagram to PDF
 ├── docs/research/proposal/build_proposal.py   the proposal figure pack (HTML and SVG)
 └── docs/research/fm_independent_review/   6 read-only scripts of the independent code review
 ```

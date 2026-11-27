@@ -1,7 +1,8 @@
 """Export the SVG of a diagram-design HTML file to a vector PDF, cropped to its viewBox, with headless Chrome.
 
 The diagram-design skill exports with Playwright, which this laptop does not have; Chrome's own print-to-PDF gives
-the same kind of output (vector, fonts embedded) without installing anything.
+the same kind of output (vector, fonts embedded) without installing anything. It loads the Geist fonts from Google
+Fonts, so it needs network access; offline, Chrome falls back to system fonts.
 
     python docs/report/fm_v1_paper/diagrams/export_pdf.py docs/report/fm_v1_paper/diagrams/pipeline.html
 """

@@ -844,8 +844,16 @@ results.
       - The pipeline figure was redrawn with the diagram-design skill: a swimlane by where each
         step ran, split into locked and post hoc, with the input lock highlighted. It uses the
         default skin on white, and the skill's self-check and geometry check pass.
-      - To keep 5 pages, the recall-against-K figure was taken out; its numbers are in Table I and
-        the hold-out table.
+      - To keep 5 pages, the recall-against-K figure was taken out. Its development values are in
+        Table I and its hold-out means in the hold-out table. The hold-out values per K (for
+        example size-only 0.645 against MIRAGE's 0.536 at K = 1) are in the extended version only.
+      - Pre-merge review (Claude Opus 5.5, read-only) of the README, the report and the diagram:
+        - fixed: the diagram and code map no longer say every post hoc rule came before its
+          numbers (P0, P6 and P7 were computed first);
+        - fixed: 23–32 images per rare class;
+        - fixed: the binding texts are marked never edited;
+        - fixed: the E1 bullet gives its 5th percentile;
+        - fixed: smaller wording, a bibliography case and figure order.
 
 ### Phase-1 controls E1–E4 (rules fixed 20 Nov 2026, before any E number)
 

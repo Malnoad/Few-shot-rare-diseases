@@ -19,7 +19,8 @@ spread (`results/fm_v1/posthoc/R2_development_spread.csv`). Template: `docs/repo
   (locked supplement-only results S1-S7, post hoc P0-P3, P5-P7, P9, G1, P10 placeholder, pre-rule files).
 - `references.bib`: the 21 proposal entries plus Sun 2024, Tai 2025, TVST 2026 and Zech 2018 (the
   one shortcut-learning source, added 24 Nov). Sun 2024 and TVST 2026 were completed on 24 Nov from
-  their Crossref and Europe PMC records.
+  their Crossref and Europe PMC records. Szegedy 2016, Zhu 2017 and He 2022 were added on 27 Nov from
+  their Crossref records; only the 5-page report cites them.
 - `make_tables.py`: writes `tables/*.tex` from the locked results archive and the post hoc CSVs
   (formatting only; no computation on images or model outputs).
 - `make_figures.py`: writes `figures/fig2-4` (`.pdf` for the paper, `.png` for viewing) from the
